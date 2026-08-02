@@ -34,7 +34,7 @@ def test_unconfigured_source_is_fail_closed_without_invented_urls(
     manifest.pop("documentation", None)
     manifest.pop("issue_tracker", None)
     manifest_path.write_text(
-        json.dumps(manifest, indent=2, sort_keys=True) + "\n",
+        json.dumps(manifest, indent=2) + "\n",
         encoding="utf-8",
     )
 
@@ -118,6 +118,9 @@ def test_publication_configurator_writes_real_repository_contract(tmp_path: Path
         "https://github.com/octocat/portfolio-architect/issues"
     )
     assert manifest["codeowners"] == ["@octocat"]
+    keys = list(manifest)
+    assert keys[:2] == ["domain", "name"]
+    assert keys[2:] == sorted(keys[2:])
     codeowners = (target / ".github/CODEOWNERS").read_text()
     assert "@octocat" in codeowners
     assert "/.github/workflows/ @octocat" in codeowners

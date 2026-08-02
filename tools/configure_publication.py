@@ -21,6 +21,20 @@ def write_json(path: Path, value: object) -> None:
     path.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
+def write_manifest_json(path: Path, value: dict[str, object]) -> None:
+    """Write a Home Assistant manifest in hassfest's required key order."""
+    ordered: dict[str, object] = {
+        "domain": value["domain"],
+        "name": value["name"],
+    }
+    ordered.update(
+        (key, value[key])
+        for key in sorted(value)
+        if key not in {"domain", "name"}
+    )
+    path.write_text(json.dumps(ordered, indent=2) + "\n", encoding="utf-8")
+
+
 def configure(root: Path, repository: str, codeowners: list[str]) -> None:
     if not REPOSITORY_RE.fullmatch(repository):
         raise SystemExit("Repository must use the GitHub OWNER/REPOSITORY form")
@@ -44,7 +58,7 @@ def configure(root: Path, repository: str, codeowners: list[str]) -> None:
     manifest["documentation"] = f"{repository_url}#readme"
     manifest["issue_tracker"] = f"{repository_url}/issues"
     manifest["codeowners"] = normalized
-    write_json(manifest_path, manifest)
+    write_manifest_json(manifest_path, manifest)
 
     publication = {
         "schema": 1,
