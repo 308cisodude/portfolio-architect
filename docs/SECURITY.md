@@ -332,3 +332,11 @@ cache.
 - executable regressions verify pinned-address connection, original Host-header
   preservation, mixed-address rejection, and rejection of mutable workflow
   dependencies.
+
+## v1.17.2 release-archive boundary validation
+
+- HACS and manual installation archives are staged independently according to their extraction boundaries;
+- the HACS asset must expose the integration manifest at the archive root and may not contain a `custom_components/` prefix;
+- the manual drop-in must contain the exact `custom_components/portfolio_architect/` wrapper;
+- release verification compares every payload file and SHA-256 after normalizing the manual archive prefix; and
+- a regression test requires the verifier to reject the prior nested-HACS layout.

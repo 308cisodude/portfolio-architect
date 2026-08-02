@@ -142,16 +142,24 @@ def build(output: Path) -> list[Path]:
     with tempfile.TemporaryDirectory(prefix="portfolio-architect-release-") as temp_name:
         temp = Path(temp_name)
 
-        # Home Assistant integration drop-in.
-        integration_stage = temp / "integration"
-        copy_tree(PROJECT_ROOT / "custom_components", integration_stage / "custom_components")
+        # Manual Home Assistant drop-in. It is extracted over /config and must
+        # therefore retain the custom_components/portfolio_architect wrapper.
+        dropin_stage = temp / "dropin"
+        copy_tree(PROJECT_ROOT / "custom_components", dropin_stage / "custom_components")
         integration_archive = output / f"portfolio-architect-v{version}-ha-dropin.zip"
-        write_reproducible_zip(integration_stage, integration_archive)
+        write_reproducible_zip(dropin_stage, integration_archive)
 
-        # Stable HACS release asset. HACS requires a non-versioned filename in
-        # hacs.json, while manual deployments retain the versioned drop-in.
+        # Stable HACS release asset. HACS already extracts into
+        # /config/custom_components/portfolio_architect, so the integration files
+        # must be placed directly at the archive root. This archive is deliberately
+        # not byte-identical to the manual drop-in.
+        hacs_stage = temp / "hacs"
+        copy_tree(
+            PROJECT_ROOT / "custom_components/portfolio_architect",
+            hacs_stage,
+        )
         hacs_archive = output / "portfolio_architect.zip"
-        write_reproducible_zip(integration_stage, hacs_archive)
+        write_reproducible_zip(hacs_stage, hacs_archive)
 
         # Home Assistant Gateway App.
         app_stage = temp / "app" / "portfolio_architect_gateway"

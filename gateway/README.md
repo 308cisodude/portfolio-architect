@@ -1,4 +1,4 @@
-# Portfolio Architect Gateway v1.17.1
+# Portfolio Architect Gateway v1.17.2
 
 The gateway is a dedicated, dependency-free Python service that converts the
 Comdirect depot API into Portfolio Architect REST schema 1. Version 1.16.0 added
@@ -69,4 +69,5 @@ state, Gateway bearer token, API credentials, cached snapshot, and selected
 account survive an in-place update.
 
 The selected-account reserve semantics were validated live before the v1.17.1
-publication milestone. The Gateway runtime remains unchanged from v1.16.0.
+publication milestone and remain unchanged in v1.17.2. The Gateway runtime
+remains unchanged from v1.16.0.

@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway App v1.17.1
+# Portfolio Architect Gateway App v1.17.2
 
-Version 1.17.1 is package-alignment only; the Gateway runtime is unchanged from v1.16.0.
+Version 1.17.2 is package-alignment only; the Gateway runtime is unchanged from v1.16.0.
 
 Native Home Assistant App packaging for the read-only Portfolio Architect
 Gateway. The App exposes no LAN port, uses an admin-only Ingress UI, runs the

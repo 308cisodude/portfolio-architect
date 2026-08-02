@@ -1,4 +1,4 @@
-# v1.17.1 validation
+# v1.17.2 validation
 
 The release pipeline validates:
 

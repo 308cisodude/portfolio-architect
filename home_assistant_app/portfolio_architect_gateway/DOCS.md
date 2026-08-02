@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway v1.17.1
+# Portfolio Architect Gateway v1.17.2
 
-The v1.17.1 App package retains the v1.16.0 Gateway runtime unchanged.
+The v1.17.2 App package retains the v1.16.0 Gateway runtime unchanged.
 
 This release adds the optional investment-reserve path used by Portfolio
 Architect's cost-aware execution engine.
@@ -22,5 +22,6 @@ bearer token, cached snapshot, and selected account. Never uninstall the App or
 remove its data for a normal update.
 
 The selected live Comdirect account balance semantics were validated before the
-v1.17.1 publication milestone. The Gateway remains GET-only and contains no
+v1.17.1 publication milestone and remain unchanged in v1.17.2. The Gateway
+remains GET-only and contains no
 trading, transfer, payment, or transaction-history operation.

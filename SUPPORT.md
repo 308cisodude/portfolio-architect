@@ -17,7 +17,7 @@ release, subject to automated compatibility checks. Beta releases receive
 best-effort compatibility only.
 
 Gateway App versions 1.16.1 and later remain protocol-compatible with Portfolio
-Architect 1.17.1. Users do not need to align package versions when the release
+Architect 1.17.2. Users do not need to align package versions when the release
 notes say that the Gateway runtime is unchanged.
 
 ## Getting help

@@ -1,65 +1,51 @@
-# Portfolio Architect 1.17.1
+# Portfolio Architect 1.17.2
 
-Version 1.17.1 is the security-hardened replacement for the unpublished v1.17.0
-publication candidate. It retains the HACS/publication milestone while addressing
-three pre-publication review findings. Portfolio calculations, cost-aware
-execution, source schemas, entities, and dashboard behavior remain unchanged from
-the validated v1.16.3 baseline.
+Version 1.17.2 repairs the HACS release-asset layout defect in v1.17.1. The
+v1.17.1 `portfolio_architect.zip` was byte-identical to the manual Home Assistant
+drop-in and therefore contained an additional
+`custom_components/portfolio_architect/` wrapper. HACS had already selected the
+integration directory as its extraction target, so that wrapper produced a
+nested, ignored copy instead of replacing the active integration files.
 
-## Immutable workflow dependencies
+The integration runtime, portfolio calculations, cost-aware execution, entities,
+dashboard behavior, source schemas, Gateway protocols, and v1.17.1 security
+hardening are otherwise unchanged.
 
-- Every `uses:` dependency is pinned to a full 40-character commit SHA with a
-  human-readable version comment.
-- HACS and hassfest run from explicit `ghcr.io/...@sha256:...` image digests.
-  This is intentional: their upstream wrapper actions currently delegate to
-  mutable container tags, so pinning only the wrapper commit would not make the
-  executed validator immutable.
-- The local publication checker rejects action tags, action branches, mutable
-  container tags, and GHCR images without a SHA-256 digest.
-- GitHub Actions permissions remain explicitly bounded per workflow.
-- Dependabot continues to propose updates for repository-syntax GitHub Actions.
-  HACS and hassfest image-digest updates require deliberate maintainer review.
+## Correct channel-specific archive layouts
 
-## Hash-locked Python validation toolchain
+- `portfolio_architect.zip`, the HACS release asset, now contains the integration
+  files directly at the ZIP root: `manifest.json`, `__init__.py`, `const.py`,
+  `engine/`, `translations/`, `brand/`, and the remaining integration files.
+- `portfolio-architect-v1.17.2-ha-dropin.zip`, the manual installation archive,
+  deliberately retains the `custom_components/portfolio_architect/` wrapper so
+  it can be extracted over the Home Assistant `/config` directory.
+- The two archives contain the same integration payload after normalizing that
+  channel-specific prefix, but they are intentionally no longer byte-identical.
 
-- Validate and release jobs use the fixed `ubuntu-24.04` runner label and exact
-  Python `3.14.6`.
-- Every direct and transitive Python validation dependency is version-pinned and
-  bound to the reviewed wheel SHA-256 in
-  `requirements/ci-python-3.14-linux-x86_64.txt`.
-- CI installs only those wheels with `--require-hashes`, `--no-deps`, and
-  `--only-binary=:all:`; it no longer performs a floating pip upgrade or an
-  unconstrained package install.
-- The lock uses pytest 9.0.3 and Pygments 2.20.0, and explicitly lists
-  pytest's Linux dependencies, PyYAML, and Pillow. Publication validation rejects
-  unhashed entries or workflows that stop enforcing the lock.
-- GitHub's hosted runner image and the Python distribution delivered by the
-  pinned setup action remain externally managed trust roots; the release does not
-  claim a hermetic or fully reproducible runner environment.
+## Regression prevention
 
-## Local REST DNS pinning
+- The release builder now stages the HACS and manual drop-in archives
+  independently.
+- Release verification rejects a HACS asset containing a `custom_components/`
+  prefix or missing a root-level integration manifest.
+- Verification rejects a manual drop-in without the expected wrapper.
+- Verification compares every integration file and SHA-256 between both archives
+  after prefix normalization.
+- An executable regression test deliberately substitutes the manual drop-in for
+  the HACS asset and requires verification to fail.
 
-- Each authenticated local REST request performs one operating-system DNS
-  resolution immediately before connecting.
-- Every returned address must be loopback, link-local, or private; a mixed local
-  and public answer fails closed.
-- A request-scoped resolver returns only that already validated address set to
-  `aiohttp`, eliminating the prior validation/connection re-resolution window.
-- The original hostname remains in the request URL, preserving the HTTP Host
-  header, TLS SNI, and certificate-name validation.
-- Redirect following, environment-proxy use, cookie persistence, DNS caching, and
-  connection reuse are disabled for this boundary.
+## Recovery after an attempted v1.17.1 HACS download
 
-## Active ownership contract
+Before downloading v1.17.2, remove only the incorrectly nested directory:
 
-- `tools/configure_publication.py` writes the active `.github/CODEOWNERS` file and
-  removes `.github/CODEOWNERS.example`.
-- Workflows, Dependabot configuration, publication scripts, integration code,
-  standalone Gateway code, and Gateway App code receive explicit ownership rules.
-- Strict publication validation fails when the active file or any protected path
-  is missing.
-- GitHub branch protection or a repository ruleset must separately require code-
-  owner review for those rules to be enforced during pull requests.
+```bash
+rm -rf /config/custom_components/portfolio_architect/custom_components
+```
+
+Do not remove the outer `/config/custom_components/portfolio_architect`
+directory. Download v1.17.2 in HACS, verify that the active root-level version
+markers report `1.17.2`, confirm that only one Portfolio Architect
+`manifest.json` exists, and then restart Home Assistant.
 
 ## Compatibility
 
