@@ -13,6 +13,7 @@ permissions:
 
 jobs:
   validate:
+    name: Validate with hassfest
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
