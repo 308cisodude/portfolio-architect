@@ -22,6 +22,7 @@ jobs:
         env:
           HACS_IMAGE: ghcr.io/hacs/action@sha256:a713e16d3ee19654937e53644ea39903132bd085862fa55ac0dde67ffaf331d6
           INPUT_CATEGORY: integration
+          INPUT_IGNORE: brands
           INPUT_REPOSITORY: ${{ github.repository }}
           INPUT_COMMENT: "false"
           INPUT_GITHUB_TOKEN: ${{ github.token }}
@@ -33,6 +34,7 @@ jobs:
             --cap-drop=ALL \
             --security-opt=no-new-privileges \
             -e INPUT_CATEGORY \
+            -e INPUT_IGNORE \
             -e INPUT_REPOSITORY \
             -e INPUT_COMMENT \
             -e INPUT_GITHUB_TOKEN \
