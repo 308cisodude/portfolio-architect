@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.17.2
+
+- Fixes the HACS release asset so integration files are stored directly at the ZIP root.
+- Retains the wrapped `custom_components/portfolio_architect/` layout for the manual Home Assistant drop-in.
+- Adds release verification for channel-specific archive roots and complete payload equivalence after prefix normalization.
+- Adds a regression test that rejects the v1.17.1 nested-HACS packaging failure.
+- Preserves the v1.17.1 runtime, security hardening, portfolio behavior, entities, dashboards, and Gateway protocols.
+
 ## 1.17.1
 
 - Supersedes the unpublished v1.17.0 publication candidate.

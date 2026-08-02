@@ -1,4 +1,4 @@
-"""v1.17.1 security-hardened publication contracts."""
+"""v1.17.x security-hardened publication contracts."""
 
 from __future__ import annotations
 
@@ -148,13 +148,34 @@ def test_hacs_metadata_and_stable_release_archive(tmp_path: Path) -> None:
         text=True,
     )
     stable = tmp_path / "portfolio_architect.zip"
-    versioned = tmp_path / "portfolio-architect-v1.17.1-ha-dropin.zip"
+    versioned = tmp_path / "portfolio-architect-v1.17.2-ha-dropin.zip"
     assert stable.is_file()
-    assert _sha256(stable) == _sha256(versioned)
+    assert versioned.is_file()
+    assert _sha256(stable) != _sha256(versioned)
+
     with zipfile.ZipFile(stable) as archive:
-        names = set(archive.namelist())
-    assert "custom_components/portfolio_architect/manifest.json" in names
-    assert "custom_components/portfolio_architect/brand/icon.png" in names
+        hacs_payload = {
+            info.filename: hashlib.sha256(archive.read(info)).hexdigest()
+            for info in archive.infolist()
+            if not info.is_dir()
+        }
+    assert "manifest.json" in hacs_payload
+    assert "brand/icon.png" in hacs_payload
+    assert not any(name.startswith("custom_components/") for name in hacs_payload)
+
+    prefix = "custom_components/portfolio_architect/"
+    with zipfile.ZipFile(versioned) as archive:
+        dropin_payload = {
+            info.filename.removeprefix(prefix): hashlib.sha256(archive.read(info)).hexdigest()
+            for info in archive.infolist()
+            if not info.is_dir()
+        }
+        assert all(
+            info.filename.startswith(prefix)
+            for info in archive.infolist()
+            if not info.is_dir()
+        )
+    assert dropin_payload == hacs_payload
 
 
 def test_publication_workflows_use_immutable_dependencies() -> None:

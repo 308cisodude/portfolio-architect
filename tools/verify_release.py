@@ -55,6 +55,87 @@ def verify_zip(path: Path) -> None:
             raise SystemExit(f"Corrupt ZIP member in {path.name}: {bad}")
 
 
+def archive_payload(path: Path, prefix: str = "") -> dict[str, str]:
+    """Return normalized file SHA-256 values from an archive."""
+    payload: dict[str, str] = {}
+    with zipfile.ZipFile(path) as archive:
+        for info in archive.infolist():
+            if info.is_dir():
+                continue
+            name = info.filename
+            if prefix:
+                if not name.startswith(prefix):
+                    raise SystemExit(
+                        f"Unexpected member outside {prefix} in {path.name}: {name}"
+                    )
+                name = name[len(prefix) :]
+            if not name:
+                raise SystemExit(f"Empty normalized member name in {path.name}")
+            payload[name] = hashlib.sha256(archive.read(info)).hexdigest()
+    return payload
+
+
+def verify_integration_archive_layouts(directory: Path, release_version: str) -> None:
+    """Verify the distinct HACS and manual extraction boundaries."""
+    hacs_path = directory / "portfolio_architect.zip"
+    dropin_path = directory / f"portfolio-architect-v{release_version}-ha-dropin.zip"
+    dropin_prefix = "custom_components/portfolio_architect/"
+
+    hacs_payload = archive_payload(hacs_path)
+    dropin_payload = archive_payload(dropin_path, prefix=dropin_prefix)
+
+    required_hacs = {
+        "__init__.py",
+        "manifest.json",
+        "const.py",
+        "engine/__init__.py",
+        "brand/icon.png",
+    }
+    nested_hacs = sorted(
+        name for name in hacs_payload if name.startswith("custom_components/")
+    )
+    if nested_hacs:
+        raise SystemExit(
+            "HACS archive must not contain a custom_components/ prefix; "
+            f"found {nested_hacs[0]}"
+        )
+    missing_hacs = sorted(required_hacs - hacs_payload.keys())
+    if missing_hacs:
+        raise SystemExit(
+            f"HACS archive is missing root-level integration files: {missing_hacs}"
+        )
+
+    with zipfile.ZipFile(dropin_path) as archive:
+        dropin_names = {info.filename for info in archive.infolist() if not info.is_dir()}
+    expected_manifest = f"{dropin_prefix}manifest.json"
+    if expected_manifest not in dropin_names:
+        raise SystemExit(
+            "Manual drop-in is missing the custom_components/portfolio_architect wrapper"
+        )
+    if "manifest.json" in dropin_names:
+        raise SystemExit("Manual drop-in unexpectedly contains a root-level manifest.json")
+
+    if hacs_payload != dropin_payload:
+        only_hacs = sorted(hacs_payload.keys() - dropin_payload.keys())
+        only_dropin = sorted(dropin_payload.keys() - hacs_payload.keys())
+        changed = sorted(
+            name
+            for name in hacs_payload.keys() & dropin_payload.keys()
+            if hacs_payload[name] != dropin_payload[name]
+        )
+        raise SystemExit(
+            "HACS and manual drop-in payloads differ after prefix normalization: "
+            f"only_hacs={only_hacs}, only_dropin={only_dropin}, changed={changed}"
+        )
+
+    with zipfile.ZipFile(hacs_path) as archive:
+        manifest = json.loads(archive.read("manifest.json"))
+    if str(manifest.get("version")) != release_version:
+        raise SystemExit(
+            f"HACS manifest version {manifest.get('version')} != {release_version}"
+        )
+
+
 def version() -> str:
     return str(
         json.loads(
@@ -90,6 +171,7 @@ def main() -> None:
     verify_checksum_file(dist)
     for archive in sorted(dist.glob("*.zip")):
         verify_zip(archive)
+    verify_integration_archive_layouts(dist, release_version)
     sbom = json.loads(
         (dist / f"portfolio-architect-v{release_version}-sbom.spdx.json").read_text()
     )

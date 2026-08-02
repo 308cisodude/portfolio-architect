@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.17.2
+
+- Aligns Gateway App package metadata with the Portfolio Architect v1.17.2 HACS packaging hotfix.
+- Gateway runtime and REST contracts remain unchanged from v1.16.0.
+
 ## 1.17.1
 
 - Aligns the Gateway App package with the Portfolio Architect v1.17.1 publication-readiness release.

@@ -13,6 +13,7 @@ permissions:
 
 jobs:
   validate-hacs:
+    name: Validate with HACS
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:

@@ -1,4 +1,4 @@
-# Portfolio Architect v1.17.1
+# Portfolio Architect v1.17.2
 
 Portfolio Architect is a Home Assistant-native portfolio overview, policy-check,
 and deterministic investment-planning system. It supports provider-specific CSV
@@ -96,4 +96,4 @@ GitHub-hosted runners as the live external validation step.
 - `docs/SECURITY.md`
 - `docs/PUBLISHING.md`
 - `docs/QUALITY.md`
-- `docs/UPGRADE-1.17.1.md`
+- `docs/UPGRADE-1.17.2.md`
