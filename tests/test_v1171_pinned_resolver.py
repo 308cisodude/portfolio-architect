@@ -1,4 +1,4 @@
-"""Executable DNS-pinning regression tests for v1.17.1."""
+"""Dependency-free DNS-pinning regression tests for v1.17.1."""
 
 from __future__ import annotations
 
@@ -9,11 +9,66 @@ import socket
 import sys
 import types
 
-from aiohttp import web
 import pytest
 
 ROOT = Path(__file__).parents[1]
 COMPONENT = ROOT / "custom_components" / "portfolio_architect"
+
+
+def _aiohttp_stub() -> tuple[types.ModuleType, types.ModuleType]:
+    """Return the smallest aiohttp contract used by rest_client.
+
+    Home Assistant supplies aiohttp at runtime. These unit tests deliberately
+    avoid pulling a second web stack into the publication-only CI environment;
+    they verify the resolver and connector configuration at the API boundary.
+    """
+    aiohttp = types.ModuleType("aiohttp")
+    abc = types.ModuleType("aiohttp.abc")
+
+    class AbstractResolver:
+        pass
+
+    class ResolveResult(dict):
+        def __init__(self, **values):
+            super().__init__(values)
+
+    class ClientError(Exception):
+        pass
+
+    class ClientResponse:
+        pass
+
+    class ClientTimeout:
+        def __init__(self, *, total):
+            self.total = total
+
+    class DummyCookieJar:
+        pass
+
+    class TCPConnector:
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+
+    class ClientSession:
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, _exc_type, _exc, _tb):
+            return False
+
+    abc.AbstractResolver = AbstractResolver
+    abc.ResolveResult = ResolveResult
+    aiohttp.ClientError = ClientError
+    aiohttp.ClientResponse = ClientResponse
+    aiohttp.ClientSession = ClientSession
+    aiohttp.ClientTimeout = ClientTimeout
+    aiohttp.DummyCookieJar = DummyCookieJar
+    aiohttp.TCPConnector = TCPConnector
+    aiohttp.abc = abc
+    return aiohttp, abc
 
 
 def _load_rest_client():
@@ -39,7 +94,23 @@ def _load_rest_client():
     core.HomeAssistant = HomeAssistant
     sys.modules["homeassistant"] = homeassistant
     sys.modules["homeassistant.core"] = core
-    return importlib.import_module("custom_components.portfolio_architect.rest_client")
+
+    previous_aiohttp = {
+        name: module
+        for name, module in sys.modules.items()
+        if name == "aiohttp" or name.startswith("aiohttp.")
+    }
+    for name in tuple(previous_aiohttp):
+        sys.modules.pop(name, None)
+    aiohttp, abc = _aiohttp_stub()
+    sys.modules["aiohttp"] = aiohttp
+    sys.modules["aiohttp.abc"] = abc
+    try:
+        return importlib.import_module("custom_components.portfolio_architect.rest_client")
+    finally:
+        sys.modules.pop("aiohttp", None)
+        sys.modules.pop("aiohttp.abc", None)
+        sys.modules.update(previous_aiohttp)
 
 
 class _FakeHass:
@@ -101,46 +172,36 @@ def test_pinned_resolver_never_performs_or_accepts_a_second_resolution() -> None
         asyncio.run(resolver.resolve("gateway.internal", 443, socket.AF_UNSPEC))
 
 
-def test_pinned_session_connects_to_validated_ip_and_preserves_host_header() -> None:
+def test_pinned_session_uses_only_the_validated_resolver_and_hardened_options() -> None:
     rest = _load_rest_client()
+    endpoint = rest.ResolvedLocalEndpoint(
+        hostname="gateway.test",
+        port=8123,
+        addresses=(
+            rest.ResolvedLocalAddress(socket.AF_INET, "127.0.0.1"),
+        ),
+    )
 
-    async def scenario() -> tuple[int, str]:
-        seen: dict[str, str] = {}
+    async def scenario():
+        async with rest._async_pinned_local_session(endpoint) as session:
+            return session
 
-        async def handler(request: web.Request) -> web.Response:
-            seen["host"] = request.host
-            return web.Response(text="ok")
+    session = asyncio.run(scenario())
+    connector = session.kwargs["connector"]
+    resolver = connector.kwargs["resolver"]
 
-        app = web.Application()
-        app.router.add_get("/healthz", handler)
-        runner = web.AppRunner(app)
-        await runner.setup()
-        site = web.TCPSite(runner, "127.0.0.1", 0)
-        await site.start()
-        try:
-            server = site._server
-            assert server is not None
-            port = server.sockets[0].getsockname()[1]
-            endpoint = rest.ResolvedLocalEndpoint(
-                hostname="gateway.test",
-                port=port,
-                addresses=(
-                    rest.ResolvedLocalAddress(socket.AF_INET, "127.0.0.1"),
-                ),
-            )
-            async with rest._async_pinned_local_session(endpoint) as session:
-                async with session.get(
-                    f"http://gateway.test:{port}/healthz",
-                    allow_redirects=False,
-                ) as response:
-                    await response.text()
-                    return response.status, seen["host"]
-        finally:
-            await runner.cleanup()
-
-    status, host = asyncio.run(scenario())
-    assert status == 200
-    assert host.startswith("gateway.test:")
+    assert isinstance(resolver, rest._PinnedLocalResolver)
+    assert resolver._endpoint == endpoint
+    assert connector.kwargs == {
+        "family": socket.AF_UNSPEC,
+        "resolver": resolver,
+        "use_dns_cache": False,
+        "force_close": True,
+        "limit": 1,
+    }
+    assert session.kwargs["connector_owner"] is True
+    assert session.kwargs["trust_env"] is False
+    assert session.kwargs["cookie_jar"].__class__.__name__ == "DummyCookieJar"
 
 
 def test_hostname_comparison_uses_one_idna_canonical_form() -> None:
