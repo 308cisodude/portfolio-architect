@@ -1,0 +1,15 @@
+{
+  "codeowners": [
+    "@308cisodude"
+  ],
+  "config_flow": true,
+  "documentation": "https://github.com/308cisodude/portfolio-architect#readme",
+  "domain": "portfolio_architect",
+  "integration_type": "service",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/308cisodude/portfolio-architect/issues",
+  "name": "Portfolio Architect",
+  "requirements": [],
+  "single_config_entry": true,
+  "version": "1.17.1"
+}

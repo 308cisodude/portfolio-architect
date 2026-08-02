@@ -1,0 +1,478 @@
+"""Provider-neutral portfolio calculation entry point.
+
+The calculation layer has no Home Assistant imports. Source adapters normalize
+holdings into canonical positions; this module combines them with the bounded local
+YAML configuration and returns the stable schema-8 payload.
+"""
+
+from __future__ import annotations
+
+from datetime import date, datetime, timezone
+from decimal import Decimal
+import hashlib
+from pathlib import Path
+import re
+from typing import Any
+
+from . import __version__
+from .coverage import calculate_target_coverage
+from .io import load_yaml, read_positions
+from .importers import CsvSourceConfig
+from .models import Holding, Position
+from .plan import apply_plan_override
+from .policy import evaluate
+from .execution import ExecutionConfig, choose_route
+from .rebalance import allocate_buys, target_funds
+
+D = Decimal
+_POSITION_ID_RE = re.compile(r"[^a-z0-9]+")
+_REQUIRED_CONFIG_FILES = (
+    "portfolio.yaml",
+    "policy.yaml",
+    "instruments.yaml",
+    "broker.yaml",
+)
+_OPTIONAL_CONFIG_FILES = ("exceptions.yaml",)
+
+
+def _minimum_cash_required_for_next_purchase(
+    *,
+    recommendations: list[Any],
+    portfolio: dict[str, Any],
+    broker: dict[str, Any],
+    execution_config: dict[str, Any] | None,
+) -> Decimal:
+    """Return minimum gross cash needed for the next buyable target position."""
+    buyable = [item for item in recommendations if item.buy_enabled]
+    if not buyable:
+        return D("0")
+    ranked = sorted(
+        buyable,
+        key=lambda item: (
+            0 if item.allocation_status == "underweight" else 1,
+            item.deviation_pp,
+            -item.target_pct,
+            item.fund_id,
+        ),
+    )
+    minimum_order = D(
+        str(portfolio.get("rebalancing", {}).get("minimum_trade", 20))
+    )
+    if minimum_order <= 0:
+        return D("0")
+    config = ExecutionConfig.from_mapping(execution_config)
+    route = choose_route(
+        isin=ranked[0].isin,
+        savings_plan_amount_eur=minimum_order,
+        manual_order_amount_eur=minimum_order,
+        broker=broker,
+        config=config,
+    )
+    return route.cash_outlay_eur
+
+
+def configuration_files(config_directory: Path) -> tuple[Path, ...]:
+    """Return the complete bounded set of files that influences a calculation."""
+    return tuple(config_directory / name for name in (*_REQUIRED_CONFIG_FILES, *_OPTIONAL_CONFIG_FILES))
+
+
+def validate_configuration_source(config_directory: Path) -> None:
+    """Validate the bounded local YAML configuration set."""
+    if not config_directory.is_dir():
+        raise ValueError("Portfolio configuration directory does not exist")
+    for name in _REQUIRED_CONFIG_FILES:
+        path = config_directory / name
+        if not path.is_file():
+            raise ValueError(f"Required portfolio configuration file is missing: {name}")
+
+
+def validate_local_source(csv_path: Path, config_directory: Path) -> None:
+    """Validate the configured local CSV and YAML source."""
+    if not csv_path.is_file():
+        raise ValueError(f"Portfolio CSV does not exist: {csv_path.name}")
+    validate_configuration_source(config_directory)
+
+
+def calculate_portfolio_payload(
+    csv_path: Path,
+    config_directory: Path,
+    *,
+    evaluated_at: datetime | None = None,
+    plan_override: dict[str, Any] | None = None,
+    source_config: dict[str, Any] | CsvSourceConfig | None = None,
+) -> dict[str, Any]:
+    """Calculate one schema-8 payload from an explicit CSV adapter."""
+    validate_local_source(csv_path, config_directory)
+    adapter = (
+        source_config
+        if isinstance(source_config, CsvSourceConfig)
+        else CsvSourceConfig.from_mapping(source_config)
+    )
+    positions = read_positions(csv_path, adapter)
+    return calculate_portfolio_payload_from_positions(
+        positions,
+        config_directory,
+        evaluated_at=evaluated_at or _file_timestamp(csv_path),
+        plan_override=plan_override,
+        source_provider=adapter.provider,
+        source_label=csv_path.name,
+    )
+
+
+def calculate_portfolio_payload_from_positions(
+    positions: dict[str, Position],
+    config_directory: Path,
+    *,
+    evaluated_at: datetime,
+    plan_override: dict[str, Any] | None = None,
+    source_provider: str,
+    source_label: str,
+    source_metadata: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Calculate one schema-8 payload from canonical provider-neutral positions."""
+    validate_configuration_source(config_directory)
+    if not positions:
+        raise ValueError("Portfolio source returned no positions")
+    timestamp = _normalise_timestamp(evaluated_at)
+    analysis_date = timestamp.date()
+
+    portfolio_source = load_yaml(config_directory / "portfolio.yaml")
+    portfolio, plan_runtime = apply_plan_override(portfolio_source, plan_override)
+    policy = load_yaml(config_directory / "policy.yaml")
+    instruments = load_yaml(config_directory / "instruments.yaml")
+    broker = load_yaml(config_directory / "broker.yaml")
+    exceptions = _load_optional_yaml(config_directory / "exceptions.yaml")
+    source_metadata = dict(source_metadata or {})
+    execution_config = None
+    if isinstance(plan_override, dict):
+        execution_config = plan_override.get("execution")
+    if execution_config is None:
+        execution_config = portfolio.get("execution")
+    reserve_value = source_metadata.get("investment_reserve_eur")
+    available_reserve = D(str(reserve_value)) if reserve_value is not None else None
+    recommendations = allocate_buys(
+        positions,
+        portfolio,
+        broker=broker,
+        execution=execution_config if isinstance(execution_config, dict) else None,
+        available_reserve_eur=available_reserve,
+    )
+    holdings = _build_holdings(positions, portfolio, recommendations)
+    findings = evaluate(
+        portfolio,
+        policy,
+        instruments,
+        broker,
+        exceptions,
+        evaluated_on=analysis_date,
+    )
+    coverage = calculate_target_coverage(recommendations)
+
+    failed = [item for item in findings if item.status == "fail"]
+    accepted = [item for item in findings if item.status == "accepted_exception"]
+    policy_errors = [item for item in failed if item.severity == "error"]
+    policy_warnings = [item for item in failed if item.severity == "warning"]
+    policy_opportunities = [item for item in failed if item.severity == "info"]
+
+    review_dates: list[date] = []
+    decision_dates: list[date] = []
+    for finding in accepted:
+        for raw_value in (
+            finding.exception_last_reviewed_on,
+            finding.exception_approved_on,
+        ):
+            if not raw_value:
+                continue
+            try:
+                decision_dates.append(date.fromisoformat(raw_value))
+                break
+            except ValueError:
+                continue
+        if finding.exception_review_on:
+            try:
+                review_dates.append(date.fromisoformat(finding.exception_review_on))
+            except ValueError:
+                continue
+
+    overdue_review_dates = sorted(value for value in review_dates if value < analysis_date)
+    upcoming_review_dates = sorted(value for value in review_dates if value >= analysis_date)
+    next_exception_review_on = (
+        upcoming_review_dates[0].isoformat() if upcoming_review_dates else None
+    )
+    oldest_overdue_exception_review_on = (
+        overdue_review_dates[0].isoformat() if overdue_review_dates else None
+    )
+    last_exception_decision_on = (
+        max(decision_dates).isoformat() if decision_dates else None
+    )
+
+    allocation_counts = {
+        state: sum(1 for item in recommendations if item.allocation_status == state)
+        for state in ("underweight", "on_target", "overweight")
+    }
+    contribution_per_execution = D(str(portfolio["portfolio"]["monthly_contribution"]))
+    execution_enabled = bool(isinstance(execution_config, dict) and execution_config.get("enabled"))
+    reserve_mode = str(execution_config.get("reserve_mode", "contribution_only")) if isinstance(execution_config, dict) else "contribution_only"
+    reserve_available = (
+        execution_enabled
+        and available_reserve is not None
+        and reserve_mode == "gateway_balance"
+    )
+    reserve_required_but_unavailable = (
+        execution_enabled and reserve_mode == "gateway_balance" and not reserve_available
+    )
+    investment_reserve = (
+        available_reserve
+        if reserve_available
+        else (D("0") if reserve_required_but_unavailable else contribution_per_execution)
+    )
+    recommended_total = sum(item.proposed_buy_eur for item in recommendations)
+    estimated_transaction_fees = sum(
+        item.estimated_fee_eur
+        for item in recommendations
+        if item.proposed_buy_eur > 0
+    )
+    estimated_cash_outlay = sum(
+        item.estimated_cash_outlay_eur
+        for item in recommendations
+        if item.proposed_buy_eur > 0
+    )
+    remaining_reserve = max(D("0"), investment_reserve - estimated_cash_outlay)
+    unallocated_contribution = remaining_reserve
+    purchase_count = sum(1 for item in recommendations if item.proposed_buy_eur > 0)
+    deferred_count = sum(1 for item in recommendations if item.deferred)
+    actionable_deferred = any(
+        item.deferred and item.recommendation_reason != "investment_reserve_unavailable"
+        for item in recommendations
+    )
+
+    execution_state = "ready"
+    additional_investment_cash_required = D("0")
+    if reserve_required_but_unavailable:
+        execution_state = "reserve_unavailable"
+    elif purchase_count > 0:
+        execution_state = "ready"
+    elif execution_enabled:
+        cost_deferred = [
+            item
+            for item in recommendations
+            if item.deferred
+            and item.recommendation_reason == "transaction_cost_threshold_not_met"
+        ]
+        if cost_deferred:
+            execution_state = "deferred_for_cost_efficiency"
+            additional_investment_cash_required = min(
+                (item.additional_reserve_required_eur for item in cost_deferred),
+                default=D("0"),
+            )
+        else:
+            minimum_cash_required = _minimum_cash_required_for_next_purchase(
+                recommendations=recommendations,
+                portfolio=portfolio,
+                broker=broker,
+                execution_config=execution_config,
+            )
+            if minimum_cash_required > investment_reserve + D("0.01"):
+                execution_state = "waiting_for_reserve"
+                additional_investment_cash_required = (
+                    minimum_cash_required - investment_reserve
+                ).quantize(D("0.01"))
+            else:
+                execution_state = "no_eligible_purchase"
+    elif abs(unallocated_contribution) > D("0.01"):
+        execution_state = "no_eligible_purchase"
+
+    whole_portfolio_value = sum(item.current_value_eur for item in holdings)
+    current_plan_value = sum(item.current_value_eur for item in recommendations)
+    outside_scope_value = whole_portfolio_value - current_plan_value
+    current_plan_whole_pct = current_plan_value / whole_portfolio_value * D("100")
+    outside_scope_whole_pct = outside_scope_value / whole_portfolio_value * D("100")
+    outside_scope_holdings = [
+        item for item in holdings if item.strategy_scope == "outside_scope"
+    ]
+    allocation_corridor = portfolio.get("rebalancing", {}).get("corridor_pp", 1)
+    allocation_on_target = (
+        allocation_counts["underweight"] == 0
+        and allocation_counts["overweight"] == 0
+    )
+
+    policy_status = (
+        "non_compliant"
+        if policy_errors
+        else ("attention" if policy_warnings or policy_opportunities else "compliant")
+    )
+
+    return {
+        "schema_version": 8,
+        "portfolio_id": portfolio["portfolio"]["id"],
+        # Do not expose the absolute Home Assistant configuration path.
+        "source_file": source_label,
+        "summary": {
+            "current_portfolio_value_eur": whole_portfolio_value,
+            "whole_portfolio_value_eur": whole_portfolio_value,
+            "whole_portfolio_position_count": len(holdings),
+            "current_plan_value_eur": current_plan_value,
+            "current_plan_whole_portfolio_pct": current_plan_whole_pct,
+            "current_plan_position_count": len(recommendations),
+            "current_plan_held_position_count": sum(
+                1 for item in recommendations if item.current_value_eur > 0
+            ),
+            "outside_scope_value_eur": outside_scope_value,
+            "outside_scope_whole_portfolio_pct": outside_scope_whole_pct,
+            "outside_scope_position_count": len(outside_scope_holdings),
+            # Kept for entity-ID and dashboard compatibility. From v1.2 onward
+            # this value is the contribution allocated for one execution.
+            "monthly_contribution_eur": contribution_per_execution,
+            "contribution_per_execution_eur": contribution_per_execution,
+            "plan_budget_amount_eur": plan_runtime.budget_amount_eur,
+            "plan_budget_basis": plan_runtime.budget_basis,
+            "plan_frequency": plan_runtime.frequency,
+            "scheduled_executions_per_period": plan_runtime.executions_per_period,
+            "plan_configuration_source": plan_runtime.configuration_source,
+            "plan_name": plan_runtime.name,
+            "recommended_total_eur": recommended_total,
+            "unallocated_contribution_eur": unallocated_contribution,
+            "purchase_count": purchase_count,
+            "monthly_plan_ready": (
+                (purchase_count > 0 or actionable_deferred)
+                if execution_enabled
+                else abs(unallocated_contribution) <= D("0.01")
+            ),
+            "available_investment_reserve_eur": investment_reserve,
+            "remaining_investment_reserve_eur": remaining_reserve,
+            "investment_reserve_source": (
+                "gateway_balance"
+                if reserve_available
+                else ("unavailable" if reserve_required_but_unavailable else "contribution")
+            ),
+            "investment_reserve_as_of": source_metadata.get("investment_reserve_as_of"),
+            "execution_policy": (
+                str(execution_config.get("policy", "monthly_continuity"))
+                if isinstance(execution_config, dict) and execution_enabled
+                else "legacy_distribution"
+            ),
+            "max_cost_ratio_pct": (
+                D(str(execution_config.get("max_cost_ratio_pct", "1.50")))
+                if isinstance(execution_config, dict) and execution_enabled
+                else D("0")
+            ),
+            "max_orders_per_execution": (
+                int(execution_config.get("max_orders_per_execution", 1))
+                if isinstance(execution_config, dict) and execution_enabled
+                else len(recommendations)
+            ),
+            "max_deferral_periods": (
+                int(execution_config.get("max_deferral_periods", 3))
+                if isinstance(execution_config, dict) and execution_enabled
+                else 0
+            ),
+            "deferred_purchase_count": deferred_count,
+            "deferred_contribution_eur": remaining_reserve if deferred_count else D("0"),
+            "estimated_transaction_fees_eur": estimated_transaction_fees,
+            "estimated_cash_outlay_eur": estimated_cash_outlay,
+            "execution_state": execution_state,
+            "additional_investment_cash_required_eur": additional_investment_cash_required,
+            "payload_schema_version": 8,
+            "engine_version": __version__,
+            "source_provider": source_provider,
+            "generated_at": timestamp.isoformat(),
+            "source_count": int(source_metadata.get("source_count", 1)),
+            "source_providers": list(source_metadata.get("source_providers", [source_provider])),
+            "source_summaries": list(source_metadata.get("source_summaries", [])),
+            "source_conflict_count": int(source_metadata.get("source_conflict_count", 0)),
+            "source_conflicts": list(source_metadata.get("source_conflicts", [])),
+            "oldest_source_generated_at": source_metadata.get("oldest_source_generated_at", timestamp.isoformat()),
+            "newest_source_generated_at": source_metadata.get("newest_source_generated_at", timestamp.isoformat()),
+            "allocation_corridor_pp": allocation_corridor,
+            "portfolio_allocation_on_target": allocation_on_target,
+            "underweight_positions": allocation_counts["underweight"],
+            "on_target_positions": allocation_counts["on_target"],
+            "overweight_positions": allocation_counts["overweight"],
+            "policy_status": policy_status,
+            "failed_findings": len(failed),
+            "accepted_exceptions": len(accepted),
+            "policy_checks_evaluated": len(findings),
+            "policy_error_findings": len(policy_errors),
+            "policy_warning_findings": len(policy_warnings),
+            "policy_opportunity_findings": len(policy_opportunities),
+            "policy_accepted_exceptions": len(accepted),
+            "mandatory_controls_compliant": not policy_errors and not policy_warnings,
+            "next_exception_review_on": next_exception_review_on,
+            "exception_review_overdue": bool(overdue_review_dates),
+            "overdue_exception_reviews": len(overdue_review_dates),
+            "oldest_overdue_exception_review_on": oldest_overdue_exception_review_on,
+            "last_exception_decision_on": last_exception_decision_on,
+            **coverage.to_dict(),
+        },
+        "holdings": [item.to_dict() for item in holdings],
+        "recommendations": [item.to_dict() for item in recommendations],
+        "policy_findings": [item.to_dict() for item in findings],
+    }
+
+
+def _file_timestamp(path: Path) -> datetime:
+    return datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc)
+
+
+def _normalise_timestamp(value: datetime) -> datetime:
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc)
+
+
+def _load_optional_yaml(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {"exceptions": []}
+    return load_yaml(path)
+
+
+def _outside_scope_id(identifier: str, used: set[str]) -> str:
+    token = _POSITION_ID_RE.sub("_", identifier.casefold()).strip("_")
+    if not token:
+        raise ValueError("Could not derive a stable position ID from identifier")
+    candidate = f"holding_{token}"
+    if candidate not in used:
+        used.add(candidate)
+        return candidate
+    digest = hashlib.sha256(identifier.encode("utf-8")).hexdigest()[:8]
+    candidate = f"holding_{token}_{digest}"
+    if candidate in used:
+        raise ValueError("Could not derive a unique stable position ID")
+    used.add(candidate)
+    return candidate
+
+
+def _build_holdings(positions, plan_document, recommendations):
+    targets = {fund["wkn"]: fund for fund in target_funds(plan_document)}
+    recommendation_by_wkn = {item.wkn: item for item in recommendations}
+    total = sum(position.value_eur for position in positions.values())
+    if total <= 0:
+        raise ValueError("Whole portfolio value must be positive")
+
+    holdings: list[Holding] = []
+    used_position_ids = {str(item["id"]) for item in targets.values()}
+    for wkn in sorted(positions):
+        position = positions[wkn]
+        target = targets.get(wkn)
+        recommendation = recommendation_by_wkn.get(wkn)
+        in_plan = target is not None
+        holdings.append(
+            Holding(
+                position_id=target["id"] if target else _outside_scope_id(wkn, used_position_ids),
+                wkn=position.wkn,
+                isin=position.isin,
+                name=target["name"] if target else position.name,
+                instrument_type=position.instrument_type,
+                source_type=position.source_type,
+                current_value_eur=position.value_eur,
+                whole_portfolio_pct=position.value_eur / total * D("100"),
+                strategy_scope="current_plan" if in_plan else "outside_scope",
+                plan_fund_id=target["id"] if target else None,
+                plan_current_pct=(
+                    recommendation.current_pct if recommendation else None
+                ),
+                source_ids=position.source_ids,
+                source_values_eur=position.source_values_eur,
+            )
+        )
+    return holdings

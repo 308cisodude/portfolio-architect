@@ -1,0 +1,22 @@
+schema_version: 1
+policy:
+  id: german_long_term_etf_v1
+  name: German long-term ETF policy
+  rules:
+    ucits_required: true
+    accumulating_preferred: true
+    ireland_preferred: true
+    max_ter_pct: 0.70
+    minimum_fund_size_eur: 100000000
+    savings_plan_required: true
+    free_savings_plan_preferred: true
+    allowed_portfolio_currency:
+      - EUR
+  severities:
+    ucits_required: error
+    accumulating_preferred: warning
+    ireland_preferred: warning
+    max_ter_pct: warning
+    minimum_fund_size_eur: warning
+    savings_plan_required: error
+    free_savings_plan_preferred: info

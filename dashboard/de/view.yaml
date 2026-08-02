@@ -1,0 +1,1910 @@
+title: DE
+path: portfolio-architekt
+type: sections
+max_columns: 2
+dense_section_placement: false
+header:
+  layout: responsive
+sections:
+- type: grid
+  cards:
+  - type: heading
+    heading: Anlageplan
+    grid_options:
+      columns: full
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_execution_state
+      state: ready
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_execution_state
+      name: Plan bereit
+      tap_action:
+        action: more-info
+      color: green
+      icon: mdi:clipboard-check-outline
+      hide_state: true
+    grid_options:
+      columns: full
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_execution_state
+      state: waiting_for_reserve
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_execution_state
+      name: Warten auf Anlageguthaben
+      tap_action:
+        action: more-info
+      color: amber
+      icon: mdi:cash-clock
+      hide_state: true
+    grid_options:
+      columns: full
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_execution_state
+      state: deferred_for_cost_efficiency
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_execution_state
+      name: Warten auf kosteneffiziente Ausführung
+      tap_action:
+        action: more-info
+      color: amber
+      icon: mdi:timer-sand
+      hide_state: true
+    grid_options:
+      columns: full
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_execution_state
+      state: no_eligible_purchase
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_execution_state
+      name: Kein geeigneter Kauf
+      tap_action:
+        action: more-info
+      color: blue
+      icon: mdi:clipboard-text-outline
+      hide_state: true
+    grid_options:
+      columns: full
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_execution_state
+      state: reserve_unavailable
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_execution_state
+      name: Anlageguthaben nicht verfügbar
+      tap_action:
+        action: more-info
+      color: red
+      icon: mdi:bank-off-outline
+      hide_state: true
+    grid_options:
+      columns: full
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_execution_state
+      state: unavailable
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_execution_state
+      name: Plan nicht verfügbar
+      tap_action:
+        action: more-info
+      color: red
+      icon: mdi:clipboard-remove-outline
+      hide_state: true
+    grid_options:
+      columns: full
+      rows: auto
+  - type: tile
+    entity: sensor.portfolio_architect_plan_budget
+    name: Planbudget
+    tap_action:
+      action: more-info
+    grid_options:
+      columns: 6
+      rows: auto
+    icon: mdi:wallet-outline
+  - type: tile
+    entity: sensor.portfolio_architect_plan_frequency
+    name: Intervall
+    tap_action:
+      action: more-info
+    grid_options:
+      columns: 6
+      rows: auto
+    icon: mdi:calendar-sync-outline
+  - type: tile
+    entity: sensor.portfolio_architect_monthly_contribution
+    name: Je Ausführung
+    tap_action:
+      action: more-info
+    grid_options:
+      columns: 6
+      rows: auto
+    icon: mdi:cash-fast
+  - type: tile
+    entity: sensor.portfolio_architect_recommended_total
+    name: Zugeordnet
+    tap_action:
+      action: more-info
+    grid_options:
+      columns: 6
+      rows: auto
+    color: green
+    icon: mdi:cash-check
+  - type: tile
+    entity: sensor.portfolio_architect_purchase_count
+    name: Käufe
+    tap_action:
+      action: more-info
+    grid_options:
+      columns: 6
+      rows: auto
+    icon: mdi:cart-outline
+  - type: tile
+    entity: sensor.portfolio_architect_executions_per_period
+    name: Ausführungen
+    tap_action:
+      action: more-info
+    grid_options:
+      columns: 6
+      rows: auto
+    icon: mdi:calendar-multiselect
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_planned_execution
+      state_not: unavailable
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_planned_execution
+      name: Ausführung
+      tap_action:
+        action: more-info
+      icon: mdi:calendar-arrow-right
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: numeric_state
+      entity: sensor.portfolio_architect_unallocated_contribution
+      above: 0.01
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_unallocated_contribution
+      name: Nicht zugeordnet
+      tap_action:
+        action: more-info
+      color: amber
+      icon: mdi:cash-clock
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: numeric_state
+      entity: sensor.portfolio_architect_world_proposed_buy
+      above: 0
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_world_proposed_buy
+      name: MSCI World
+      tap_action:
+        action: more-info
+        entity: sensor.portfolio_architect_world_isin
+      color: green
+      icon: mdi:cart-arrow-down
+      hold_action:
+        action: more-info
+        entity: sensor.portfolio_architect_world_proposed_buy
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: numeric_state
+      entity: sensor.portfolio_architect_emerging_markets_proposed_buy
+      above: 0
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_emerging_markets_proposed_buy
+      name: Emerging Markets
+      tap_action:
+        action: more-info
+        entity: sensor.portfolio_architect_emerging_markets_isin
+      color: green
+      icon: mdi:cart-arrow-down
+      hold_action:
+        action: more-info
+        entity: sensor.portfolio_architect_emerging_markets_proposed_buy
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: numeric_state
+      entity: sensor.portfolio_architect_world_small_cap_proposed_buy
+      above: 0
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_world_small_cap_proposed_buy
+      name: World Small Cap
+      tap_action:
+        action: more-info
+        entity: sensor.portfolio_architect_world_small_cap_isin
+      color: green
+      icon: mdi:cart-arrow-down
+      hold_action:
+        action: more-info
+        entity: sensor.portfolio_architect_world_small_cap_proposed_buy
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: numeric_state
+      entity: sensor.portfolio_architect_healthcare_proposed_buy
+      above: 0
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_healthcare_proposed_buy
+      name: Gesundheit
+      tap_action:
+        action: more-info
+        entity: sensor.portfolio_architect_healthcare_isin
+      color: green
+      icon: mdi:cart-arrow-down
+      hold_action:
+        action: more-info
+        entity: sensor.portfolio_architect_healthcare_proposed_buy
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: numeric_state
+      entity: sensor.portfolio_architect_ai_big_data_proposed_buy
+      above: 0
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_ai_big_data_proposed_buy
+      name: AI & Big Data
+      tap_action:
+        action: more-info
+        entity: sensor.portfolio_architect_ai_big_data_isin
+      color: green
+      icon: mdi:cart-arrow-down
+      hold_action:
+        action: more-info
+        entity: sensor.portfolio_architect_ai_big_data_proposed_buy
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: numeric_state
+      entity: sensor.portfolio_architect_cybersecurity_proposed_buy
+      above: 0
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_cybersecurity_proposed_buy
+      name: Cybersecurity
+      tap_action:
+        action: more-info
+        entity: sensor.portfolio_architect_cybersecurity_isin
+      color: green
+      icon: mdi:cart-arrow-down
+      hold_action:
+        action: more-info
+        entity: sensor.portfolio_architect_cybersecurity_proposed_buy
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: numeric_state
+      entity: sensor.portfolio_architect_robotics_proposed_buy
+      above: 0
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_robotics_proposed_buy
+      name: Robotik
+      tap_action:
+        action: more-info
+        entity: sensor.portfolio_architect_robotics_isin
+      color: green
+      icon: mdi:cart-arrow-down
+      hold_action:
+        action: more-info
+        entity: sensor.portfolio_architect_robotics_proposed_buy
+    grid_options:
+      columns: 6
+      rows: auto
+- type: grid
+  cards:
+  - type: heading
+    heading: Portfolio-Richtlinienkonformität
+    grid_options:
+      columns: full
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: binary_sensor.portfolio_architect_mandatory_controls_compliant
+      state: 'on'
+    card:
+      type: tile
+      entity: binary_sensor.portfolio_architect_mandatory_controls_compliant
+      name: Verbindliche Kontrollen konform
+      tap_action:
+        action: more-info
+      color: green
+      icon: mdi:shield-check-outline
+      hide_state: true
+    grid_options:
+      columns: full
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: binary_sensor.portfolio_architect_mandatory_controls_compliant
+      state: 'off'
+    card:
+      type: tile
+      entity: binary_sensor.portfolio_architect_mandatory_controls_compliant
+      name: Kontrollen benötigen Aufmerksamkeit
+      tap_action:
+        action: more-info
+      color: red
+      icon: mdi:shield-alert-outline
+      hide_state: true
+    grid_options:
+      columns: full
+      rows: auto
+  - type: tile
+    entity: sensor.portfolio_architect_policy_checks_evaluated
+    name: Prüfungen
+    tap_action:
+      action: more-info
+    grid_options:
+      columns: 6
+      rows: auto
+    icon: mdi:clipboard-text-search-outline
+  - type: tile
+    entity: sensor.portfolio_architect_accepted_exception_count
+    name: Ausnahmen
+    tap_action:
+      action: more-info
+    grid_options:
+      columns: 6
+      rows: auto
+    color: amber
+    icon: mdi:shield-half-full
+  - type: tile
+    entity: sensor.portfolio_architect_optimisation_opportunity_count
+    name: Optimierung
+    tap_action:
+      action: more-info
+    grid_options:
+      columns: 6
+      rows: auto
+    color: blue
+    icon: mdi:lightbulb-on-outline
+  - type: conditional
+    conditions:
+    - condition: numeric_state
+      entity: sensor.portfolio_architect_policy_error_findings
+      above: 0
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_policy_error_findings
+      name: Fehler
+      tap_action:
+        action: more-info
+      color: red
+      icon: mdi:alert-octagon-outline
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: numeric_state
+      entity: sensor.portfolio_architect_policy_warning_findings
+      above: 0
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_policy_warning_findings
+      name: Warnungen
+      tap_action:
+        action: more-info
+      color: amber
+      icon: mdi:alert-outline
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: binary_sensor.portfolio_architect_exception_review_overdue
+      state: 'on'
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_oldest_overdue_exception_review
+      name: Nächste Prüfung
+      tap_action:
+        action: more-info
+      color: red
+      icon: mdi:calendar-alert
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: binary_sensor.portfolio_architect_exception_review_overdue
+      state: 'off'
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_next_exception_review
+      name: Nächste Prüfung
+      tap_action:
+        action: more-info
+      color: amber
+      icon: mdi:calendar-clock
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_last_exception_decision
+      state_not: unavailable
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_last_exception_decision
+      name: Letzte Entscheidung
+      tap_action:
+        action: more-info
+      icon: mdi:calendar-check
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_robotics_accumulating_preferred_policy_exception
+      state: accepted_exception
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_robotics_accumulating_preferred_policy_exception
+      name: Robotik-Ausnahme
+      tap_action:
+        action: more-info
+      color: amber
+      icon: mdi:shield-half-full
+      hide_state: true
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_world_free_savings_plan_preferred_policy_finding
+      state: opportunity
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_world_free_savings_plan_preferred_policy_finding
+      name: MSCI World · Gebühr 1,5 % → 0 %
+      tap_action:
+        action: more-info
+      color: blue
+      icon: mdi:cash-remove
+      hide_state: true
+    grid_options:
+      columns: full
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_emerging_markets_free_savings_plan_preferred_policy_finding
+      state: opportunity
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_emerging_markets_free_savings_plan_preferred_policy_finding
+      name: Emerging Markets · Gebühr 1,5 % → 0 %
+      tap_action:
+        action: more-info
+      color: blue
+      icon: mdi:cash-remove
+      hide_state: true
+    grid_options:
+      columns: full
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_healthcare_free_savings_plan_preferred_policy_finding
+      state: opportunity
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_healthcare_free_savings_plan_preferred_policy_finding
+      name: Gesundheit · Gebühr 1,5 % → 0 %
+      tap_action:
+        action: more-info
+      color: blue
+      icon: mdi:cash-remove
+      hide_state: true
+    grid_options:
+      columns: full
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_cybersecurity_free_savings_plan_preferred_policy_finding
+      state: opportunity
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_cybersecurity_free_savings_plan_preferred_policy_finding
+      name: Cybersecurity · Gebühr 1,5 % → 0 %
+      tap_action:
+        action: more-info
+      color: blue
+      icon: mdi:cash-remove
+      hide_state: true
+    grid_options:
+      columns: full
+      rows: auto
+- type: grid
+  cards:
+  - type: heading
+    heading: Zielarchitektur
+    grid_options:
+      columns: full
+      rows: auto
+  - type: tile
+    entity: sensor.portfolio_architect_target_position_coverage
+    name: Abdeckung
+    tap_action:
+      action: more-info
+    grid_options:
+      columns: 6
+      rows: auto
+    icon: mdi:target
+    features:
+    - type: bar-gauge
+      min: 0
+      max: 100
+  - type: tile
+    entity: binary_sensor.portfolio_architect_target_architecture_complete
+    name: Architektur
+    tap_action:
+      action: more-info
+    grid_options:
+      columns: 6
+      rows: auto
+    color: state
+    icon: mdi:vector-arrange-below
+    state_content: coverage_summary
+  - type: glance
+    title: Zielpositionen · ✓ Vorhanden · ○ Fehlt
+    columns: 2
+    show_name: true
+    show_state: false
+    state_color: true
+    entities:
+    - entity: binary_sensor.portfolio_architect_world_target_position_held
+      name: MSCI World
+    - entity: binary_sensor.portfolio_architect_emerging_markets_target_position_held
+      name: Emerging Markets
+    - entity: binary_sensor.portfolio_architect_world_small_cap_target_position_held
+      name: World Small Cap
+    - entity: binary_sensor.portfolio_architect_healthcare_target_position_held
+      name: Gesundheit
+    - entity: binary_sensor.portfolio_architect_ai_big_data_target_position_held
+      name: AI & Big Data
+    - entity: binary_sensor.portfolio_architect_cybersecurity_target_position_held
+      name: Cybersecurity
+    - entity: binary_sensor.portfolio_architect_robotics_target_position_held
+      name: Robotik
+    grid_options:
+      columns: full
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: numeric_state
+      entity: sensor.portfolio_architect_world_position_sources
+      above: 1
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_world_position_sources
+      name: Quellen MSCI World
+      state_content: source_summary
+      tap_action:
+        action: more-info
+      icon: mdi:source-branch
+      color: blue
+    grid_options:
+      columns: full
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: numeric_state
+      entity: sensor.portfolio_architect_emerging_markets_position_sources
+      above: 1
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_emerging_markets_position_sources
+      name: Quellen Emerging Markets
+      state_content: source_summary
+      tap_action:
+        action: more-info
+      icon: mdi:source-branch
+      color: blue
+    grid_options:
+      columns: full
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: numeric_state
+      entity: sensor.portfolio_architect_world_small_cap_position_sources
+      above: 1
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_world_small_cap_position_sources
+      name: Quellen World Small Cap
+      state_content: source_summary
+      tap_action:
+        action: more-info
+      icon: mdi:source-branch
+      color: blue
+    grid_options:
+      columns: full
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: numeric_state
+      entity: sensor.portfolio_architect_healthcare_position_sources
+      above: 1
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_healthcare_position_sources
+      name: Quellen Gesundheit
+      state_content: source_summary
+      tap_action:
+        action: more-info
+      icon: mdi:source-branch
+      color: blue
+    grid_options:
+      columns: full
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: numeric_state
+      entity: sensor.portfolio_architect_ai_big_data_position_sources
+      above: 1
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_ai_big_data_position_sources
+      name: Quellen KI & Big Data
+      state_content: source_summary
+      tap_action:
+        action: more-info
+      icon: mdi:source-branch
+      color: blue
+    grid_options:
+      columns: full
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: numeric_state
+      entity: sensor.portfolio_architect_cybersecurity_position_sources
+      above: 1
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_cybersecurity_position_sources
+      name: Quellen Cybersicherheit
+      state_content: source_summary
+      tap_action:
+        action: more-info
+      icon: mdi:source-branch
+      color: blue
+    grid_options:
+      columns: full
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: numeric_state
+      entity: sensor.portfolio_architect_robotics_position_sources
+      above: 1
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_robotics_position_sources
+      name: Quellen Robotik
+      state_content: source_summary
+      tap_action:
+        action: more-info
+      icon: mdi:source-branch
+      color: blue
+    grid_options:
+      columns: full
+      rows: auto
+- type: grid
+  cards:
+  - type: heading
+    heading: Laufzeitstatus
+    grid_options:
+      columns: full
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: binary_sensor.portfolio_architect_source_healthy
+      state: 'on'
+    card:
+      type: tile
+      entity: binary_sensor.portfolio_architect_source_healthy
+      name: Quelle verfügbar
+      tap_action:
+        action: more-info
+      color: green
+      icon: mdi:database-check-outline
+      hide_state: true
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: binary_sensor.portfolio_architect_source_healthy
+      state: 'off'
+    card:
+      type: tile
+      entity: binary_sensor.portfolio_architect_source_healthy
+      name: Quelle fehlt
+      tap_action:
+        action: more-info
+      color: red
+      icon: mdi:database-alert-outline
+      hide_state: true
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: binary_sensor.portfolio_architect_data_fresh
+      state: 'on'
+    card:
+      type: tile
+      entity: binary_sensor.portfolio_architect_data_fresh
+      name: Daten aktuell
+      tap_action:
+        action: more-info
+      color: green
+      icon: mdi:clock-check-outline
+      hide_state: true
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: binary_sensor.portfolio_architect_data_fresh
+      state: 'off'
+    card:
+      type: tile
+      entity: binary_sensor.portfolio_architect_data_fresh
+      name: Daten veraltet
+      tap_action:
+        action: more-info
+      color: amber
+      icon: mdi:clock-alert-outline
+      hide_state: true
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: binary_sensor.portfolio_architect_review_schedule_configured
+      state: 'off'
+    card:
+      type: tile
+      entity: binary_sensor.portfolio_architect_review_schedule_configured
+      name: Prüfplan nicht konfiguriert
+      tap_action:
+        action: more-info
+      icon: mdi:calendar-question-outline
+      color: amber
+      hide_state: true
+    grid_options:
+      columns: full
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: binary_sensor.portfolio_architect_plan_review_due
+      state: 'on'
+    card:
+      type: tile
+      entity: binary_sensor.portfolio_architect_plan_review_due
+      name: Planprüfung fällig
+      tap_action:
+        action: more-info
+      icon: mdi:calendar-alert
+      color: red
+      hide_state: true
+    grid_options:
+      columns: full
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_next_plan_review
+      state_not: unavailable
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_next_plan_review
+      name: Nächste Planprüfung
+      tap_action:
+        action: more-info
+      icon: mdi:calendar-refresh-outline
+      color: blue
+    grid_options:
+      columns: full
+      rows: auto
+  - type: tile
+    entity: sensor.portfolio_architect_last_successful_refresh
+    name: Letzte Auswertung
+    tap_action:
+      action: more-info
+    grid_options:
+      columns: full
+      rows: auto
+    icon: mdi:clock-check-outline
+    state_content:
+    - state
+    - engine_version
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_source_provider
+      state: local_rest_json
+    - condition: state
+      entity: binary_sensor.portfolio_architect_gateway_reauthentication_required
+      state: 'on'
+    card:
+      type: tile
+      entity: binary_sensor.portfolio_architect_gateway_reauthentication_required
+      name: Gateway-Anmeldung erforderlich
+      tap_action:
+        action: more-info
+      color: red
+      icon: mdi:account-alert-outline
+      hide_state: true
+    grid_options:
+      columns: full
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_source_provider
+      state: local_rest_json
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_gateway_status
+      name: Gateway-Status
+      tap_action:
+        action: more-info
+      icon: mdi:lan-check
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_source_provider
+      state: local_rest_json
+    - condition: state
+      entity: sensor.portfolio_architect_gateway_last_refresh
+      state_not: unavailable
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_gateway_last_refresh
+      name: Live-Aktualisierung
+      tap_action:
+        action: more-info
+      icon: mdi:cloud-refresh-outline
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_source_provider
+      state: local_rest_json
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_gateway_operating_mode
+      name: Betriebsmodus
+      tap_action:
+        action: more-info
+      icon: mdi:database-sync-outline
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_source_provider
+      state: local_rest_json
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_gateway_snapshot_age
+      name: Snapshot-Alter
+      tap_action:
+        action: more-info
+      icon: mdi:timer-sand
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_source_provider
+      state: local_rest_json
+    - condition: state
+      entity: binary_sensor.portfolio_architect_gateway_using_last_known_good_snapshot
+      state: 'on'
+    card:
+      type: tile
+      entity: binary_sensor.portfolio_architect_gateway_using_last_known_good_snapshot
+      name: Letzter gültiger Snapshot aktiv
+      tap_action:
+        action: more-info
+      icon: mdi:database-clock-outline
+      color: amber
+      hide_state: true
+    grid_options:
+      columns: full
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_source_provider
+      state: local_rest_json
+    - condition: state
+      entity: binary_sensor.portfolio_architect_gateway_snapshot_integrity_verified
+      state: 'on'
+    card:
+      type: tile
+      entity: binary_sensor.portfolio_architect_gateway_snapshot_integrity_verified
+      name: Snapshot verifiziert
+      tap_action:
+        action: more-info
+      color: green
+      icon: mdi:shield-check-outline
+      hide_state: true
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_source_provider
+      state: local_rest_json
+    - condition: state
+      entity: binary_sensor.portfolio_architect_gateway_snapshot_integrity_verified
+      state: 'off'
+    card:
+      type: tile
+      entity: binary_sensor.portfolio_architect_gateway_snapshot_integrity_verified
+      name: Snapshot-Fehler
+      tap_action:
+        action: more-info
+      color: red
+      icon: mdi:shield-alert-outline
+      hide_state: true
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_source_provider
+      state: local_rest_json
+    - condition: state
+      entity: binary_sensor.portfolio_architect_gateway_snapshot_integrity_verified
+      state: unavailable
+    card:
+      type: tile
+      entity: binary_sensor.portfolio_architect_gateway_snapshot_integrity_verified
+      name: Integrität unbekannt
+      tap_action:
+        action: more-info
+      color: amber
+      icon: mdi:shield-question-outline
+      hide_state: true
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_source_provider
+      state: local_rest_json
+    - condition: state
+      entity: sensor.portfolio_architect_gateway_snapshot_generated
+      state_not: unavailable
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_gateway_snapshot_generated
+      name: Snapshot erzeugt
+      tap_action:
+        action: more-info
+      icon: mdi:database-clock-outline
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_source_provider
+      state: local_rest_json
+    - condition: state
+      entity: sensor.portfolio_architect_gateway_last_error
+      state_not: none
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_gateway_last_error
+      name: Gateway-Fehler
+      tap_action:
+        action: more-info
+      color: amber
+      icon: mdi:alert-circle-outline
+    grid_options:
+      columns: full
+      rows: auto
+  - type: tile
+    entity: sensor.portfolio_architect_source_provider
+    name: Quellanbieter
+    tap_action:
+      action: more-info
+    grid_options:
+      columns: full
+      rows: auto
+    icon: mdi:file-table-box-multiple-outline
+  - type: tile
+    entity: sensor.portfolio_architect_version
+    name: Version
+    tap_action:
+      action: more-info
+    grid_options:
+      columns: 6
+      rows: auto
+    icon: mdi:tag-outline
+  - type: tile
+    entity: sensor.portfolio_architect_payload_schema_version
+    name: Schema
+    tap_action:
+      action: more-info
+    grid_options:
+      columns: 6
+      rows: auto
+    icon: mdi:file-code-outline
+- type: grid
+  cards:
+  - type: heading
+    heading: Gesamtportfolio
+    grid_options:
+      columns: full
+      rows: auto
+  - type: tile
+    entity: sensor.portfolio_architect_portfolio_value
+    name: Portfoliowert
+    tap_action:
+      action: more-info
+    grid_options:
+      columns: 6
+      rows: auto
+    icon: mdi:briefcase-outline
+  - type: tile
+    entity: sensor.portfolio_architect_whole_position_count
+    name: Importiert
+    tap_action:
+      action: more-info
+    grid_options:
+      columns: 6
+      rows: auto
+    icon: mdi:counter
+  - type: tile
+    entity: sensor.portfolio_architect_current_plan_value
+    name: Planwert
+    tap_action:
+      action: more-info
+    grid_options:
+      columns: 6
+      rows: auto
+    icon: mdi:bullseye-arrow
+  - type: tile
+    entity: sensor.portfolio_architect_current_plan_share
+    name: Plananteil
+    tap_action:
+      action: more-info
+    grid_options:
+      columns: 6
+      rows: auto
+    icon: mdi:chart-donut
+  - type: tile
+    entity: sensor.portfolio_architect_outside_scope_value
+    name: Wert außerhalb
+    tap_action:
+      action: more-info
+    grid_options:
+      columns: 6
+      rows: auto
+    icon: mdi:vector-difference
+  - type: tile
+    entity: sensor.portfolio_architect_outside_scope_share
+    name: Anteil außerhalb
+    tap_action:
+      action: more-info
+    grid_options:
+      columns: 6
+      rows: auto
+    icon: mdi:chart-donut-variant
+  - type: tile
+    entity: sensor.portfolio_architect_outside_scope_position_count
+    name: Positionen außerhalb
+    tap_action:
+      action: more-info
+    grid_options:
+      columns: 6
+      rows: auto
+    icon: mdi:counter
+  - type: distribution
+    title: Verteilung des Gesamtportfolios
+    entities:
+    - entity: sensor.portfolio_architect_world_whole_portfolio_allocation
+      name: MSCI World
+      color: '#1e88e5'
+    - entity: sensor.portfolio_architect_emerging_markets_whole_portfolio_allocation
+      name: Emerging Markets
+      color: '#00897b'
+    - entity: sensor.portfolio_architect_world_small_cap_whole_portfolio_allocation
+      name: World Small Cap
+      color: '#43a047'
+    - entity: sensor.portfolio_architect_healthcare_whole_portfolio_allocation
+      name: Healthcare Innovation
+      color: '#e53935'
+    - entity: sensor.portfolio_architect_ai_big_data_whole_portfolio_allocation
+      name: AI & Big Data
+      color: '#8e24aa'
+    - entity: sensor.portfolio_architect_cybersecurity_whole_portfolio_allocation
+      name: Cybersecurity
+      color: '#fb8c00'
+    - entity: sensor.portfolio_architect_holding_a113fm_whole_portfolio_allocation
+      name: MSCI World Information Technology
+      color: '#757575'
+    - entity: sensor.portfolio_architect_holding_555750_whole_portfolio_allocation
+      name: Deutsche Telekom
+      color: '#3949ab'
+    - entity: sensor.portfolio_architect_holding_766400_whole_portfolio_allocation
+      name: Volkswagen
+      color: '#6d4c41'
+    - entity: sensor.portfolio_architect_holding_a2qp7j_whole_portfolio_allocation
+      name: Coinbase
+      color: '#5e35b1'
+    - entity: sensor.portfolio_architect_holding_a3e5a5_whole_portfolio_allocation
+      name: SynBiotic
+      color: '#7cb342'
+    - entity: sensor.portfolio_architect_holding_a2qkff_whole_portfolio_allocation
+      name: Mosaic ImmunoEngineering
+      color: '#00838f'
+    - entity: sensor.portfolio_architect_holding_a1x3w3_whole_portfolio_allocation
+      name: Loewe
+      color: '#9e9e9e'
+    grid_options:
+      columns: full
+      rows: auto
+- type: grid
+  cards:
+  - type: heading
+    heading: Außerhalb des aktuellen Plans
+    grid_options:
+      columns: full
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_holding_a113fm_holding_value
+      state_not: unavailable
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_holding_a113fm_holding_value
+      name: MSCI World Information Technology
+      tap_action:
+        action: more-info
+      icon: mdi:briefcase-outline
+    grid_options:
+      columns: full
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_holding_555750_holding_value
+      state_not: unavailable
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_holding_555750_holding_value
+      name: Deutsche Telekom
+      tap_action:
+        action: more-info
+      icon: mdi:briefcase-outline
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_holding_766400_holding_value
+      state_not: unavailable
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_holding_766400_holding_value
+      name: Volkswagen
+      tap_action:
+        action: more-info
+      icon: mdi:briefcase-outline
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_holding_a2qp7j_holding_value
+      state_not: unavailable
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_holding_a2qp7j_holding_value
+      name: Coinbase
+      tap_action:
+        action: more-info
+      icon: mdi:briefcase-outline
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_holding_a3e5a5_holding_value
+      state_not: unavailable
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_holding_a3e5a5_holding_value
+      name: SynBiotic
+      tap_action:
+        action: more-info
+      icon: mdi:briefcase-outline
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_holding_a2qkff_holding_value
+      state_not: unavailable
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_holding_a2qkff_holding_value
+      name: Mosaic ImmunoEngineering
+      tap_action:
+        action: more-info
+      icon: mdi:briefcase-outline
+    grid_options:
+      columns: full
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_holding_a1x3w3_holding_value
+      state_not: unavailable
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_holding_a1x3w3_holding_value
+      name: Loewe
+      tap_action:
+        action: more-info
+      icon: mdi:briefcase-outline
+    grid_options:
+      columns: 6
+      rows: auto
+- type: grid
+  cards:
+  - type: heading
+    heading: Aktuelle Planallokation
+    grid_options:
+      columns: full
+      rows: auto
+  - type: distribution
+    title: Aktuelle Planallokation
+    entities:
+    - entity: sensor.portfolio_architect_world_current_allocation
+      name: MSCI World
+      color: '#1e88e5'
+    - entity: sensor.portfolio_architect_emerging_markets_current_allocation
+      name: Emerging Markets
+      color: '#00897b'
+    - entity: sensor.portfolio_architect_world_small_cap_current_allocation
+      name: World Small Cap
+      color: '#43a047'
+    - entity: sensor.portfolio_architect_healthcare_current_allocation
+      name: Healthcare Innovation
+      color: '#e53935'
+    - entity: sensor.portfolio_architect_ai_big_data_current_allocation
+      name: AI & Big Data
+      color: '#8e24aa'
+    - entity: sensor.portfolio_architect_cybersecurity_current_allocation
+      name: Cybersecurity
+      color: '#fb8c00'
+    - entity: sensor.portfolio_architect_robotics_current_allocation
+      name: Robotics
+      color: '#00acc1'
+    grid_options:
+      columns: full
+      rows: auto
+- type: grid
+  cards:
+  - type: heading
+    heading: Zielallokation des Plans
+    grid_options:
+      columns: full
+      rows: auto
+  - type: distribution
+    title: Zielallokation des Plans
+    entities:
+    - entity: sensor.portfolio_architect_world_target_allocation
+      name: MSCI World
+      color: '#1e88e5'
+    - entity: sensor.portfolio_architect_emerging_markets_target_allocation
+      name: Emerging Markets
+      color: '#00897b'
+    - entity: sensor.portfolio_architect_world_small_cap_target_allocation
+      name: World Small Cap
+      color: '#43a047'
+    - entity: sensor.portfolio_architect_healthcare_target_allocation
+      name: Healthcare Innovation
+      color: '#e53935'
+    - entity: sensor.portfolio_architect_ai_big_data_target_allocation
+      name: AI & Big Data
+      color: '#8e24aa'
+    - entity: sensor.portfolio_architect_cybersecurity_target_allocation
+      name: Cybersecurity
+      color: '#fb8c00'
+    - entity: sensor.portfolio_architect_robotics_target_allocation
+      name: Robotics
+      color: '#00acc1'
+    grid_options:
+      columns: full
+      rows: auto
+- type: grid
+  cards:
+  - type: heading
+    heading: Abweichung im aktuellen Plan
+    grid_options:
+      columns: full
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: binary_sensor.portfolio_architect_portfolio_allocation_on_target
+      state: 'on'
+    card:
+      type: tile
+      entity: binary_sensor.portfolio_architect_portfolio_allocation_on_target
+      name: Allokation im Ziel
+      tap_action:
+        action: more-info
+      color: green
+      icon: mdi:scale-balance
+      hide_state: true
+    grid_options:
+      columns: full
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: binary_sensor.portfolio_architect_portfolio_allocation_on_target
+      state: 'off'
+    card:
+      type: tile
+      entity: binary_sensor.portfolio_architect_portfolio_allocation_on_target
+      name: Allokation erfordert Ausgleich
+      tap_action:
+        action: more-info
+      color: amber
+      icon: mdi:scale-unbalanced
+      hide_state: true
+    grid_options:
+      columns: full
+      rows: auto
+  - type: tile
+    entity: sensor.portfolio_architect_allocation_corridor
+    name: Zielkorridor
+    tap_action:
+      action: more-info
+    grid_options:
+      columns: 6
+      rows: auto
+    icon: mdi:arrow-expand-horizontal
+  - type: tile
+    entity: sensor.portfolio_architect_underweight_position_count
+    name: Untergewichtet
+    tap_action:
+      action: more-info
+    grid_options:
+      columns: 6
+      rows: auto
+    color: amber
+    icon: mdi:arrow-down-bold-outline
+  - type: tile
+    entity: sensor.portfolio_architect_on_target_position_count
+    name: Im Ziel
+    tap_action:
+      action: more-info
+    grid_options:
+      columns: 6
+      rows: auto
+    color: green
+    icon: mdi:check-circle-outline
+  - type: tile
+    entity: sensor.portfolio_architect_overweight_position_count
+    name: Übergewichtet
+    tap_action:
+      action: more-info
+    grid_options:
+      columns: 6
+      rows: auto
+    color: red
+    icon: mdi:arrow-up-bold-outline
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_world_allocation_status
+      state: underweight
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_world_allocation_drift
+      name: MSCI World
+      tap_action:
+        action: more-info
+      color: amber
+      icon: mdi:chart-timeline-variant
+      features:
+      - type: bar-gauge
+        min: -100
+        max: 100
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_world_allocation_status
+      state: on_target
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_world_allocation_drift
+      name: MSCI World
+      tap_action:
+        action: more-info
+      color: green
+      icon: mdi:chart-timeline-variant
+      features:
+      - type: bar-gauge
+        min: -100
+        max: 100
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_world_allocation_status
+      state: overweight
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_world_allocation_drift
+      name: MSCI World
+      tap_action:
+        action: more-info
+      color: red
+      icon: mdi:chart-timeline-variant
+      features:
+      - type: bar-gauge
+        min: -100
+        max: 100
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_emerging_markets_allocation_status
+      state: underweight
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_emerging_markets_allocation_drift
+      name: Emerging Markets
+      tap_action:
+        action: more-info
+      color: amber
+      icon: mdi:chart-timeline-variant
+      features:
+      - type: bar-gauge
+        min: -100
+        max: 100
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_emerging_markets_allocation_status
+      state: on_target
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_emerging_markets_allocation_drift
+      name: Emerging Markets
+      tap_action:
+        action: more-info
+      color: green
+      icon: mdi:chart-timeline-variant
+      features:
+      - type: bar-gauge
+        min: -100
+        max: 100
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_emerging_markets_allocation_status
+      state: overweight
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_emerging_markets_allocation_drift
+      name: Emerging Markets
+      tap_action:
+        action: more-info
+      color: red
+      icon: mdi:chart-timeline-variant
+      features:
+      - type: bar-gauge
+        min: -100
+        max: 100
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_world_small_cap_allocation_status
+      state: underweight
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_world_small_cap_allocation_drift
+      name: World Small Cap
+      tap_action:
+        action: more-info
+      color: amber
+      icon: mdi:chart-timeline-variant
+      features:
+      - type: bar-gauge
+        min: -100
+        max: 100
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_world_small_cap_allocation_status
+      state: on_target
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_world_small_cap_allocation_drift
+      name: World Small Cap
+      tap_action:
+        action: more-info
+      color: green
+      icon: mdi:chart-timeline-variant
+      features:
+      - type: bar-gauge
+        min: -100
+        max: 100
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_world_small_cap_allocation_status
+      state: overweight
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_world_small_cap_allocation_drift
+      name: World Small Cap
+      tap_action:
+        action: more-info
+      color: red
+      icon: mdi:chart-timeline-variant
+      features:
+      - type: bar-gauge
+        min: -100
+        max: 100
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_healthcare_allocation_status
+      state: underweight
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_healthcare_allocation_drift
+      name: Gesundheit
+      tap_action:
+        action: more-info
+      color: amber
+      icon: mdi:chart-timeline-variant
+      features:
+      - type: bar-gauge
+        min: -100
+        max: 100
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_healthcare_allocation_status
+      state: on_target
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_healthcare_allocation_drift
+      name: Gesundheit
+      tap_action:
+        action: more-info
+      color: green
+      icon: mdi:chart-timeline-variant
+      features:
+      - type: bar-gauge
+        min: -100
+        max: 100
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_healthcare_allocation_status
+      state: overweight
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_healthcare_allocation_drift
+      name: Gesundheit
+      tap_action:
+        action: more-info
+      color: red
+      icon: mdi:chart-timeline-variant
+      features:
+      - type: bar-gauge
+        min: -100
+        max: 100
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_ai_big_data_allocation_status
+      state: underweight
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_ai_big_data_allocation_drift
+      name: AI & Big Data
+      tap_action:
+        action: more-info
+      color: amber
+      icon: mdi:chart-timeline-variant
+      features:
+      - type: bar-gauge
+        min: -100
+        max: 100
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_ai_big_data_allocation_status
+      state: on_target
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_ai_big_data_allocation_drift
+      name: AI & Big Data
+      tap_action:
+        action: more-info
+      color: green
+      icon: mdi:chart-timeline-variant
+      features:
+      - type: bar-gauge
+        min: -100
+        max: 100
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_ai_big_data_allocation_status
+      state: overweight
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_ai_big_data_allocation_drift
+      name: AI & Big Data
+      tap_action:
+        action: more-info
+      color: red
+      icon: mdi:chart-timeline-variant
+      features:
+      - type: bar-gauge
+        min: -100
+        max: 100
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_cybersecurity_allocation_status
+      state: underweight
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_cybersecurity_allocation_drift
+      name: Cybersecurity
+      tap_action:
+        action: more-info
+      color: amber
+      icon: mdi:chart-timeline-variant
+      features:
+      - type: bar-gauge
+        min: -100
+        max: 100
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_cybersecurity_allocation_status
+      state: on_target
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_cybersecurity_allocation_drift
+      name: Cybersecurity
+      tap_action:
+        action: more-info
+      color: green
+      icon: mdi:chart-timeline-variant
+      features:
+      - type: bar-gauge
+        min: -100
+        max: 100
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_cybersecurity_allocation_status
+      state: overweight
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_cybersecurity_allocation_drift
+      name: Cybersecurity
+      tap_action:
+        action: more-info
+      color: red
+      icon: mdi:chart-timeline-variant
+      features:
+      - type: bar-gauge
+        min: -100
+        max: 100
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_robotics_allocation_status
+      state: underweight
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_robotics_allocation_drift
+      name: Robotik
+      tap_action:
+        action: more-info
+      color: amber
+      icon: mdi:chart-timeline-variant
+      features:
+      - type: bar-gauge
+        min: -100
+        max: 100
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_robotics_allocation_status
+      state: on_target
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_robotics_allocation_drift
+      name: Robotik
+      tap_action:
+        action: more-info
+      color: green
+      icon: mdi:chart-timeline-variant
+      features:
+      - type: bar-gauge
+        min: -100
+        max: 100
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.portfolio_architect_robotics_allocation_status
+      state: overweight
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_robotics_allocation_drift
+      name: Robotik
+      tap_action:
+        action: more-info
+      color: red
+      icon: mdi:chart-timeline-variant
+      features:
+      - type: bar-gauge
+        min: -100
+        max: 100
+    grid_options:
+      columns: 6
+      rows: auto

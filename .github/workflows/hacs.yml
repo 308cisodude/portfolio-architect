@@ -1,0 +1,62 @@
+name: Validate with HACS
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "17 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-hacs:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - name: HACS validation using immutable container image
+        env:
+          HACS_IMAGE: ghcr.io/hacs/action@sha256:a713e16d3ee19654937e53644ea39903132bd085862fa55ac0dde67ffaf331d6
+          INPUT_CATEGORY: integration
+          INPUT_REPOSITORY: ${{ github.repository }}
+          INPUT_COMMENT: "false"
+          INPUT_GITHUB_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          action_home="${RUNNER_TEMP}/${GITHUB_JOB}-home"
+          mkdir -p "${action_home}"
+          docker run --rm \
+            --cap-drop=ALL \
+            --security-opt=no-new-privileges \
+            -e INPUT_CATEGORY \
+            -e INPUT_REPOSITORY \
+            -e INPUT_COMMENT \
+            -e INPUT_GITHUB_TOKEN \
+            -e GITHUB_REPOSITORY \
+            -e GITHUB_REPOSITORY_OWNER \
+            -e GITHUB_SHA \
+            -e GITHUB_REF \
+            -e GITHUB_REF_NAME \
+            -e GITHUB_HEAD_REF \
+            -e GITHUB_BASE_REF \
+            -e GITHUB_EVENT_NAME \
+            -e GITHUB_ACTOR \
+            -e GITHUB_WORKFLOW \
+            -e GITHUB_RUN_ID \
+            -e GITHUB_SERVER_URL \
+            -e GITHUB_API_URL \
+            -e GITHUB_GRAPHQL_URL \
+            -e GITHUB_ACTIONS=true \
+            -e CI=true \
+            -e HOME=/github/home \
+            -e GITHUB_WORKSPACE=/github/workspace \
+            -e GITHUB_EVENT_PATH=/github/workflow/event.json \
+            -v "${action_home}:/github/home" \
+            -v "${GITHUB_WORKSPACE}:/github/workspace" \
+            -v "${GITHUB_EVENT_PATH}:/github/workflow/event.json:ro" \
+            -w /github/workspace \
+            "${HACS_IMAGE}"

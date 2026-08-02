@@ -1,0 +1,58 @@
+x-gateway-common: &gateway-common
+  build:
+    context: .
+    dockerfile: Dockerfile
+  image: portfolio-architect-gateway:1.17.1
+  init: true
+  read_only: true
+  user: "65532:65532"
+  volumes:
+    - ./config/gateway.toml:/config/gateway.toml:ro
+    - ./data:/data:rw
+  secrets:
+    - portfolio_gateway_token
+    - comdirect_client_id
+    - comdirect_client_secret
+  tmpfs:
+    - /tmp:rw,noexec,nosuid,nodev,size=16m,mode=1777
+  cap_drop:
+    - ALL
+  security_opt:
+    - no-new-privileges:true
+  pids_limit: 64
+  mem_limit: 128m
+  cpus: 0.50
+  stop_grace_period: 15s
+
+services:
+  gateway:
+    <<: *gateway-common
+    container_name: portfolio-architect-gateway
+    command: ["--config", "/config/gateway.toml", "serve"]
+    restart: unless-stopped
+    ports:
+      - "${GATEWAY_LISTEN_IP:-127.0.0.1}:8787:8787"
+
+  bootstrap:
+    <<: *gateway-common
+    profiles: ["bootstrap"]
+    command: ["--config", "/config/gateway.toml", "bootstrap"]
+    restart: "no"
+    secrets:
+      - portfolio_gateway_token
+      - comdirect_client_id
+      - comdirect_client_secret
+      - comdirect_username
+      - comdirect_password
+
+secrets:
+  portfolio_gateway_token:
+    file: ./secrets/portfolio_gateway_token
+  comdirect_client_id:
+    file: ./secrets/comdirect_client_id
+  comdirect_client_secret:
+    file: ./secrets/comdirect_client_secret
+  comdirect_username:
+    file: ./secrets/comdirect_username
+  comdirect_password:
+    file: ./secrets/comdirect_password

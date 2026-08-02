@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-07-30T14:30:00Z",
+  "currency": "EUR",
+  "positions": [
+    {
+      "identifier": "A1XB5U",
+      "name": "World equity ETF",
+      "market_value_eur": "5500.00",
+      "isin": "IE00BJ0KDQ92",
+      "instrument_type": "ETF"
+    },
+    {
+      "identifier": "A12GVR",
+      "name": "Emerging markets ETF",
+      "market_value_eur": "1800.00",
+      "isin": "IE00BTJRMP35",
+      "instrument_type": "ETF"
+    }
+  ]
+}

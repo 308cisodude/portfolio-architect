@@ -1,0 +1,229 @@
+type: vertical-stack
+cards:
+- type: conditional
+  conditions:
+  - condition: state
+    entity: binary_sensor.portfolio_architect_mandatory_controls_compliant
+    state: 'on'
+  card:
+    type: tile
+    entity: binary_sensor.portfolio_architect_mandatory_controls_compliant
+    name: Mandatory controls compliant
+    tap_action:
+      action: more-info
+    color: green
+    icon: mdi:shield-check-outline
+    hide_state: true
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: binary_sensor.portfolio_architect_mandatory_controls_compliant
+    state: 'off'
+  card:
+    type: tile
+    entity: binary_sensor.portfolio_architect_mandatory_controls_compliant
+    name: Mandatory controls need attention
+    tap_action:
+      action: more-info
+    color: red
+    icon: mdi:shield-alert-outline
+    hide_state: true
+  grid_options:
+    columns: full
+    rows: auto
+- type: tile
+  entity: sensor.portfolio_architect_policy_checks_evaluated
+  name: Checks
+  tap_action:
+    action: more-info
+  grid_options:
+    columns: 6
+    rows: auto
+  icon: mdi:clipboard-text-search-outline
+- type: tile
+  entity: sensor.portfolio_architect_accepted_exception_count
+  name: Exceptions
+  tap_action:
+    action: more-info
+  grid_options:
+    columns: 6
+    rows: auto
+  color: amber
+  icon: mdi:shield-half-full
+- type: tile
+  entity: sensor.portfolio_architect_optimisation_opportunity_count
+  name: Opportunities
+  tap_action:
+    action: more-info
+  grid_options:
+    columns: 6
+    rows: auto
+  color: blue
+  icon: mdi:lightbulb-on-outline
+- type: conditional
+  conditions:
+  - condition: numeric_state
+    entity: sensor.portfolio_architect_policy_error_findings
+    above: 0
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_policy_error_findings
+    name: Errors
+    tap_action:
+      action: more-info
+    color: red
+    icon: mdi:alert-octagon-outline
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: numeric_state
+    entity: sensor.portfolio_architect_policy_warning_findings
+    above: 0
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_policy_warning_findings
+    name: Warnings
+    tap_action:
+      action: more-info
+    color: amber
+    icon: mdi:alert-outline
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: binary_sensor.portfolio_architect_exception_review_overdue
+    state: 'on'
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_oldest_overdue_exception_review
+    name: Next review
+    tap_action:
+      action: more-info
+    color: red
+    icon: mdi:calendar-alert
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: binary_sensor.portfolio_architect_exception_review_overdue
+    state: 'off'
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_next_exception_review
+    name: Next review
+    tap_action:
+      action: more-info
+    color: amber
+    icon: mdi:calendar-clock
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_last_exception_decision
+    state_not: unavailable
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_last_exception_decision
+    name: Last decision
+    tap_action:
+      action: more-info
+    icon: mdi:calendar-check
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_robotics_accumulating_preferred_policy_exception
+    state: accepted_exception
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_robotics_accumulating_preferred_policy_exception
+    name: Robotics exception
+    tap_action:
+      action: more-info
+    color: amber
+    icon: mdi:shield-half-full
+    hide_state: true
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_world_free_savings_plan_preferred_policy_finding
+    state: opportunity
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_world_free_savings_plan_preferred_policy_finding
+    name: MSCI World · fee 1.5% → 0%
+    tap_action:
+      action: more-info
+    color: blue
+    icon: mdi:cash-remove
+    hide_state: true
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_emerging_markets_free_savings_plan_preferred_policy_finding
+    state: opportunity
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_emerging_markets_free_savings_plan_preferred_policy_finding
+    name: Emerging Markets · fee 1.5% → 0%
+    tap_action:
+      action: more-info
+    color: blue
+    icon: mdi:cash-remove
+    hide_state: true
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_healthcare_free_savings_plan_preferred_policy_finding
+    state: opportunity
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_healthcare_free_savings_plan_preferred_policy_finding
+    name: Healthcare · fee 1.5% → 0%
+    tap_action:
+      action: more-info
+    color: blue
+    icon: mdi:cash-remove
+    hide_state: true
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_cybersecurity_free_savings_plan_preferred_policy_finding
+    state: opportunity
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_cybersecurity_free_savings_plan_preferred_policy_finding
+    name: Cybersecurity · fee 1.5% → 0%
+    tap_action:
+      action: more-info
+    color: blue
+    icon: mdi:cash-remove
+    hide_state: true
+  grid_options:
+    columns: full
+    rows: auto

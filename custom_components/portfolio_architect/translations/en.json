@@ -1,0 +1,2292 @@
+{
+  "title": "Portfolio Architect",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configure Portfolio Architect",
+        "description": "Choose a source adapter and the local Portfolio Architect configuration. CSV remains the default; the REST adapter accepts only a bounded local gateway.",
+        "data": {
+          "source_provider": "Source adapter",
+          "config_directory": "Portfolio configuration directory"
+        },
+        "data_description": {
+          "source_provider": "Choose Comdirect CSV, DKB depot CSV, a mapped generic CSV, or the local REST JSON gateway contract.",
+          "config_directory": "Relative to /config. It must contain portfolio.yaml, policy.yaml, instruments.yaml, and broker.yaml; exceptions.yaml is optional."
+        }
+      },
+      "reconfigure": {
+        "title": "Reconfigure portfolio source",
+        "description": "Change the source adapter or its connection details. The complete source is validated before the integration reloads.",
+        "data": {
+          "source_provider": "Source adapter",
+          "config_directory": "Portfolio configuration directory"
+        },
+        "data_description": {
+          "source_provider": "Choose Comdirect CSV, DKB depot CSV, a mapped generic CSV, or the local REST JSON gateway contract.",
+          "config_directory": "Relative to /config. It must contain portfolio.yaml, policy.yaml, instruments.yaml, and broker.yaml; exceptions.yaml is optional."
+        }
+      },
+      "csv_source": {
+        "title": "Configure CSV source",
+        "description": "Select the portfolio export file. It is confined to the Home Assistant configuration directory and validated before setup completes.",
+        "data": {
+          "csv_path": "Portfolio CSV path"
+        },
+        "data_description": {
+          "csv_path": "Relative to /config, for example portfolio-architect/depot.csv."
+        }
+      },
+      "rest_source": {
+        "title": "Configure local REST gateway",
+        "description": "Connect to a read-only local gateway that publishes the Portfolio Architect JSON contract. Banking credentials stay in the gateway and are never stored in Home Assistant.",
+        "data": {
+          "rest_endpoint_url": "Local gateway URL",
+          "rest_api_token": "Gateway bearer token"
+        },
+        "data_description": {
+          "rest_endpoint_url": "HTTP or HTTPS URL without credentials, query, or fragment. The host must resolve exclusively to loopback, link-local, or private addresses.",
+          "rest_api_token": "Dedicated low-privilege token used only between Home Assistant and the local gateway. Minimum length: 16 characters."
+        }
+      },
+      "reauth_confirm": {
+        "title": "Update local gateway token",
+        "description": "The local REST gateway rejected its bearer token. Enter a replacement token; the gateway response is validated before the integration reloads.",
+        "data": {
+          "rest_api_token": "Gateway bearer token"
+        },
+        "data_description": {
+          "rest_api_token": "Dedicated low-privilege token used only between Home Assistant and the local gateway."
+        }
+      },
+      "generic_format": {
+        "title": "Generic CSV format",
+        "description": "Describe how the CSV is encoded. Automatic detection is recommended first.",
+        "data": {
+          "csv_encoding": "Encoding",
+          "csv_delimiter": "Delimiter",
+          "csv_header_row": "Header row",
+          "csv_decimal_format": "Number format"
+        },
+        "data_description": {
+          "csv_header_row": "One-based row number containing unique column names (1–50).",
+          "csv_decimal_format": "How decimal and thousands separators should be interpreted."
+        }
+      },
+      "generic_mapping": {
+        "title": "Map generic CSV columns",
+        "description": "Header row {header_row} contains {column_count} columns. Map the required fields and optional metadata. Market values must already be in EUR.",
+        "data": {
+          "csv_column_identifier": "Instrument identifier",
+          "csv_column_name": "Instrument name",
+          "csv_column_value": "Market value in EUR",
+          "csv_column_isin": "ISIN column",
+          "csv_column_type": "Instrument type column",
+          "csv_column_currency": "Currency column"
+        },
+        "data_description": {
+          "csv_column_identifier": "Use WKN, ISIN, ticker, or another stable identifier. Values must be unique.",
+          "csv_column_currency": "Optional. When mapped, every imported row must explicitly contain EUR or €."
+        }
+      }
+    },
+    "error": {
+      "invalid_path": "The configured path is unsafe or points outside the Home Assistant configuration directory.",
+      "source_unavailable": "The configured CSV or required configuration files could not be found.",
+      "invalid_source": "The configured files could not be parsed into a valid Portfolio Architect calculation.",
+      "invalid_provider": "Select a supported source adapter.",
+      "invalid_csv_format": "The CSV header could not be read with these format settings.",
+      "invalid_rest_source": "The local REST gateway or its JSON response did not satisfy the bounded Portfolio Architect source contract.",
+      "invalid_auth": "The local REST gateway rejected the bearer token."
+    },
+    "abort": {
+      "already_configured": "Portfolio Architect is already configured. Use Reconfigure on the existing integration entry to change its source.",
+      "reconfigure_successful": "Portfolio source updated successfully.",
+      "reauth_successful": "Local gateway token updated successfully.",
+      "reauth_not_supported": "Reauthentication is only available for the local REST gateway adapter."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "current_allocation": {
+        "name": "{fund_name} current allocation",
+        "state_attributes": {
+          "allocation_status": {
+            "name": "Allocation status",
+            "state": {
+              "underweight": "Underweight",
+              "on_target": "On target",
+              "overweight": "Overweight"
+            }
+          },
+          "current_value_eur": {
+            "name": "Current value"
+          },
+          "target_value_eur": {
+            "name": "Target value"
+          },
+          "deviation_eur": {
+            "name": "Value deviation"
+          },
+          "deviation_pp": {
+            "name": "Allocation deviation"
+          },
+          "proposed_buy_eur": {
+            "name": "Proposed purchase"
+          },
+          "source_count": {
+            "name": "Portfolio sources"
+          },
+          "source_ids": {
+            "name": "Portfolio sources"
+          },
+          "source_values_eur": {
+            "name": "Source contributions"
+          }
+        }
+      },
+      "target_allocation": {
+        "name": "{fund_name} target allocation"
+      },
+      "target_position_coverage": {
+        "name": "Target position coverage",
+        "state_attributes": {
+          "held_count": {
+            "name": "Positions held"
+          },
+          "total_count": {
+            "name": "Target positions"
+          },
+          "missing_count": {
+            "name": "Positions missing"
+          },
+          "coverage_summary": {
+            "name": "Coverage"
+          },
+          "missing_names": {
+            "name": "Missing positions"
+          }
+        }
+      },
+      "monthly_contribution": {
+        "name": "Monthly contribution"
+      },
+      "recommended_total": {
+        "name": "Allocated contribution"
+      },
+      "unallocated_contribution": {
+        "name": "Unallocated contribution"
+      },
+      "purchase_count": {
+        "name": "Purchase count"
+      },
+      "proposed_buy": {
+        "name": "{fund_name} proposed purchase",
+        "state_attributes": {
+          "fund_name": {
+            "name": "Instrument"
+          },
+          "isin": {
+            "name": "ISIN"
+          },
+          "wkn": {
+            "name": "WKN"
+          },
+          "fund_id": {
+            "name": "Internal fund ID"
+          },
+          "allocation_status": {
+            "name": "Allocation status",
+            "state": {
+              "underweight": "Underweight",
+              "on_target": "On target",
+              "overweight": "Overweight"
+            }
+          },
+          "deviation_pp": {
+            "name": "Allocation deviation"
+          },
+          "source_count": {
+            "name": "Portfolio sources"
+          },
+          "source_ids": {
+            "name": "Portfolio sources"
+          },
+          "source_values_eur": {
+            "name": "Source contributions"
+          }
+        }
+      },
+      "last_successful_refresh": {
+        "name": "Last evaluation",
+        "state_attributes": {
+          "integration_version": {
+            "name": "Integration version"
+          },
+          "engine_version": {
+            "name": "Engine version"
+          },
+          "payload_schema_version": {
+            "name": "Payload schema"
+          },
+          "planned_execution_on": {
+            "name": "Planned execution"
+          },
+          "next_plan_review_on": {
+            "name": "Next plan review"
+          },
+          "plan_frequency": {
+            "name": "Plan frequency",
+            "state": {
+              "weekly": "Weekly",
+              "monthly": "Monthly",
+              "quarterly": "Quarterly",
+              "yearly": "Yearly"
+            }
+          },
+          "freshness_mode": {
+            "name": "Freshness mode",
+            "state": {
+              "review_schedule": "Review schedule",
+              "age_threshold": "Age threshold"
+            }
+          }
+        }
+      },
+      "payload_schema_version": {
+        "name": "Payload schema version"
+      },
+      "version": {
+        "name": "Version",
+        "state_attributes": {
+          "integration_version": {
+            "name": "Integration version"
+          },
+          "engine_version": {
+            "name": "Engine version"
+          },
+          "versions_match": {
+            "name": "Versions match"
+          }
+        }
+      },
+      "policy_status": {
+        "name": "Policy status",
+        "state": {
+          "compliant": "Compliant",
+          "attention": "Attention",
+          "non_compliant": "Non-compliant"
+        },
+        "state_attributes": {
+          "checks_evaluated": {
+            "name": "Checks evaluated"
+          },
+          "error_findings": {
+            "name": "Errors"
+          },
+          "warning_findings": {
+            "name": "Warnings"
+          },
+          "accepted_exceptions": {
+            "name": "Accepted exceptions"
+          },
+          "optimisation_opportunities": {
+            "name": "Optimisation opportunities"
+          },
+          "mandatory_controls_compliant": {
+            "name": "Mandatory controls compliant"
+          }
+        }
+      },
+      "policy_checks_evaluated": {
+        "name": "Policy checks evaluated"
+      },
+      "policy_error_findings": {
+        "name": "Policy errors"
+      },
+      "policy_warning_findings": {
+        "name": "Policy warnings"
+      },
+      "accepted_exception_count": {
+        "name": "Accepted exceptions"
+      },
+      "optimisation_opportunity_count": {
+        "name": "Optimisation opportunities"
+      },
+      "next_exception_review": {
+        "name": "Next exception review"
+      },
+      "policy_finding_metadata": {
+        "name": "{fund_name}: instrument metadata",
+        "state": {
+          "error": "Error",
+          "warning": "Warning",
+          "accepted_exception": "Accepted exception",
+          "opportunity": "Optimisation opportunity"
+        },
+        "state_attributes": {
+          "fund_name": {
+            "name": "ETF"
+          },
+          "rule": {
+            "name": "Policy rule"
+          },
+          "severity": {
+            "name": "Severity"
+          },
+          "observed": {
+            "name": "Observed",
+            "state": {
+              "not_verified": "Not verified",
+              "accumulating": "Accumulating",
+              "distributing": "Distributing",
+              "ireland": "Ireland",
+              "luxembourg": "Luxembourg",
+              "ucits": "UCITS",
+              "not_ucits": "Not UCITS",
+              "available": "Available",
+              "unavailable": "Unavailable",
+              "yes": "Yes",
+              "no": "No"
+            }
+          },
+          "expected": {
+            "name": "Expected",
+            "state": {
+              "not_verified": "Not verified",
+              "accumulating": "Accumulating",
+              "distributing": "Distributing",
+              "ireland": "Ireland",
+              "luxembourg": "Luxembourg",
+              "ucits": "UCITS",
+              "not_ucits": "Not UCITS",
+              "available": "Available",
+              "unavailable": "Unavailable",
+              "yes": "Yes",
+              "no": "No"
+            }
+          },
+          "exception_rationale": {
+            "name": "Rationale",
+            "state": {
+              "robotics_distributing_share_class": "The distributing iShares share class is retained because Comdirect offers it at 0% savings-plan fee, it provides the preferred broad automation and robotics exposure, and the accumulating share class is not fee-free."
+            }
+          },
+          "exception_review_on": {
+            "name": "Review date"
+          },
+          "exception_approved_on": {
+            "name": "Approved on"
+          },
+          "exception_last_reviewed_on": {
+            "name": "Last reviewed on"
+          }
+        }
+      },
+      "policy_finding_ucits_required": {
+        "name": "{fund_name}: UCITS status",
+        "state": {
+          "error": "Error",
+          "warning": "Warning",
+          "accepted_exception": "Accepted exception",
+          "opportunity": "Optimisation opportunity"
+        },
+        "state_attributes": {
+          "fund_name": {
+            "name": "ETF"
+          },
+          "rule": {
+            "name": "Policy rule"
+          },
+          "severity": {
+            "name": "Severity"
+          },
+          "observed": {
+            "name": "Observed",
+            "state": {
+              "not_verified": "Not verified",
+              "accumulating": "Accumulating",
+              "distributing": "Distributing",
+              "ireland": "Ireland",
+              "luxembourg": "Luxembourg",
+              "ucits": "UCITS",
+              "not_ucits": "Not UCITS",
+              "available": "Available",
+              "unavailable": "Unavailable",
+              "yes": "Yes",
+              "no": "No"
+            }
+          },
+          "expected": {
+            "name": "Expected",
+            "state": {
+              "not_verified": "Not verified",
+              "accumulating": "Accumulating",
+              "distributing": "Distributing",
+              "ireland": "Ireland",
+              "luxembourg": "Luxembourg",
+              "ucits": "UCITS",
+              "not_ucits": "Not UCITS",
+              "available": "Available",
+              "unavailable": "Unavailable",
+              "yes": "Yes",
+              "no": "No"
+            }
+          },
+          "exception_rationale": {
+            "name": "Rationale",
+            "state": {
+              "robotics_distributing_share_class": "The distributing iShares share class is retained because Comdirect offers it at 0% savings-plan fee, it provides the preferred broad automation and robotics exposure, and the accumulating share class is not fee-free."
+            }
+          },
+          "exception_review_on": {
+            "name": "Review date"
+          },
+          "exception_approved_on": {
+            "name": "Approved on"
+          },
+          "exception_last_reviewed_on": {
+            "name": "Last reviewed on"
+          }
+        }
+      },
+      "policy_finding_accumulating_preferred": {
+        "name": "{fund_name}: distribution policy",
+        "state": {
+          "error": "Error",
+          "warning": "Warning",
+          "accepted_exception": "Accepted exception",
+          "opportunity": "Optimisation opportunity"
+        },
+        "state_attributes": {
+          "fund_name": {
+            "name": "ETF"
+          },
+          "rule": {
+            "name": "Policy rule"
+          },
+          "severity": {
+            "name": "Severity"
+          },
+          "observed": {
+            "name": "Observed",
+            "state": {
+              "not_verified": "Not verified",
+              "accumulating": "Accumulating",
+              "distributing": "Distributing",
+              "ireland": "Ireland",
+              "luxembourg": "Luxembourg",
+              "ucits": "UCITS",
+              "not_ucits": "Not UCITS",
+              "available": "Available",
+              "unavailable": "Unavailable",
+              "yes": "Yes",
+              "no": "No"
+            }
+          },
+          "expected": {
+            "name": "Expected",
+            "state": {
+              "not_verified": "Not verified",
+              "accumulating": "Accumulating",
+              "distributing": "Distributing",
+              "ireland": "Ireland",
+              "luxembourg": "Luxembourg",
+              "ucits": "UCITS",
+              "not_ucits": "Not UCITS",
+              "available": "Available",
+              "unavailable": "Unavailable",
+              "yes": "Yes",
+              "no": "No"
+            }
+          },
+          "exception_rationale": {
+            "name": "Rationale",
+            "state": {
+              "robotics_distributing_share_class": "The distributing iShares share class is retained because Comdirect offers it at 0% savings-plan fee, it provides the preferred broad automation and robotics exposure, and the accumulating share class is not fee-free."
+            }
+          },
+          "exception_review_on": {
+            "name": "Review date"
+          },
+          "exception_approved_on": {
+            "name": "Approved on"
+          },
+          "exception_last_reviewed_on": {
+            "name": "Last reviewed on"
+          }
+        }
+      },
+      "policy_finding_ireland_preferred": {
+        "name": "{fund_name}: fund domicile",
+        "state": {
+          "error": "Error",
+          "warning": "Warning",
+          "accepted_exception": "Accepted exception",
+          "opportunity": "Optimisation opportunity"
+        },
+        "state_attributes": {
+          "fund_name": {
+            "name": "ETF"
+          },
+          "rule": {
+            "name": "Policy rule"
+          },
+          "severity": {
+            "name": "Severity"
+          },
+          "observed": {
+            "name": "Observed",
+            "state": {
+              "not_verified": "Not verified",
+              "accumulating": "Accumulating",
+              "distributing": "Distributing",
+              "ireland": "Ireland",
+              "luxembourg": "Luxembourg",
+              "ucits": "UCITS",
+              "not_ucits": "Not UCITS",
+              "available": "Available",
+              "unavailable": "Unavailable",
+              "yes": "Yes",
+              "no": "No"
+            }
+          },
+          "expected": {
+            "name": "Expected",
+            "state": {
+              "not_verified": "Not verified",
+              "accumulating": "Accumulating",
+              "distributing": "Distributing",
+              "ireland": "Ireland",
+              "luxembourg": "Luxembourg",
+              "ucits": "UCITS",
+              "not_ucits": "Not UCITS",
+              "available": "Available",
+              "unavailable": "Unavailable",
+              "yes": "Yes",
+              "no": "No"
+            }
+          },
+          "exception_rationale": {
+            "name": "Rationale",
+            "state": {
+              "robotics_distributing_share_class": "The distributing iShares share class is retained because Comdirect offers it at 0% savings-plan fee, it provides the preferred broad automation and robotics exposure, and the accumulating share class is not fee-free."
+            }
+          },
+          "exception_review_on": {
+            "name": "Review date"
+          },
+          "exception_approved_on": {
+            "name": "Approved on"
+          },
+          "exception_last_reviewed_on": {
+            "name": "Last reviewed on"
+          }
+        }
+      },
+      "policy_finding_max_ter_pct": {
+        "name": "{fund_name}: total expense ratio",
+        "state": {
+          "error": "Error",
+          "warning": "Warning",
+          "accepted_exception": "Accepted exception",
+          "opportunity": "Optimisation opportunity"
+        },
+        "state_attributes": {
+          "fund_name": {
+            "name": "ETF"
+          },
+          "rule": {
+            "name": "Policy rule"
+          },
+          "severity": {
+            "name": "Severity"
+          },
+          "observed": {
+            "name": "Observed",
+            "state": {
+              "not_verified": "Not verified",
+              "accumulating": "Accumulating",
+              "distributing": "Distributing",
+              "ireland": "Ireland",
+              "luxembourg": "Luxembourg",
+              "ucits": "UCITS",
+              "not_ucits": "Not UCITS",
+              "available": "Available",
+              "unavailable": "Unavailable",
+              "yes": "Yes",
+              "no": "No"
+            }
+          },
+          "expected": {
+            "name": "Expected",
+            "state": {
+              "not_verified": "Not verified",
+              "accumulating": "Accumulating",
+              "distributing": "Distributing",
+              "ireland": "Ireland",
+              "luxembourg": "Luxembourg",
+              "ucits": "UCITS",
+              "not_ucits": "Not UCITS",
+              "available": "Available",
+              "unavailable": "Unavailable",
+              "yes": "Yes",
+              "no": "No"
+            }
+          },
+          "exception_rationale": {
+            "name": "Rationale",
+            "state": {
+              "robotics_distributing_share_class": "The distributing iShares share class is retained because Comdirect offers it at 0% savings-plan fee, it provides the preferred broad automation and robotics exposure, and the accumulating share class is not fee-free."
+            }
+          },
+          "exception_review_on": {
+            "name": "Review date"
+          },
+          "exception_approved_on": {
+            "name": "Approved on"
+          },
+          "exception_last_reviewed_on": {
+            "name": "Last reviewed on"
+          }
+        }
+      },
+      "policy_finding_minimum_fund_size_eur": {
+        "name": "{fund_name}: ETF fund size",
+        "state": {
+          "error": "Error",
+          "warning": "Warning",
+          "accepted_exception": "Accepted exception",
+          "opportunity": "Optimisation opportunity"
+        },
+        "state_attributes": {
+          "fund_name": {
+            "name": "ETF"
+          },
+          "rule": {
+            "name": "Policy rule"
+          },
+          "severity": {
+            "name": "Severity"
+          },
+          "observed": {
+            "name": "Observed",
+            "state": {
+              "not_verified": "Not verified",
+              "accumulating": "Accumulating",
+              "distributing": "Distributing",
+              "ireland": "Ireland",
+              "luxembourg": "Luxembourg",
+              "ucits": "UCITS",
+              "not_ucits": "Not UCITS",
+              "available": "Available",
+              "unavailable": "Unavailable",
+              "yes": "Yes",
+              "no": "No"
+            }
+          },
+          "expected": {
+            "name": "Expected",
+            "state": {
+              "not_verified": "Not verified",
+              "accumulating": "Accumulating",
+              "distributing": "Distributing",
+              "ireland": "Ireland",
+              "luxembourg": "Luxembourg",
+              "ucits": "UCITS",
+              "not_ucits": "Not UCITS",
+              "available": "Available",
+              "unavailable": "Unavailable",
+              "yes": "Yes",
+              "no": "No"
+            }
+          },
+          "exception_rationale": {
+            "name": "Rationale",
+            "state": {
+              "robotics_distributing_share_class": "The distributing iShares share class is retained because Comdirect offers it at 0% savings-plan fee, it provides the preferred broad automation and robotics exposure, and the accumulating share class is not fee-free."
+            }
+          },
+          "exception_review_on": {
+            "name": "Review date"
+          },
+          "exception_approved_on": {
+            "name": "Approved on"
+          },
+          "exception_last_reviewed_on": {
+            "name": "Last reviewed on"
+          }
+        }
+      },
+      "policy_finding_savings_plan_required": {
+        "name": "{fund_name}: savings plan availability",
+        "state": {
+          "error": "Error",
+          "warning": "Warning",
+          "accepted_exception": "Accepted exception",
+          "opportunity": "Optimisation opportunity"
+        },
+        "state_attributes": {
+          "fund_name": {
+            "name": "ETF"
+          },
+          "rule": {
+            "name": "Policy rule"
+          },
+          "severity": {
+            "name": "Severity"
+          },
+          "observed": {
+            "name": "Observed",
+            "state": {
+              "not_verified": "Not verified",
+              "accumulating": "Accumulating",
+              "distributing": "Distributing",
+              "ireland": "Ireland",
+              "luxembourg": "Luxembourg",
+              "ucits": "UCITS",
+              "not_ucits": "Not UCITS",
+              "available": "Available",
+              "unavailable": "Unavailable",
+              "yes": "Yes",
+              "no": "No"
+            }
+          },
+          "expected": {
+            "name": "Expected",
+            "state": {
+              "not_verified": "Not verified",
+              "accumulating": "Accumulating",
+              "distributing": "Distributing",
+              "ireland": "Ireland",
+              "luxembourg": "Luxembourg",
+              "ucits": "UCITS",
+              "not_ucits": "Not UCITS",
+              "available": "Available",
+              "unavailable": "Unavailable",
+              "yes": "Yes",
+              "no": "No"
+            }
+          },
+          "exception_rationale": {
+            "name": "Rationale",
+            "state": {
+              "robotics_distributing_share_class": "The distributing iShares share class is retained because Comdirect offers it at 0% savings-plan fee, it provides the preferred broad automation and robotics exposure, and the accumulating share class is not fee-free."
+            }
+          },
+          "exception_review_on": {
+            "name": "Review date"
+          },
+          "exception_approved_on": {
+            "name": "Approved on"
+          },
+          "exception_last_reviewed_on": {
+            "name": "Last reviewed on"
+          }
+        }
+      },
+      "policy_finding_free_savings_plan_preferred": {
+        "name": "{fund_name}: savings-plan fee",
+        "state": {
+          "error": "Error",
+          "warning": "Warning",
+          "accepted_exception": "Accepted exception",
+          "opportunity": "Optimisation opportunity"
+        },
+        "state_attributes": {
+          "fund_name": {
+            "name": "ETF"
+          },
+          "rule": {
+            "name": "Policy rule"
+          },
+          "severity": {
+            "name": "Severity"
+          },
+          "observed": {
+            "name": "Observed",
+            "state": {
+              "not_verified": "Not verified",
+              "accumulating": "Accumulating",
+              "distributing": "Distributing",
+              "ireland": "Ireland",
+              "luxembourg": "Luxembourg",
+              "ucits": "UCITS",
+              "not_ucits": "Not UCITS",
+              "available": "Available",
+              "unavailable": "Unavailable",
+              "yes": "Yes",
+              "no": "No"
+            }
+          },
+          "expected": {
+            "name": "Expected",
+            "state": {
+              "not_verified": "Not verified",
+              "accumulating": "Accumulating",
+              "distributing": "Distributing",
+              "ireland": "Ireland",
+              "luxembourg": "Luxembourg",
+              "ucits": "UCITS",
+              "not_ucits": "Not UCITS",
+              "available": "Available",
+              "unavailable": "Unavailable",
+              "yes": "Yes",
+              "no": "No"
+            }
+          },
+          "exception_rationale": {
+            "name": "Rationale",
+            "state": {
+              "robotics_distributing_share_class": "The distributing iShares share class is retained because Comdirect offers it at 0% savings-plan fee, it provides the preferred broad automation and robotics exposure, and the accumulating share class is not fee-free."
+            }
+          },
+          "exception_review_on": {
+            "name": "Review date"
+          },
+          "exception_approved_on": {
+            "name": "Approved on"
+          },
+          "exception_last_reviewed_on": {
+            "name": "Last reviewed on"
+          }
+        }
+      },
+      "portfolio_value": {
+        "name": "Portfolio value"
+      },
+      "allocation_corridor": {
+        "name": "Allocation corridor"
+      },
+      "underweight_position_count": {
+        "name": "Underweight positions"
+      },
+      "on_target_position_count": {
+        "name": "Positions on target"
+      },
+      "overweight_position_count": {
+        "name": "Overweight positions"
+      },
+      "allocation_overview": {
+        "name": "Allocation overview",
+        "state": {
+          "on_target": "On target",
+          "drift_detected": "Drift detected"
+        },
+        "state_attributes": {
+          "schema_version": {
+            "name": "Contract schema"
+          },
+          "portfolio_value_eur": {
+            "name": "Portfolio value"
+          },
+          "current_plan_value_eur": {
+            "name": "Current plan value"
+          },
+          "allocation_corridor_pp": {
+            "name": "Allocation corridor"
+          },
+          "position_count": {
+            "name": "Plan positions"
+          },
+          "underweight_count": {
+            "name": "Underweight positions"
+          },
+          "on_target_count": {
+            "name": "Positions on target"
+          },
+          "overweight_count": {
+            "name": "Overweight positions"
+          },
+          "underweight": {
+            "name": "Underweight allocation rows"
+          },
+          "on_target": {
+            "name": "On-target allocation rows"
+          },
+          "overweight": {
+            "name": "Overweight allocation rows"
+          }
+        }
+      },
+      "allocation_status": {
+        "name": "{fund_name} allocation status",
+        "state": {
+          "underweight": "Underweight",
+          "on_target": "On target",
+          "overweight": "Overweight"
+        },
+        "state_attributes": {
+          "current_pct": {
+            "name": "Current allocation"
+          },
+          "target_pct": {
+            "name": "Target allocation"
+          },
+          "deviation_pp": {
+            "name": "Allocation deviation"
+          },
+          "deviation_eur": {
+            "name": "Value deviation"
+          },
+          "proposed_buy_eur": {
+            "name": "Proposed purchase"
+          }
+        }
+      },
+      "allocation_drift": {
+        "name": "{fund_name} allocation drift",
+        "state_attributes": {
+          "allocation_status": {
+            "name": "Allocation status",
+            "state": {
+              "underweight": "Underweight",
+              "on_target": "On target",
+              "overweight": "Overweight"
+            }
+          },
+          "current_pct": {
+            "name": "Current allocation"
+          },
+          "target_pct": {
+            "name": "Target allocation"
+          },
+          "deviation_eur": {
+            "name": "Value deviation"
+          },
+          "proposed_buy_eur": {
+            "name": "Proposed purchase"
+          }
+        }
+      },
+      "allocation_value_gap": {
+        "name": "{fund_name} allocation value gap"
+      },
+      "overdue_exception_review_count": {
+        "name": "Overdue exception reviews"
+      },
+      "oldest_overdue_exception_review": {
+        "name": "Oldest overdue exception review"
+      },
+      "last_exception_decision": {
+        "name": "Last exception decision"
+      },
+      "current_plan_value": {
+        "name": "Current plan value"
+      },
+      "outside_scope_value": {
+        "name": "Outside current plan value"
+      },
+      "current_plan_share": {
+        "name": "Current plan share"
+      },
+      "outside_scope_share": {
+        "name": "Outside current plan share"
+      },
+      "whole_position_count": {
+        "name": "Whole-portfolio positions"
+      },
+      "outside_scope_position_count": {
+        "name": "Outside current plan positions"
+      },
+      "whole_portfolio_allocation": {
+        "name": "{holding_name} whole-portfolio allocation"
+      },
+      "holding_value": {
+        "name": "{holding_name} value",
+        "state_attributes": {
+          "source_count": {
+            "name": "Portfolio sources"
+          },
+          "source_ids": {
+            "name": "Portfolio sources"
+          },
+          "source_values_eur": {
+            "name": "Source contributions"
+          }
+        }
+      },
+      "strategy_scope": {
+        "name": "{holding_name} strategy scope",
+        "state": {
+          "current_plan": "Current plan",
+          "outside_scope": "Outside current plan"
+        }
+      },
+      "planned_execution": {
+        "name": "Planned execution",
+        "state_attributes": {
+          "evaluated_on": {
+            "name": "Evaluated on"
+          },
+          "planned_execution_on": {
+            "name": "Planned execution"
+          },
+          "next_review_on": {
+            "name": "Next plan review"
+          },
+          "review_for_execution_on": {
+            "name": "Review for execution"
+          },
+          "frequency": {
+            "name": "Frequency",
+            "state": {
+              "weekly": "Weekly",
+              "monthly": "Monthly",
+              "quarterly": "Quarterly",
+              "yearly": "Yearly"
+            }
+          },
+          "execution_days": {
+            "name": "Execution days"
+          },
+          "executions_per_period": {
+            "name": "Executions per period"
+          },
+          "review_lead_days": {
+            "name": "Review lead time"
+          },
+          "review_schedule_configured": {
+            "name": "Review schedule configured"
+          }
+        }
+      },
+      "next_plan_review": {
+        "name": "Next plan review",
+        "state_attributes": {
+          "evaluated_on": {
+            "name": "Evaluated on"
+          },
+          "planned_execution_on": {
+            "name": "Planned execution"
+          },
+          "next_review_on": {
+            "name": "Next plan review"
+          },
+          "review_for_execution_on": {
+            "name": "Review for execution"
+          },
+          "frequency": {
+            "name": "Frequency",
+            "state": {
+              "weekly": "Weekly",
+              "monthly": "Monthly",
+              "quarterly": "Quarterly",
+              "yearly": "Yearly"
+            }
+          },
+          "execution_days": {
+            "name": "Execution days"
+          },
+          "executions_per_period": {
+            "name": "Executions per period"
+          },
+          "review_lead_days": {
+            "name": "Review lead time"
+          },
+          "review_schedule_configured": {
+            "name": "Review schedule configured"
+          }
+        }
+      },
+      "plan_budget": {
+        "name": "Plan budget"
+      },
+      "contribution_per_execution": {
+        "name": "Contribution per execution"
+      },
+      "plan_frequency": {
+        "name": "Plan frequency",
+        "state": {
+          "weekly": "Weekly",
+          "monthly": "Monthly",
+          "quarterly": "Quarterly",
+          "yearly": "Yearly"
+        }
+      },
+      "plan_budget_basis": {
+        "name": "Budget basis",
+        "state": {
+          "per_period": "Per period",
+          "per_execution": "Per execution"
+        }
+      },
+      "executions_per_period": {
+        "name": "Executions per period",
+        "state_attributes": {
+          "plan_name": {
+            "name": "Plan name"
+          },
+          "configuration_source": {
+            "name": "Configuration source",
+            "state": {
+              "yaml": "portfolio.yaml",
+              "ui": "Home Assistant UI"
+            }
+          }
+        }
+      },
+      "source_provider": {
+        "name": "Source provider",
+        "state": {
+          "comdirect_csv": "Comdirect CSV",
+          "generic_csv": "Generic CSV",
+          "local_rest_json": "Local REST JSON",
+          "dkb_csv": "DKB CSV",
+          "multi_source": "Multi-source portfolio"
+        }
+      },
+      "instrument_isin": {
+        "name": "{fund_name} ISIN",
+        "state_attributes": {
+          "fund_name": {
+            "name": "Instrument"
+          },
+          "wkn": {
+            "name": "WKN"
+          },
+          "fund_id": {
+            "name": "Internal fund ID"
+          },
+          "proposed_buy_eur": {
+            "name": "Proposed purchase"
+          },
+          "source_count": {
+            "name": "Portfolio sources"
+          },
+          "source_ids": {
+            "name": "Portfolio sources"
+          },
+          "source_values_eur": {
+            "name": "Source contributions"
+          }
+        }
+      },
+      "gateway_status": {
+        "name": "Gateway status",
+        "state": {
+          "ok": "OK",
+          "degraded": "Degraded",
+          "unavailable": "Unavailable"
+        }
+      },
+      "gateway_last_refresh": {
+        "name": "Gateway last live refresh"
+      },
+      "gateway_last_error": {
+        "name": "Gateway last error"
+      },
+      "gateway_snapshot_generated": {
+        "name": "Gateway snapshot generated",
+        "state_attributes": {
+          "snapshot_sha256": {
+            "name": "Snapshot SHA-256"
+          },
+          "position_count": {
+            "name": "Position count"
+          },
+          "integrity_verified": {
+            "name": "Integrity verified"
+          }
+        }
+      },
+      "gateway_operating_mode": {
+        "name": "Gateway operating mode",
+        "state": {
+          "live": "Live",
+          "last_known_good": "Last known good",
+          "reauthentication_required": "Reauthentication required",
+          "unavailable": "Unavailable"
+        },
+        "state_attributes": {
+          "last_refresh_attempt": {
+            "name": "Last refresh attempt"
+          },
+          "last_refresh_success": {
+            "name": "Last refresh success"
+          },
+          "consecutive_refresh_failures": {
+            "name": "Consecutive refresh failures"
+          },
+          "snapshot_age_seconds": {
+            "name": "Snapshot age"
+          },
+          "snapshot_expires_in_seconds": {
+            "name": "Snapshot expires in"
+          }
+        }
+      },
+      "gateway_snapshot_age": {
+        "name": "Gateway snapshot age"
+      },
+      "gateway_snapshot_expires_in": {
+        "name": "Gateway snapshot expires in"
+      },
+      "gateway_consecutive_refresh_failures": {
+        "name": "Gateway consecutive refresh failures"
+      },
+      "gateway_next_refresh": {
+        "name": "Scheduled refresh time"
+      },
+      "gateway_last_refresh_duration": {
+        "name": "Gateway last refresh duration",
+        "state_attributes": {
+          "last_refresh_attempt": {
+            "name": "Last refresh attempt"
+          },
+          "last_refresh_trigger": {
+            "name": "Last refresh trigger"
+          }
+        }
+      },
+      "gateway_last_refresh_trigger": {
+        "name": "Gateway last refresh trigger",
+        "state": {
+          "startup": "Startup",
+          "scheduled": "Scheduled",
+          "manual": "Manual",
+          "bootstrap": "Bootstrap"
+        }
+      },
+      "gateway_attention_reason": {
+        "name": "Gateway attention reason",
+        "state": {
+          "none": "None",
+          "health_unavailable": "Health unavailable",
+          "reauthentication_required": "Reauthentication required",
+          "integrity_failure": "Integrity failure",
+          "snapshot_unavailable": "Snapshot unavailable",
+          "refresh_overdue": "Refresh overdue",
+          "last_known_good": "Last known good",
+          "authentication_error": "Authentication error",
+          "rate_limited": "Rate limited",
+          "remote_service_error": "Remote service error",
+          "remote_api_error": "Remote API error",
+          "transport_error": "Connectivity error",
+          "invalid_response": "Invalid upstream response",
+          "configuration_error": "Configuration error",
+          "gateway_error": "Gateway error",
+          "internal_error": "Internal error"
+        },
+        "state_attributes": {
+          "recommended_action": {
+            "name": "Recommended action"
+          },
+          "consecutive_refresh_failures": {
+            "name": "Consecutive refresh failures"
+          },
+          "last_refresh_failure_at": {
+            "name": "Last refresh failure"
+          },
+          "retry_after_seconds": {
+            "name": "Retry after"
+          },
+          "refresh_overdue": {
+            "name": "Refresh overdue"
+          }
+        }
+      },
+      "gateway_recommended_action": {
+        "name": "Gateway recommended action",
+        "state": {
+          "none": "None",
+          "reauthenticate": "Reauthenticate with PhotoTAN",
+          "wait": "Wait for automatic retry",
+          "check_connectivity": "Check connectivity",
+          "inspect_logs": "Inspect Gateway logs",
+          "fix_configuration": "Fix Gateway configuration"
+        }
+      },
+      "gateway_last_refresh_failure": {
+        "name": "Gateway last refresh failure",
+        "state_attributes": {
+          "failure_class": {
+            "name": "Failure class"
+          },
+          "recommended_action": {
+            "name": "Recommended action"
+          },
+          "retry_after_seconds": {
+            "name": "Retry after"
+          }
+        }
+      },
+      "gateway_refresh_schedule": {
+        "name": "Refresh schedule",
+        "state": {
+          "scheduled": "Scheduled",
+          "due_now": "Due now",
+          "overdue": "Overdue",
+          "refreshing": "Refreshing"
+        },
+        "state_attributes": {
+          "scheduled_refresh_time": {
+            "name": "Scheduled refresh time"
+          },
+          "seconds_until_due": {
+            "name": "Seconds until due"
+          },
+          "overdue_seconds": {
+            "name": "Overdue by"
+          },
+          "grace_seconds": {
+            "name": "Scheduling grace period"
+          },
+          "poll_interval_seconds": {
+            "name": "Polling interval"
+          },
+          "refresh_in_progress": {
+            "name": "Refresh in progress"
+          }
+        }
+      },
+      "source_count": {
+        "name": "Portfolio sources",
+        "state_attributes": {
+          "sources": {
+            "name": "Portfolio sources"
+          },
+          "conflict_count": {
+            "name": "Source identity conflicts"
+          }
+        }
+      },
+      "source_conflict_count": {
+        "name": "Source identity conflicts",
+        "state_attributes": {
+          "conflicts": {
+            "name": "Source identity conflicts"
+          }
+        }
+      },
+      "position_sources": {
+        "name": "{fund_name} portfolio sources",
+        "state_attributes": {
+          "source_summary": {
+            "name": "Source contributions"
+          },
+          "source_contributions": {
+            "name": "Source contribution details"
+          },
+          "source_count": {
+            "name": "Portfolio sources"
+          },
+          "source_ids": {
+            "name": "Portfolio source IDs"
+          },
+          "source_values_eur": {
+            "name": "Exact source contributions"
+          },
+          "consolidated_value_eur": {
+            "name": "Consolidated value"
+          },
+          "fund_id": {
+            "name": "Internal fund ID"
+          },
+          "fund_name": {
+            "name": "Instrument"
+          },
+          "isin": {
+            "name": "ISIN"
+          },
+          "wkn": {
+            "name": "WKN"
+          }
+        }
+      },
+      "policy_exception_detail": {
+        "name": "{fund_name}: policy exception",
+        "state": {
+          "accepted_exception": "Accepted exception"
+        },
+        "state_attributes": {
+          "fund_name": {
+            "name": "ETF"
+          },
+          "rule": {
+            "name": "Policy rule",
+            "state": {
+              "metadata": "Metadata completeness",
+              "ucits_required": "UCITS requirement",
+              "accumulating_preferred": "Distribution policy",
+              "ireland_preferred": "Domicile preference",
+              "max_ter_pct": "TER limit",
+              "minimum_fund_size_eur": "Minimum fund size",
+              "savings_plan_required": "Savings-plan availability",
+              "free_savings_plan_preferred": "Savings-plan fee preference"
+            }
+          },
+          "observed": {
+            "name": "Observed",
+            "state": {
+              "not_verified": "Not verified",
+              "accumulating": "Accumulating",
+              "distributing": "Distributing",
+              "ireland": "Ireland",
+              "luxembourg": "Luxembourg",
+              "ucits": "UCITS",
+              "not_ucits": "Not UCITS",
+              "available": "Available",
+              "unavailable": "Unavailable",
+              "yes": "Yes",
+              "no": "No"
+            }
+          },
+          "expected": {
+            "name": "Expected",
+            "state": {
+              "not_verified": "Not verified",
+              "accumulating": "Accumulating",
+              "distributing": "Distributing",
+              "ireland": "Ireland",
+              "luxembourg": "Luxembourg",
+              "ucits": "UCITS",
+              "not_ucits": "Not UCITS",
+              "available": "Available",
+              "unavailable": "Unavailable",
+              "yes": "Yes",
+              "no": "No"
+            }
+          },
+          "decision_on": {
+            "name": "Decision date"
+          },
+          "review_on": {
+            "name": "Review date"
+          }
+        }
+      },
+      "allocation_explanation": {
+        "name": "{fund_name}: allocation explained",
+        "state": {
+          "underweight": "Underweight",
+          "on_target": "On target",
+          "overweight": "Overweight"
+        },
+        "state_attributes": {
+          "fund_name": {
+            "name": "ETF"
+          },
+          "current_pct": {
+            "name": "Current allocation"
+          },
+          "target_pct": {
+            "name": "Target allocation"
+          },
+          "corridor_lower_pct": {
+            "name": "Corridor lower bound"
+          },
+          "corridor_upper_pct": {
+            "name": "Corridor upper bound"
+          },
+          "deviation_pp": {
+            "name": "Allocation deviation"
+          },
+          "current_value_eur": {
+            "name": "Current value"
+          },
+          "target_value_eur": {
+            "name": "Target value"
+          },
+          "deviation_eur": {
+            "name": "Value deviation"
+          },
+          "reason_code": {
+            "name": "Reason code"
+          }
+        }
+      },
+      "purchase_explanation": {
+        "name": "{fund_name}: purchase explained",
+        "state": {
+          "recommended": "Purchase recommended",
+          "not_recommended": "No purchase recommended",
+          "disabled": "Purchases disabled",
+          "deferred": "Purchase deferred"
+        },
+        "state_attributes": {
+          "fund_name": {
+            "name": "ETF"
+          },
+          "allocation_status": {
+            "name": "Allocation status"
+          },
+          "current_pct": {
+            "name": "Current allocation"
+          },
+          "target_pct": {
+            "name": "Target allocation"
+          },
+          "deviation_pp": {
+            "name": "Allocation deviation"
+          },
+          "deviation_eur": {
+            "name": "Value deviation"
+          },
+          "buy_enabled": {
+            "name": "Purchases enabled"
+          },
+          "proposed_buy_eur": {
+            "name": "Proposed purchase"
+          },
+          "reason_code": {
+            "name": "Reason code"
+          },
+          "execution_route": {
+            "name": "Execution route"
+          },
+          "estimated_fee_eur": {
+            "name": "Estimated fee"
+          },
+          "estimated_cost_ratio_pct": {
+            "name": "Estimated cost ratio"
+          },
+          "additional_reserve_required_eur": {
+            "name": "Additional reserve required"
+          },
+          "deferred": {
+            "name": "Deferred"
+          },
+          "estimated_cash_outlay_eur": {
+            "name": "Estimated cash outlay"
+          }
+        }
+      },
+      "policy_decision_detail": {
+        "name": "{fund_name}: policy decision",
+        "state": {
+          "error": "Mandatory failure",
+          "warning": "Warning",
+          "opportunity": "Optimisation opportunity",
+          "accepted_exception": "Accepted exception"
+        },
+        "state_attributes": {
+          "fund_name": {
+            "name": "ETF"
+          },
+          "rule": {
+            "name": "Policy rule"
+          },
+          "severity": {
+            "name": "Severity"
+          },
+          "observed": {
+            "name": "Observed"
+          },
+          "expected": {
+            "name": "Expected"
+          },
+          "reason_code": {
+            "name": "Reason code"
+          },
+          "decision_on": {
+            "name": "Decision date"
+          },
+          "review_on": {
+            "name": "Review date"
+          }
+        }
+      },
+      "available_investment_reserve": {
+        "name": "Available investment cash",
+        "state_attributes": {
+          "reserve_source": {
+            "name": "Reserve source"
+          },
+          "reserve_as_of": {
+            "name": "Balance timestamp"
+          }
+        }
+      },
+      "remaining_investment_reserve": {
+        "name": "Cash after recommended purchases"
+      },
+      "deferred_contribution": {
+        "name": "Deferred investment reserve",
+        "state_attributes": {
+          "deferred_purchases": {
+            "name": "Deferred purchases"
+          }
+        }
+      },
+      "estimated_transaction_fees": {
+        "name": "Estimated transaction fees"
+      },
+      "deferred_purchase_count": {
+        "name": "Deferred purchases"
+      },
+      "execution_policy": {
+        "name": "Execution policy",
+        "state": {
+          "legacy_distribution": "Legacy distribution",
+          "monthly_continuity": "Monthly continuity",
+          "balanced": "Balanced",
+          "efficiency_first": "Efficiency first"
+        },
+        "state_attributes": {
+          "max_cost_ratio_pct": {
+            "name": "Maximum cost ratio"
+          },
+          "max_orders_per_execution": {
+            "name": "Maximum orders per execution"
+          },
+          "max_deferral_periods": {
+            "name": "Maximum deferral periods"
+          }
+        }
+      },
+      "investment_reserve_source": {
+        "name": "Investment reserve source",
+        "state": {
+          "contribution": "Current contribution",
+          "gateway_balance": "Gateway account balance",
+          "unavailable": "Unavailable"
+        }
+      },
+      "estimated_cash_outlay": {
+        "name": "Estimated cash outlay"
+      },
+      "execution_state": {
+        "name": "Execution state",
+        "state": {
+          "ready": "Ready to invest",
+          "waiting_for_reserve": "Waiting for investment cash",
+          "deferred_for_cost_efficiency": "Deferred for cost efficiency",
+          "no_eligible_purchase": "No eligible purchase",
+          "reserve_unavailable": "Investment cash unavailable"
+        },
+        "state_attributes": {
+          "execution_policy": {
+            "name": "Execution policy"
+          },
+          "purchase_count": {
+            "name": "Purchases"
+          },
+          "deferred_purchase_count": {
+            "name": "Deferred purchases"
+          },
+          "available_investment_cash_eur": {
+            "name": "Available investment cash"
+          },
+          "cash_after_recommended_purchases_eur": {
+            "name": "Cash after recommended purchases"
+          },
+          "additional_investment_cash_required_eur": {
+            "name": "Additional investment cash required"
+          },
+          "reserve_source": {
+            "name": "Investment cash source"
+          }
+        }
+      },
+      "additional_investment_cash_required": {
+        "name": "Additional investment cash required"
+      }
+    },
+    "binary_sensor": {
+      "target_architecture_complete": {
+        "name": "Target architecture",
+        "state": {
+          "on": "Complete",
+          "off": "Incomplete"
+        },
+        "state_attributes": {
+          "held_count": {
+            "name": "Positions held"
+          },
+          "total_count": {
+            "name": "Target positions"
+          },
+          "missing_count": {
+            "name": "Positions missing"
+          },
+          "coverage_summary": {
+            "name": "Coverage"
+          },
+          "missing_names": {
+            "name": "Missing positions"
+          }
+        }
+      },
+      "target_position_held": {
+        "name": "{fund_name} target position",
+        "state": {
+          "on": "Held",
+          "off": "Missing"
+        },
+        "state_attributes": {
+          "current_value_eur": {
+            "name": "Current value"
+          },
+          "current_pct": {
+            "name": "Current allocation"
+          },
+          "target_pct": {
+            "name": "Target allocation"
+          }
+        }
+      },
+      "monthly_plan_ready": {
+        "name": "Investment plan",
+        "state": {
+          "on": "Ready",
+          "off": "Not ready"
+        },
+        "state_attributes": {
+          "contribution_per_execution_eur": {
+            "name": "Contribution per execution"
+          },
+          "plan_budget_amount_eur": {
+            "name": "Plan budget"
+          },
+          "plan_budget_basis": {
+            "name": "Budget basis",
+            "state": {
+              "per_period": "Per period",
+              "per_execution": "Per execution"
+            }
+          },
+          "plan_frequency": {
+            "name": "Plan frequency",
+            "state": {
+              "weekly": "Weekly",
+              "monthly": "Monthly",
+              "quarterly": "Quarterly",
+              "yearly": "Yearly"
+            }
+          },
+          "scheduled_executions_per_period": {
+            "name": "Executions per period"
+          },
+          "recommended_total_eur": {
+            "name": "Allocated contribution"
+          },
+          "unallocated_contribution_eur": {
+            "name": "Unallocated contribution"
+          },
+          "purchase_count": {
+            "name": "Purchase count"
+          },
+          "data_fresh": {
+            "name": "Data fresh"
+          },
+          "freshness_mode": {
+            "name": "Freshness mode",
+            "state": {
+              "review_schedule": "Review schedule",
+              "age_threshold": "Age threshold"
+            }
+          }
+        }
+      },
+      "source_healthy": {
+        "name": "Source health",
+        "state": {
+          "on": "Healthy",
+          "off": "Unhealthy"
+        },
+        "state_attributes": {
+          "last_error": {
+            "name": "Last error"
+          }
+        }
+      },
+      "data_fresh": {
+        "name": "Data freshness",
+        "state": {
+          "on": "Fresh",
+          "off": "Stale"
+        },
+        "state_attributes": {
+          "freshness_threshold_hours": {
+            "name": "Freshness threshold"
+          },
+          "freshness_mode": {
+            "name": "Freshness mode",
+            "state": {
+              "review_schedule": "Review schedule",
+              "age_threshold": "Age threshold"
+            }
+          },
+          "fresh_through": {
+            "name": "Fresh through"
+          }
+        }
+      },
+      "mandatory_controls_compliant": {
+        "name": "Mandatory controls",
+        "state": {
+          "on": "Compliant",
+          "off": "Action required"
+        },
+        "state_attributes": {
+          "error_findings": {
+            "name": "Errors"
+          },
+          "warning_findings": {
+            "name": "Warnings"
+          },
+          "accepted_exceptions": {
+            "name": "Accepted exceptions"
+          },
+          "optimisation_opportunities": {
+            "name": "Optimisation opportunities"
+          }
+        }
+      },
+      "portfolio_allocation_on_target": {
+        "name": "Portfolio allocation on target",
+        "state": {
+          "on": "On target",
+          "off": "Drift detected"
+        }
+      },
+      "exception_review_overdue": {
+        "name": "Exception review overdue",
+        "state": {
+          "on": "Overdue",
+          "off": "On schedule"
+        }
+      },
+      "review_schedule_configured": {
+        "name": "Review schedule",
+        "state": {
+          "on": "Configured",
+          "off": "Not configured"
+        },
+        "state_attributes": {
+          "frequency": {
+            "name": "Frequency",
+            "state": {
+              "weekly": "Weekly",
+              "monthly": "Monthly",
+              "quarterly": "Quarterly",
+              "yearly": "Yearly"
+            }
+          },
+          "execution_days": {
+            "name": "Execution days"
+          },
+          "execution_month": {
+            "name": "Execution month"
+          },
+          "execution_month_offset": {
+            "name": "Month within quarter"
+          },
+          "executions_per_period": {
+            "name": "Executions per period"
+          },
+          "review_lead_days": {
+            "name": "Review lead time"
+          }
+        }
+      },
+      "plan_review_due": {
+        "name": "Plan review",
+        "state": {
+          "on": "Due",
+          "off": "Scheduled"
+        },
+        "state_attributes": {
+          "evaluated_on": {
+            "name": "Evaluated on"
+          },
+          "planned_execution_on": {
+            "name": "Planned execution"
+          },
+          "next_review_on": {
+            "name": "Next plan review"
+          },
+          "review_for_execution_on": {
+            "name": "Review for execution"
+          },
+          "frequency": {
+            "name": "Frequency",
+            "state": {
+              "weekly": "Weekly",
+              "monthly": "Monthly",
+              "quarterly": "Quarterly",
+              "yearly": "Yearly"
+            }
+          },
+          "execution_days": {
+            "name": "Execution days"
+          },
+          "executions_per_period": {
+            "name": "Executions per period"
+          },
+          "review_lead_days": {
+            "name": "Review lead time"
+          },
+          "review_schedule_configured": {
+            "name": "Review schedule configured"
+          }
+        }
+      },
+      "gateway_reauthentication_required": {
+        "name": "Gateway reauthentication required"
+      },
+      "gateway_snapshot_integrity_verified": {
+        "name": "Gateway snapshot integrity verified",
+        "state_attributes": {
+          "snapshot_sha256": {
+            "name": "Snapshot SHA-256"
+          },
+          "position_count": {
+            "name": "Position count"
+          },
+          "snapshot_generated_at": {
+            "name": "Snapshot generated"
+          },
+          "health_schema_version": {
+            "name": "Health schema version"
+          },
+          "last_integrity_error": {
+            "name": "Last integrity error"
+          }
+        }
+      },
+      "gateway_using_last_known_good_snapshot": {
+        "name": "Gateway using last-known-good snapshot",
+        "state_attributes": {
+          "operating_mode": {
+            "name": "Operating mode"
+          },
+          "consecutive_refresh_failures": {
+            "name": "Consecutive refresh failures"
+          },
+          "snapshot_age_seconds": {
+            "name": "Snapshot age"
+          },
+          "snapshot_expires_in_seconds": {
+            "name": "Snapshot expires in"
+          },
+          "last_error": {
+            "name": "Last error"
+          }
+        }
+      },
+      "gateway_refresh_in_progress": {
+        "name": "Gateway refresh in progress",
+        "state": {
+          "on": "Refreshing",
+          "off": "Idle"
+        },
+        "state_attributes": {
+          "last_refresh_attempt": {
+            "name": "Last refresh attempt"
+          },
+          "last_refresh_trigger": {
+            "name": "Last refresh trigger"
+          }
+        }
+      },
+      "gateway_refresh_overdue": {
+        "name": "Gateway refresh overdue",
+        "state": {
+          "on": "Overdue",
+          "off": "On schedule"
+        },
+        "state_attributes": {
+          "next_refresh_due_at": {
+            "name": "Next refresh due"
+          },
+          "poll_interval_seconds": {
+            "name": "Poll interval"
+          },
+          "refresh_in_progress": {
+            "name": "Refresh in progress"
+          }
+        }
+      },
+      "gateway_attention_required": {
+        "name": "Gateway attention required",
+        "state": {
+          "on": "Attention required",
+          "off": "No attention required"
+        },
+        "state_attributes": {
+          "attention_reason": {
+            "name": "Attention reason"
+          },
+          "recommended_action": {
+            "name": "Recommended action"
+          },
+          "last_refresh_failure_class": {
+            "name": "Last refresh failure class"
+          },
+          "consecutive_refresh_failures": {
+            "name": "Consecutive refresh failures"
+          },
+          "retry_after_seconds": {
+            "name": "Retry after"
+          }
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Portfolio Architect configuration",
+        "menu_options": {
+          "plan": "Investment plan",
+          "runtime": "Runtime safeguards",
+          "reset_plan": "Restore file-based plan",
+          "sources": "Portfolio sources",
+          "execution": "Execution and transaction costs"
+        }
+      },
+      "plan": {
+        "title": "Configure investment plan",
+        "description": "Define the budget, cadence, and instruments managed by the current plan. Imported holdings outside this selection remain part of the complete portfolio.",
+        "data": {
+          "plan_name": "Plan name",
+          "plan_budget_amount": "Budget amount",
+          "plan_budget_basis": "Budget applies",
+          "plan_frequency": "Plan frequency",
+          "plan_schedule_enabled": "Configure execution schedule",
+          "selected_instruments": "In-scope instruments"
+        },
+        "data_description": {
+          "plan_budget_amount": "The amount is either split across all executions in the period or applied to every execution.",
+          "plan_schedule_enabled": "Enable this to calculate planned executions, review dates, and schedule-aware freshness.",
+          "selected_instruments": "Select between 1 and 32 instruments. Every selected instrument receives a target weight in the next steps."
+        }
+      },
+      "schedule": {
+        "title": "Configure recurring execution schedule",
+        "description": "Configure the recurring execution pattern. The next evaluation is scheduled before a later execution using the review lead time.",
+        "data": {
+          "review_lead_days": "Review lead time",
+          "plan_execution_days": "Execution days",
+          "plan_execution_month": "Execution month",
+          "plan_execution_month_offset": "Month within quarter"
+        },
+        "data_description": {
+          "review_lead_days": "Number of days before the execution for which the next review is due.",
+          "plan_execution_days": "Weekly plans use weekdays; all other plans use days of month from 1 to 28."
+        }
+      },
+      "plan_instrument": {
+        "title": "Configure {instrument_name}",
+        "description": "WKN {wkn} · ISIN {isin}",
+        "data": {
+          "target_pct": "Target weight",
+          "buy_enabled": "Eligible for purchases"
+        }
+      },
+      "plan_review": {
+        "title": "Normalise target weights",
+        "description": "The {instrument_count} target weights currently total {target_total}%. Enable normalisation to scale them proportionally to exactly 100%.",
+        "data": {
+          "normalise_targets": "Normalise targets to 100%"
+        }
+      },
+      "runtime": {
+        "title": "Runtime safeguards",
+        "description": "The age threshold is used only when no review schedule is configured. With a schedule, data remains fresh through the planned review date.",
+        "data": {
+          "freshness_hours": "Fallback freshness threshold"
+        },
+        "data_description": {
+          "freshness_hours": "Allowed data age when no recurring review schedule is configured (1–168 hours)."
+        }
+      },
+      "reset_plan": {
+        "title": "Restore file-based plan",
+        "description": "Discard the Home Assistant plan override and use the plan defined in portfolio.yaml again. Runtime safeguards are preserved.",
+        "data": {
+          "confirm_reset": "Restore portfolio.yaml plan"
+        }
+      },
+      "sources": {
+        "title": "Supplemental portfolio sources",
+        "description": "Add DKB depot exports to the primary source, one relative CSV path per line. Positions are consolidated by ISIN; depot numbers are ignored.",
+        "data": {
+          "supplemental_dkb_csv_paths": "DKB CSV paths"
+        },
+        "data_description": {
+          "supplemental_dkb_csv_paths": "Relative to /config. Use one current export per DKB depot. If several dated exports of the same depot are configured, only the newest is counted. Up to 8 paths are supported."
+        }
+      },
+      "execution": {
+        "title": "Execution and transaction costs",
+        "description": "Choose how Portfolio Architect balances regular investing, allocation drift, and execution costs. Existing installations remain on legacy distribution until cost-aware execution is enabled.",
+        "data": {
+          "execution_cost_aware_enabled": "Enable cost-aware execution",
+          "execution_policy": "Execution policy",
+          "execution_max_cost_ratio_pct": "Maximum transaction-cost ratio",
+          "execution_max_deferral_periods": "Maximum deferral periods",
+          "execution_max_orders": "Maximum orders per execution",
+          "execution_reserve_mode": "Investment reserve source",
+          "manual_commission_base_eur": "Manual-order base commission",
+          "manual_commission_pct": "Manual-order percentage commission",
+          "manual_commission_min_eur": "Manual-order minimum commission",
+          "manual_commission_max_eur": "Manual-order maximum commission",
+          "manual_venue_fee_pct": "Venue fee percentage",
+          "manual_venue_fee_min_eur": "Venue minimum fee",
+          "manual_settlement_fee_eur": "Settlement fee"
+        },
+        "data_description": {
+          "execution_cost_aware_enabled": "When disabled, the established monthly distribution algorithm remains unchanged.",
+          "execution_policy": "Monthly continuity invests each period; Balanced observes the cost ceiling but eventually executes; Efficiency first waits until the ceiling is met.",
+          "execution_max_cost_ratio_pct": "Maximum estimated transaction fees as a percentage of the proposed order value.",
+          "execution_max_deferral_periods": "Balanced mode may exceed the cost ceiling after this many accumulated contribution periods.",
+          "execution_max_orders": "Limits how many separate fee-bearing orders are proposed for one execution.",
+          "execution_reserve_mode": "Gateway balance requires an explicitly selected dedicated Comdirect account. Contribution-only uses only the current plan contribution.",
+          "manual_settlement_fee_eur": "Configure the additional fixed settlement charge observed for the selected execution route."
+        }
+      },
+      "execution_fees": {
+        "title": "Manual-order cost model",
+        "description": "Configure the estimated fees for manual exchange orders. These values are planning assumptions and do not place an order.",
+        "data": {
+          "manual_commission_base_eur": "Base commission",
+          "manual_commission_pct": "Percentage commission",
+          "manual_commission_min_eur": "Minimum commission",
+          "manual_commission_max_eur": "Maximum commission",
+          "manual_venue_fee_bps": "Venue fee in basis points",
+          "manual_venue_fee_min_eur": "Minimum venue fee",
+          "manual_settlement_fee_eur": "Settlement fee"
+        },
+        "data_description": {
+          "manual_commission_pct": "Percentage of the order value. Enter 0.25 for 0.25%.",
+          "manual_venue_fee_bps": "100 basis points equal 1%. Enter 0.25 for 0.0025%.",
+          "manual_settlement_fee_eur": "Additional fixed settlement charge observed for the selected execution route."
+        }
+      }
+    },
+    "error": {
+      "invalid_instrument_count": "Select between 1 and 32 instruments.",
+      "invalid_instrument": "The selected instrument is no longer available.",
+      "invalid_target": "Enter a target weight above 0% and at most 100%.",
+      "invalid_schedule": "The recurring schedule is incomplete or invalid.",
+      "targets_not_100": "The target weights must total exactly 100% or be explicitly normalised.",
+      "invalid_supplemental_source": "At least one supplemental DKB CSV is missing, unsafe, or not a supported DKB depot export.",
+      "too_many_sources": "At most 8 supplemental DKB CSV sources are supported.",
+      "invalid_execution_config": "The execution-cost settings are inconsistent or outside the supported range."
+    },
+    "abort": {
+      "plan_source_unavailable": "The local portfolio files could not be read for the plan editor.",
+      "invalid_plan": "The configured plan failed validation and was not saved.",
+      "plan_already_uses_yaml": "The investment plan already uses portfolio.yaml."
+    }
+  },
+  "selector": {
+    "plan_budget_basis": {
+      "options": {
+        "per_period": "Per period",
+        "per_execution": "Per execution"
+      }
+    },
+    "plan_frequency": {
+      "options": {
+        "weekly": "Weekly",
+        "monthly": "Monthly",
+        "quarterly": "Quarterly",
+        "yearly": "Yearly"
+      }
+    },
+    "weekdays": {
+      "options": {
+        "1": "Monday",
+        "2": "Tuesday",
+        "3": "Wednesday",
+        "4": "Thursday",
+        "5": "Friday",
+        "6": "Saturday",
+        "7": "Sunday"
+      }
+    },
+    "quarter_month": {
+      "options": {
+        "1": "First month of quarter",
+        "2": "Second month of quarter",
+        "3": "Third month of quarter"
+      }
+    },
+    "months": {
+      "options": {
+        "1": "January",
+        "2": "February",
+        "3": "March",
+        "4": "April",
+        "5": "May",
+        "6": "June",
+        "7": "July",
+        "8": "August",
+        "9": "September",
+        "10": "October",
+        "11": "November",
+        "12": "December"
+      }
+    },
+    "source_provider": {
+      "options": {
+        "comdirect_csv": "Comdirect depot CSV",
+        "generic_csv": "Generic mapped CSV",
+        "local_rest_json": "Local REST JSON gateway",
+        "dkb_csv": "DKB depot CSV",
+        "multi_source": "Multi-source portfolio"
+      }
+    },
+    "csv_encoding": {
+      "options": {
+        "auto": "Automatic detection",
+        "utf-8-sig": "UTF-8 with BOM",
+        "utf-8": "UTF-8",
+        "iso-8859-1": "ISO-8859-1 / Latin-1"
+      }
+    },
+    "csv_delimiter": {
+      "options": {
+        "auto": "Automatic detection",
+        "semicolon": "Semicolon (;)",
+        "comma": "Comma (,)",
+        "tab": "Tab"
+      }
+    },
+    "csv_decimal_format": {
+      "options": {
+        "auto": "Automatic per value",
+        "comma_decimal": "Comma decimal (1.234,56)",
+        "dot_decimal": "Dot decimal (1,234.56)"
+      }
+    },
+    "execution_policy": {
+      "options": {
+        "monthly_continuity": "Monthly continuity",
+        "balanced": "Balanced",
+        "efficiency_first": "Efficiency first"
+      }
+    },
+    "execution_reserve_mode": {
+      "options": {
+        "contribution_only": "Current contribution only",
+        "gateway_balance": "Selected Gateway account balance"
+      }
+    }
+  },
+  "issues": {
+    "gateway_reauthentication_required": {
+      "title": "Portfolio Gateway requires Comdirect reauthentication",
+      "description": "Open the Portfolio Architect Gateway App Web UI and complete a new PhotoTAN bootstrap. Portfolio Architect keeps the last-known-good snapshot but will stop treating it as actionable when it becomes stale."
+    },
+    "gateway_repeated_refresh_failures": {
+      "title": "Portfolio Gateway has repeated live-refresh failures",
+      "description": "The Gateway is serving the last-known-good portfolio after at least three consecutive refresh failures. Review the Gateway attention reason and recommended action. The cached snapshot remains usable only while it is fresh."
+    },
+    "gateway_snapshot_unavailable": {
+      "title": "Portfolio Gateway has no usable snapshot",
+      "description": "The Gateway cannot provide a portfolio snapshot. Open the Portfolio Architect Gateway App, review its runtime status and logs, and restore live refreshes before using purchase recommendations."
+    },
+    "gateway_refresh_overdue": {
+      "title": "Portfolio Gateway refresh is overdue",
+      "description": "The next fixed-cadence refresh deadline passed beyond its grace period and no refresh is running. Review the Gateway App status and logs."
+    },
+    "gateway_snapshot_integrity_failure": {
+      "title": "Portfolio Gateway snapshot integrity validation failed",
+      "description": "Portfolio Architect rejected live data because its fingerprint, position count, timestamp, or health metadata was inconsistent. The previously accepted data remains protected. Review the Gateway and Home Assistant logs before continuing."
+    }
+  }
+}

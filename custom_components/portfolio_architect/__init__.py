@@ -1,0 +1,275 @@
+"""Portfolio Architect integration setup."""
+
+from __future__ import annotations
+
+import logging
+
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import Event, HomeAssistant, callback
+from homeassistant.helpers import entity_registry as er
+from homeassistant.helpers.event import async_track_state_change_event
+
+from .const import (
+    CONF_CONFIG_DIRECTORY,
+    CONF_CSV_PATH,
+    CONF_PLAN_EXECUTION_DAY,
+    CONF_PLAN_EXECUTION_DAYS,
+    CONF_PLAN_FREQUENCY,
+    CONF_PLAN_SCHEDULE_ENABLED,
+    CONF_SOURCE_ENTITY_ID,
+    CONF_SOURCE_PROVIDER,
+    CONF_SOURCE_TYPE,
+    DEFAULT_CONFIG_DIRECTORY,
+    DEFAULT_CSV_PATH,
+    DEFAULT_SOURCE_ENTITY_ID,
+    DEFAULT_SOURCE_PROVIDER,
+    DOMAIN,
+    INSTANCE_UNIQUE_ID,
+    PLAN_FREQUENCY_MONTHLY,
+    PLATFORMS,
+    SOURCE_TYPE_LEGACY_SENSOR,
+    SOURCE_TYPE_LOCAL_FILES,
+)
+from .coordinator import PortfolioArchitectCoordinator
+from .engine.calculator import validate_local_source
+from .entity_ids import plan_legacy_entity_id_migrations
+from .source import resolve_local_source_paths
+
+_LOGGER = logging.getLogger(__name__)
+
+
+def _migrate_legacy_entity_ids(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+) -> int:
+    """Rename exact duplicated-prefix IDs owned by this config entry."""
+    registry = er.async_get(hass)
+    entries = er.async_entries_for_config_entry(registry, entry.entry_id)
+    migrated = 0
+
+    for migration in plan_legacy_entity_id_migrations(entries):
+        existing_destination = registry.async_get(migration.new_entity_id)
+        if existing_destination is not None:
+            _LOGGER.error(
+                "Cannot migrate %s to %s because the destination already exists",
+                migration.old_entity_id,
+                migration.new_entity_id,
+            )
+            continue
+
+        registry.async_update_entity(
+            migration.old_entity_id,
+            new_entity_id=migration.new_entity_id,
+        )
+        migrated += 1
+        _LOGGER.info(
+            "Migrated Portfolio Architect entity ID from %s to %s",
+            migration.old_entity_id,
+            migration.new_entity_id,
+        )
+
+    return migrated
+
+
+async def async_migrate_entry(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+) -> bool:
+    """Migrate a Portfolio Architect config entry to schema version 8."""
+    _LOGGER.debug(
+        "Migrating Portfolio Architect config entry from version %s.%s",
+        entry.version,
+        entry.minor_version,
+    )
+
+    if entry.version > 8:
+        _LOGGER.error(
+            "Cannot migrate Portfolio Architect config entry from future version %s",
+            entry.version,
+        )
+        return False
+
+    migrated_entities = 0
+    if entry.version < 2:
+        migrated_entities = _migrate_legacy_entity_ids(hass, entry)
+
+    if entry.version < 3:
+        old_source = entry.data.get(
+            CONF_SOURCE_ENTITY_ID,
+            DEFAULT_SOURCE_ENTITY_ID,
+        )
+        local_paths = resolve_local_source_paths(
+            hass,
+            DEFAULT_CSV_PATH,
+            DEFAULT_CONFIG_DIRECTORY,
+            require_exists=False,
+        )
+        try:
+            await hass.async_add_executor_job(
+                validate_local_source,
+                local_paths.csv_path,
+                local_paths.config_directory,
+            )
+        except (OSError, ValueError) as err:
+            new_data = {
+                CONF_SOURCE_TYPE: SOURCE_TYPE_LEGACY_SENSOR,
+                CONF_SOURCE_ENTITY_ID: old_source,
+            }
+            _LOGGER.warning(
+                "Could not automatically migrate to the self-contained local-file "
+                "source; retaining the deprecated source sensor until the integration "
+                "is reconfigured: %s",
+                err,
+            )
+        else:
+            new_data = {
+                CONF_SOURCE_TYPE: SOURCE_TYPE_LOCAL_FILES,
+                CONF_CSV_PATH: DEFAULT_CSV_PATH,
+                CONF_CONFIG_DIRECTORY: DEFAULT_CONFIG_DIRECTORY,
+            }
+            _LOGGER.info(
+                "Migrated Portfolio Architect from the command-line source sensor "
+                "to the self-contained local-file engine"
+            )
+
+        hass.config_entries.async_update_entry(
+            entry,
+            data=new_data,
+            version=3,
+        )
+
+    if entry.version < 4:
+        domain_entries = hass.config_entries.async_entries(DOMAIN)
+        if len(domain_entries) == 1:
+            hass.config_entries.async_update_entry(
+                entry,
+                unique_id=INSTANCE_UNIQUE_ID,
+                version=4,
+            )
+            _LOGGER.info(
+                "Normalized Portfolio Architect to the stable single-instance "
+                "config-entry identity"
+            )
+        else:
+            # Existing v1.1.0 installations could create duplicate entries because
+            # the source path was incorrectly used as a mutable unique ID. Never
+            # guess which portfolio source the user intends to retain. Keep both
+            # entries loadable so they can be removed safely through the UI.
+            hass.config_entries.async_update_entry(entry, version=4)
+            _LOGGER.error(
+                "Multiple Portfolio Architect config entries exist. Remove all "
+                "duplicate entries through the Home Assistant UI and add one "
+                "Portfolio Architect entry again; .storage must not be edited"
+            )
+
+
+    if entry.version < 5:
+        options = dict(entry.options)
+        legacy_execution_day = options.pop(CONF_PLAN_EXECUTION_DAY, None)
+        if (
+            legacy_execution_day is not None
+            and not options.get(CONF_PLAN_SCHEDULE_ENABLED)
+            and not isinstance(legacy_execution_day, bool)
+        ):
+            try:
+                execution_day = int(legacy_execution_day)
+            except (TypeError, ValueError):
+                execution_day = 0
+            if 1 <= execution_day <= 28:
+                options.update({
+                    CONF_PLAN_SCHEDULE_ENABLED: True,
+                    CONF_PLAN_FREQUENCY: PLAN_FREQUENCY_MONTHLY,
+                    CONF_PLAN_EXECUTION_DAYS: [execution_day],
+                })
+                _LOGGER.info(
+                    "Migrated the monthly execution day to the recurring plan schedule"
+                )
+        hass.config_entries.async_update_entry(
+            entry,
+            options=options,
+            version=5,
+        )
+
+
+    if entry.version < 6:
+        data = dict(entry.data)
+        if data.get(CONF_SOURCE_TYPE) == SOURCE_TYPE_LOCAL_FILES:
+            data.setdefault(CONF_SOURCE_PROVIDER, DEFAULT_SOURCE_PROVIDER)
+        hass.config_entries.async_update_entry(
+            entry,
+            data=data,
+            version=6,
+        )
+        _LOGGER.info(
+            "Migrated Portfolio Architect to the explicit CSV provider adapter model"
+        )
+
+    if entry.version < 7:
+        # v1.4 adds the optional REST adapter. Existing CSV entries require no
+        # data transformation; only advance the schema marker.
+        hass.config_entries.async_update_entry(entry, version=7)
+        _LOGGER.info(
+            "Migrated Portfolio Architect to the local REST source-adapter schema"
+        )
+
+    if entry.version < 8:
+        # v1.12 adds optional supplemental source lists in options. Existing
+        # single-source entries require no transformation.
+        hass.config_entries.async_update_entry(entry, version=8)
+        _LOGGER.info("Migrated Portfolio Architect to the multi-source schema")
+
+    if migrated_entities:
+        _LOGGER.info(
+            "Portfolio Architect entity-ID migration renamed %s entities",
+            migrated_entities,
+        )
+    return True
+
+
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Set up Portfolio Architect from a config entry."""
+    coordinator = PortfolioArchitectCoordinator(hass, entry)
+    # Restore one private, validated REST calculation before contacting the
+    # Gateway so reloads and Home Assistant restarts remain serviceable during
+    # a complete Gateway outage. The live refresh below replaces it only after
+    # the source and current configuration validate successfully.
+    await coordinator.async_restore_last_known_good()
+    await coordinator.async_refresh()
+    entry.runtime_data = coordinator
+
+    if coordinator.source_type == SOURCE_TYPE_LEGACY_SENSOR:
+
+        @callback
+        def _source_state_changed(_event: Event) -> None:
+            """Refresh mirrored entities after the deprecated source changes."""
+            entry.async_create_background_task(
+                hass,
+                coordinator.async_request_refresh(),
+                "Refresh Portfolio Architect entities",
+                eager_start=True,
+            )
+
+        if coordinator.source_entity_id is not None:
+            entry.async_on_unload(
+                async_track_state_change_event(
+                    hass,
+                    [coordinator.source_entity_id],
+                    _source_state_changed,
+                )
+            )
+
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+
+    migrated = _migrate_legacy_entity_ids(hass, entry)
+    if migrated:
+        _LOGGER.info(
+            "Post-setup Portfolio Architect entity-ID repair renamed %s entities",
+            migrated,
+        )
+
+    return True
+
+
+async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Unload a Portfolio Architect config entry."""
+    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)

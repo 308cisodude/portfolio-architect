@@ -1,0 +1,41 @@
+schema_version: 1
+as_of: 2026-07-27
+broker:
+  id: comdirect
+  name: Comdirect
+  savings_plans:
+    IE00BJ0KDQ92:
+      available: true
+      fee_pct: 1.5
+      promotional: false
+      status: public_listing_standard_fee
+    IE00BTJRMP35:
+      available: true
+      fee_pct: 1.5
+      promotional: false
+      status: public_listing_standard_fee
+    IE000F354Q61:
+      available: true
+      fee_pct: 0
+      promotional: true
+      status: public_listing_special
+    IE00BYZK4776:
+      available: true
+      fee_pct: 1.5
+      promotional: false
+      status: public_listing_standard_fee
+    IE00BGV5VN51:
+      available: true
+      fee_pct: 0
+      promotional: true
+      status: public_listing_special
+    IE00BLPK3577:
+      available: true
+      fee_pct: 1.5
+      promotional: false
+      status: user_confirmed_not_free
+    IE00BYWZ0333:
+      available: true
+      fee_pct: 0
+      promotional: true
+      status: user_confirmed_free

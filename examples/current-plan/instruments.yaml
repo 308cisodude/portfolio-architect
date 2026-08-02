@@ -1,0 +1,104 @@
+schema_version: 1
+as_of: 2026-07-27
+valuation_currency: EUR
+valuation_fx:
+  source: ECB
+  date: 2026-07-27
+  eur_usd: 1.1389
+instruments:
+  IE00BJ0KDQ92:
+    ucits: true
+    domicile: IE
+    distribution: accumulating
+    fund_currency: USD
+    ter_pct: 0.12
+    fund_size_eur: 25471946615
+    fund_size_native: 29010000000
+    fund_size_native_currency: USD
+    fund_size_as_of: 2026-07-24
+    metadata_status: verified
+    metadata_source: DWS Xtrackers factsheet
+  IE00BTJRMP35:
+    ucits: true
+    domicile: IE
+    distribution: accumulating
+    fund_currency: USD
+    ter_pct: 0.18
+    fund_size_eur: 12037931337
+    fund_size_native: 13710000000
+    fund_size_native_currency: USD
+    fund_size_as_of: 2026-07-24
+    metadata_status: verified
+    metadata_source: DWS Xtrackers factsheet
+  IE000F354Q61:
+    ucits: true
+    domicile: IE
+    distribution: accumulating
+    fund_currency: USD
+    ter_pct: 0.25
+    fund_size_eur: 141850000
+    fund_size_native: 141850000
+    fund_size_native_currency: EUR
+    fund_size_as_of: 2026-06-30
+    metadata_status: verified
+    metadata_source: DWS Xtrackers product overview
+  IE00BYZK4776:
+    ucits: true
+    domicile: IE
+    distribution: accumulating
+    fund_currency: USD
+    ter_pct: 0.40
+    fund_size_eur: 1011267971
+    fund_size_native: 1151733092
+    fund_size_native_currency: USD
+    fund_size_as_of: 2026-07-24
+    metadata_status: verified
+    metadata_source: iShares product page
+  IE00BGV5VN51:
+    ucits: true
+    domicile: IE
+    distribution: accumulating
+    fund_currency: USD
+    ter_pct: 0.35
+    fund_size_eur: 7735534287
+    fund_size_native: 8810000000
+    fund_size_native_currency: USD
+    fund_size_as_of: 2026-07-24
+    metadata_status: verified
+    metadata_source: DWS Xtrackers factsheet
+  IE00BLPK3577:
+    ucits: true
+    domicile: IE
+    distribution: accumulating
+    fund_currency: USD
+    ter_pct: 0.45
+    fund_size_eur: 372173537
+    fund_size_native: 423868441
+    fund_size_native_currency: USD
+    fund_size_as_of: 2026-07-24
+    metadata_status: verified
+    metadata_source: WisdomTree product page
+  IE00BYWZ0333:
+    ucits: true
+    domicile: IE
+    distribution: distributing
+    fund_currency: USD
+    ter_pct: 0.40
+    fund_size_eur: 4386773963
+    fund_size_native: 4996096866
+    fund_size_native_currency: USD
+    fund_size_as_of: 2026-07-24
+    metadata_status: verified
+    metadata_source: iShares product page
+  IE00BM67HT60:
+    ucits: true
+    domicile: IE
+    distribution: accumulating
+    fund_currency: USD
+    ter_pct: 0.25
+    fund_size_eur: 5347264905
+    fund_size_native: 6090000000
+    fund_size_native_currency: USD
+    fund_size_as_of: 2026-07-24
+    metadata_status: verified
+    metadata_source: DWS Xtrackers factsheet

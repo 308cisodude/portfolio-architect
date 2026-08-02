@@ -1,0 +1,169 @@
+type: vertical-stack
+cards:
+- type: tile
+  entity: sensor.portfolio_architect_target_position_coverage
+  name: Coverage
+  tap_action:
+    action: more-info
+  grid_options:
+    columns: 6
+    rows: auto
+  icon: mdi:target
+  features:
+  - type: bar-gauge
+    min: 0
+    max: 100
+- type: tile
+  entity: binary_sensor.portfolio_architect_target_architecture_complete
+  name: Architecture
+  tap_action:
+    action: more-info
+  grid_options:
+    columns: 6
+    rows: auto
+  color: state
+  icon: mdi:vector-arrange-below
+  state_content: coverage_summary
+- type: glance
+  title: Target positions · ✓ Held · ○ Missing
+  columns: 2
+  show_name: true
+  show_state: false
+  state_color: true
+  entities:
+  - entity: binary_sensor.portfolio_architect_world_target_position_held
+    name: MSCI World
+  - entity: binary_sensor.portfolio_architect_emerging_markets_target_position_held
+    name: Emerging Markets
+  - entity: binary_sensor.portfolio_architect_world_small_cap_target_position_held
+    name: World Small Cap
+  - entity: binary_sensor.portfolio_architect_healthcare_target_position_held
+    name: Healthcare
+  - entity: binary_sensor.portfolio_architect_ai_big_data_target_position_held
+    name: AI & Big Data
+  - entity: binary_sensor.portfolio_architect_cybersecurity_target_position_held
+    name: Cybersecurity
+  - entity: binary_sensor.portfolio_architect_robotics_target_position_held
+    name: Robotics
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: numeric_state
+    entity: sensor.portfolio_architect_world_position_sources
+    above: 1
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_world_position_sources
+    name: MSCI World sources
+    state_content: source_summary
+    tap_action:
+      action: more-info
+    icon: mdi:source-branch
+    color: blue
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: numeric_state
+    entity: sensor.portfolio_architect_emerging_markets_position_sources
+    above: 1
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_emerging_markets_position_sources
+    name: Emerging Markets sources
+    state_content: source_summary
+    tap_action:
+      action: more-info
+    icon: mdi:source-branch
+    color: blue
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: numeric_state
+    entity: sensor.portfolio_architect_world_small_cap_position_sources
+    above: 1
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_world_small_cap_position_sources
+    name: World Small Cap sources
+    state_content: source_summary
+    tap_action:
+      action: more-info
+    icon: mdi:source-branch
+    color: blue
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: numeric_state
+    entity: sensor.portfolio_architect_healthcare_position_sources
+    above: 1
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_healthcare_position_sources
+    name: Healthcare sources
+    state_content: source_summary
+    tap_action:
+      action: more-info
+    icon: mdi:source-branch
+    color: blue
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: numeric_state
+    entity: sensor.portfolio_architect_ai_big_data_position_sources
+    above: 1
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_ai_big_data_position_sources
+    name: AI & Big Data sources
+    state_content: source_summary
+    tap_action:
+      action: more-info
+    icon: mdi:source-branch
+    color: blue
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: numeric_state
+    entity: sensor.portfolio_architect_cybersecurity_position_sources
+    above: 1
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_cybersecurity_position_sources
+    name: Cybersecurity sources
+    state_content: source_summary
+    tap_action:
+      action: more-info
+    icon: mdi:source-branch
+    color: blue
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: numeric_state
+    entity: sensor.portfolio_architect_robotics_position_sources
+    above: 1
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_robotics_position_sources
+    name: Robotics sources
+    state_content: source_summary
+    tap_action:
+      action: more-info
+    icon: mdi:source-branch
+    color: blue
+  grid_options:
+    columns: full
+    rows: auto

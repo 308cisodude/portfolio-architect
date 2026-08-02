@@ -1,0 +1,603 @@
+type: vertical-stack
+cards:
+- type: conditional
+  conditions:
+  - condition: state
+    entity: binary_sensor.portfolio_architect_source_healthy
+    state: 'on'
+  card:
+    type: tile
+    entity: binary_sensor.portfolio_architect_source_healthy
+    name: Quelle verfügbar
+    tap_action:
+      action: more-info
+    color: green
+    icon: mdi:database-check-outline
+    hide_state: true
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: binary_sensor.portfolio_architect_source_healthy
+    state: 'off'
+  card:
+    type: tile
+    entity: binary_sensor.portfolio_architect_source_healthy
+    name: Quelle fehlt
+    tap_action:
+      action: more-info
+    color: red
+    icon: mdi:database-alert-outline
+    hide_state: true
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: binary_sensor.portfolio_architect_data_fresh
+    state: 'on'
+  card:
+    type: tile
+    entity: binary_sensor.portfolio_architect_data_fresh
+    name: Daten aktuell
+    tap_action:
+      action: more-info
+    color: green
+    icon: mdi:clock-check-outline
+    hide_state: true
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: binary_sensor.portfolio_architect_data_fresh
+    state: 'off'
+  card:
+    type: tile
+    entity: binary_sensor.portfolio_architect_data_fresh
+    name: Daten veraltet
+    tap_action:
+      action: more-info
+    color: amber
+    icon: mdi:clock-alert-outline
+    hide_state: true
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: binary_sensor.portfolio_architect_review_schedule_configured
+    state: 'off'
+  card:
+    type: tile
+    entity: binary_sensor.portfolio_architect_review_schedule_configured
+    name: Prüfplan nicht konfiguriert
+    tap_action:
+      action: more-info
+    icon: mdi:calendar-question-outline
+    color: amber
+    hide_state: true
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: binary_sensor.portfolio_architect_plan_review_due
+    state: 'on'
+  card:
+    type: tile
+    entity: binary_sensor.portfolio_architect_plan_review_due
+    name: Planprüfung fällig
+    tap_action:
+      action: more-info
+    icon: mdi:calendar-alert
+    color: red
+    hide_state: true
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_next_plan_review
+    state_not: unavailable
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_next_plan_review
+    name: Nächste Planprüfung
+    tap_action:
+      action: more-info
+    icon: mdi:calendar-refresh-outline
+    color: blue
+  grid_options:
+    columns: full
+    rows: auto
+- type: tile
+  entity: sensor.portfolio_architect_last_successful_refresh
+  name: Letzte Auswertung
+  tap_action:
+    action: more-info
+  grid_options:
+    columns: full
+    rows: auto
+  icon: mdi:clock-check-outline
+  state_content:
+  - state
+  - engine_version
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_gateway_status
+    state_not: unavailable
+  - condition: state
+    entity: binary_sensor.portfolio_architect_gateway_reauthentication_required
+    state: 'on'
+  card:
+    type: tile
+    entity: binary_sensor.portfolio_architect_gateway_reauthentication_required
+    name: Gateway-Anmeldung erforderlich
+    tap_action:
+      action: more-info
+    color: red
+    icon: mdi:account-alert-outline
+    hide_state: true
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_gateway_status
+    state_not: unavailable
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_gateway_status
+    name: Gateway-Status
+    tap_action:
+      action: more-info
+    icon: mdi:lan-check
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_gateway_status
+    state_not: unavailable
+  - condition: state
+    entity: sensor.portfolio_architect_gateway_last_refresh
+    state_not: unavailable
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_gateway_last_refresh
+    name: Live-Aktualisierung
+    tap_action:
+      action: more-info
+    icon: mdi:cloud-refresh-outline
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_gateway_status
+    state_not: unavailable
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_gateway_operating_mode
+    name: Betriebsmodus
+    tap_action:
+      action: more-info
+    icon: mdi:database-sync-outline
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_gateway_status
+    state_not: unavailable
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_gateway_snapshot_age
+    name: Snapshot-Alter
+    tap_action:
+      action: more-info
+    icon: mdi:timer-sand
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_gateway_status
+    state_not: unavailable
+  - condition: state
+    entity: sensor.portfolio_architect_gateway_refresh_schedule
+    state: scheduled
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_gateway_next_refresh
+    name: Abruf geplant
+    state_content: state
+    time_format:
+      type: datetime
+      style: short
+    tap_action:
+      action: more-info
+    icon: mdi:calendar-sync-outline
+    color: blue
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_gateway_status
+    state_not: unavailable
+  - condition: state
+    entity: sensor.portfolio_architect_gateway_refresh_schedule
+    state: due_now
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_gateway_next_refresh
+    name: Abruf fällig
+    state_content: state
+    time_format:
+      type: datetime
+      style: short
+    tap_action:
+      action: more-info
+    icon: mdi:calendar-sync-outline
+    color: amber
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_gateway_status
+    state_not: unavailable
+  - condition: state
+    entity: sensor.portfolio_architect_gateway_refresh_schedule
+    state: overdue
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_gateway_next_refresh
+    name: Abruf überfällig
+    state_content: state
+    time_format:
+      type: datetime
+      style: short
+    tap_action:
+      action: more-info
+    icon: mdi:calendar-sync-outline
+    color: red
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_gateway_status
+    state_not: unavailable
+  - condition: state
+    entity: sensor.portfolio_architect_gateway_refresh_schedule
+    state: refreshing
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_gateway_refresh_schedule
+    name: Abruf läuft
+    tap_action:
+      action: more-info
+    icon: mdi:database-refresh-outline
+    color: blue
+    hide_state: true
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_gateway_status
+    state_not: unavailable
+  - condition: state
+    entity: sensor.portfolio_architect_gateway_last_refresh_duration
+    state_not: unavailable
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_gateway_last_refresh_duration
+    name: Letzte Abrufdauer
+    tap_action:
+      action: more-info
+    icon: mdi:timer-outline
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_gateway_status
+    state_not: unavailable
+  - condition: state
+    entity: sensor.portfolio_architect_gateway_last_refresh_trigger
+    state_not: unavailable
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_gateway_last_refresh_trigger
+    name: Abrufauslöser
+    tap_action:
+      action: more-info
+    icon: mdi:database-refresh-outline
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_gateway_status
+    state_not: unavailable
+  - condition: state
+    entity: binary_sensor.portfolio_architect_gateway_refresh_in_progress
+    state: 'on'
+  card:
+    type: tile
+    entity: binary_sensor.portfolio_architect_gateway_refresh_in_progress
+    name: Live-Aktualisierung läuft
+    tap_action:
+      action: more-info
+    icon: mdi:database-refresh-outline
+    color: blue
+    hide_state: true
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_gateway_status
+    state_not: unavailable
+  - condition: state
+    entity: binary_sensor.portfolio_architect_gateway_using_last_known_good_snapshot
+    state: 'on'
+  card:
+    type: tile
+    entity: binary_sensor.portfolio_architect_gateway_using_last_known_good_snapshot
+    name: Letzter gültiger Snapshot aktiv
+    tap_action:
+      action: more-info
+    icon: mdi:database-clock-outline
+    color: amber
+    hide_state: true
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_gateway_status
+    state_not: unavailable
+  - condition: state
+    entity: binary_sensor.portfolio_architect_gateway_attention_required
+    state: 'on'
+  card:
+    type: tile
+    entity: binary_sensor.portfolio_architect_gateway_attention_required
+    name: Gateway erfordert Aufmerksamkeit
+    tap_action:
+      action: more-info
+    color: red
+    icon: mdi:shield-alert-outline
+    hide_state: true
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_gateway_status
+    state_not: unavailable
+  - condition: state
+    entity: binary_sensor.portfolio_architect_gateway_attention_required
+    state: 'on'
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_gateway_attention_reason
+    name: Warnungsgrund
+    tap_action:
+      action: more-info
+    color: amber
+    icon: mdi:alert-decagram-outline
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_gateway_status
+    state_not: unavailable
+  - condition: state
+    entity: binary_sensor.portfolio_architect_gateway_attention_required
+    state: 'on'
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_gateway_recommended_action
+    name: Empfohlene Maßnahme
+    tap_action:
+      action: more-info
+    color: amber
+    icon: mdi:clipboard-text-search-outline
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_gateway_status
+    state_not: unavailable
+  - condition: state
+    entity: binary_sensor.portfolio_architect_gateway_attention_required
+    state: 'on'
+  - condition: state
+    entity: sensor.portfolio_architect_gateway_last_refresh_failure
+    state_not: unavailable
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_gateway_last_refresh_failure
+    name: Letzter Fehler
+    tap_action:
+      action: more-info
+    icon: mdi:clock-alert-outline
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_gateway_status
+    state_not: unavailable
+  - condition: state
+    entity: binary_sensor.portfolio_architect_gateway_refresh_overdue
+    state: 'on'
+  card:
+    type: tile
+    entity: binary_sensor.portfolio_architect_gateway_refresh_overdue
+    name: Refresh überfällig
+    tap_action:
+      action: more-info
+    color: red
+    icon: mdi:calendar-alert
+    hide_state: true
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_source_provider
+    state: local_rest_json
+  - condition: state
+    entity: binary_sensor.portfolio_architect_gateway_snapshot_integrity_verified
+    state: 'on'
+  card:
+    type: tile
+    entity: binary_sensor.portfolio_architect_gateway_snapshot_integrity_verified
+    name: Snapshot verifiziert
+    tap_action:
+      action: more-info
+    color: green
+    icon: mdi:shield-check-outline
+    hide_state: true
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_source_provider
+    state: local_rest_json
+  - condition: state
+    entity: binary_sensor.portfolio_architect_gateway_snapshot_integrity_verified
+    state: 'off'
+  card:
+    type: tile
+    entity: binary_sensor.portfolio_architect_gateway_snapshot_integrity_verified
+    name: Snapshot-Fehler
+    tap_action:
+      action: more-info
+    color: red
+    icon: mdi:shield-alert-outline
+    hide_state: true
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_source_provider
+    state: local_rest_json
+  - condition: state
+    entity: binary_sensor.portfolio_architect_gateway_snapshot_integrity_verified
+    state: unavailable
+  card:
+    type: tile
+    entity: binary_sensor.portfolio_architect_gateway_snapshot_integrity_verified
+    name: Integrität unbekannt
+    tap_action:
+      action: more-info
+    color: amber
+    icon: mdi:shield-question-outline
+    hide_state: true
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_source_provider
+    state: local_rest_json
+  - condition: state
+    entity: sensor.portfolio_architect_gateway_snapshot_generated
+    state_not: unavailable
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_gateway_snapshot_generated
+    name: Snapshot erzeugt
+    tap_action:
+      action: more-info
+    icon: mdi:database-clock-outline
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_gateway_status
+    state_not: unavailable
+  - condition: state
+    entity: sensor.portfolio_architect_gateway_last_error
+    state_not: none
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_gateway_last_error
+    name: Gateway-Fehler
+    tap_action:
+      action: more-info
+    color: amber
+    icon: mdi:alert-circle-outline
+  grid_options:
+    columns: full
+    rows: auto
+- type: tile
+  entity: sensor.portfolio_architect_source_provider
+  name: Quellanbieter
+  tap_action:
+    action: more-info
+  grid_options:
+    columns: full
+    rows: auto
+  icon: mdi:file-table-box-multiple-outline
+- type: tile
+  entity: sensor.portfolio_architect_version
+  name: Version
+  tap_action:
+    action: more-info
+  grid_options:
+    columns: 6
+    rows: auto
+  icon: mdi:tag-outline
+- type: tile
+  entity: sensor.portfolio_architect_payload_schema_version
+  name: Schema
+  tap_action:
+    action: more-info
+  grid_options:
+    columns: 6
+    rows: auto
+  icon: mdi:file-code-outline

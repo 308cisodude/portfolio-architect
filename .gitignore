@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+dist/
+.env
+.DS_Store
+/PACKAGE-MANIFEST.json
+/SHA256SUMS

@@ -1,0 +1,72 @@
+{
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "creationInfo": {
+    "created": "2026-08-01T00:00:00Z",
+    "creators": [
+      "Tool: Portfolio Architect release tooling"
+    ]
+  },
+  "dataLicense": "CC0-1.0",
+  "documentNamespace": "urn:uuid:8d607869-1eb2-5d65-8dd3-20a15dfbc719",
+  "name": "Portfolio Architect v1.17.1 SBOM",
+  "packages": [
+    {
+      "SPDXID": "SPDXRef-Package-Integration",
+      "copyrightText": "Copyright 2026 Portfolio Architect contributors",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "name": "Portfolio Architect Home Assistant integration",
+      "supplier": "Organization: Portfolio Architect contributors",
+      "versionInfo": "1.17.1"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-Gateway",
+      "copyrightText": "Copyright 2026 Portfolio Architect contributors",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "name": "Portfolio Architect Gateway App",
+      "supplier": "Organization: Portfolio Architect contributors",
+      "versionInfo": "1.17.1"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-PythonBase",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://hub.docker.com/_/python",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:docker/python@3.14.6-alpine3.24?digest=sha256:26730869004e2b9c4b9ad09cab8625e81d256d1ce97e72df5520e806b1709f92",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "name": "Python Alpine base image",
+      "supplier": "Organization: Python Docker Official Images",
+      "versionInfo": "3.14.6-alpine3.24"
+    }
+  ],
+  "relationships": [
+    {
+      "relatedSpdxElement": "SPDXRef-Package-Integration",
+      "relationshipType": "DESCRIBES",
+      "spdxElementId": "SPDXRef-DOCUMENT"
+    },
+    {
+      "relatedSpdxElement": "SPDXRef-Package-Gateway",
+      "relationshipType": "DESCRIBES",
+      "spdxElementId": "SPDXRef-DOCUMENT"
+    },
+    {
+      "relatedSpdxElement": "SPDXRef-Package-PythonBase",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-Gateway"
+    }
+  ],
+  "spdxVersion": "SPDX-2.3"
+}

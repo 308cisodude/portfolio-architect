@@ -1,0 +1,458 @@
+{
+  "entity": {
+    "sensor": {
+      "current_allocation": {
+        "default": "mdi:chart-donut"
+      },
+      "target_allocation": {
+        "default": "mdi:target"
+      },
+      "target_position_coverage": {
+        "default": "mdi:view-grid-plus",
+        "range": {
+          "0": "mdi:view-grid-outline",
+          "75": "mdi:view-grid-plus-outline",
+          "100": "mdi:view-grid-plus"
+        }
+      },
+      "monthly_contribution": {
+        "default": "mdi:cash-plus"
+      },
+      "recommended_total": {
+        "default": "mdi:cash-check"
+      },
+      "unallocated_contribution": {
+        "default": "mdi:cash-minus"
+      },
+      "purchase_count": {
+        "default": "mdi:cart-outline"
+      },
+      "proposed_buy": {
+        "default": "mdi:basket-plus-outline"
+      },
+      "last_successful_refresh": {
+        "default": "mdi:clock-check-outline"
+      },
+      "payload_schema_version": {
+        "default": "mdi:code-json"
+      },
+      "version": {
+        "default": "mdi:tag-outline"
+      },
+      "policy_status": {
+        "default": "mdi:shield-check-outline",
+        "state": {
+          "compliant": "mdi:shield-check",
+          "attention": "mdi:shield-alert-outline",
+          "non_compliant": "mdi:shield-off-outline"
+        }
+      },
+      "policy_checks_evaluated": {
+        "default": "mdi:clipboard-check-multiple-outline"
+      },
+      "policy_error_findings": {
+        "default": "mdi:alert-octagon-outline"
+      },
+      "policy_warning_findings": {
+        "default": "mdi:alert-outline"
+      },
+      "accepted_exception_count": {
+        "default": "mdi:shield-lock-open-outline"
+      },
+      "optimisation_opportunity_count": {
+        "default": "mdi:lightbulb-on-outline"
+      },
+      "next_exception_review": {
+        "default": "mdi:calendar-clock-outline"
+      },
+      "policy_finding_metadata": {
+        "default": "mdi:shield-alert-outline",
+        "state": {
+          "error": "mdi:alert-octagon",
+          "warning": "mdi:alert",
+          "accepted_exception": "mdi:shield-lock-open",
+          "opportunity": "mdi:lightbulb-on-outline"
+        }
+      },
+      "policy_finding_ucits_required": {
+        "default": "mdi:shield-alert-outline",
+        "state": {
+          "error": "mdi:alert-octagon",
+          "warning": "mdi:alert",
+          "accepted_exception": "mdi:shield-lock-open",
+          "opportunity": "mdi:lightbulb-on-outline"
+        }
+      },
+      "policy_finding_accumulating_preferred": {
+        "default": "mdi:shield-alert-outline",
+        "state": {
+          "error": "mdi:alert-octagon",
+          "warning": "mdi:alert",
+          "accepted_exception": "mdi:shield-lock-open",
+          "opportunity": "mdi:lightbulb-on-outline"
+        }
+      },
+      "policy_finding_ireland_preferred": {
+        "default": "mdi:shield-alert-outline",
+        "state": {
+          "error": "mdi:alert-octagon",
+          "warning": "mdi:alert",
+          "accepted_exception": "mdi:shield-lock-open",
+          "opportunity": "mdi:lightbulb-on-outline"
+        }
+      },
+      "policy_finding_max_ter_pct": {
+        "default": "mdi:shield-alert-outline",
+        "state": {
+          "error": "mdi:alert-octagon",
+          "warning": "mdi:alert",
+          "accepted_exception": "mdi:shield-lock-open",
+          "opportunity": "mdi:lightbulb-on-outline"
+        }
+      },
+      "policy_finding_minimum_fund_size_eur": {
+        "default": "mdi:shield-alert-outline",
+        "state": {
+          "error": "mdi:alert-octagon",
+          "warning": "mdi:alert",
+          "accepted_exception": "mdi:shield-lock-open",
+          "opportunity": "mdi:lightbulb-on-outline"
+        }
+      },
+      "policy_finding_savings_plan_required": {
+        "default": "mdi:shield-alert-outline",
+        "state": {
+          "error": "mdi:alert-octagon",
+          "warning": "mdi:alert",
+          "accepted_exception": "mdi:shield-lock-open",
+          "opportunity": "mdi:lightbulb-on-outline"
+        }
+      },
+      "policy_finding_free_savings_plan_preferred": {
+        "default": "mdi:shield-alert-outline",
+        "state": {
+          "error": "mdi:alert-octagon",
+          "warning": "mdi:alert",
+          "accepted_exception": "mdi:shield-lock-open",
+          "opportunity": "mdi:lightbulb-on-outline"
+        }
+      },
+      "portfolio_value": {
+        "default": "mdi:finance"
+      },
+      "allocation_corridor": {
+        "default": "mdi:arrow-expand-horizontal"
+      },
+      "underweight_position_count": {
+        "default": "mdi:arrow-down-circle-outline"
+      },
+      "on_target_position_count": {
+        "default": "mdi:target"
+      },
+      "overweight_position_count": {
+        "default": "mdi:arrow-up-circle-outline"
+      },
+      "allocation_overview": {
+        "default": "mdi:chart-box-outline",
+        "state": {
+          "on_target": "mdi:check-circle-outline",
+          "drift_detected": "mdi:chart-bell-curve-cumulative"
+        }
+      },
+      "allocation_status": {
+        "default": "mdi:target",
+        "state": {
+          "underweight": "mdi:arrow-down-circle",
+          "on_target": "mdi:check-circle",
+          "overweight": "mdi:arrow-up-circle"
+        }
+      },
+      "allocation_drift": {
+        "default": "mdi:chart-bell-curve-cumulative"
+      },
+      "allocation_value_gap": {
+        "default": "mdi:scale-balance"
+      },
+      "overdue_exception_review_count": {
+        "default": "mdi:calendar-alert"
+      },
+      "oldest_overdue_exception_review": {
+        "default": "mdi:calendar-alert"
+      },
+      "last_exception_decision": {
+        "default": "mdi:calendar-check-outline"
+      },
+      "current_plan_value": {
+        "default": "mdi:briefcase-outline"
+      },
+      "outside_scope_value": {
+        "default": "mdi:shape-outline"
+      },
+      "current_plan_share": {
+        "default": "mdi:chart-donut"
+      },
+      "outside_scope_share": {
+        "default": "mdi:chart-donut-variant"
+      },
+      "whole_position_count": {
+        "default": "mdi:format-list-numbered"
+      },
+      "outside_scope_position_count": {
+        "default": "mdi:format-list-bulleted"
+      },
+      "whole_portfolio_allocation": {
+        "default": "mdi:chart-pie"
+      },
+      "holding_value": {
+        "default": "mdi:cash"
+      },
+      "strategy_scope": {
+        "default": "mdi:tag-outline"
+      },
+      "planned_execution": {
+        "default": "mdi:calendar-arrow-right"
+      },
+      "next_plan_review": {
+        "default": "mdi:calendar-refresh-outline"
+      },
+      "plan_budget": {
+        "default": "mdi:wallet-outline"
+      },
+      "contribution_per_execution": {
+        "default": "mdi:cash-fast"
+      },
+      "plan_frequency": {
+        "default": "mdi:calendar-sync-outline"
+      },
+      "plan_budget_basis": {
+        "default": "mdi:scale-balance"
+      },
+      "executions_per_period": {
+        "default": "mdi:calendar-multiselect"
+      },
+      "source_provider": {
+        "default": "mdi:file-table-box-multiple-outline",
+        "state": {
+          "comdirect_csv": "mdi:bank-outline",
+          "generic_csv": "mdi:file-delimited-outline",
+          "local_rest_json": "mdi:lan-connect"
+        }
+      },
+      "instrument_isin": {
+        "default": "mdi:identifier"
+      },
+      "gateway_status": {
+        "default": "mdi:lan-check",
+        "state": {
+          "ok": "mdi:lan-check",
+          "degraded": "mdi:lan-disconnect",
+          "unavailable": "mdi:lan-pending"
+        }
+      },
+      "gateway_last_refresh": {
+        "default": "mdi:cloud-refresh-outline"
+      },
+      "gateway_last_error": {
+        "default": "mdi:alert-circle-outline"
+      },
+      "gateway_snapshot_generated": {
+        "default": "mdi:database-clock-outline"
+      },
+      "gateway_operating_mode": {
+        "default": "mdi:database-sync-outline"
+      },
+      "gateway_snapshot_age": {
+        "default": "mdi:timer-sand"
+      },
+      "gateway_snapshot_expires_in": {
+        "default": "mdi:timer-alert-outline"
+      },
+      "gateway_consecutive_refresh_failures": {
+        "default": "mdi:counter"
+      },
+      "gateway_next_refresh": {
+        "default": "mdi:calendar-clock-outline"
+      },
+      "gateway_last_refresh_duration": {
+        "default": "mdi:timer-outline"
+      },
+      "gateway_last_refresh_trigger": {
+        "default": "mdi:database-refresh-outline"
+      },
+      "gateway_attention_reason": {
+        "default": "mdi:alert-decagram-outline"
+      },
+      "gateway_recommended_action": {
+        "default": "mdi:clipboard-text-search-outline"
+      },
+      "gateway_last_refresh_failure": {
+        "default": "mdi:clock-alert-outline"
+      },
+      "gateway_refresh_schedule": {
+        "default": "mdi:calendar-sync-outline"
+      },
+      "source_count": {
+        "default": "mdi:source-branch"
+      },
+      "source_conflict_count": {
+        "default": "mdi:source-branch-alert"
+      },
+      "position_sources": {
+        "default": "mdi:source-branch"
+      },
+      "policy_exception_detail": {
+        "default": "mdi:shield-half-full",
+        "state": {
+          "accepted_exception": "mdi:shield-lock-open"
+        }
+      },
+      "available_investment_reserve": {
+        "default": "mdi:piggy-bank-outline"
+      },
+      "remaining_investment_reserve": {
+        "default": "mdi:cash-clock"
+      },
+      "deferred_contribution": {
+        "default": "mdi:timer-sand"
+      },
+      "estimated_transaction_fees": {
+        "default": "mdi:cash-minus"
+      },
+      "estimated_cash_outlay": {
+        "default": "mdi:cash-sync"
+      },
+      "deferred_purchase_count": {
+        "default": "mdi:cart-clock"
+      },
+      "execution_policy": {
+        "default": "mdi:tune-variant"
+      },
+      "investment_reserve_source": {
+        "default": "mdi:bank-outline"
+      },
+      "execution_state": {
+        "default": "mdi:clipboard-text-clock-outline",
+        "state": {
+          "ready": "mdi:clipboard-check-outline",
+          "waiting_for_reserve": "mdi:cash-clock",
+          "deferred_for_cost_efficiency": "mdi:timer-sand",
+          "no_eligible_purchase": "mdi:clipboard-text-outline",
+          "reserve_unavailable": "mdi:bank-off-outline"
+        }
+      },
+      "additional_investment_cash_required": {
+        "default": "mdi:cash-plus"
+      }
+    },
+    "binary_sensor": {
+      "target_architecture_complete": {
+        "default": "mdi:alert-decagram",
+        "state": {
+          "on": "mdi:check-decagram",
+          "off": "mdi:alert-decagram"
+        }
+      },
+      "target_position_held": {
+        "default": "mdi:circle-outline",
+        "state": {
+          "on": "mdi:check-circle",
+          "off": "mdi:circle-outline"
+        }
+      },
+      "monthly_plan_ready": {
+        "default": "mdi:clipboard-alert-outline",
+        "state": {
+          "on": "mdi:clipboard-check-outline",
+          "off": "mdi:clipboard-alert-outline"
+        }
+      },
+      "source_healthy": {
+        "default": "mdi:database-alert-outline",
+        "state": {
+          "on": "mdi:database-check-outline",
+          "off": "mdi:database-alert-outline"
+        }
+      },
+      "data_fresh": {
+        "default": "mdi:clock-alert-outline",
+        "state": {
+          "on": "mdi:clock-check-outline",
+          "off": "mdi:clock-alert-outline"
+        }
+      },
+      "mandatory_controls_compliant": {
+        "default": "mdi:shield-alert-outline",
+        "state": {
+          "on": "mdi:shield-check",
+          "off": "mdi:shield-alert"
+        }
+      },
+      "portfolio_allocation_on_target": {
+        "default": "mdi:target",
+        "state": {
+          "on": "mdi:target",
+          "off": "mdi:target-variant"
+        }
+      },
+      "exception_review_overdue": {
+        "default": "mdi:calendar-check-outline",
+        "state": {
+          "on": "mdi:calendar-alert",
+          "off": "mdi:calendar-check-outline"
+        }
+      },
+      "review_schedule_configured": {
+        "default": "mdi:calendar-question-outline",
+        "state": {
+          "on": "mdi:calendar-check-outline",
+          "off": "mdi:calendar-question-outline"
+        }
+      },
+      "plan_review_due": {
+        "default": "mdi:calendar-clock-outline",
+        "state": {
+          "on": "mdi:calendar-alert",
+          "off": "mdi:calendar-clock-outline"
+        }
+      },
+      "gateway_reauthentication_required": {
+        "default": "mdi:account-key-outline",
+        "state": {
+          "on": "mdi:account-alert-outline",
+          "off": "mdi:account-check-outline"
+        }
+      },
+      "gateway_snapshot_integrity_verified": {
+        "default": "mdi:shield-alert-outline",
+        "state": {
+          "on": "mdi:shield-check-outline",
+          "off": "mdi:shield-alert-outline"
+        }
+      },
+      "gateway_using_last_known_good_snapshot": {
+        "default": "mdi:database-sync-outline",
+        "state": {
+          "on": "mdi:database-clock-outline",
+          "off": "mdi:database-check-outline"
+        }
+      },
+      "gateway_refresh_in_progress": {
+        "default": "mdi:database-refresh-outline"
+      },
+      "gateway_refresh_overdue": {
+        "default": "mdi:calendar-clock-outline",
+        "state": {
+          "on": "mdi:calendar-alert",
+          "off": "mdi:calendar-check-outline"
+        }
+      },
+      "gateway_attention_required": {
+        "default": "mdi:shield-check-outline",
+        "state": {
+          "on": "mdi:shield-alert-outline",
+          "off": "mdi:shield-check-outline"
+        }
+      }
+    }
+  }
+}

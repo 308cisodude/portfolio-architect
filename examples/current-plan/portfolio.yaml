@@ -1,0 +1,54 @@
+schema_version: 1
+portfolio:
+  id: long_term_etf
+  name: Long-term ETF Portfolio
+  currency: EUR
+  strategy: buy_only
+  monthly_contribution: 350
+  allocation:
+  - id: world
+    name: Xtrackers MSCI World UCITS ETF 1C
+    wkn: A1XB5U
+    isin: IE00BJ0KDQ92
+    target_pct: 45
+    buy_enabled: true
+  - id: emerging_markets
+    name: Xtrackers MSCI Emerging Markets UCITS ETF 1C
+    wkn: A12GVR
+    isin: IE00BTJRMP35
+    target_pct: 15
+    buy_enabled: true
+  - id: world_small_cap
+    name: Xtrackers MSCI World Small Cap UCITS ETF 1C
+    wkn: DBX0WG
+    isin: IE000F354Q61
+    target_pct: 15
+    buy_enabled: true
+  - id: healthcare
+    name: iShares Healthcare Innovation UCITS ETF USD Acc
+    wkn: A2ANH2
+    isin: IE00BYZK4776
+    target_pct: 8
+    buy_enabled: true
+  - id: ai_big_data
+    name: Xtrackers Artificial Intelligence & Big Data UCITS ETF 1C
+    wkn: A2N6LC
+    isin: IE00BGV5VN51
+    target_pct: 7
+    buy_enabled: true
+  - id: cybersecurity
+    name: WisdomTree Cybersecurity UCITS ETF USD Acc
+    wkn: A2QGAH
+    isin: IE00BLPK3577
+    target_pct: 5
+    buy_enabled: true
+  - id: robotics
+    name: iShares Automation & Robotics UCITS ETF USD Dist
+    wkn: A2ANH1
+    isin: IE00BYWZ0333
+    target_pct: 5
+    buy_enabled: true
+rebalancing:
+  corridor_pp: 1
+  minimum_trade: 20
+  rounding_step: 10

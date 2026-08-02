@@ -1,0 +1,83 @@
+rules:
+  action-setup:
+    status: exempt
+    comment: The integration exposes no Home Assistant service actions.
+  appropriate-polling: done
+  brands: done
+  common-modules: done
+  config-flow-test-coverage:
+  config-flow: done
+  dependency-transparency: done
+  docs-actions:
+    status: exempt
+    comment: The integration exposes no Home Assistant service actions.
+  docs-triggers:
+    status: exempt
+    comment: The integration exposes no device triggers.
+  docs-conditions:
+    status: exempt
+    comment: The integration exposes no device conditions.
+  docs-high-level-description: done
+  docs-installation-instructions: done
+  docs-removal-instructions: done
+  entity-event-setup:
+    status: exempt
+    comment: Entities do not subscribe directly to external events.
+  entity-unique-id: done
+  has-entity-name: done
+  runtime-data: done
+  test-before-configure: done
+  test-before-setup: done
+  unique-config-entry: done
+  action-exceptions:
+    status: exempt
+    comment: The integration exposes no Home Assistant service actions.
+  config-entry-unloading: done
+  docs-configuration-parameters: done
+  docs-installation-parameters: done
+  entity-unavailable: done
+  integration-owner:
+  log-when-unavailable:
+  parallel-updates:
+    status: exempt
+    comment: A single DataUpdateCoordinator serializes source refreshes.
+  reauthentication-flow:
+    status: exempt
+    comment: Bank reauthentication is isolated in the Gateway App; the local bearer token remains stable.
+  test-coverage:
+  devices: done
+  diagnostics: done
+  discovery-update-info:
+    status: exempt
+    comment: Sources are explicitly configured and are not network-discovered.
+  discovery:
+    status: exempt
+    comment: Sources are explicitly configured and are not network-discovered.
+  docs-data-update: done
+  docs-examples: done
+  docs-known-limitations: done
+  docs-supported-devices:
+    status: exempt
+    comment: The integration models portfolio data sources rather than physical devices.
+  docs-supported-functions: done
+  docs-troubleshooting: done
+  docs-use-cases: done
+  dynamic-devices:
+    status: exempt
+    comment: A config entry represents one logical portfolio service.
+  entity-category: done
+  entity-device-class: done
+  entity-disabled-by-default: done
+  entity-translations: done
+  exception-translations: done
+  icon-translations: done
+  reconfiguration-flow: done
+  repair-issues: done
+  stale-devices:
+    status: exempt
+    comment: A config entry represents one logical portfolio service.
+  async-dependency:
+    status: exempt
+    comment: The integration has no third-party Python requirement.
+  inject-websession: done
+  strict-typing:

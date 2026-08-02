@@ -1,0 +1,45 @@
+name: Bug report
+description: Report reproducible Portfolio Architect behaviour
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Do not include credentials, tokens, account identifiers, CSV exports, snapshots, or `.storage` contents.
+  - type: input
+    id: version
+    attributes:
+      label: Portfolio Architect version
+    validations:
+      required: true
+  - type: input
+    id: ha_version
+    attributes:
+      label: Home Assistant version
+    validations:
+      required: true
+  - type: dropdown
+    id: source
+    attributes:
+      label: Source adapter
+      options: [Local REST JSON, Comdirect CSV, Generic CSV]
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+    validations:
+      required: true

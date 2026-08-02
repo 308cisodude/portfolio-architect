@@ -1,0 +1,50 @@
+name: Portfolio Architect Gateway
+version: 1.17.1
+slug: portfolio_architect_gateway
+description: Read-only Comdirect gateway for Portfolio Architect with private investment-reserve
+  selection and live recovery diagnostics.
+url: https://developers.home-assistant.io/docs/apps/
+arch:
+- amd64
+- aarch64
+startup: services
+boot: auto
+init: true
+homeassistant: 2026.7.0
+ingress: true
+ingress_port: 8099
+ingress_stream: false
+panel_icon: mdi:shield-key-outline
+panel_title: Portfolio Gateway
+panel_admin: true
+host_network: false
+hassio_api: false
+homeassistant_api: false
+auth_api: false
+docker_api: false
+apparmor: true
+tmpfs: true
+backup: cold
+backup_exclude:
+- gateway/comdirect-session.json
+ports:
+  8787/tcp: null
+ports_description:
+  8787/tcp: Private Portfolio Architect REST endpoint; leave host mapping disabled
+watchdog: tcp://[HOST]:[PORT:8787]
+stage: stable
+options:
+  poll_interval_seconds: 900
+  max_cached_snapshot_age_seconds: 604800
+  request_timeout_seconds: 20
+  mfa_timeout_seconds: 180
+  health_endpoint_enabled: true
+  depot_ids: []
+schema:
+  poll_interval_seconds: int(300,86400)
+  max_cached_snapshot_age_seconds: int(0,2592000)
+  request_timeout_seconds: int(5,60)
+  mfa_timeout_seconds: int(30,600)
+  health_endpoint_enabled: bool
+  depot_ids:
+  - str

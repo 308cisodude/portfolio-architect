@@ -1,0 +1,29 @@
+schema_version = 1
+
+[server]
+# The container listens internally on all interfaces. compose.yaml restricts the
+# published host address through GATEWAY_LISTEN_IP and defaults to loopback.
+bind = "0.0.0.0"
+port = 8787
+api_token_file = "/run/secrets/portfolio_gateway_token"
+snapshot_file = "/data/portfolio.json"
+max_cached_snapshot_age_seconds = 604800
+health_endpoint_enabled = true
+# Optional native TLS. Configure both paths and mount the files read-only.
+# tls_cert_file = "/config/tls/fullchain.pem"
+# tls_key_file = "/config/tls/privkey.pem"
+
+[comdirect]
+base_url = "https://api.comdirect.de"
+client_id_file = "/run/secrets/comdirect_client_id"
+client_secret_file = "/run/secrets/comdirect_client_secret"
+username_file = "/run/secrets/comdirect_username"
+password_file = "/run/secrets/comdirect_password"
+session_file = "/data/comdirect-session.json"
+investment_account_file = "/data/investment-account.json"
+poll_interval_seconds = 900
+request_timeout_seconds = 20
+mfa_timeout_seconds = 180
+# Empty means every depot visible to the API. To restrict the source, list the
+# exact depot IDs after the first successful bootstrap.
+depot_ids = []
