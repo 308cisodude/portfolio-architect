@@ -51,18 +51,24 @@ def test_publication_metadata_and_docs_are_present() -> None:
     assert {package["versionInfo"] for package in sbom["packages"][:2]} == {"1.17.1"}
 
 
-def test_release_and_operational_tools_are_executable() -> None:
-    tools = [
+def test_release_and_operational_tools_have_expected_modes() -> None:
+    python_tools = [
         "tools/build_release.py",
         "tools/verify_release.py",
+        "tools/configure_publication.py",
+        "tools/check_publication.py",
+    ]
+    shell_tools = [
         "tools/release_check.sh",
         "tools/create_backup.sh",
         "tools/rollback_home_assistant.sh",
         "tools/prune_backups.sh",
-        "tools/configure_publication.py",
-        "tools/check_publication.py",
     ]
-    for relative in tools:
+    for relative in python_tools:
+        path = ROOT / relative
+        assert path.is_file()
+        assert path.read_text(encoding="utf-8").startswith("#!/usr/bin/env python3")
+    for relative in shell_tools:
         path = ROOT / relative
         assert path.is_file()
         assert path.stat().st_mode & 0o100

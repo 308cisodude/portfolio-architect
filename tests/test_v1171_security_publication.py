@@ -18,30 +18,54 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def test_unconfigured_source_is_fail_closed_without_invented_urls() -> None:
-    manifest = json.loads(
-        (ROOT / "custom_components/portfolio_architect/manifest.json").read_text()
+def test_unconfigured_source_is_fail_closed_without_invented_urls(
+    tmp_path: Path,
+) -> None:
+    target = tmp_path / "unconfigured-repository"
+    shutil.copytree(
+        ROOT,
+        target,
+        ignore=shutil.ignore_patterns("dist", ".pytest_cache", "__pycache__", "*.pyc"),
     )
-    publication = json.loads((ROOT / "publication.json").read_text())
-    assert publication == {
+
+    manifest_path = target / "custom_components/portfolio_architect/manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["codeowners"] = []
+    manifest.pop("documentation", None)
+    manifest.pop("issue_tracker", None)
+    manifest_path.write_text(
+        json.dumps(manifest, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+    publication = {
         "schema": 1,
         "configured": False,
         "github_repository": "",
         "codeowners": [],
     }
-    assert manifest["codeowners"] == []
-    assert "documentation" not in manifest
-    assert "issue_tracker" not in manifest
+    (target / "publication.json").write_text(
+        json.dumps(publication, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    (target / ".github/CODEOWNERS").unlink(missing_ok=True)
+
     subprocess.run(
-        ["python", str(ROOT / "tools/check_publication.py")],
-        cwd=ROOT,
+        ["python", str(target / "tools/check_publication.py"), "--root", str(target)],
+        cwd=target,
         check=True,
         capture_output=True,
         text=True,
     )
     strict = subprocess.run(
-        ["python", str(ROOT / "tools/check_publication.py"), "--strict"],
-        cwd=ROOT,
+        [
+            "python",
+            str(target / "tools/check_publication.py"),
+            "--root",
+            str(target),
+            "--strict",
+        ],
+        cwd=target,
         check=False,
         capture_output=True,
         text=True,
