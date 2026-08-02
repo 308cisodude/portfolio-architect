@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import shutil
 import subprocess
 import zipfile
@@ -172,10 +173,16 @@ def test_publication_workflows_use_immutable_dependencies() -> None:
     assert workflows.count("runs-on: ubuntu-24.04") == 4
     assert "ghcr.io/hacs/action@sha256:a713e16" in hacs
     assert "ghcr.io/home-assistant/hassfest@sha256:5bfa5a99" in hassfest
-    assert "actions/checkout@11d5960a326750d5838078e36cf38b85af677262" in workflows
-    assert "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065" in workflows
-    assert "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02" in validate
-    assert "actions/attest@508db95dd578ae2727ebd6217d5ba78e4fbda05d" in release
+    for action, source in (
+        ("actions/checkout", workflows),
+        ("actions/setup-python", workflows),
+        ("actions/upload-artifact", validate),
+        ("actions/attest", release),
+    ):
+        assert re.search(
+            rf"uses:\s*{re.escape(action)}@[0-9a-f]{{40}}(?:\s|#|$)",
+            source,
+        ), f"{action} must be pinned to a full commit SHA"
     assert "tools/check_publication.py --strict" in release
     assert "--draft" in release
     assert "gh release upload" in release
@@ -190,11 +197,13 @@ def test_publication_checker_rejects_mutable_workflow_dependency(tmp_path: Path)
         ignore=shutil.ignore_patterns("dist", ".pytest_cache", "__pycache__", "*.pyc"),
     )
     workflow = target / ".github/workflows/validate.yml"
-    text = workflow.read_text(encoding="utf-8").replace(
-        "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+    text, replacements = re.subn(
+        r"actions/checkout@[0-9a-f]{40}",
         "actions/checkout@main",
-        1,
+        workflow.read_text(encoding="utf-8"),
+        count=1,
     )
+    assert replacements == 1
     workflow.write_text(text, encoding="utf-8")
     result = subprocess.run(
         ["python", str(target / "tools/check_publication.py"), "--root", str(target)],
