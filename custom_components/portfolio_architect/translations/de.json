@@ -908,6 +908,51 @@
           }
         }
       },
+      "plan_change": {
+        "name": "Änderungen seit letzter Auswertung",
+        "state": {
+          "baseline_established": "Ausgangsbasis gespeichert",
+          "unchanged": "Keine wesentliche Änderung",
+          "allocation_changed": "Allokation geändert",
+          "recommendation_changed": "Empfehlung geändert",
+          "execution_state_changed": "Ausführungsstatus geändert",
+          "policy_changed": "Richtlinienstatus geändert",
+          "source_changed": "Quelle geändert",
+          "multiple_changes": "Mehrere Änderungen"
+        },
+        "state_attributes": {
+          "previous_evaluated_at": {
+            "name": "Vorherige Auswertung"
+          },
+          "current_evaluated_at": {
+            "name": "Aktuelle Auswertung"
+          },
+          "change_categories": {
+            "name": "Änderungskategorien"
+          },
+          "position_change_count": {
+            "name": "Geänderte Positionen"
+          },
+          "allocation_change_count": {
+            "name": "Allokationsänderungen"
+          },
+          "recommendation_change_count": {
+            "name": "Empfehlungsänderungen"
+          },
+          "position_changes": {
+            "name": "Positionsänderungen"
+          },
+          "execution_change": {
+            "name": "Ausführungsänderung"
+          },
+          "policy_change": {
+            "name": "Richtlinienänderung"
+          },
+          "source_change": {
+            "name": "Quellenänderung"
+          }
+        }
+      },
       "allocation_status": {
         "name": "Allokationsstatus {fund_name}",
         "state": {

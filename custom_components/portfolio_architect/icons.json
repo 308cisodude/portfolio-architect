@@ -159,6 +159,19 @@
           "drift_detected": "mdi:chart-bell-curve-cumulative"
         }
       },
+      "plan_change": {
+        "default": "mdi:delta",
+        "state": {
+          "baseline_established": "mdi:timeline-check-outline",
+          "unchanged": "mdi:equal",
+          "allocation_changed": "mdi:chart-donut-variant",
+          "recommendation_changed": "mdi:clipboard-edit-outline",
+          "execution_state_changed": "mdi:state-machine",
+          "policy_changed": "mdi:shield-edit-outline",
+          "source_changed": "mdi:source-branch",
+          "multiple_changes": "mdi:delta"
+        }
+      },
       "allocation_status": {
         "default": "mdi:target",
         "state": {

@@ -908,6 +908,51 @@
           }
         }
       },
+      "plan_change": {
+        "name": "Changes since previous evaluation",
+        "state": {
+          "baseline_established": "Baseline established",
+          "unchanged": "No material change",
+          "allocation_changed": "Allocation changed",
+          "recommendation_changed": "Recommendation changed",
+          "execution_state_changed": "Execution state changed",
+          "policy_changed": "Policy changed",
+          "source_changed": "Source changed",
+          "multiple_changes": "Multiple changes"
+        },
+        "state_attributes": {
+          "previous_evaluated_at": {
+            "name": "Previous evaluation"
+          },
+          "current_evaluated_at": {
+            "name": "Current evaluation"
+          },
+          "change_categories": {
+            "name": "Change categories"
+          },
+          "position_change_count": {
+            "name": "Changed positions"
+          },
+          "allocation_change_count": {
+            "name": "Allocation changes"
+          },
+          "recommendation_change_count": {
+            "name": "Recommendation changes"
+          },
+          "position_changes": {
+            "name": "Position changes"
+          },
+          "execution_change": {
+            "name": "Execution change"
+          },
+          "policy_change": {
+            "name": "Policy change"
+          },
+          "source_change": {
+            "name": "Source change"
+          }
+        }
+      },
       "allocation_status": {
         "name": "{fund_name} allocation status",
         "state": {

@@ -115,6 +115,28 @@
       grid_options:
         columns: full
         rows: auto
+    - type: conditional
+      conditions:
+      - condition: state
+        entity: sensor.portfolio_architect_plan_change
+        state_not: baseline_established
+      - condition: state
+        entity: sensor.portfolio_architect_plan_change
+        state_not: unchanged
+      - condition: state
+        entity: sensor.portfolio_architect_plan_change
+        state_not: unavailable
+      card:
+        type: tile
+        entity: sensor.portfolio_architect_plan_change
+        name: Änderungen seit letzter Auswertung
+        tap_action:
+          action: more-info
+        color: blue
+        icon: mdi:delta
+      grid_options:
+        columns: full
+        rows: auto
     - type: tile
       entity: sensor.portfolio_architect_plan_budget
       name: Planbudget

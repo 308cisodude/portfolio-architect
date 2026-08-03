@@ -62,6 +62,30 @@ Version 1.13.1 clarifies that this aggregate entity is a data contract, not a
 second reference-dashboard summary. The bilingual dashboard continues to use the
 established native per-position and plan entities.
 
+## Plan delta and decision trace
+
+Version 1.18.0 adds a Home Assistant-side temporal adapter after complete payload
+validation. It snapshots only the bounded provider-neutral fields needed to compare
+the two most recent fresh evaluations. The source payload and Gateway contracts do
+not change.
+
+```text
+validated PortfolioData
+          ↓
+bounded evaluation snapshot
+          ↓
+private two-snapshot history
+          ↓
+deterministic PlanDelta
+          ↓
+sensor.portfolio_architect_plan_change
+```
+
+REST last-known-good replay is outside this advancement path. A degraded refresh
+can republish the validated cached portfolio, but it cannot become a new decision
+baseline. Trace storage is non-authoritative: persistence failure is logged and
+never changes the portfolio result. See `docs/DECISION-TRACE.md`.
+
 ## Native dashboard presentation boundary
 
 Version 1.14.0 keeps long policy-exception rationale out of dashboard-triggered

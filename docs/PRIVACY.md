@@ -38,3 +38,18 @@ Architect REST snapshot may contain only:
 IBANs, account numbers, account IDs, account-holder names, account labels,
 transactions, credit limits, and raw balance documents are not exposed to Home
 Assistant entities, diagnostics, logs, or release fixtures.
+
+## Decision-trace privacy
+
+The Home Assistant integration keeps exactly two private provider-neutral decision
+snapshots for Plan Delta & Decision Trace. The snapshots contain stable plan fund
+IDs, fund display names, allocation status and drift, bounded recommendation and
+execution values, policy finding keys/states, source counts, and evaluation
+timestamps.
+
+They do not contain ISINs, WKNs, source file paths, raw CSV/PDF/REST documents,
+account identifiers, IBANs, transaction history, credentials, OAuth material, or
+Gateway session data. Detailed plan-change attributes are excluded from Home
+Assistant recorder history; only the bounded enum state may be retained according to
+the user's recorder policy. Diagnostics omit monetary trace values and expose only
+the state, timestamps, categories, counts, and changed fund IDs.

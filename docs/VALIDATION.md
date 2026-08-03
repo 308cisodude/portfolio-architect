@@ -1,4 +1,4 @@
-# v1.17.2 validation
+# v1.18.0 validation
 
 The release pipeline validates:
 
@@ -23,6 +23,9 @@ The release pipeline validates:
 - tag-to-version and release-workflow contracts;
 - supported-version and security-reporting policy files;
 - native dashboard contracts and all previously validated v1.16.3 behavior;
+- strict two-evaluation decision-trace serialization, material-change thresholds,
+  last-known-good replay exclusion, bilingual enum translations, and dashboard
+  visibility contracts;
 - Gateway/integration version alignment and App Dockerfile build label;
 - reproducible release builds, package manifests, SHA-256 files, SPDX 2.3
   metadata, ZIP integrity, and archive path safety.
