@@ -229,6 +229,9 @@ async def async_migrate_entry(
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Portfolio Architect from a config entry."""
     coordinator = PortfolioArchitectCoordinator(hass, entry)
+    # Restore the bounded decision trace before any source refresh. It contains
+    # only the two most recent provider-neutral evaluations.
+    await coordinator.async_restore_decision_trace()
     # Restore one private, validated REST calculation before contacting the
     # Gateway so reloads and Home Assistant restarts remain serviceable during
     # a complete Gateway outage. The live refresh below replaces it only after

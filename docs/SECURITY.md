@@ -340,3 +340,18 @@ cache.
 - the manual drop-in must contain the exact `custom_components/portfolio_architect/` wrapper;
 - release verification compares every payload file and SHA-256 after normalizing the manual archive prefix; and
 - a regression test requires the verifier to reject the prior nested-HACS layout.
+
+## v1.18.0 decision-trace storage controls
+
+- exactly two provider-neutral validated evaluations are retained in private,
+  atomic Home Assistant storage;
+- the document is size-bounded, carries a canonical SHA-256 integrity value, and
+  strict field validation rejects unknown, malformed, duplicated, non-finite, or
+  non-deterministically ordered content;
+- the trace excludes credentials, account identifiers, ISIN/WKN values, source
+  paths, raw source records, and transaction history;
+- REST last-known-good replay never advances the trace;
+- trace persistence is non-authoritative and cannot suppress a valid portfolio
+  update;
+- detailed trace attributes are excluded from recorder history; and
+- diagnostics intentionally omit monetary trace deltas.

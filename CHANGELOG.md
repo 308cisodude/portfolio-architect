@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.18.0
+
+- Adds a private two-evaluation Plan Delta & Decision Trace.
+- Adds `sensor.portfolio_architect_plan_change` with bounded translated states and stable per-position reason codes.
+- Suppresses drift-only changes below 0.10 pp and non-zero purchase changes below EUR 1.00 while always reporting status transitions and additions/removals.
+- Prevents REST last-known-good replay from advancing the decision trace.
+- Adds a native bilingual conditional dashboard tile and privacy-conscious diagnostics.
+- Protects the private history with canonical SHA-256 validation and excludes detailed trace attributes from recorder history.
+- Preserves payload schema 8, REST schema 1, Gateway health schema 5, allocation, policy, execution, and existing entity contracts.
+
 ## 1.17.2
 
 - Fixes the HACS release asset so integration files are stored directly at the ZIP root.

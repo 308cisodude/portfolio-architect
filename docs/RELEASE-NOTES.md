@@ -1,57 +1,64 @@
-# Portfolio Architect 1.17.2
+# Portfolio Architect 1.18.0
 
-Version 1.17.2 repairs the HACS release-asset layout defect in v1.17.1. The
-v1.17.1 `portfolio_architect.zip` was byte-identical to the manual Home Assistant
-drop-in and therefore contained an additional
-`custom_components/portfolio_architect/` wrapper. HACS had already selected the
-integration directory as its extraction target, so that wrapper produced a
-nested, ignored copy instead of replacing the active integration files.
+Version 1.18.0 adds **Plan Delta & Decision Trace**. Portfolio Architect can now
+explain what materially changed between the two most recent fresh, validated
+portfolio evaluations without inferring trades or retaining transaction history.
 
-The integration runtime, portfolio calculations, cost-aware execution, entities,
-dashboard behavior, source schemas, Gateway protocols, and v1.17.1 security
-hardening are otherwise unchanged.
+## Two-evaluation decision trace
 
-## Correct channel-specific archive layouts
+- Adds `sensor.portfolio_architect_plan_change` as a translated bounded enum.
+- Retains exactly the previous and current provider-neutral evaluation snapshots
+  in private, atomic Home Assistant storage with canonical SHA-256 validation.
+- Restores the last trace across integration reloads and Home Assistant restarts.
+- Does not advance the trace when the REST source falls back to the existing
+  Home Assistant last-known-good calculation.
 
-- `portfolio_architect.zip`, the HACS release asset, now contains the integration
-  files directly at the ZIP root: `manifest.json`, `__init__.py`, `const.py`,
-  `engine/`, `translations/`, `brand/`, and the remaining integration files.
-- `portfolio-architect-v1.17.2-ha-dropin.zip`, the manual installation archive,
-  deliberately retains the `custom_components/portfolio_architect/` wrapper so
-  it can be extracted over the Home Assistant `/config` directory.
-- The two archives contain the same integration payload after normalizing that
-  channel-specific prefix, but they are intentionally no longer byte-identical.
+## Deterministic change classification
 
-## Regression prevention
+The trace distinguishes:
 
-- The release builder now stages the HACS and manual drop-in archives
-  independently.
-- Release verification rejects a HACS asset containing a `custom_components/`
-  prefix or missing a root-level integration manifest.
-- Verification rejects a manual drop-in without the expected wrapper.
-- Verification compares every integration file and SHA-256 between both archives
-  after prefix normalization.
-- An executable regression test deliberately substitutes the manual drop-in for
-  the HACS asset and requires verification to fail.
+- allocation changes;
+- recommendation changes;
+- execution-state or investment-cash changes;
+- policy changes;
+- source-composition changes; and
+- combined changes.
 
-## Recovery after an attempted v1.17.1 HACS download
+Per-position attributes expose stable reason codes such as
+`entered_target_corridor`, `left_target_corridor`,
+`proposed_purchase_removed`, and `recommendation_reason_changed`.
 
-Before downloading v1.17.2, remove only the incorrectly nested directory:
+To avoid refresh noise, drift-only changes below 0.10 percentage points and
+non-zero purchase changes below EUR 1.00 are not reported as material. Status
+transitions and additions/removals remain visible regardless of those thresholds.
 
-```bash
-rm -rf /config/custom_components/portfolio_architect/custom_components
-```
+## Native bilingual dashboard
 
-Do not remove the outer `/config/custom_components/portfolio_architect`
-directory. Download v1.17.2 in HACS, verify that the active root-level version
-markers report `1.17.2`, confirm that only one Portfolio Architect
-`manifest.json` exists, and then restart Home Assistant.
+The supplied English/German dashboard adds one full-width conditional tile named
+**Changes since previous evaluation / Änderungen seit letzter Auswertung**. The
+tile remains hidden for the initial baseline, unchanged evaluations, and
+unavailable state. It opens the native more-info dialog; no custom card or
+JavaScript dependency is introduced.
+
+## Privacy and safety
+
+- No raw source document, account identifier, ISIN, WKN, credential, OAuth
+  material, or transaction history is stored in the trace.
+- The trace never claims that a recommended order was executed.
+- Persistence is non-authoritative: a trace-storage failure cannot suppress or
+  alter the validated portfolio calculation.
+- Detailed trace attributes are excluded from recorder history; only the bounded
+  enum state is eligible for normal state-history recording.
+- Diagnostics expose only trace state, timestamps, categories, counts, and stable
+  fund IDs; monetary deltas remain in the current entity state, not diagnostics.
 
 ## Compatibility
 
-- No configuration migration.
-- No payload, REST portfolio, Gateway health, allocation-overview, or cost-model
-  schema change.
-- No entity-ID or unique-ID change.
-- No dashboard replacement required.
-- Gateway App 1.16.1 and later remain protocol-compatible.
+- No configuration-entry migration.
+- Payload schema 8, REST schema 1, and Gateway health schema 5 remain unchanged.
+- No allocation corridor, policy, or cost-model change.
+- Existing entity IDs and unique IDs remain unchanged; one new entity is added.
+- Gateway App 1.16.1 and later remain protocol-compatible. The 1.18.0 Gateway
+  package aligns release metadata only.
+- Replacing the dashboard YAML is optional for runtime compatibility and required
+  only to show the new conditional trace tile.

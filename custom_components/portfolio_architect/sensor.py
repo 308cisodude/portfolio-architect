@@ -12,7 +12,7 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import PERCENTAGE, EntityCategory, UnitOfTime
+from homeassistant.const import MATCH_ALL, PERCENTAGE, EntityCategory, UnitOfTime
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
@@ -29,6 +29,7 @@ from .const import (
     VERSION,
 )
 from .allocation_overview import allocation_overview_state, build_allocation_overview
+from .decision_trace import PLAN_CHANGE_STATES
 from .coordinator import PortfolioArchitectCoordinator
 from .engine.aggregation import PROVIDER_MULTI_SOURCE
 from .engine.importers import PROVIDER_COMDIRECT, PROVIDER_DKB, PROVIDER_GENERIC_CSV
@@ -67,6 +68,7 @@ async def async_setup_entry(
             PortfolioOnTargetCountSensor(coordinator, entry),
             PortfolioOverweightCountSensor(coordinator, entry),
             PortfolioAllocationOverviewSensor(coordinator, entry),
+            PortfolioPlanChangeSensor(coordinator, entry),
             PortfolioPlanBudgetSensor(coordinator, entry),
             PortfolioPlanFrequencySensor(coordinator, entry),
             PortfolioPlanBudgetBasisSensor(coordinator, entry),
@@ -487,6 +489,41 @@ class PortfolioAllocationOverviewSensor(
         if not self.available or self.coordinator.data is None:
             return base
         return {**build_allocation_overview(self.coordinator.data), **base}
+
+
+class PortfolioPlanChangeSensor(
+    CoordinatorEntity[PortfolioArchitectCoordinator], SensorEntity
+):
+    """Changes between the two most recent validated portfolio evaluations."""
+
+    _attr_has_entity_name = True
+    _attr_translation_key = "plan_change"
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_options = list(PLAN_CHANGE_STATES)
+    _unrecorded_attributes = frozenset({MATCH_ALL})
+
+    def __init__(self, coordinator: PortfolioArchitectCoordinator, entry: ConfigEntry) -> None:
+        super().__init__(coordinator, context="plan_change")
+        source_key = entry.unique_id or entry.entry_id
+        self._attr_unique_id = f"{source_key}_plan_change"
+        self._attr_device_info = _device_info(source_key)
+
+    @property
+    def suggested_object_id(self) -> str:
+        return "plan_change"
+
+    @property
+    def native_value(self) -> str | None:
+        if not self.available or self.coordinator.plan_delta is None:
+            return None
+        return self.coordinator.plan_delta.state
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        base = _source_attributes(self.coordinator)
+        if not self.available or self.coordinator.plan_delta is None:
+            return base
+        return {**self.coordinator.plan_delta.attributes, **base}
 
 
 class _PortfolioMonthlyMoneySensor(

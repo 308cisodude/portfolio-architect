@@ -1,8 +1,8 @@
 # Changelog
 
-## 1.17.2
+## 1.18.0
 
-- Aligns Gateway App package metadata with the Portfolio Architect v1.17.2 HACS packaging hotfix.
+- Aligns Gateway App package metadata with the Portfolio Architect v1.18.0 Plan Delta & Decision Trace release.
 - Gateway runtime and REST contracts remain unchanged from v1.16.0.
 
 ## 1.17.1

@@ -189,6 +189,32 @@ async def async_get_config_entry_diagnostics(
             sum(1 for holding in data.holdings.values() if not holding.in_current_plan)
             if data is not None else 0
         ),
+        "decision_trace": (
+            {
+                "state": coordinator.plan_delta.state,
+                "previous_evaluated_at": coordinator.plan_delta.attributes.get(
+                    "previous_evaluated_at"
+                ),
+                "current_evaluated_at": coordinator.plan_delta.attributes.get(
+                    "current_evaluated_at"
+                ),
+                "change_categories": list(
+                    coordinator.plan_delta.attributes.get("change_categories", [])
+                ),
+                "position_change_count": coordinator.plan_delta.attributes.get(
+                    "position_change_count", 0
+                ),
+                "changed_fund_ids": [
+                    item.get("fund_id")
+                    for item in coordinator.plan_delta.attributes.get(
+                        "position_changes", []
+                    )
+                    if isinstance(item, dict) and isinstance(item.get("fund_id"), str)
+                ],
+            }
+            if coordinator.plan_delta is not None
+            else None
+        ),
         "monthly_plan": (
             {
                 # Financial amounts are intentionally omitted from diagnostics.

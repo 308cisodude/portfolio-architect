@@ -122,3 +122,13 @@ The calculation engine's `Decimal` values are converted to exact decimal strings
 before JSON storage and fully revalidated after restoration. This makes the
 cache survive integration reloads and Home Assistant restarts as originally
 intended by v1.10.1.
+
+## v1.18.0 temporal explainability
+
+Version 1.18.0 adds one additive enum entity and a private two-evaluation trace.
+It does not alter source payload schema 8, REST schema 1, Gateway health schema 5,
+the allocation corridor, policy decisions, or cost-aware execution. The supplied
+dashboard adds only a conditional native tile; older dashboards remain valid.
+
+The trace is advisory and non-authoritative. A failure to restore or persist it
+does not make portfolio data unavailable and does not change a recommendation.

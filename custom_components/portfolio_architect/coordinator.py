@@ -71,6 +71,15 @@ from .const import (
     SOURCE_TYPE_LOCAL_FILES,
     SOURCE_TYPE_REST_API,
 )
+from .decision_trace import (
+    DecisionTraceError,
+    EvaluationHistory,
+    PlanDelta,
+    advance_history,
+    build_evaluation_snapshot,
+    compare_history,
+)
+from .decision_trace_store import DecisionTraceStore
 from .engine import calculate_portfolio_payload_from_positions
 from .engine.aggregation import (
     AggregationResult,
@@ -177,6 +186,9 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
         self._last_known_good_payload: dict[str, Any] | None = None
         self._last_known_good_configuration_sha256: str | None = None
         self._using_home_assistant_last_known_good = False
+        self._decision_trace_store = DecisionTraceStore(hass, entry.entry_id)
+        self._decision_history = EvaluationHistory()
+        self.plan_delta: PlanDelta | None = None
         self._home_assistant_cache_failure_count = 0
         self._home_assistant_cache_last_failure_at: datetime | None = None
         self._gateway_reauth_issue_id = f"gateway_reauthentication_required_{entry.entry_id}"
@@ -229,6 +241,15 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
         self.plan_override = _plan_override_from_entry(entry)
         self.schedule_config = _schedule_config_from_entry(entry)
 
+    async def async_restore_decision_trace(self) -> bool:
+        """Restore the bounded two-evaluation trace before the first refresh."""
+        history = await self._decision_trace_store.async_load()
+        if history is None:
+            return False
+        self._decision_history = history
+        self.plan_delta = compare_history(history)
+        _LOGGER.info("Restored Portfolio Architect decision trace from private storage")
+        return self.plan_delta is not None
 
     @property
     def using_home_assistant_last_known_good(self) -> bool:
@@ -754,10 +775,48 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
     async def _async_update_data(self) -> PortfolioData:
         """Calculate or read the configured source and validate its payload."""
         if self.source_type == SOURCE_TYPE_LOCAL_FILES:
-            return await self._async_update_local_files()
-        if self.source_type == SOURCE_TYPE_REST_API:
-            return await self._async_update_rest_api()
-        return self._update_legacy_sensor()
+            data = await self._async_update_local_files()
+        elif self.source_type == SOURCE_TYPE_REST_API:
+            data = await self._async_update_rest_api()
+        else:
+            data = self._update_legacy_sensor()
+
+        # A degraded REST refresh deliberately republishes the already stored
+        # last-known-good calculation. It must never advance the decision trace
+        # or masquerade as a new portfolio evaluation.
+        if not self._using_home_assistant_last_known_good:
+            await self._async_record_decision_trace(data)
+        return data
+
+    async def _async_record_decision_trace(self, data: PortfolioData) -> None:
+        """Advance and persist the two-evaluation trace after a fresh validation."""
+        evaluated_at = (
+            data.runtime.generated_at
+            or self.last_valid_source_updated
+            or self.source_last_updated
+            or dt_util.utcnow()
+        )
+        try:
+            snapshot = build_evaluation_snapshot(
+                data,
+                evaluated_at=evaluated_at,
+                source_provider=self.source_provider,
+                source_count=self.source_count,
+                source_conflict_count=self.source_conflict_count,
+            )
+            history, changed = advance_history(self._decision_history, snapshot)
+            if not changed:
+                return
+            self._decision_history = history
+            self.plan_delta = compare_history(history)
+            await self._decision_trace_store.async_save(history)
+        except DecisionTraceError as err:
+            _LOGGER.warning("Could not derive Portfolio Architect decision trace: %s", err)
+        except Exception as err:  # Trace persistence is non-authoritative.
+            _LOGGER.warning(
+                "Could not update Portfolio Architect decision-trace storage: %s",
+                type(err).__name__,
+            )
 
     async def _async_update_local_files(self) -> PortfolioData:
         """Calculate one portfolio snapshot from confined local files."""
