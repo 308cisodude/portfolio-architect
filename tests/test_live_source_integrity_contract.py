@@ -15,12 +15,12 @@ def test_component_versions_are_compatible() -> None:
     engine = (COMPONENT / "engine" / "__init__.py").read_text()
     app = yaml.safe_load((APP / "config.yaml").read_text())
     gateway = (APP / "src" / "portfolio_architect_gateway" / "__init__.py").read_text()
-    assert manifest["version"] == "1.18.0"
-    assert 'VERSION: Final = "1.18.0"' in const
-    assert '__version__ = "1.18.0"' in engine
-    assert app["version"] == "1.18.0"
-    assert '__version__ = "1.18.0"' in gateway
-    assert app["stage"] == "stable"
+    assert manifest["version"] == "1.19.0-rc1"
+    assert 'VERSION: Final = "1.19.0-rc1"' in const
+    assert '__version__ = "1.19.0-rc1"' in engine
+    assert app["version"] == "1.19.0-rc1"
+    assert '__version__ = "1.19.0-rc1"' in gateway
+    assert app["stage"] == "experimental"
 
 
 def test_integrity_headers_and_versioned_health_are_implemented() -> None:

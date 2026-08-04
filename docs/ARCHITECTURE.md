@@ -146,3 +146,20 @@ clamped at zero, and omits the reserve if either field is unavailable or invalid
 
 The reserve is advisory input only. Neither the Gateway nor the Home Assistant
 integration contains an order, transfer, or payment operation.
+
+## v1.19.0-rc1 experimental fee-probe adapter
+
+The probe is an App-Ingress-only adapter beside, not inside, the scheduled Gateway
+snapshot pipeline. The App controller exposes two fixed operations to
+`ComdirectClient`: one instrument read and one ex-ante cost calculation. The
+transport owns the exact API paths; no caller can supply a path or arbitrary HTTP
+method.
+
+The controller maps private depot and venue identifiers to random process-local
+browser tokens. A cost request can use only a depot discovered in the current
+process and a venue returned by the immediately retained instrument probe. The
+public portfolio server and health document do not import or reference probe state.
+
+Probe results are bounded, sanitized value objects kept in memory. The architecture
+deliberately does not add a new public Gateway schema, Home Assistant coordinator
+source, portfolio payload field, or persistence format.

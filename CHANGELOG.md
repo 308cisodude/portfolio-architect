@@ -1,14 +1,25 @@
 # Changelog
 
-## 1.18.0
+## 1.19.0-rc1
 
-- Adds a private two-evaluation Plan Delta & Decision Trace.
-- Adds `sensor.portfolio_architect_plan_change` with bounded translated states and stable per-position reason codes.
-- Suppresses drift-only changes below 0.10 pp and non-zero purchase changes below EUR 1.00 while always reporting status transitions and additions/removals.
-- Prevents REST last-known-good replay from advancing the decision trace.
-- Adds a native bilingual conditional dashboard tile and privacy-conscious diagnostics.
-- Protects the private history with canonical SHA-256 validation and excludes detailed trace attributes from recorder history.
-- Preserves payload schema 8, REST schema 1, Gateway health schema 5, allocation, policy, execution, and existing entity contracts.
+- Adds an admin-only instrument probe for documented `fundDistribution`, opaque
+  `fundFlags`, and bounded eligible-venue metadata.
+- Adds one hard-coded, non-submitting POST operation for
+  `/api/brokerage/v3/orders/costindicationexante`.
+- Keeps order prevalidation, validation, quote/TAN, submission, modification,
+  cancellation, and generic brokerage POST capability absent.
+- Sanitizes probe evidence and keeps internal depot/venue identifiers behind
+  short-lived random Ingress tokens.
+- Keeps probe state process-local and outside REST portfolio schema 1, Gateway
+  health schema 5, Home Assistant entities, diagnostics, and scheduled refreshes.
+- Adds opt-in fee-verification dates/sources with an informational stale-review
+  policy finding; no probe result changes configured fees automatically.
+- Adds a bilingual built-in Markdown block with selectable ISINs for current
+  recommended purchases.
+- Marks the Gateway App package experimental and publishes the release as a
+  prerelease pending live Comdirect acceptance.
+- Preserves v1.18.0 Plan Delta & Decision Trace and all established portfolio,
+  allocation, execution, entity, and schema contracts.
 
 ## 1.17.2
 

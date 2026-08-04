@@ -1,3 +1,4 @@
+views:
 - title: DE
   path: portfolio-architekt
   type: sections
@@ -248,6 +249,22 @@
           action: more-info
         icon: mdi:piggy-bank-outline
         color: blue
+      grid_options:
+        columns: full
+        rows: auto
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.portfolio_architect_additional_investment_cash_required
+        above: 0.01
+      card:
+        type: tile
+        entity: sensor.portfolio_architect_additional_investment_cash_required
+        name: Zusätzlich benötigtes Anlageguthaben
+        tap_action:
+          action: more-info
+        icon: mdi:cash-plus
+        color: amber
       grid_options:
         columns: full
         rows: auto
@@ -617,6 +634,22 @@
         hide_state: true
       grid_options:
         columns: 6
+        rows: auto
+    - type: conditional
+      conditions:
+      - condition: numeric_state
+        entity: sensor.portfolio_architect_purchase_count
+        above: 0
+      card:
+        type: markdown
+        title: Orderkennungen
+        entity_id:
+        - sensor.portfolio_architect
+        content: "{% set recommendations = state_attr('sensor.portfolio_architect', 'recommendations') or [] %}\n{% for item\
+          \ in recommendations if item.proposed_buy_eur | float > 0 %}\n**{{ item.name }}** — `{{ item.isin }}`\n\n{% endfor\
+          \ %}\n"
+      grid_options:
+        columns: full
         rows: auto
   - type: grid
     cards:

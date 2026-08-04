@@ -1457,7 +1457,8 @@
               "max_ter_pct": "TER-Grenze",
               "minimum_fund_size_eur": "Mindestfondsvolumen",
               "savings_plan_required": "Sparplanverfügbarkeit",
-              "free_savings_plan_preferred": "Sparplangebühr-Präferenz"
+              "free_savings_plan_preferred": "Sparplangebühr-Präferenz",
+              "savings_plan_fee_verified_recently": "Prüfung der Sparplangebühr"
             }
           },
           "observed": {
@@ -1725,6 +1726,47 @@
       },
       "additional_investment_cash_required": {
         "name": "Zusätzlich benötigtes Anlageguthaben"
+      },
+      "policy_finding_savings_plan_fee_verified_recently": {
+        "name": "{fund_name}: Gebührenprüfung",
+        "state": {
+          "error": "Fehler",
+          "warning": "Warnung",
+          "accepted_exception": "Akzeptierte Ausnahme",
+          "opportunity": "Optimierungsmöglichkeit"
+        },
+        "state_attributes": {
+          "fund_name": {
+            "name": "ETF"
+          },
+          "rule": {
+            "name": "Richtlinienregel"
+          },
+          "severity": {
+            "name": "Schweregrad"
+          },
+          "observed": {
+            "name": "Beobachtet"
+          },
+          "expected": {
+            "name": "Erwartet"
+          },
+          "exception_rationale": {
+            "name": "Begründung",
+            "state": {
+              "robotics_distributing_share_class": "Die ausschüttende iShares-Anteilsklasse wird beibehalten, weil Comdirect sie mit 0% Sparplangebühr anbietet, sie das bevorzugte breite Engagement in Automation und Robotik bietet und die thesaurierende Anteilsklasse nicht gebührenfrei ist."
+            }
+          },
+          "exception_review_on": {
+            "name": "Überprüfungsdatum"
+          },
+          "exception_approved_on": {
+            "name": "Genehmigt am"
+          },
+          "exception_last_reviewed_on": {
+            "name": "Zuletzt überprüft am"
+          }
+        }
       }
     },
     "binary_sensor": {

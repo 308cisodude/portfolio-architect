@@ -355,6 +355,15 @@
       },
       "additional_investment_cash_required": {
         "default": "mdi:cash-plus"
+      },
+      "policy_finding_savings_plan_fee_verified_recently": {
+        "default": "mdi:calendar-clock-outline",
+        "state": {
+          "error": "mdi:alert-octagon",
+          "warning": "mdi:alert",
+          "accepted_exception": "mdi:shield-lock-open",
+          "opportunity": "mdi:lightbulb-on-outline"
+        }
       }
     },
     "binary_sensor": {

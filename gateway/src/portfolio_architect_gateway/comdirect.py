@@ -46,6 +46,8 @@ class TransportProtocol(Protocol):
     def get_depots(self, *, bearer: str) -> HttpResponse: ...
     def get_positions(self, **kwargs: Any) -> HttpResponse: ...
     def get_instrument(self, *, instrument_id: str, bearer: str) -> HttpResponse: ...
+    def get_instrument_probe(self, *, isin: str, bearer: str) -> HttpResponse: ...
+    def post_cost_indication(self, *, order_document: dict[str, Any], bearer: str) -> HttpResponse: ...
 
 
 @dataclass(frozen=True, slots=True)
@@ -107,6 +109,64 @@ class AccountBalanceCandidate:
         token = "".join(ch for ch in self.display_id if ch.isalnum())
         suffix = token[-4:] if token else self.account_id[-4:]
         return f"{self.account_type} · …{suffix}"
+
+
+
+
+@dataclass(frozen=True, slots=True)
+class DepotCandidate:
+    """One private depot identifier with a display-safe admin label."""
+
+    depot_id: str
+    display_id: str
+
+    @property
+    def masked_label(self) -> str:
+        token = "".join(ch for ch in self.display_id if ch.isalnum())
+        return f"Depot · …{token[-4:]}" if token else "Depot candidate"
+
+
+@dataclass(frozen=True, slots=True)
+class InstrumentProbeResult:
+    """Bounded public instrument fields retained by the experimental probe."""
+
+    isin: str
+    name: str
+    wkn: str
+    fund_status: str | None
+    fund_flags: tuple[str, ...]
+    currency: str | None
+    surcharges: dict[str, str]
+    venues: tuple[dict[str, str], ...]
+    probed_at: datetime
+
+    def public_dict(self) -> dict[str, Any]:
+        return {
+            "probe_type": "instrument_metadata",
+            "isin": self.isin,
+            "name": self.name,
+            "wkn": self.wkn,
+            "fund_status": self.fund_status,
+            "fund_flags": list(self.fund_flags),
+            "currency": self.currency,
+            "surcharges": dict(self.surcharges),
+            "venues": [
+                {key: value for key, value in item.items() if key != "venue_id"}
+                for item in self.venues
+            ],
+            "probed_at": self.probed_at.isoformat(timespec="seconds"),
+            "interpretation": "opaque_observation_only",
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class CostProbeResult:
+    """Sanitized ex-ante ordinary-order cost indication."""
+
+    document: dict[str, Any]
+
+    def public_dict(self) -> dict[str, Any]:
+        return dict(self.document)
 
 
 class ComdirectClient:
@@ -428,6 +488,111 @@ class ComdirectClient:
                 )
             )
         return tuple(sorted(result, key=lambda item: (item.account_type, item.masked_label, item.account_id)))
+
+    def discover_depots(self) -> tuple[DepotCandidate, ...]:
+        """Return bounded depot candidates for the admin-only probe UI."""
+        with self._operation_lock:
+            bearer = self._ensure_access_token_locked()
+            raw = decode_json_response(self._transport.get_depots(bearer=bearer))
+            values = _extract_values(raw, field="depots")
+            candidates: list[DepotCandidate] = []
+            seen: set[str] = set()
+            for item in values:
+                if not isinstance(item, dict):
+                    raise ProtocolError("Comdirect depot list contains a non-object")
+                depot_id = _first_text(item, ("depotId",), "depot ID")
+                if depot_id in seen:
+                    raise ProtocolError("Comdirect depot list contains duplicate IDs")
+                seen.add(depot_id)
+                display = _optional_first_text(item, ("depotDisplayId",)) or depot_id[-4:]
+                candidates.append(DepotCandidate(depot_id, _text(display, "depot display ID", maximum=64)))
+                if len(candidates) > 32:
+                    raise ProtocolError("Comdirect returned too many depots")
+            return tuple(candidates)
+
+    def probe_instrument(self, isin: str) -> InstrumentProbeResult:
+        """Probe documented fundDistribution and orderDimensions for one ISIN."""
+        cleaned = _validated_isin(isin)
+        with self._operation_lock:
+            bearer = self._ensure_access_token_locked()
+            raw = decode_json_response(
+                self._transport.get_instrument_probe(isin=cleaned, bearer=bearer)
+            )
+        document = _extract_instrument_document(raw)
+        actual_isin = _instrument_isin(document) or cleaned
+        if actual_isin != cleaned:
+            raise ProtocolError("Comdirect instrument probe returned a different ISIN")
+        funds = document.get("fundsDistribution")
+        if not isinstance(funds, dict):
+            funds = {}
+        flags_raw = funds.get("fundFlags", [])
+        if not isinstance(flags_raw, list) or len(flags_raw) > 64:
+            raise ProtocolError("Comdirect fundFlags is malformed or unbounded")
+        flags = tuple(sorted({_text(value, "fund flag", maximum=64) for value in flags_raw}))
+        surcharges: dict[str, str] = {}
+        for key in (
+            "regularIssueSurcharge",
+            "discountIssueSurcharge",
+            "reducedIssueSurcharge",
+            "individualIssueSurcharge",
+        ):
+            value = funds.get(key)
+            if value is not None:
+                surcharges[key] = _decimal_text(value, key, maximum=Decimal("1000"))
+        venues = _public_venues(document.get("orderDimensions"))
+        return InstrumentProbeResult(
+            isin=cleaned,
+            name=_instrument_name(document, fallback=cleaned),
+            wkn=_optional_first_text(document, ("wkn",)) or "",
+            fund_status=_optional_bounded_text(funds.get("fundStatus"), "fund status", 16),
+            fund_flags=flags,
+            currency=_optional_bounded_text(funds.get("currency"), "fund currency", 8),
+            surcharges=surcharges,
+            venues=venues,
+            probed_at=datetime.now(timezone.utc),
+        )
+
+    def probe_cost_indication(
+        self,
+        *,
+        depot_id: str,
+        isin: str,
+        venue_id: str,
+        venue_name: str,
+        quantity: Decimal,
+    ) -> CostProbeResult:
+        """Request a BUY/MARKET ex-ante indication without validating or placing an order."""
+        cleaned_isin = _validated_isin(isin)
+        cleaned_depot = _text(depot_id, "depot ID", maximum=40)
+        cleaned_venue = _text(venue_id, "venue ID", maximum=40)
+        display_venue = _text(venue_name, "venue name", maximum=80)
+        if not isinstance(quantity, Decimal) or not quantity.is_finite() or quantity <= 0 or quantity > Decimal("1000000"):
+            raise ProtocolError("Probe quantity is outside the allowed range")
+        quantity_text = format(quantity.normalize(), "f")
+        order = {
+            "depotId": cleaned_depot,
+            "side": "BUY",
+            "instrumentId": cleaned_isin,
+            "venueId": cleaned_venue,
+            "quantity": {"value": quantity_text, "unit": "XXX"},
+            "orderType": "MARKET",
+            "validityType": "GFD",
+            "bestEx": False,
+        }
+        with self._operation_lock:
+            bearer = self._ensure_access_token_locked()
+            raw = decode_json_response(
+                self._transport.post_cost_indication(order_document=order, bearer=bearer)
+            )
+        value = _extract_single_cost_indication(raw)
+        result = _sanitize_cost_indication(
+            value,
+            requested_depot=cleaned_depot,
+            requested_isin=cleaned_isin,
+            requested_quantity=quantity_text,
+            requested_venue=display_venue,
+        )
+        return CostProbeResult(result)
 
     def fetch_snapshot(self) -> PortfolioSnapshot:
         """Fetch all selected depots and normalize their positions into schema 1."""
@@ -879,6 +1044,223 @@ def _instrument_type(metadata: dict[str, Any]) -> str:
     return "Other"
 
 
+
+def _validated_isin(value: str) -> str:
+    cleaned = _text(value, "ISIN", maximum=12).upper()
+    if _ISIN_RE.fullmatch(cleaned) is None:
+        raise ProtocolError("Probe ISIN is invalid")
+    return cleaned
+
+
+def _optional_bounded_text(value: Any, field: str, maximum: int) -> str | None:
+    if value in (None, ""):
+        return None
+    return _text(value, field, maximum=maximum)
+
+
+def _decimal_text(value: Any, field: str, *, maximum: Decimal) -> str:
+    if not isinstance(value, (str, int, float, Decimal)) or isinstance(value, bool):
+        raise ProtocolError(f"{field} must be a decimal value")
+    try:
+        number = Decimal(str(value))
+    except InvalidOperation as err:
+        raise ProtocolError(f"{field} contains an invalid decimal") from err
+    if not number.is_finite() or abs(number) > maximum:
+        raise ProtocolError(f"{field} is outside the allowed range")
+    return format(number.normalize(), "f")
+
+
+def _public_venues(raw: Any) -> tuple[dict[str, str], ...]:
+    if raw is None:
+        return ()
+    if not isinstance(raw, dict):
+        raise ProtocolError("Comdirect orderDimensions must be an object")
+    venues_raw = raw.get("venues", [])
+    if not isinstance(venues_raw, list) or len(venues_raw) > 128:
+        raise ProtocolError("Comdirect venue list is malformed or unbounded")
+    venues: list[dict[str, str]] = []
+    seen: set[str] = set()
+    for item in venues_raw:
+        if not isinstance(item, dict):
+            raise ProtocolError("Comdirect venue list contains a non-object")
+        venue_id = _text(item.get("venueId"), "venue ID", maximum=40)
+        if venue_id in seen:
+            raise ProtocolError("Comdirect venue list contains a duplicate ID")
+        seen.add(venue_id)
+        name = _text(item.get("name"), "venue name", maximum=80)
+        sides = item.get("sides", [])
+        order_types = item.get("orderTypes", {})
+        currencies = item.get("currencies", [])
+        validity_types = item.get("validityTypes", [])
+        if not isinstance(sides, list) or any(not isinstance(value, str) for value in sides):
+            raise ProtocolError("Comdirect venue sides are malformed")
+        if not isinstance(order_types, dict) or any(not isinstance(key, str) for key in order_types):
+            raise ProtocolError("Comdirect venue order types are malformed")
+        if not isinstance(currencies, list) or any(not isinstance(value, str) for value in currencies):
+            raise ProtocolError("Comdirect venue currencies are malformed")
+        if not isinstance(validity_types, list) or any(not isinstance(value, str) for value in validity_types):
+            raise ProtocolError("Comdirect venue validity types are malformed")
+        if sides and "BUY" not in sides:
+            continue
+        if order_types and "MARKET" not in order_types:
+            continue
+        if currencies and "EUR" not in currencies:
+            continue
+        if validity_types and "GFD" not in validity_types:
+            continue
+        venues.append({
+            "venue_id": venue_id,
+            "name": name,
+            "country": _optional_bounded_text(item.get("country"), "venue country", 8) or "",
+            "type": _optional_bounded_text(item.get("type"), "venue type", 16) or "",
+        })
+    venues.sort(key=lambda item: (item["name"], item["country"], item["venue_id"]))
+    return tuple(venues)
+
+def _extract_single_cost_indication(raw: Any) -> dict[str, Any]:
+    values = _extract_values(raw, field="cost indication")
+    objects = [item for item in values if isinstance(item, dict)]
+    if len(objects) != 1 or len(values) != 1:
+        raise ProtocolError("Comdirect cost indication response is ambiguous")
+    return objects[0]
+
+
+def _public_amount(raw: Any, field: str) -> dict[str, str] | None:
+    if raw is None:
+        return None
+    if not isinstance(raw, dict):
+        raise ProtocolError(f"Comdirect {field} must be an amount object")
+    value = _decimal_text(raw.get("value"), field, maximum=Decimal("1000000000"))
+    unit = _text(raw.get("unit"), f"{field} currency", maximum=8)
+    return {"value": value, "unit": unit}
+
+
+def _public_currency(raw: Any, field: str) -> str | None:
+    if raw is None:
+        return None
+    value = raw
+    if isinstance(raw, dict):
+        value = raw.get("Currency", raw.get("currency"))
+    return _optional_bounded_text(value, field, 8)
+
+
+def _strict_bool(value: Any, field: str) -> bool:
+    if not isinstance(value, bool):
+        raise ProtocolError(f"Comdirect {field} must be boolean")
+    return value
+
+
+def _public_percentage(raw: Any, field: str) -> str | None:
+    if raw is None:
+        return None
+    if isinstance(raw, dict):
+        value = raw.get("percentString")
+        if value is None:
+            before = raw.get("preDecimalPlaces", "0")
+            after = raw.get("decimalPlaces", "")
+            value = f"{before}.{after}" if after else str(before)
+    else:
+        value = raw
+    return _decimal_text(value, field, maximum=Decimal("1000000"))
+
+
+def _public_cost_group(
+    raw: Any, field: str, *, expected_type: str
+) -> dict[str, Any] | None:
+    if raw is None:
+        return None
+    if not isinstance(raw, dict):
+        raise ProtocolError(f"Comdirect {field} must be an object")
+    group_type = _optional_bounded_text(raw.get("type"), "cost group type", 8)
+    if group_type not in (None, expected_type):
+        raise ProtocolError(f"Comdirect {field} has an unexpected type")
+    costs_raw = raw.get("costs", [])
+    if not isinstance(costs_raw, list) or len(costs_raw) > 64:
+        raise ProtocolError(f"Comdirect {field} costs are malformed or unbounded")
+    costs: list[dict[str, Any]] = []
+    for entry in costs_raw:
+        if not isinstance(entry, dict):
+            raise ProtocolError(f"Comdirect {field} contains a non-object cost")
+        entry_type = _optional_bounded_text(entry.get("type"), "cost type", 8)
+        if entry_type not in (None, "E", "F", "P"):
+            raise ProtocolError(f"Comdirect {field} contains an unexpected cost type")
+        costs.append({
+            "type": entry_type,
+            "label": _optional_bounded_text(entry.get("label"), "cost label", 160),
+            "amount": _public_amount(entry.get("amount"), "cost amount"),
+            "amount_reporting_currency": _public_amount(entry.get("amountReportingCurrency"), "reporting cost amount"),
+        })
+    return {
+        "type": group_type,
+        "label": _optional_bounded_text(raw.get("label"), "cost group label", 160),
+        "sum": _public_amount(raw.get("sum"), f"{field} sum"),
+        "sum_reporting_currency": _public_amount(raw.get("sumReportingCurrency"), f"{field} reporting sum"),
+        "costs": costs,
+    }
+
+def _sanitize_cost_indication(
+    raw: dict[str, Any],
+    *,
+    requested_depot: str,
+    requested_isin: str,
+    requested_quantity: str,
+    requested_venue: str,
+) -> dict[str, Any]:
+    returned_depot = _optional_bounded_text(raw.get("depotId"), "cost indication depot ID", 40)
+    if returned_depot not in (None, requested_depot):
+        raise ProtocolError("Comdirect cost indication returned a different depot")
+    side = _optional_bounded_text(raw.get("side"), "cost indication side", 8)
+    if side not in (None, "BUY"):
+        raise ProtocolError("Comdirect cost indication returned an unexpected side")
+    quantity = _public_amount(raw.get("quantity"), "quantity")
+    if quantity is not None:
+        try:
+            returned_quantity = Decimal(quantity["value"])
+            expected_quantity = Decimal(requested_quantity)
+        except InvalidOperation as err:
+            raise ProtocolError("Comdirect cost indication returned an invalid quantity") from err
+        if returned_quantity != expected_quantity or quantity["unit"] != "XXX":
+            raise ProtocolError("Comdirect cost indication returned a different quantity")
+    calculation_successful = _strict_bool(
+        raw.get("calculationSuccessful"), "calculationSuccessful"
+    )
+    purchase_costs = _public_cost_group(
+        raw.get("purchaseCosts"), "purchase costs", expected_type="K"
+    )
+    holding_costs = _public_cost_group(
+        raw.get("holdingCosts"), "holding costs", expected_type="H"
+    )
+    sales_costs = _public_cost_group(
+        raw.get("salesCosts"), "sales costs", expected_type="V"
+    )
+    if calculation_successful and purchase_costs is None:
+        raise ProtocolError("Successful Comdirect cost indication lacks purchase costs")
+    return {
+        "probe_type": "ordinary_order_cost_indication",
+        "warning": "No order was validated or submitted. This is not a savings-plan quotation.",
+        "requested_isin": requested_isin,
+        "requested_quantity": requested_quantity,
+        "requested_venue": requested_venue,
+        "requested_side": "BUY",
+        "requested_order_type": "MARKET",
+        "calculation_successful": calculation_successful,
+        "instrument_name": _optional_bounded_text(raw.get("name"), "instrument name", 160),
+        "wkn": _optional_bounded_text(raw.get("wkn"), "WKN", 16),
+        "quantity": quantity,
+        "expected_value": _public_amount(raw.get("expectedValue"), "expected value"),
+        "venue_name": _optional_bounded_text(raw.get("venueName"), "venue name", 80),
+        "settlement_currency": _public_currency(raw.get("settlementCurrency"), "settlement currency"),
+        "trading_currency": _public_currency(raw.get("tradingCurrency"), "trading currency"),
+        "reporting_currency": _public_currency(raw.get("reportingCurrency"), "reporting currency"),
+        "expected_settlement_costs": _public_amount(raw.get("expectedSettlementCosts"), "expected settlement costs"),
+        "purchase_costs": purchase_costs,
+        "holding_costs": holding_costs,
+        "sales_costs": sales_costs,
+        "holding_period_years": _optional_bounded_text(raw.get("holdingPeriod"), "holding period", 16),
+        "total_costs_abs": _public_amount(raw.get("totalCostsAbs"), "total costs"),
+        "total_costs_rel_pct": _public_percentage(raw.get("totalCostsRel"), "relative total costs"),
+        "probed_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+    }
 
 def _signed_amount_eur(raw: Any, *, field: str) -> Decimal:
     """Parse one bounded signed EUR account amount."""

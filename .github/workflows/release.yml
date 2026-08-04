@@ -57,7 +57,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
-          gh release create "${GITHUB_REF_NAME}" \
+          prerelease_args=()
+          if [[ "${GITHUB_REF_NAME#v}" == *-* ]]; then
+            prerelease_args+=(--prerelease)
+          fi
+          gh release create "${GITHUB_REF_NAME}" "${prerelease_args[@]}" \
             --verify-tag \
             --draft \
             --title "Portfolio Architect ${GITHUB_REF_NAME#v}" \

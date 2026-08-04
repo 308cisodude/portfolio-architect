@@ -1,15 +1,18 @@
-# Portfolio Architect Gateway v1.18.0
+# Portfolio Architect Gateway v1.19.0-rc1
 
-The gateway is a dedicated, dependency-free Python service that converts the
-Comdirect depot API into Portfolio Architect REST schema 1. Version 1.16.0 added
-an optional, privacy-bounded investment-reserve path for the native Home
-Assistant App deployment.
+Version 1.19.0-rc1 is an experimental fee-probe release candidate. The established
+live portfolio, reserve, OAuth/session, REST portfolio schema 1, and health schema 5
+remain compatible.
 
-The standalone deployment remains suitable for the existing read-only portfolio
-snapshot. Account discovery and explicit settlement-account selection are
-intentionally delivered through the authenticated Home Assistant App Ingress UI
-in this release; a standalone gateway without that private selection state omits
-the optional investment reserve.
+The protected admin Ingress UI adds:
+
+- a documented instrument metadata probe for opaque `fundFlags` and eligible venues;
+- a documented non-submitting ex-ante ordinary-order cost indication.
+
+The transport permits only the exact cost-indication path. It contains no order
+prevalidation, validation, quote/TAN, submission, modification, cancellation, or
+generic brokerage POST facility. Probe results are sanitized, process-local, and
+absent from the public portfolio and health endpoints.
 
 ## Security boundary
 
@@ -18,11 +21,11 @@ The running service:
 - exposes authenticated `GET /api/v1/portfolio` and optional authenticated
   `GET /healthz` only;
 - binds served snapshots to SHA-256, ETag, and position-count metadata;
-- has no order, order-book, trading, transfer, payment, or account-transaction
-  endpoint;
-- contains a bounded outbound allowlist for OAuth/session activation and the
-  read paths required for depots, positions, instrument metadata, and account
-  balances;
+- has no public order, order-book, trading, transfer, payment, or account-
+  transaction endpoint;
+- contains a bounded outbound allowlist for OAuth/session activation, required
+  portfolio/account reads, the explicit instrument probe, and exactly one
+  non-submitting ex-ante cost-indication POST;
 - never reads the Comdirect username or password after bootstrap;
 - persists OAuth/session material, the last provider-neutral snapshot, and—only
   after explicit App selection—the private account identifier;
@@ -69,5 +72,5 @@ state, Gateway bearer token, API credentials, cached snapshot, and selected
 account survive an in-place update.
 
 The selected-account reserve semantics were validated live before the v1.17.1
-publication milestone and remain unchanged in v1.18.0. The Gateway runtime
+publication milestone and remain unchanged in v1.19.0-rc1. The Gateway runtime
 remains unchanged from v1.16.0.

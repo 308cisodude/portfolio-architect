@@ -8,7 +8,7 @@
   },
   "dataLicense": "CC0-1.0",
   "documentNamespace": "urn:uuid:37578c47-25df-5cb4-a17a-0672a9142849",
-  "name": "Portfolio Architect v1.18.0 SBOM",
+  "name": "Portfolio Architect v1.19.0-rc1 SBOM",
   "packages": [
     {
       "SPDXID": "SPDXRef-Package-Integration",
@@ -19,7 +19,7 @@
       "licenseDeclared": "MIT",
       "name": "Portfolio Architect Home Assistant integration",
       "supplier": "Organization: Portfolio Architect contributors",
-      "versionInfo": "1.18.0"
+      "versionInfo": "1.19.0-rc1"
     },
     {
       "SPDXID": "SPDXRef-Package-Gateway",
@@ -30,7 +30,7 @@
       "licenseDeclared": "MIT",
       "name": "Portfolio Architect Gateway App",
       "supplier": "Organization: Portfolio Architect contributors",
-      "versionInfo": "1.18.0"
+      "versionInfo": "1.19.0-rc1"
     },
     {
       "SPDXID": "SPDXRef-Package-PythonBase",

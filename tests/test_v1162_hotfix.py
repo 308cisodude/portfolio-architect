@@ -1,4 +1,4 @@
-"""v1.18.0 options-flow, reserve-transition, and classification hotfixes."""
+"""v1.19.0-rc1 options-flow, reserve-transition, and classification hotfixes."""
 
 from datetime import datetime, timezone
 from decimal import Decimal
@@ -114,4 +114,4 @@ def test_calculation_failures_are_not_mislabelled_as_supplemental_source_failure
 
 
 def test_v1162_version_metadata_is_aligned() -> None:
-    assert 'version = "1.18.0"' in (ROOT / "pyproject.toml").read_text()
+    assert 'version = "1.19.0-rc1"' in (ROOT / "pyproject.toml").read_text()

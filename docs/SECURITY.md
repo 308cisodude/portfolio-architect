@@ -355,3 +355,25 @@ cache.
   update;
 - detailed trace attributes are excluded from recorder history; and
 - diagnostics intentionally omit monetary trace deltas.
+
+## v1.19.0-rc1 experimental brokerage-probe controls
+
+The release adds one deliberately narrow brokerage POST exception for the documented
+non-submitting ex-ante cost-indication endpoint. Security controls include:
+
+- fixed method and exact path in the transport;
+- fixed BUY/MARKET/GFD request semantics with `bestEx=false`;
+- ISIN, quantity, depot, and venue validation before request construction;
+- depot and venue selection through random process-local Ingress tokens;
+- no user-supplied URL, method, request JSON, side, order type, or validity type;
+- no order prevalidation, validation, quote/ticket, TAN, submission, modification,
+  cancellation, or generic brokerage POST method;
+- CSRF-protected, Supervisor-authenticated Ingress initiation only;
+- no scheduled/background probe execution;
+- bounded response parsing and explicit omission of private identifiers, links,
+  inducements, raw bodies, and authentication material;
+- no probe persistence and no public REST/health/diagnostic exposure.
+
+The secondary Comdirect token necessarily carries `BROKERAGE_RW` because Comdirect
+uses that scope for both portfolio reads and the cost endpoint. The application
+boundary, rather than OAuth scope granularity, therefore enforces non-submission.

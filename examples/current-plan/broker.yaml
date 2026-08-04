@@ -3,39 +3,54 @@ as_of: 2026-07-27
 broker:
   id: comdirect
   name: Comdirect
+  fee_verification_max_age_days: 90
   savings_plans:
     IE00BJ0KDQ92:
       available: true
       fee_pct: 1.5
       promotional: false
       status: public_listing_standard_fee
+      fee_verified_at: 2026-08-03
+      fee_source: manual_comdirect_verification
     IE00BTJRMP35:
       available: true
       fee_pct: 1.5
       promotional: false
       status: public_listing_standard_fee
+      fee_verified_at: 2026-08-03
+      fee_source: manual_comdirect_verification
     IE000F354Q61:
       available: true
       fee_pct: 0
       promotional: true
       status: public_listing_special
+      fee_verified_at: 2026-08-03
+      fee_source: manual_comdirect_verification
     IE00BYZK4776:
       available: true
       fee_pct: 1.5
       promotional: false
       status: public_listing_standard_fee
+      fee_verified_at: 2026-08-03
+      fee_source: manual_comdirect_verification
     IE00BGV5VN51:
       available: true
       fee_pct: 0
       promotional: true
       status: public_listing_special
+      fee_verified_at: 2026-08-03
+      fee_source: manual_comdirect_verification
     IE00BLPK3577:
       available: true
       fee_pct: 1.5
       promotional: false
       status: user_confirmed_not_free
+      fee_verified_at: 2026-08-03
+      fee_source: manual_comdirect_verification
     IE00BYWZ0333:
       available: true
       fee_pct: 0
       promotional: true
       status: user_confirmed_free
+      fee_verified_at: 2026-08-03
+      fee_source: manual_comdirect_verification

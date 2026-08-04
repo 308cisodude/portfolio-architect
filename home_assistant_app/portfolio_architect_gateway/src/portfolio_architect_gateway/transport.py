@@ -25,7 +25,7 @@ from .errors import ProtocolError, RemoteApiError
 
 MAX_REMOTE_RESPONSE_BYTES: Final = 2 * 1024 * 1024
 MAX_REMOTE_HEADER_BYTES: Final = 64 * 1024
-USER_AGENT: Final = "portfolio-architect-gateway/1.18.0"
+USER_AGENT: Final = "portfolio-architect-gateway/1.19.0-rc1"
 
 
 @dataclass(frozen=True, slots=True)
@@ -43,7 +43,7 @@ class _NoRedirects(HTTPRedirectHandler):
 
 
 class ComdirectTransport:
-    """HTTPS client exposing only authentication/session and read endpoints."""
+    """HTTPS client exposing only authentication/session, bounded reads, and one cost probe."""
 
     def __init__(self, base_url: str, timeout_seconds: int) -> None:
         self._base_url = base_url.rstrip("/")
@@ -252,6 +252,32 @@ class ComdirectTransport:
         )
         return self._request_json(
             "GET", path, bearer=bearer, operation="get_instrument"
+        )
+
+    def get_instrument_probe(self, *, isin: str, bearer: str) -> HttpResponse:
+        """Read documented fund metadata and order dimensions for one ISIN."""
+        path = (
+            "/api/brokerage/v1/instruments/"
+            f"{quote(_path_token(isin), safe='')}?"
+            + urlencode([
+                ("with-attr", "fundDistribution"),
+                ("with-attr", "orderDimensions"),
+            ])
+        )
+        return self._request_json(
+            "GET", path, bearer=bearer, operation="probe_instrument"
+        )
+
+    def post_cost_indication(
+        self, *, order_document: dict[str, Any], bearer: str
+    ) -> HttpResponse:
+        """Call only the documented non-submitting ex-ante cost endpoint."""
+        return self._request_json(
+            "POST",
+            "/api/brokerage/v3/orders/costindicationexante",
+            bearer=bearer,
+            json_document=order_document,
+            operation="cost_indication_ex_ante",
         )
 
     def _request_form(

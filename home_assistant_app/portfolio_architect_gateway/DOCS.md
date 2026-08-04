@@ -1,27 +1,44 @@
-# Portfolio Architect Gateway v1.18.0
+# Portfolio Architect Gateway v1.19.0-rc1
 
-The v1.18.0 App package retains the v1.16.0 Gateway runtime unchanged.
+This App package is an **experimental release candidate**. It preserves the
+established live portfolio, investment-cash reserve, OAuth/session, cached snapshot,
+REST portfolio schema 1, and health schema 5.
 
-The package aligns release metadata with Portfolio Architect 1.18.0. The optional
-investment-reserve path and Gateway runtime remain unchanged from v1.16.0.
+## Update in place
 
-After completing or refreshing Comdirect authentication, open the App Web UI:
+Do not uninstall the App and do not remove App-private data. An in-place update
+preserves API credentials, OAuth/session state, Gateway bearer token, cached
+snapshot, and the selected investment account. A new PhotoTAN bootstrap is needed
+only when Comdirect rejects the existing session.
+
+## Investment account
+
+After authentication, open the App Web UI:
 
 1. select **Discover investment accounts**;
 2. review the bounded masked EUR-account choices;
 3. select the dedicated investment/settlement account explicitly;
 4. wait for the next successful portfolio refresh.
 
-The Gateway requires both booked balance and available cash for the selected
-account. It publishes the lower non-negative value, preventing overdraft or
-pending-debit money from being treated as investable cash. If the semantics are
-incomplete, the reserve is omitted and Portfolio Architect fails closed.
+The Gateway publishes the lower non-negative value of booked balance and available
+cash. It never publishes the account identifier or IBAN.
 
-The update preserves App-private API credentials, OAuth/session state, Gateway
-bearer token, cached snapshot, and selected account. Never uninstall the App or
-remove its data for a normal update.
+## Experimental fee probe
 
-The selected live Comdirect account balance semantics were validated before the
-v1.17.1 publication milestone and remain unchanged in v1.18.0. The Gateway
-remains GET-only and contains no
-trading, transfer, payment, or transaction-history operation.
+The Web UI also provides two manual probes:
+
+1. enter an ISIN to read documented fund metadata, opaque `fundFlags`, and eligible
+   public venue labels;
+2. choose a masked depot, one returned venue, and a small positive unit quantity to
+   request an ex-ante ordinary BUY/MARKET cost indication.
+
+The page and sanitized JSON state explicitly that no order was validated or
+submitted and that the response is not a savings-plan quotation.
+
+The App has no order prevalidation, validation, quote/ticket, brokerage TAN,
+submission, modification, cancellation, or generic brokerage POST operation.
+Private depot and venue identifiers remain behind random in-memory tokens. Probe
+results are not persisted or included in the public portfolio/health endpoints.
+
+See `docs/COMDIRECT-FEE-PROBE.md` in the complete source release for the acceptance
+and interpretation rules.

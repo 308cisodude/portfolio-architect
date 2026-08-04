@@ -1,9 +1,16 @@
 # Changelog
 
-## 1.18.0
+## 1.19.0-rc1
 
-- Aligns Gateway App package metadata with the Portfolio Architect v1.18.0 Plan Delta & Decision Trace release.
-- Gateway runtime and REST contracts remain unchanged from v1.16.0.
+- Marks the App package experimental for a controlled real-account acceptance test.
+- Adds an admin-only instrument metadata probe for opaque `fundFlags` and eligible
+  venues.
+- Adds one hard-coded non-submitting ex-ante cost-indication POST.
+- Keeps order prevalidation, validation, quote/TAN, submission, modification,
+  cancellation, and generic brokerage POST capability absent.
+- Keeps probe state process-local and sanitizes all displayed/downloaded evidence.
+- Preserves existing credentials, OAuth/session state, cached snapshot, selected
+  investment account, REST portfolio schema 1, and health schema 5.
 
 ## 1.17.1
 

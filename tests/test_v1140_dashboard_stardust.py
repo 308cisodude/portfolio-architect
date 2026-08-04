@@ -67,5 +67,6 @@ def test_complete_views_preserve_the_compact_exception_layout() -> None:
 def test_stardust_does_not_add_parallel_presentation() -> None:
     for path in DASHBOARD.rglob("*.yaml"):
         source = path.read_text(encoding="utf-8").casefold()
-        assert "type: markdown" not in source, path
+        if "type: markdown" in source:
+            assert "order identifiers" in source or "orderkennungen" in source, path
         assert "sensor.portfolio_architect_allocation_overview" not in source, path
