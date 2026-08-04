@@ -1,4 +1,4 @@
-# v1.18.0 validation
+# v1.19.0-rc1 validation
 
 The release pipeline validates:
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from html import escape
+from decimal import Decimal, InvalidOperation
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
@@ -17,7 +18,7 @@ import threading
 from typing import Any, Callable, Final
 from urllib.parse import parse_qs, urlsplit
 
-from .comdirect import AccountBalanceCandidate, ComdirectClient
+from .comdirect import AccountBalanceCandidate, ComdirectClient, CostProbeResult, InstrumentProbeResult
 from .config import ComdirectConfig, GatewayConfig, ServerConfig, normalise_secret
 from .errors import GatewayError, RemoteApiError
 from .server import GatewayState, create_server, run_refresh_loop
@@ -204,6 +205,18 @@ class InvestmentAccountView:
     candidates: tuple[dict[str, str], ...]
 
 
+@dataclass(frozen=True, slots=True)
+class ProbeView:
+    """Sanitized admin-only state for the experimental Comdirect probes."""
+
+    state: str
+    message: str
+    instrument: dict[str, Any] | None
+    cost: dict[str, Any] | None
+    depots: tuple[dict[str, str], ...]
+    venues: tuple[dict[str, str], ...]
+
+
 class AppController:
     """Coordinate background refresh, one bootstrap operation, and safe UI state."""
 
@@ -229,6 +242,16 @@ class AppController:
             "Configured account" if client.selected_investment_account_id() else None,
             (),
         )
+        self._probe_depot_tokens: dict[str, str] = {}
+        self._probe_venue_tokens: dict[str, tuple[str, str]] = {}
+        self._probe = ProbeView(
+            "idle",
+            "Probe an ISIN to observe documented fund metadata and eligible venues.",
+            None,
+            None,
+            (),
+            (),
+        )
 
     def bootstrap_view(self) -> BootstrapView:
         with self._lock:
@@ -238,9 +261,25 @@ class AppController:
         with self._lock:
             return self._account_view
 
+    def probe_view(self) -> ProbeView:
+        with self._lock:
+            return self._probe
+
+    def probe_report(self) -> dict[str, Any]:
+        view = self.probe_view()
+        return {
+            "schema_version": 1,
+            "release": "1.19.0-rc1",
+            "experimental": True,
+            "no_order_submitted": True,
+            "instrument_probe": view.instrument,
+            "cost_probe": view.cost,
+        }
+
     def status_document(self) -> dict[str, Any]:
         bootstrap = self.bootstrap_view()
         account = self.account_view()
+        probe = self.probe_view()
         return {
             "bootstrap": {
                 "state": bootstrap.state,
@@ -254,6 +293,14 @@ class AppController:
                 "selected": account.selected_label is not None,
                 "selected_label": account.selected_label,
                 "candidates": list(account.candidates),
+            },
+            "experimental_probe": {
+                "state": probe.state,
+                "message": probe.message,
+                "instrument": probe.instrument,
+                "cost": probe.cost,
+                "depots": list(probe.depots),
+                "venues": list(probe.venues),
             },
             "gateway": self.gateway_state.health_document(version=5),
             "client_credentials_configured": (
@@ -357,6 +404,96 @@ class AppController:
                 ),
                 None,
                 (),
+            )
+
+    def probe_instrument(self, isin: str) -> None:
+        """Run one explicit metadata probe and prepare opaque depot/venue choices."""
+        try:
+            result = self.client.probe_instrument(isin)
+            depots = self.client.discover_depots()
+        except GatewayError as err:
+            _LOGGER.warning("Instrument probe failed: %s", type(err).__name__)
+            with self._lock:
+                self._probe_depot_tokens = {}
+                self._probe_venue_tokens = {}
+                self._probe = ProbeView("error", _public_probe_error(err), None, None, (), ())
+            return
+        depot_tokens: dict[str, str] = {}
+        depot_views: list[dict[str, str]] = []
+        for candidate in depots:
+            token = secrets.token_urlsafe(24)
+            depot_tokens[token] = candidate.depot_id
+            depot_views.append({"token": token, "label": candidate.masked_label})
+        venue_tokens: dict[str, tuple[str, str]] = {}
+        venue_views: list[dict[str, str]] = []
+        for venue in result.venues:
+            token = secrets.token_urlsafe(24)
+            venue_tokens[token] = (venue["venue_id"], venue["name"])
+            venue_views.append({
+                "token": token,
+                "name": venue["name"],
+                "country": venue.get("country", ""),
+                "type": venue.get("type", ""),
+            })
+        public = result.public_dict()
+        message = (
+            f"Observed {len(result.fund_flags)} opaque fund flag(s), "
+            f"{len(venue_views)} BUY/MARKET EUR venue(s), and {len(depot_views)} depot candidate(s)."
+        )
+        with self._lock:
+            self._probe_depot_tokens = depot_tokens
+            self._probe_venue_tokens = venue_tokens
+            self._probe = ProbeView(
+                "instrument_ready", message, public, None, tuple(depot_views), tuple(venue_views)
+            )
+
+    def probe_cost(
+        self, *, depot_token: str, venue_token: str, quantity_text: str
+    ) -> None:
+        """Run the single allowlisted ex-ante cost operation."""
+        with self._lock:
+            depot_id = self._probe_depot_tokens.get(depot_token)
+            venue = self._probe_venue_tokens.get(venue_token)
+            instrument = self._probe.instrument
+        if depot_id is None or venue is None or not instrument:
+            raise ValueError("Probe choices are unknown or expired")
+        try:
+            quantity = Decimal(quantity_text)
+        except InvalidOperation as err:
+            raise ValueError("Quantity must be a positive decimal") from err
+        try:
+            result = self.client.probe_cost_indication(
+                depot_id=depot_id,
+                isin=str(instrument["isin"]),
+                venue_id=venue[0],
+                venue_name=venue[1],
+                quantity=quantity,
+            )
+        except GatewayError as err:
+            _LOGGER.warning("Cost probe failed: %s", type(err).__name__)
+            with self._lock:
+                self._probe = ProbeView(
+                    "error", _public_probe_error(err), instrument, None, self._probe.depots, self._probe.venues
+                )
+            return
+        with self._lock:
+            self._probe = ProbeView(
+                "cost_ready",
+                "Ex-ante ordinary-order costs received. No order was validated or submitted.",
+                instrument,
+                result.public_dict(),
+                self._probe.depots,
+                self._probe.venues,
+            )
+
+    def clear_probe(self) -> None:
+        with self._lock:
+            self._probe_depot_tokens = {}
+            self._probe_venue_tokens = {}
+            self._probe = ProbeView(
+                "idle",
+                "Probe an ISIN to observe documented fund metadata and eligible venues.",
+                None, None, (), ()
             )
 
     def start_bootstrap(
@@ -492,6 +629,17 @@ def _public_account_error(err: GatewayError) -> str:
     return "Account operation failed. Review the App log and retry."
 
 
+def _public_probe_error(err: GatewayError) -> str:
+    if isinstance(err, RemoteApiError):
+        if err.status in {401, 403}:
+            return "Comdirect rejected the authenticated probe. Reauthenticate and retry."
+        if err.status == 422:
+            return "Comdirect rejected the bounded probe parameters. Review the selected venue and quantity."
+        if err.status == 429:
+            return "Comdirect rate-limited the probe. Wait before retrying."
+    return "Experimental probe failed. Review the App log and retry."
+
+
 def _public_bootstrap_error(err: GatewayError) -> str:
     name = type(err).__name__
     if name == "AuthenticationError":
@@ -561,6 +709,9 @@ class IngressRequestHandler(BaseHTTPRequestHandler):
         if path == "/health":
             self._json({"status": "ok"})
             return
+        if path == "/probe-result.json":
+            self._json(self.ingress_server.controller.probe_report())
+            return
         self._empty(HTTPStatus.NOT_FOUND)
 
     def do_POST(self) -> None:  # noqa: N802
@@ -574,6 +725,9 @@ class IngressRequestHandler(BaseHTTPRequestHandler):
             "/discover-accounts",
             "/select-account",
             "/clear-account",
+            "/probe-instrument",
+            "/probe-cost",
+            "/clear-probe",
         }:
             self._empty(HTTPStatus.NOT_FOUND)
             return
@@ -597,7 +751,7 @@ class IngressRequestHandler(BaseHTTPRequestHandler):
                 body.decode("utf-8"),
                 keep_blank_values=True,
                 strict_parsing=True,
-                max_num_fields=8 if path == "/bootstrap" else 3,
+                max_num_fields=8 if path == "/bootstrap" else (5 if path == "/probe-cost" else 3),
             )
             csrf = _single(values, "csrf")
             if not secrets.compare_digest(
@@ -629,10 +783,29 @@ class IngressRequestHandler(BaseHTTPRequestHandler):
                     _single(values, "selection")
                 )
                 accepted = True
-            else:
+            elif path == "/clear-account":
                 if set(values) != {"csrf"}:
                     raise ValueError("Unexpected account-clear form field")
                 self.ingress_server.controller.clear_investment_account()
+                accepted = True
+            elif path == "/probe-instrument":
+                if set(values) != {"csrf", "isin"}:
+                    raise ValueError("Unexpected instrument-probe form field")
+                self.ingress_server.controller.probe_instrument(_single(values, "isin"))
+                accepted = True
+            elif path == "/probe-cost":
+                if set(values) != {"csrf", "depot", "venue", "quantity"}:
+                    raise ValueError("Unexpected cost-probe form field")
+                self.ingress_server.controller.probe_cost(
+                    depot_token=_single(values, "depot"),
+                    venue_token=_single(values, "venue"),
+                    quantity_text=_single(values, "quantity"),
+                )
+                accepted = True
+            else:
+                if set(values) != {"csrf"}:
+                    raise ValueError("Unexpected probe-clear form field")
+                self.ingress_server.controller.clear_probe()
                 accepted = True
         except (UnicodeError, ValueError):
             self._empty(HTTPStatus.BAD_REQUEST)
@@ -711,6 +884,7 @@ class IngressRequestHandler(BaseHTTPRequestHandler):
         gateway = document["gateway"]
         bootstrap = document["bootstrap"]
         account = document["investment_account"]
+        probe = document["experimental_probe"]
         status_class = (
             "ok" if gateway["status"] == "ok" else "warn"
         )
@@ -776,6 +950,36 @@ class IngressRequestHandler(BaseHTTPRequestHandler):
             if account.get("selected")
             else ""
         )
+        probe_instrument = probe.get("instrument") or {}
+        probe_cost = probe.get("cost") or {}
+        probe_json = escape(
+            json.dumps(
+                {"instrument_probe": probe_instrument or None, "cost_probe": probe_cost or None},
+                indent=2, sort_keys=True, ensure_ascii=False,
+            )
+        )
+        depot_options = "".join(
+            '<option value="' + escape(str(item["token"]), quote=True) + '">'
+            + escape(str(item["label"])) + "</option>"
+            for item in probe.get("depots", [])
+        )
+        venue_options = "".join(
+            '<option value="' + escape(str(item["token"]), quote=True) + '">'
+            + escape(str(item["name"]))
+            + (" · " + escape(str(item.get("country"))) if item.get("country") else "")
+            + "</option>"
+            for item in probe.get("venues", [])
+        )
+        cost_form = (
+            f'<form method="post" action="probe-cost" autocomplete="off">'
+            f'<input type="hidden" name="csrf" value="{csrf}">'
+            f'<div class="grid"><div><label for="probe_depot">Depot</label><select id="probe_depot" name="depot" required>{depot_options}</select></div>'
+            f'<div><label for="probe_venue">Venue</label><select id="probe_venue" name="venue" required>{venue_options}</select></div></div>'
+            '<label for="probe_quantity">Quantity (units)</label><input id="probe_quantity" name="quantity" inputmode="decimal" maxlength="24" value="1" required>'
+            '<button type="submit">Read ex-ante ordinary-order costs</button></form>'
+            if depot_options and venue_options else ""
+        )
+
         html = f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Portfolio Architect Gateway</title>
@@ -793,6 +997,15 @@ class IngressRequestHandler(BaseHTTPRequestHandler):
 <form method="post" action="discover-accounts" autocomplete="off"><input type="hidden" name="csrf" value="{csrf}"><button type="submit">Discover eligible EUR accounts</button></form>
 {selection_form}{clear_form}
 <p class="small">Only a masked account label, available EUR cash and timestamp are shown in this admin-only page. The account identifier stays in App-private storage and is never sent to Home Assistant.</p></section>
+<section><h2>Experimental Comdirect fee probe · v1.19.0-rc1</h2>
+<p class="warn"><strong>No order is validated or submitted.</strong> The cost operation is an ordinary BUY/MARKET order indication, not a savings-plan quotation.</p>
+<p>State: <strong>{escape(str(probe.get('state', 'idle')))}</strong></p><p>{escape(str(probe.get('message', '')))}</p>
+<form method="post" action="probe-instrument" autocomplete="off"><input type="hidden" name="csrf" value="{csrf}"><label for="probe_isin">ISIN</label><input id="probe_isin" name="isin" minlength="12" maxlength="12" pattern="[A-Za-z]{{2}}[A-Za-z0-9]{{9}}[0-9]" required><button type="submit">Probe fundFlags and venues</button></form>
+{cost_form}
+<details><summary>Sanitized probe result</summary><code>{probe_json}</code></details>
+<p><a href="probe-result.json" rel="nofollow">Open sanitized JSON result</a></p>
+<form method="post" action="clear-probe" autocomplete="off"><input type="hidden" name="csrf" value="{csrf}"><button type="submit">Clear probe result</button></form>
+<p class="small">Opaque fundFlags are recorded without interpretation. Depot and venue identifiers remain token-mapped in memory and are absent from the displayed/downloaded result. The Gateway contains no order validation, TAN, submission, modification, cancellation, or quote-request operation.</p></section>
 <section><h2>Comdirect bootstrap / reauthentication</h2><form method="post" action="bootstrap" autocomplete="off">
 <input type="hidden" name="csrf" value="{csrf}">
 <div class="grid"><div><label for="client_id">API client ID</label><input id="client_id" name="client_id" maxlength="512" required></div><div><label for="client_secret">API client secret</label><input id="client_secret" name="client_secret" type="password" maxlength="1024" required></div></div>

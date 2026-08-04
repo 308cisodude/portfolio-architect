@@ -1,4 +1,4 @@
-"""v1.18.0 HACS packaging regression contracts."""
+"""v1.19.0-rc1 HACS packaging regression contracts."""
 
 from __future__ import annotations
 
@@ -35,7 +35,7 @@ def test_release_verifier_rejects_dropin_used_as_hacs_asset(tmp_path: Path) -> N
     _build(tmp_path)
     broken_hacs = tmp_path / "portfolio_architect.zip"
     shutil.copy2(
-        tmp_path / "portfolio-architect-v1.18.0-ha-dropin.zip",
+        tmp_path / "portfolio-architect-v1.19.0-rc1-ha-dropin.zip",
         broken_hacs,
     )
     digest = hashlib.sha256(broken_hacs.read_bytes()).hexdigest()

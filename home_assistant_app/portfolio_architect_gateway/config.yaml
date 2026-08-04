@@ -1,8 +1,8 @@
 name: Portfolio Architect Gateway
-version: 1.18.0
+version: 1.19.0-rc1
 slug: portfolio_architect_gateway
-description: Read-only Comdirect gateway for Portfolio Architect with private investment-reserve
-  selection and live recovery diagnostics.
+description: Credential-isolated Comdirect gateway with read-only portfolio service,
+  private reserve selection, and experimental non-submitting cost probe.
 url: https://developers.home-assistant.io/docs/apps/
 arch:
 - amd64
@@ -32,7 +32,7 @@ ports:
 ports_description:
   8787/tcp: Private Portfolio Architect REST endpoint; leave host mapping disabled
 watchdog: tcp://[HOST]:[PORT:8787]
-stage: stable
+stage: experimental
 options:
   poll_interval_seconds: 900
   max_cached_snapshot_age_seconds: 604800

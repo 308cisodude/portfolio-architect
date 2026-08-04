@@ -46,7 +46,8 @@ def test_sections_use_native_responsive_cards():
             assert section['cards'][0]['type']=='heading'
         cards=list(_walk(view))
         types={card.get('type') for card in cards if isinstance(card,dict)}
-        assert 'markdown' not in types
+        assert 'custom:' not in '\n'.join(str(item) for item in types)
+        assert sum(1 for card in cards if isinstance(card, dict) and card.get('type') == 'markdown') == 1
         assert 'entities' not in types
         assert 'entity-filter' not in types
         # No nested fixed-column grid cards; only Sections themselves use grid.

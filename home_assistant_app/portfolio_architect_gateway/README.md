@@ -1,15 +1,15 @@
-# Portfolio Architect Gateway App v1.18.0
+# Portfolio Architect Gateway v1.19.0-rc1
 
-Version 1.18.0 is package-alignment only; the Gateway runtime is unchanged from v1.16.0.
+Version 1.19.0-rc1 is an experimental fee-probe release candidate. The established
+live portfolio, reserve, OAuth/session, REST portfolio schema 1, and health schema 5
+remain compatible.
 
-Native Home Assistant App packaging for the read-only Portfolio Architect
-Gateway. The App exposes no LAN port, uses an admin-only Ingress UI, runs the
-long-lived process as UID/GID 65532, and keeps Comdirect and Gateway credentials
-in App-private data.
+The protected admin Ingress UI adds:
 
-Version 1.16.0 adds bounded discovery and explicit selection of one EUR
-investment/settlement account. Only the conservative usable reserve and timestamp
-enter the provider-neutral REST snapshot. Account identifiers, IBANs, labels,
-transactions, and raw balance documents remain private.
+- a documented instrument metadata probe for opaque `fundFlags` and eligible venues;
+- a documented non-submitting ex-ante ordinary-order cost indication.
 
-Install updates in place. Do not uninstall the App or remove its data.
+The transport permits only the exact cost-indication path. It contains no order
+prevalidation, validation, quote/TAN, submission, modification, cancellation, or
+generic brokerage POST facility. Probe results are sanitized, process-local, and
+absent from the public portfolio and health endpoints.

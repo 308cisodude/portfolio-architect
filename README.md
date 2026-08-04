@@ -1,22 +1,28 @@
-# Portfolio Architect v1.18.0
+# Portfolio Architect v1.19.0-rc1
 
 Portfolio Architect is a Home Assistant-native portfolio overview, policy-check,
 and deterministic investment-planning system. It supports provider-specific CSV
 imports, multi-source consolidation, cost-aware recommendations, and a separate
-read-only Gateway App for live Comdirect data.
+credential-isolated Gateway App for live Comdirect data.
 
-Portfolio Architect is advisory software. It exposes no trading, order,
-transfer, payment, or account-transaction capability.
+Portfolio Architect is advisory software. It cannot validate, submit, modify, or
+cancel trades, transfer money, initiate payments, or read account transactions.
+The v1.19.0-rc1 Gateway adds one explicitly bounded experimental call to Comdirect's
+documented non-submitting ex-ante cost-indication endpoint.
 
 ## Highlights
 
 - Native Home Assistant entities, configuration flows, diagnostics, repairs, and
   bilingual English/German reference dashboards.
 - Deterministic allocation, policy, and cost-aware investment recommendations.
-- Private two-evaluation Plan Delta & Decision Trace with bounded reason codes and recorder-safe attributes.
+- Private two-evaluation Plan Delta & Decision Trace with bounded reason codes and
+  recorder-safe attributes.
 - Live Comdirect data through a local credential-isolated Gateway App.
+- Experimental admin-only Comdirect instrument and ordinary-order cost probes with
+  hard-coded endpoints and sanitized, process-local results.
 - Comdirect, DKB, and generic mapped CSV sources with multi-source consolidation.
 - Conservative investment-cash handling and explicit transaction-cost policies.
+- Optional fee-verification freshness checks and copyable recommended-buy ISINs.
 - Reproducible release archives, SHA-256 manifests, SPDX 2.3 SBOMs, and release
   provenance workflows.
 - Immutable GitHub Action and validator-image dependencies, plus a hash-locked
@@ -24,40 +30,40 @@ transfer, payment, or account-transaction capability.
 - DNS-pinned local REST transport that binds the validated private address set to
   the authenticated connection while preserving Host/SNI identity.
 
+## Release-candidate status
+
+Version 1.19.0-rc1 is an experimental prerelease. The stable known-good baseline
+remains v1.18.0 until the Comdirect probes have been accepted against real promoted
+and regular-fee ETF samples. The v1.19.0-rc1 Gateway App is intentionally marked
+`experimental`.
+
 ## Installation channels
 
-### Manual installation
+### Manual or prerelease testing
 
-Extract the versioned Home Assistant drop-in over the Home Assistant configuration
-folder so this directory exists:
+Follow `docs/UPGRADE-1.19.0-rc1.md`. The integration and Gateway App must both be
+updated for probe testing. Preserve App-private `/data` and retain v1.18.0 artifacts
+for rollback.
 
-```text
-/config/custom_components/portfolio_architect
-```
+### Stable HACS installation
 
-Restart Home Assistant, then add **Portfolio Architect** through
-**Settings → Devices & services**.
+Stable users should remain on the latest non-prerelease HACS version. The repository
+contains a flat `portfolio_architect.zip` HACS asset, HACS metadata, brand assets,
+HACS validation, and hassfest workflows.
 
-### HACS publication
-
-The repository contains a stable HACS release asset named
-`portfolio_architect.zip`, HACS metadata, brand assets, HACS validation, and
-hassfest workflows. Before the first public release, the repository owner must run
-`tools/configure_publication.py` once to write the real GitHub repository URL and
-code owner into the integration manifest. Placeholder or invented repository URLs
-are deliberately not shipped.
-
-See `docs/PUBLICATION-SETUP.md` and `docs/PUBLISHING.md`.
+See `docs/PUBLICATION-SETUP.md` and `docs/PUBLISHING.md` for maintainer publication.
 
 ## Supported environment
 
 - Home Assistant 2026.7.0 or newer
 - Python 3.14 for source validation and Gateway builds
-- Gateway App 1.16.1 or newer when using the established live Comdirect protocol
+- Gateway App 1.19.0-rc1 for experimental fee-probe testing
+- Gateway App 1.16.1 or newer for the established live portfolio/reserve protocol
 
-The current stable Portfolio Architect release and the immediately preceding
-stable release receive security and correctness fixes while a documented upgrade
-path exists. See `SUPPORT.md` and `docs/SUPPORTED-VERSIONS.md`.
+The current stable Portfolio Architect release and the immediately preceding stable
+release receive security and correctness fixes. Prereleases receive best-effort
+support and must have a documented rollback path. See `SUPPORT.md` and
+`docs/SUPPORTED-VERSIONS.md`.
 
 ## Privacy and security
 
@@ -67,7 +73,10 @@ investment account identifier, IBAN, account holder, transaction history, OAuth
 material, qSession cookie, and bank credentials are not included in the public
 portfolio snapshot or diagnostics.
 
-Never expose the Gateway REST port to an untrusted network.
+Experimental probe results stay in Gateway process memory. Internal depot and venue
+identifiers are represented by short-lived Ingress tokens and are absent from the
+sanitized result. Never expose the Gateway REST or Ingress ports to an untrusted
+network.
 
 ## Development and validation
 
@@ -81,11 +90,11 @@ python -m pip install \
 ./tools/release_check.sh
 ```
 
-The lock targets CPython 3.14.6 on Linux x86-64. The local pipeline compiles
-Python, parses structured files, checks immutable publication contracts, runs the
-complete regression suite, builds reproducible archives, and verifies checksums
-and ZIP safety. Digest-pinned HACS and hassfest containers execute on
-GitHub-hosted runners as the live external validation step.
+The lock targets CPython 3.14.6 on Linux x86-64. The pipeline compiles Python,
+parses structured files, checks immutable publication contracts, runs the complete
+regression suite, builds reproducible archives, and verifies checksums and ZIP
+safety. Digest-pinned HACS and hassfest containers execute on GitHub-hosted runners
+as the live external validation step.
 
 ## Documentation
 
@@ -98,4 +107,5 @@ GitHub-hosted runners as the live external validation step.
 - `docs/PUBLISHING.md`
 - `docs/QUALITY.md`
 - `docs/DECISION-TRACE.md`
-- `docs/UPGRADE-1.18.0.md`
+- `docs/COMDIRECT-FEE-PROBE.md`
+- `docs/UPGRADE-1.19.0-rc1.md`

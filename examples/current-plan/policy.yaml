@@ -20,3 +20,4 @@ policy:
     minimum_fund_size_eur: warning
     savings_plan_required: error
     free_savings_plan_preferred: info
+    savings_plan_fee_verified_recently: info

@@ -1,5 +1,5 @@
 from __future__ import annotations
-from datetime import date
+from datetime import date, timedelta
 from typing import Any
 from .models import Finding
 
@@ -43,7 +43,18 @@ def evaluate(
     p = policy_doc["policy"]
     rules = p["rules"]
     instruments = instruments_doc.get("instruments", {})
-    plans = broker_doc.get("broker", {}).get("savings_plans", {})
+    broker = broker_doc.get("broker", {})
+    plans = broker.get("savings_plans", {})
+    verification_days_raw = broker.get("fee_verification_max_age_days")
+    verification_days: int | None = None
+    if verification_days_raw is not None:
+        if (
+            isinstance(verification_days_raw, bool)
+            or not isinstance(verification_days_raw, int)
+            or not 1 <= verification_days_raw <= 3650
+        ):
+            raise ValueError("fee_verification_max_age_days must be an integer from 1 to 3650")
+        verification_days = verification_days_raw
     exceptions = _active_exceptions(
         exceptions_doc, evaluated_on=evaluated_on or date.today()
     )
@@ -72,6 +83,37 @@ def evaluate(
                 ("savings_plan_required", not rules.get("savings_plan_required") or plan.get("available") is True, plan.get("available"), True, "Comdirect savings plan required"),
                 ("free_savings_plan_preferred", not rules.get("free_savings_plan_preferred") or plan.get("fee_pct") == 0, plan.get("fee_pct"), 0, "Zero-fee savings plan preferred"),
             ])
+            if verification_days is not None:
+                verified_on_raw = plan.get("fee_verified_at")
+                source_raw = plan.get("fee_source")
+                verified_on = None
+                if isinstance(verified_on_raw, date):
+                    verified_on = verified_on_raw
+                    verified_on_raw = verified_on.isoformat()
+                elif isinstance(verified_on_raw, str):
+                    try:
+                        verified_on = date.fromisoformat(verified_on_raw)
+                    except ValueError:
+                        verified_on = None
+                source_valid = (
+                    isinstance(source_raw, str)
+                    and 1 <= len(source_raw.strip()) <= 80
+                    and all(ord(char) >= 32 and ord(char) != 127 for char in source_raw)
+                )
+                cutoff = (evaluated_on or date.today()) - timedelta(days=verification_days)
+                verification_current = (
+                    verified_on is not None
+                    and verified_on <= (evaluated_on or date.today())
+                    and verified_on >= cutoff
+                    and source_valid
+                )
+                checks.append((
+                    "savings_plan_fee_verified_recently",
+                    verification_current,
+                    verified_on_raw if verified_on_raw else "missing",
+                    f"within_{verification_days}_days",
+                    "Savings-plan fee verification is missing or stale",
+                ))
 
         for rule, passed, observed, expected, message in checks:
             if passed:

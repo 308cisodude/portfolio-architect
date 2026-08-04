@@ -53,3 +53,15 @@ Gateway session data. Detailed plan-change attributes are excluded from Home
 Assistant recorder history; only the bounded enum state may be retained according to
 the user's recorder policy. Diagnostics omit monetary trace values and expose only
 the state, timestamps, categories, counts, and changed fund IDs.
+
+## Experimental fee-probe data
+
+Version 1.19.0-rc1 keeps probe state exclusively in Gateway process memory. The
+Ingress page uses random short-lived tokens for private depot and venue identifiers.
+The sanitized result may contain public instrument/venue labels and cost values, but
+not depot IDs, venue IDs, customer/account metadata, OAuth/session material,
+request headers, upstream links, inducement objects, or raw responses.
+
+Clearing the probe or restarting the App removes the result. It is not written to
+App-private storage, Home Assistant storage, recorder history, diagnostics, the
+portfolio snapshot, or the Gateway health document.

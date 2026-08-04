@@ -9,7 +9,7 @@ import re
 from pathlib import Path
 
 CODEOWNER_RE = re.compile(r"^@[A-Za-z0-9-]+$")
-SEMVER_RE = re.compile(r"^\d+\.\d+\.\d+$")
+SEMVER_RE = re.compile(r"^\d+\.\d+\.\d+(?:-(?:rc|beta|alpha)\d+)?$")
 FULL_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 IMAGE_DIGEST_RE = re.compile(r"ghcr\.io/[A-Za-z0-9_.\/-]+@sha256:[0-9a-f]{64}")
 ACTION_REF_RE = re.compile(r"^\s*-?\s*uses:\s*[^@\s]+@([^\s#]+)", re.MULTILINE)

@@ -55,6 +55,33 @@ class FakeBootstrapClient:
     def clear_investment_account(self):
         self.selected_account_id = None
 
+    def discover_depots(self):
+        from portfolio_architect_gateway.comdirect import DepotCandidate
+        return (DepotCandidate("DEPOT-PRIVATE-1", "12345678"),)
+
+    def probe_instrument(self, isin):
+        from portfolio_architect_gateway.comdirect import InstrumentProbeResult
+        return InstrumentProbeResult(
+            isin=isin.upper(), name="ETF One", wkn="A1XB5U", fund_status="A",
+            fund_flags=("FLAG_A",), currency="EUR",
+            surcharges={"regularIssueSurcharge": "1.5"},
+            venues=({"venue_id": "VENUE-PRIVATE-1", "name": "Tradegate", "country": "DE", "type": "EXCHANGE"},),
+            probed_at=datetime.now(timezone.utc).replace(microsecond=0),
+        )
+
+    def probe_cost_indication(self, **kwargs):
+        from portfolio_architect_gateway.comdirect import CostProbeResult
+        assert kwargs["depot_id"] == "DEPOT-PRIVATE-1"
+        assert kwargs["venue_id"] == "VENUE-PRIVATE-1"
+        return CostProbeResult({
+            "probe_type": "ordinary_order_cost_indication",
+            "warning": "No order was validated or submitted. This is not a savings-plan quotation.",
+            "requested_isin": kwargs["isin"],
+            "requested_quantity": str(kwargs["quantity"]),
+            "requested_venue": kwargs["venue_name"],
+            "calculation_successful": True,
+        })
+
     def fetch_snapshot(self):
         selected = self.selected_account_id is not None
         return PortfolioSnapshot(
@@ -377,3 +404,31 @@ def test_ingress_page_polls_every_mutable_runtime_status_without_reload(tmp_path
         server.shutdown()
         server.server_close()
         thread.join(timeout=5)
+
+
+def test_ingress_experimental_probe_uses_opaque_tokens_and_exports_sanitized_json(tmp_path: Path) -> None:
+    controller, _client = _controller(tmp_path)
+    server = IngressHttpServer(("127.0.0.1", 0), controller, allowed_sources=frozenset({"127.0.0.1"}), require_user_header=True)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        connection = http.client.HTTPConnection("127.0.0.1", server.server_address[1], timeout=5)
+        form = urlencode({"csrf": controller.csrf_token, "isin": "IE00BJ0KDQ92"})
+        connection.request("POST", "/probe-instrument", body=form, headers={"Content-Type": "application/x-www-form-urlencoded", "Content-Length": str(len(form.encode())), "X-Remote-User-Id": "admin"})
+        response = connection.getresponse(); assert response.status == 303; response.read()
+        view = controller.status_document()["experimental_probe"]
+        assert view["state"] == "instrument_ready"
+        assert "VENUE-PRIVATE-1" not in json.dumps(view)
+        assert "DEPOT-PRIVATE-1" not in json.dumps(view)
+        cost = urlencode({"csrf": controller.csrf_token, "depot": view["depots"][0]["token"], "venue": view["venues"][0]["token"], "quantity": "1"})
+        connection.request("POST", "/probe-cost", body=cost, headers={"Content-Type": "application/x-www-form-urlencoded", "Content-Length": str(len(cost.encode())), "X-Remote-User-Id": "admin"})
+        response = connection.getresponse(); assert response.status == 303; response.read()
+        connection.request("GET", "/probe-result.json", headers={"X-Remote-User-Id": "admin"})
+        response = connection.getresponse(); report = json.loads(response.read()); assert response.status == 200
+        encoded = json.dumps(report)
+        assert report["no_order_submitted"] is True
+        assert report["cost_probe"]["calculation_successful"] is True
+        assert "VENUE-PRIVATE-1" not in encoded
+        assert "DEPOT-PRIVATE-1" not in encoded
+    finally:
+        server.shutdown(); server.server_close(); thread.join(timeout=5)

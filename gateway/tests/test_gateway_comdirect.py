@@ -150,6 +150,87 @@ class FakeTransport:
             }
         )
 
+
+    def get_instrument_probe(self, *, isin, bearer):
+        assert isin == "IE00BJ0KDQ92"
+        return response({
+            "isin": isin,
+            "wkn": "A1XB5U",
+            "name": "ETF One",
+            "fundsDistribution": {
+                "fundStatus": "A",
+                "fundFlags": ["FLAG_B", "FLAG_A"],
+                "currency": "EUR",
+                "regularIssueSurcharge": "1.500",
+            },
+            "orderDimensions": {
+                "venues": [
+                    {
+                        "name": "Tradegate",
+                        "venueId": "VENUE-PRIVATE-1",
+                        "country": "DE",
+                        "type": "EXCHANGE",
+                        "currencies": ["EUR"],
+                        "sides": ["BUY", "SELL"],
+                        "orderTypes": {"MARKET": {}},
+                    },
+                    {
+                        "name": "Sell only",
+                        "venueId": "VENUE-PRIVATE-2",
+                        "country": "DE",
+                        "type": "EXCHANGE",
+                        "currencies": ["EUR"],
+                        "sides": ["SELL"],
+                        "orderTypes": {"MARKET": {}},
+                    },
+                ]
+            },
+        })
+
+    def post_cost_indication(self, *, order_document, bearer):
+        assert order_document == {
+            "depotId": "D1",
+            "side": "BUY",
+            "instrumentId": "IE00BJ0KDQ92",
+            "venueId": "VENUE-PRIVATE-1",
+            "quantity": {"value": "1", "unit": "XXX"},
+            "orderType": "MARKET",
+            "validityType": "GFD",
+            "bestEx": False,
+        }
+        return response({"values": [{
+            "depotId": "D1",
+            "calculationSuccessful": True,
+            "name": "ETF One",
+            "wkn": "A1XB5U",
+            "side": "BUY",
+            "quantity": {"value": "1", "unit": "XXX"},
+            "expectedValue": {"value": "105.00", "unit": "EUR"},
+            "venueName": "Tradegate",
+            "settlementCurrency": "EUR",
+            "tradingCurrency": "EUR",
+            "reportingCurrency": "EUR",
+            "expectedSettlementCosts": {"value": "9.90", "unit": "EUR"},
+            "purchaseCosts": {
+                "type": "K",
+                "label": "Kaufkosten",
+                "sum": {"value": "9.90", "unit": "EUR"},
+                "costs": [{
+                    "type": "E",
+                    "label": "Orderprovision",
+                    "amount": {"value": "9.90", "unit": "EUR"},
+                    "amountReportingCurrency": {"value": "9.90", "unit": "EUR"},
+                    "inducement": {"secret": "not-retained"},
+                }],
+            },
+            "holdingCosts": {"type": "H", "label": "Halten", "sum": {"value": "1.20", "unit": "EUR"}, "costs": []},
+            "salesCosts": {"type": "V", "label": "Verkauf", "sum": {"value": "9.90", "unit": "EUR"}, "costs": []},
+            "holdingPeriod": "5",
+            "totalCostsAbs": {"value": "25.80", "unit": "EUR"},
+            "totalCostsRel": {"percentString": "24.57"},
+            "linkCosts": "https://example.invalid/private",
+        }]})
+
     def get_instrument(self, *, instrument_id, bearer):
         assert instrument_id == "instrument-1"
         return response(

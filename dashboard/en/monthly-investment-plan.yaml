@@ -350,3 +350,22 @@ cards:
   grid_options:
     columns: 6
     rows: auto
+- type: conditional
+  conditions:
+  - condition: numeric_state
+    entity: sensor.portfolio_architect_purchase_count
+    above: 0
+  card:
+    type: markdown
+    title: Order identifiers
+    entity_id:
+    - sensor.portfolio_architect
+    content: |-
+      {% set recommendations = state_attr('sensor.portfolio_architect', 'recommendations') or [] %}
+      {% for item in recommendations if item.proposed_buy_eur | float > 0 %}
+      **{{ item.name }}** — `{{ item.isin }}`
+
+      {% endfor %}
+  grid_options:
+    columns: full
+    rows: auto

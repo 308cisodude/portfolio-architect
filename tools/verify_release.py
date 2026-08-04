@@ -177,7 +177,7 @@ def main() -> None:
     )
     if sbom.get("spdxVersion") != "SPDX-2.3":
         raise SystemExit("SBOM is not SPDX 2.3")
-    if not re.fullmatch(r"\d+\.\d+\.\d+", release_version):
+    if not re.fullmatch(r"\d+\.\d+\.\d+(?:-(?:rc|beta|alpha)\d+)?", release_version):
         raise SystemExit(f"Unexpected release version: {release_version}")
     print(f"Verified Portfolio Architect v{release_version} release in {dist}")
 

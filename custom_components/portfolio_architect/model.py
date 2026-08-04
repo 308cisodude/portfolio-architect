@@ -30,6 +30,7 @@ POLICY_RULES = frozenset({
     "minimum_fund_size_eur",
     "savings_plan_required",
     "free_savings_plan_preferred",
+    "savings_plan_fee_verified_recently",
 })
 POLICY_SEVERITIES = frozenset({"error", "warning", "info"})
 POLICY_STATUSES = frozenset({"pass", "fail", "accepted_exception"})

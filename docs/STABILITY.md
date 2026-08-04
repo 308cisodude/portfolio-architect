@@ -132,3 +132,14 @@ dashboard adds only a conditional native tile; older dashboards remain valid.
 
 The trace is advisory and non-authoritative. A failure to restore or persist it
 does not make portfolio data unavailable and does not change a recommendation.
+
+## v1.19.0-rc1 release-candidate isolation
+
+The fee probe is optional, manual, and outside the portfolio refresh path. A probe
+failure cannot make the portfolio unavailable, alter a recommendation, advance the
+decision trace, or modify fee configuration. Results are empirical evidence only.
+
+The release remains a prerelease until promoted and regular-fee ETF samples confirm
+what the documented fields actually represent. Unknown `fundFlags` remain opaque,
+and ordinary-order cost indications are never promoted into savings-plan fees
+automatically.

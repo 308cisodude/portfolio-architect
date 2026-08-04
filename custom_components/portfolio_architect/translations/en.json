@@ -1457,7 +1457,8 @@
               "max_ter_pct": "TER limit",
               "minimum_fund_size_eur": "Minimum fund size",
               "savings_plan_required": "Savings-plan availability",
-              "free_savings_plan_preferred": "Savings-plan fee preference"
+              "free_savings_plan_preferred": "Savings-plan fee preference",
+              "savings_plan_fee_verified_recently": "Savings-plan fee verification"
             }
           },
           "observed": {
@@ -1725,6 +1726,47 @@
       },
       "additional_investment_cash_required": {
         "name": "Additional investment cash required"
+      },
+      "policy_finding_savings_plan_fee_verified_recently": {
+        "name": "{fund_name}: fee verification",
+        "state": {
+          "error": "Error",
+          "warning": "Warning",
+          "accepted_exception": "Accepted exception",
+          "opportunity": "Optimisation opportunity"
+        },
+        "state_attributes": {
+          "fund_name": {
+            "name": "ETF"
+          },
+          "rule": {
+            "name": "Policy rule"
+          },
+          "severity": {
+            "name": "Severity"
+          },
+          "observed": {
+            "name": "Observed"
+          },
+          "expected": {
+            "name": "Expected"
+          },
+          "exception_rationale": {
+            "name": "Rationale",
+            "state": {
+              "robotics_distributing_share_class": "The distributing iShares share class is retained because Comdirect offers it at 0% savings-plan fee, it provides the preferred broad automation and robotics exposure, and the accumulating share class is not fee-free."
+            }
+          },
+          "exception_review_on": {
+            "name": "Review date"
+          },
+          "exception_approved_on": {
+            "name": "Approved on"
+          },
+          "exception_last_reviewed_on": {
+            "name": "Last reviewed on"
+          }
+        }
       }
     },
     "binary_sensor": {
