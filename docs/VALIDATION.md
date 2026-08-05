@@ -1,11 +1,11 @@
-# v1.19.0-rc1 validation
+# v1.19.0-rc2 validation
 
 The release pipeline validates:
 
 - Python compilation for the integration, standalone Gateway, and Gateway App;
 - JSON and YAML parsing for all shipped configuration, quality-audit, workflow,
   and dashboard files;
-- the complete deterministic regression suite;
+- the complete deterministic regression suite (**288 tests**);
 - executable local REST DNS-pinning behavior, including exact-address connection
   and preservation of the original Host header;
 - local publication-readiness metadata without invented repository URLs;
@@ -26,6 +26,10 @@ The release pipeline validates:
 - strict two-evaluation decision-trace serialization, material-change thresholds,
   last-known-good replay exclusion, bilingual enum translations, and dashboard
   visibility contracts;
+- rc2 dashboard regression contracts for copy-first tap behavior, explanation on
+  long press, and populated order-identifier rendering from live proposed-buy entities;
+- acceptance-informed brokerage-diagnostic wording that rejects savings-plan
+  promotion inference from `fundFlags`, surcharge fields, or ordinary-order costs;
 - Gateway/integration version alignment and App Dockerfile build label;
 - reproducible release builds, package manifests, SHA-256 files, SPDX 2.3
   metadata, ZIP integrity, and archive path safety.

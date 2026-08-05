@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.19.0-rc2
+
+- Corrects the recommended-buy tile actions: tap opens the copy-friendly ISIN and
+  long press opens the purchase explanation.
+- Corrects the conditional Order identifiers / Orderkennungen card to read the
+  actual proposed-buy entities, so it no longer renders an empty title-only card.
+- Records live acceptance against a confirmed 0% ETF and a regular 1.5% ETF: both
+  returned empty `fundFlags`, null fund status, and zero surcharge fields.
+- Records identical EUR 15.30 Tradegate ordinary-order purchase charges for both
+  samples and confirms that no PhotoTAN challenge or pending/open order was created.
+- Retains the instrument metadata read only as an opaque diagnostic and the ex-ante
+  endpoint only as an ordinary-order cost diagnostic; neither is presented as a
+  savings-plan promotion detector.
+- Preserves all rc1 security boundaries, schemas, calculations, entities, fee-review
+  metadata, and App-private state.
+
 ## 1.19.0-rc1
 
 - Adds an admin-only instrument probe for documented `fundDistribution`, opaque

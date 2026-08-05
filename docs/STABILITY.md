@@ -133,13 +133,14 @@ dashboard adds only a conditional native tile; older dashboards remain valid.
 The trace is advisory and non-authoritative. A failure to restore or persist it
 does not make portfolio data unavailable and does not change a recommendation.
 
-## v1.19.0-rc1 release-candidate isolation
+## v1.19.0-rc2 release-candidate isolation
 
-The fee probe is optional, manual, and outside the portfolio refresh path. A probe
+The brokerage diagnostics are optional, manual, and outside the portfolio refresh path. A diagnostic
 failure cannot make the portfolio unavailable, alter a recommendation, advance the
 decision trace, or modify fee configuration. Results are empirical evidence only.
 
-The release remains a prerelease until promoted and regular-fee ETF samples confirm
-what the documented fields actually represent. Unknown `fundFlags` remain opaque,
-and ordinary-order cost indications are never promoted into savings-plan fees
-automatically.
+Live rc1 acceptance found no promotion distinction in `fundFlags`, fund status, or
+surcharge fields and returned the same ordinary-order purchase charges for a
+confirmed 0% and a regular 1.5% savings-plan ETF. rc2 therefore retains these
+operations only as bounded diagnostics. They are never promoted into savings-plan
+fees automatically.

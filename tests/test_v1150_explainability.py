@@ -54,11 +54,11 @@ def test_dashboard_routes_native_interactions_to_bounded_details() -> None:
         entity = card["entity"]
         assert card["tap_action"] == {
             "action": "more-info",
-            "entity": entity.removesuffix("_proposed_buy") + "_purchase_explanation",
+            "entity": entity.removesuffix("_proposed_buy") + "_isin",
         }
         assert card["hold_action"] == {
             "action": "more-info",
-            "entity": entity.removesuffix("_proposed_buy") + "_isin",
+            "entity": entity.removesuffix("_proposed_buy") + "_purchase_explanation",
         }
 
     policy_cards = [c for c in cards if c.get("type") == "tile" and str(c.get("entity", "")).endswith("_policy_finding")]

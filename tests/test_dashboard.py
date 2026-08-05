@@ -37,8 +37,9 @@ def test_monthly_plan_uses_conditional_tiles():
         source=(DASHBOARD/locale/'monthly-investment-plan.yaml').read_text()
         config=yaml.safe_load(source)
         assert config['type']=='vertical-stack'
-        assert source.count('_proposed_buy')==21  # condition, tile entity, and hold target for seven funds
-        assert source.count('_isin')==7  # tap target for seven funds
+        assert source.count('_isin') == 7  # tap target for seven funds
+        assert source.count('_purchase_explanation') == 7  # hold target for seven funds
+        assert source.count('_proposed_buy') >= 21  # conditions, tile entities, and Markdown inputs
         assert 'type: conditional' in source
         assert 'type: tile' in source
         assert 'type: entities' not in source

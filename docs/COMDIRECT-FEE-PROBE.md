@@ -1,15 +1,22 @@
-# Experimental Comdirect fee probe
+# Experimental Comdirect brokerage diagnostics
 
-## Purpose
+## Purpose and accepted interpretation
 
-The v1.19.0-rc1 probe collects bounded evidence for two questions:
+The v1.19.0 release-candidate diagnostics answer two bounded questions:
 
-1. Do documented `fundFlags` differ consistently between promoted and regular
-   Comdirect ETF savings-plan products?
-2. Does the documented ex-ante ordinary-order cost endpoint provide useful evidence
-   for validating Portfolio Architect's manual-order cost assumptions?
+1. What documented instrument metadata and eligible public venues does Comdirect
+   expose for one ISIN?
+2. What ordinary-order costs does Comdirect calculate for one bounded BUY/MARKET
+   request without validating or submitting an order?
 
-It does not assume that ordinary-order costs describe a recurring savings plan.
+Live rc1 acceptance compared a confirmed 0.00% savings-plan ETF
+`IE00BYWZ0333` with a regular 1.50% savings-plan ETF `IE00BJ0KDQ92`.
+Both returned empty `fundFlags`, a null fund status, and zero regular/reduced/discount
+issue-surcharge fields. These values are not treated as a promotion detector.
+
+The ordinary-order cost endpoint returned the same EUR 15.30 Tradegate purchase-cost
+structure for both instruments at quantity 1. It is useful as an account-specific
+ordinary-order cost diagnostic, but it is not a savings-plan quotation.
 
 ## Endpoint allowlist
 
@@ -58,12 +65,12 @@ There is no generic brokerage POST function exposed to the App controller or UI.
 
 ## Execution boundary
 
-- Probes are started manually through Home Assistant Ingress.
+- Diagnostics are started manually through Home Assistant Ingress.
 - CSRF protection and the existing Ingress source/user-header checks apply.
 - They never run in the polling or manual portfolio-refresh path.
 - Results live only in Gateway process memory until cleared or the App restarts.
-- Probe results are not persisted in `/data`.
-- Probe results are not included in public REST or health schemas.
+- Results are not persisted in `/data`.
+- Results are not included in public REST or health schemas.
 
 ## Sanitization
 
@@ -75,13 +82,17 @@ It excludes internal depot/venue identifiers, customer and account metadata, OAu
 and qSession material, request headers, upstream links, inducement objects, raw
 responses, and exception bodies.
 
-## Interpretation rule
+## Interpretation rules
 
-`fundFlags` are retained exactly as opaque strings and sorted for deterministic
-comparison. No flag receives a semantic label until repeated promoted/regular
-samples establish a stable distinction and an official contract or sufficiently
-strong evidence supports that interpretation.
+- `fundFlags`, fund status, and surcharge fields remain opaque observations.
+- Empty or zero values must not be interpreted as 0% savings-plan eligibility.
+- `ordinary_order_cost_indication` must never be presented as a savings-plan quote.
+- Diagnostic results never update configured savings-plan fees automatically.
+- Current savings-plan fees remain subject to human verification until Comdirect
+  exposes a documented machine-readable contract for that information.
 
-An ex-ante response is labelled `ordinary_order_cost_indication`. It must never be
-presented as a savings-plan quotation merely because the tested instrument is
-savings-plan eligible.
+## Live safety acceptance
+
+The rc1 live test completed both instrument reads and both ex-ante cost requests
+without a PhotoTAN invocation and without creating a pending or open order. This
+supports the endpoint contract but does not broaden the allowed operation set.

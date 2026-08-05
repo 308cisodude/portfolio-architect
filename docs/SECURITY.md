@@ -356,7 +356,7 @@ cache.
 - detailed trace attributes are excluded from recorder history; and
 - diagnostics intentionally omit monetary trace deltas.
 
-## v1.19.0-rc1 experimental brokerage-probe controls
+## v1.19.0-rc2 experimental brokerage-probe controls
 
 The release adds one deliberately narrow brokerage POST exception for the documented
 non-submitting ex-ante cost-indication endpoint. Security controls include:

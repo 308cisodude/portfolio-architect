@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.19.0-rc2
+
+- Updates Ingress wording to reflect the live rc1 finding that instrument metadata
+  and ordinary-order costs do not expose current savings-plan promotion status.
+- Retains the exact endpoint allowlist, non-submission boundary, in-memory token
+  mapping, and sanitized result contract.
+- Preserves credentials, OAuth/session state, cached snapshot, selected investment
+  account, REST portfolio schema 1, and health schema 5.
+
 ## 1.19.0-rc1
 
 - Marks the App package experimental for a controlled real-account acceptance test.

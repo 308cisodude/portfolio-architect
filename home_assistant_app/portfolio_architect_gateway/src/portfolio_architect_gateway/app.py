@@ -269,7 +269,7 @@ class AppController:
         view = self.probe_view()
         return {
             "schema_version": 1,
-            "release": "1.19.0-rc1",
+            "release": "1.19.0-rc2",
             "experimental": True,
             "no_order_submitted": True,
             "instrument_probe": view.instrument,
@@ -997,15 +997,15 @@ class IngressRequestHandler(BaseHTTPRequestHandler):
 <form method="post" action="discover-accounts" autocomplete="off"><input type="hidden" name="csrf" value="{csrf}"><button type="submit">Discover eligible EUR accounts</button></form>
 {selection_form}{clear_form}
 <p class="small">Only a masked account label, available EUR cash and timestamp are shown in this admin-only page. The account identifier stays in App-private storage and is never sent to Home Assistant.</p></section>
-<section><h2>Experimental Comdirect fee probe · v1.19.0-rc1</h2>
+<section><h2>Experimental Comdirect brokerage diagnostics · v1.19.0-rc2</h2>
 <p class="warn"><strong>No order is validated or submitted.</strong> The cost operation is an ordinary BUY/MARKET order indication, not a savings-plan quotation.</p>
 <p>State: <strong>{escape(str(probe.get('state', 'idle')))}</strong></p><p>{escape(str(probe.get('message', '')))}</p>
-<form method="post" action="probe-instrument" autocomplete="off"><input type="hidden" name="csrf" value="{csrf}"><label for="probe_isin">ISIN</label><input id="probe_isin" name="isin" minlength="12" maxlength="12" pattern="[A-Za-z]{{2}}[A-Za-z0-9]{{9}}[0-9]" required><button type="submit">Probe fundFlags and venues</button></form>
+<form method="post" action="probe-instrument" autocomplete="off"><input type="hidden" name="csrf" value="{csrf}"><label for="probe_isin">ISIN</label><input id="probe_isin" name="isin" minlength="12" maxlength="12" pattern="[A-Za-z]{{2}}[A-Za-z0-9]{{9}}[0-9]" required><button type="submit">Read instrument metadata and venues</button></form>
 {cost_form}
 <details><summary>Sanitized probe result</summary><code>{probe_json}</code></details>
 <p><a href="probe-result.json" rel="nofollow">Open sanitized JSON result</a></p>
 <form method="post" action="clear-probe" autocomplete="off"><input type="hidden" name="csrf" value="{csrf}"><button type="submit">Clear probe result</button></form>
-<p class="small">Opaque fundFlags are recorded without interpretation. Depot and venue identifiers remain token-mapped in memory and are absent from the displayed/downloaded result. The Gateway contains no order validation, TAN, submission, modification, cancellation, or quote-request operation.</p></section>
+<p class="small">fundFlags and surcharge fields are recorded only as opaque instrument metadata. Live v1.19.0-rc1 acceptance found no difference between a confirmed 0% and a regular 1.5% savings-plan ETF, so these fields are not a promotion detector. Depot and venue identifiers remain token-mapped in memory and are absent from the displayed/downloaded result. The Gateway contains no order validation, TAN, submission, modification, cancellation, or quote-request operation.</p></section>
 <section><h2>Comdirect bootstrap / reauthentication</h2><form method="post" action="bootstrap" autocomplete="off">
 <input type="hidden" name="csrf" value="{csrf}">
 <div class="grid"><div><label for="client_id">API client ID</label><input id="client_id" name="client_id" maxlength="512" required></div><div><label for="client_secret">API client secret</label><input id="client_secret" name="client_secret" type="password" maxlength="1024" required></div></div>

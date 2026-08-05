@@ -1,83 +1,87 @@
-# Portfolio Architect 1.19.0-rc1
+# Portfolio Architect 1.19.0-rc2
 
-Version 1.19.0-rc1 is an experimental Comdirect fee-discovery release candidate.
-It preserves the v1.18.0 portfolio calculation and Plan Delta & Decision Trace,
-while adding two explicit admin-only probes to the Gateway App and a small Home
-Assistant fee-review workflow.
+Version 1.19.0-rc2 is an acceptance-informed correction release for the experimental
+Comdirect brokerage diagnostics introduced in rc1. Portfolio Architect v1.18.0
+remains the stable known-good baseline.
 
-## Experimental Comdirect probes
+## Live acceptance findings
 
-The protected Gateway Ingress page can now perform two manual operations:
+The rc1 diagnostics were tested against two current Comdirect ETF savings-plan
+examples:
 
-- read one instrument through the documented instrument endpoint with
-  `fundDistribution` and `orderDimensions`, retaining `fundFlags` as opaque values;
-- request an ex-ante cost indication for one bounded ordinary BUY/MARKET order
-  through `/api/brokerage/v3/orders/costindicationexante`.
+- `IE00BYWZ0333`, confirmed in the Comdirect UI with a 0.00% savings-plan fee;
+- `IE00BJ0KDQ92`, configured with the regular 1.50% savings-plan fee.
 
-The implementation contains no generic POST proxy. It has no brokerage order
-validation, prevalidation, quote, TAN, submission, modification, cancellation, or
-transaction-history operation. The cost probe is explicitly labelled as an
-ordinary-order indication, not a savings-plan quotation.
+Both instrument responses exposed the same potentially relevant metadata:
 
-Probe execution is manual and available only through Home Assistant Ingress. It is
-not part of scheduled portfolio refreshes and is not exposed through REST portfolio
-schema 1 or Gateway health schema 5.
+```text
+fundFlags: []
+fundStatus: null
+regularIssueSurcharge: 0
+reducedIssueSurcharge: 0
+discountIssueSurcharge: 0
+```
 
-## Bounded and sanitized evidence
+The fields therefore do not provide a usable current savings-plan promotion signal
+for these live samples and remain opaque metadata only.
 
-The instrument probe retains only:
+For quantity 1 at Tradegate, the ex-ante endpoint returned the same ordinary-order
+purchase charges for both ETFs:
 
-- ISIN, public name and WKN;
-- opaque `fundFlags`, fund status, currency, and bounded surcharge fields;
-- public venue name, country, and type;
-- probe timestamp.
+```text
+Orderprovision:                               EUR 9.90
+Börsenplatzabhängiges Entgelt:                EUR 2.50
+Abwicklungsentgelt Clearstream/Streifband:    EUR 2.90
+Total purchase costs:                         EUR 15.30
+```
 
-Private depot and venue identifiers are represented by short-lived random tokens in
-the browser and are absent from the displayed/downloaded result. The cost result
-retains bounded cost groups, labels, amounts, currencies, holding-period assumption,
-and total costs. It excludes depot IDs, venue IDs, OAuth/session material,
-inducements, links, and raw upstream responses.
+The live tests created no PhotoTAN challenge and no pending or open order appeared. The endpoint
+is therefore retained only as an explicitly labelled ordinary-order cost diagnostic;
+it is not a savings-plan quotation or promotion detector.
+
+## Dashboard corrections
+
+rc1 exposed two dashboard defects that are corrected in rc2:
+
+- a normal tap on a recommended-buy tile now opens the copy-friendly ISIN entity;
+- a long press opens the detailed purchase explanation;
+- the conditional **Order identifiers / Orderkennungen** card now reads the seven
+  actual proposed-buy entities instead of a non-existent aggregate
+  `recommendations` attribute;
+- only instruments with a positive proposed buy are listed.
+
+The implementation remains native Home Assistant YAML without a custom card or
+JavaScript dependency.
+
+## Experimental brokerage diagnostics
+
+The protected Gateway Ingress page retains two manual operations:
+
+- read documented instrument metadata and eligible public venues;
+- request one bounded ex-ante ordinary BUY/MARKET cost indication through
+  `/api/brokerage/v3/orders/costindicationexante`.
+
+The implementation contains no generic POST proxy and no order prevalidation,
+validation, quote/ticket, brokerage TAN, submission, modification, cancellation, or
+transaction-history operation. Probe state is process-local, sanitized, and absent
+from REST portfolio schema 1, Gateway health schema 5, Home Assistant entities,
+diagnostics, and scheduled refreshes.
 
 ## Fee-verification lifecycle
 
-A plan may opt into fee-review freshness by configuring:
-
-```yaml
-broker:
-  fee_verification_max_age_days: 90
-  savings_plans:
-    IE00BJ0KDQ92:
-      available: true
-      fee_pct: 1.5
-      fee_verified_at: 2026-08-03
-      fee_source: manual_comdirect_verification
-```
-
-When enabled, Portfolio Architect emits an informational policy finding if a target
-instrument has no valid verification date/source, if the date lies in the future,
-or if it is older than the configured maximum age. Probe results never overwrite
-`fee_pct` or verification metadata automatically.
-
-## Copyable order identifiers
-
-The supplied English/German dashboard adds a conditional built-in Markdown block
-listing only current recommended-buy ISINs as selectable text. Existing purchase
-tiles and their tap/hold actions remain available.
-
-## Release-candidate boundary
-
-This release requires the v1.19.0-rc1 Gateway App for probe testing. The App package
-is marked `experimental`. No Comdirect test environment is available, so the probe
-contracts require acceptance against a real account before any stable release.
+Optional `fee_verified_at`, `fee_source`, and
+`fee_verification_max_age_days` fields remain supported. They provide a bounded
+human-review reminder only. Diagnostics never overwrite `fee_pct` or verification
+metadata automatically.
 
 ## Compatibility
 
-- Portfolio payload schema 8 remains unchanged.
-- REST schema 1 remains unchanged.
-- Gateway health schema 5 remains unchanged.
-- Existing entity IDs and unique IDs remain unchanged.
-- Allocation, policy thresholds, target corridor, recommendation distribution,
-  execution-cost calculations, and decision-trace semantics remain unchanged.
-- Existing v1.18.0 configuration remains valid; fee-verification metadata is opt-in.
-- No Gateway authentication or selected-account migration is required for an
-  in-place App update.
+- Portfolio payload schema 8 is unchanged.
+- REST schema 1 is unchanged.
+- Gateway health schema 5 is unchanged.
+- Existing entity IDs and unique IDs are unchanged.
+- Allocation, policy, target corridor, recommendation distribution, execution-cost
+  calculation, and decision-trace semantics are unchanged.
+- Existing v1.18.0 and rc1 configuration remains valid.
+- No Gateway authentication, selected-account, or stored-session migration is
+  required for an in-place App update.

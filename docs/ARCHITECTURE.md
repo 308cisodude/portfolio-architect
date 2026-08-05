@@ -147,7 +147,7 @@ clamped at zero, and omits the reserve if either field is unavailable or invalid
 The reserve is advisory input only. Neither the Gateway nor the Home Assistant
 integration contains an order, transfer, or payment operation.
 
-## v1.19.0-rc1 experimental fee-probe adapter
+## v1.19.0-rc2 experimental brokerage-diagnostic adapter
 
 The probe is an App-Ingress-only adapter beside, not inside, the scheduled Gateway
 snapshot pipeline. The App controller exposes two fixed operations to

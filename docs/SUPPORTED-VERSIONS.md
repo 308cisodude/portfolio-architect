@@ -20,7 +20,7 @@ snapshot.
 
 ## Gateway compatibility
 
-Portfolio Architect 1.19.0-rc1 accepts the established REST portfolio schema 1 and
+Portfolio Architect 1.19.0-rc2 accepts the established REST portfolio schema 1 and
 Gateway health schemas 1 through 5. Gateway App 1.16.1 and later remain supported
 when release notes state that the Gateway protocol is unchanged.
 
@@ -30,9 +30,9 @@ A release that repairs a security vulnerability will document the affected
 versions and remediation path in the corresponding security advisory. Users
 should not rely on an unsupported release merely because it still starts.
 
-## Experimental v1.19.0-rc1 boundary
+## Experimental v1.19.0-rc2 boundary
 
-The stable known-good baseline remains v1.18.0. The v1.19.0-rc1 integration and
-Gateway App are supported only for the documented controlled fee-probe acceptance
-exercise. Experimental probe output is not a stable API contract and may change or
-be removed before v1.19.0.
+The stable known-good baseline remains v1.18.0. The v1.19.0-rc2 integration and
+Gateway App are supported only for the documented experimental brokerage-diagnostic workflow.
+Live acceptance did not identify a savings-plan promotion signal. Diagnostic output
+is not a stable API contract and may change or be removed before v1.19.0.
