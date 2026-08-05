@@ -256,12 +256,12 @@ def test_v1160_dashboard_keeps_native_cost_aware_interaction_contract() -> None:
         name: MSCI World
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_world_purchase_explanation
+          entity: sensor.portfolio_architect_world_isin
         color: green
         icon: mdi:cart-arrow-down
         hold_action:
           action: more-info
-          entity: sensor.portfolio_architect_world_isin"""
+          entity: sensor.portfolio_architect_world_purchase_explanation"""
     assert dashboard.count(expected_en) == 2
 
 

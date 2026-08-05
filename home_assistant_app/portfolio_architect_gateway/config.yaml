@@ -1,8 +1,8 @@
 name: Portfolio Architect Gateway
-version: 1.19.0-rc1
+version: 1.19.0-rc2
 slug: portfolio_architect_gateway
 description: Credential-isolated Comdirect gateway with read-only portfolio service,
-  private reserve selection, and experimental non-submitting cost probe.
+  private reserve selection, and experimental non-submitting brokerage diagnostics.
 url: https://developers.home-assistant.io/docs/apps/
 arch:
 - amd64

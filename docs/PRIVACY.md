@@ -54,9 +54,9 @@ Assistant recorder history; only the bounded enum state may be retained accordin
 the user's recorder policy. Diagnostics omit monetary trace values and expose only
 the state, timestamps, categories, counts, and changed fund IDs.
 
-## Experimental fee-probe data
+## Experimental brokerage-diagnostic data
 
-Version 1.19.0-rc1 keeps probe state exclusively in Gateway process memory. The
+Version 1.19.0-rc2 keeps probe state exclusively in Gateway process memory. The
 Ingress page uses random short-lived tokens for private depot and venue identifiers.
 The sanitized result may contain public instrument/venue labels and cost values, but
 not depot IDs, venue IDs, customer/account metadata, OAuth/session material,

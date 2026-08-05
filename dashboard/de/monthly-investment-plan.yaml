@@ -226,7 +226,7 @@ cards:
     icon: mdi:cart-arrow-down
     hold_action:
       action: more-info
-      entity: sensor.portfolio_architect_world_proposed_buy
+      entity: sensor.portfolio_architect_world_purchase_explanation
   grid_options:
     columns: 6
     rows: auto
@@ -246,7 +246,7 @@ cards:
     icon: mdi:cart-arrow-down
     hold_action:
       action: more-info
-      entity: sensor.portfolio_architect_emerging_markets_proposed_buy
+      entity: sensor.portfolio_architect_emerging_markets_purchase_explanation
   grid_options:
     columns: 6
     rows: auto
@@ -266,7 +266,7 @@ cards:
     icon: mdi:cart-arrow-down
     hold_action:
       action: more-info
-      entity: sensor.portfolio_architect_world_small_cap_proposed_buy
+      entity: sensor.portfolio_architect_world_small_cap_purchase_explanation
   grid_options:
     columns: 6
     rows: auto
@@ -286,7 +286,7 @@ cards:
     icon: mdi:cart-arrow-down
     hold_action:
       action: more-info
-      entity: sensor.portfolio_architect_healthcare_proposed_buy
+      entity: sensor.portfolio_architect_healthcare_purchase_explanation
   grid_options:
     columns: 6
     rows: auto
@@ -306,7 +306,7 @@ cards:
     icon: mdi:cart-arrow-down
     hold_action:
       action: more-info
-      entity: sensor.portfolio_architect_ai_big_data_proposed_buy
+      entity: sensor.portfolio_architect_ai_big_data_purchase_explanation
   grid_options:
     columns: 6
     rows: auto
@@ -326,7 +326,7 @@ cards:
     icon: mdi:cart-arrow-down
     hold_action:
       action: more-info
-      entity: sensor.portfolio_architect_cybersecurity_proposed_buy
+      entity: sensor.portfolio_architect_cybersecurity_purchase_explanation
   grid_options:
     columns: 6
     rows: auto
@@ -346,7 +346,7 @@ cards:
     icon: mdi:cart-arrow-down
     hold_action:
       action: more-info
-      entity: sensor.portfolio_architect_robotics_proposed_buy
+      entity: sensor.portfolio_architect_robotics_purchase_explanation
   grid_options:
     columns: 6
     rows: auto
@@ -359,13 +359,15 @@ cards:
     type: markdown
     title: Orderkennungen
     entity_id:
-    - sensor.portfolio_architect
-    content: |-
-      {% set recommendations = state_attr('sensor.portfolio_architect', 'recommendations') or [] %}
-      {% for item in recommendations if item.proposed_buy_eur | float > 0 %}
-      **{{ item.name }}** — `{{ item.isin }}`
-
-      {% endfor %}
+    - sensor.portfolio_architect_purchase_count
+    - sensor.portfolio_architect_world_proposed_buy
+    - sensor.portfolio_architect_emerging_markets_proposed_buy
+    - sensor.portfolio_architect_world_small_cap_proposed_buy
+    - sensor.portfolio_architect_healthcare_proposed_buy
+    - sensor.portfolio_architect_ai_big_data_proposed_buy
+    - sensor.portfolio_architect_cybersecurity_proposed_buy
+    - sensor.portfolio_architect_robotics_proposed_buy
+    content: "{% set buy_entities = [\n  'sensor.portfolio_architect_world_proposed_buy',\n  'sensor.portfolio_architect_emerging_markets_proposed_buy',\n  'sensor.portfolio_architect_world_small_cap_proposed_buy',\n  'sensor.portfolio_architect_healthcare_proposed_buy',\n  'sensor.portfolio_architect_ai_big_data_proposed_buy',\n  'sensor.portfolio_architect_cybersecurity_proposed_buy',\n  'sensor.portfolio_architect_robotics_proposed_buy'\n] %}\n{% for entity_id in buy_entities %}\n{% if states(entity_id) | float(0) > 0 %}\n**{{ state_attr(entity_id, 'fund_name') }}** — `{{ state_attr(entity_id, 'isin') }}`\n\n{% endif %}\n{% endfor %}\n"
   grid_options:
     columns: full
     rows: auto

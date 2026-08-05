@@ -167,6 +167,9 @@ def test_ingress_requires_proxy_identity_and_serves_setup(tmp_path: Path) -> Non
         assert response.status == 200
         assert b"local-portfolio-architect-gateway:8787" in body
         assert controller.api_token.encode() in body
+        assert b"Experimental Comdirect brokerage diagnostics" in body
+        assert b"Read instrument metadata and venues" in body
+        assert b"not a promotion detector" in body
         assert response.getheader("Cache-Control") == "no-store"
     finally:
         server.shutdown()

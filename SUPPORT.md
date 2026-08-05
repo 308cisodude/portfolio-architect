@@ -11,17 +11,18 @@ Security and correctness fixes are provided for:
 - the current stable Portfolio Architect release; and
 - the immediately preceding stable release while a documented upgrade path exists.
 
-The stable known-good baseline is v1.18.0. Version v1.19.0-rc1 is an experimental
+The stable known-good baseline is v1.18.0. Version v1.19.0-rc2 is an experimental
 prerelease and receives best-effort support only. It must not be treated as a stable
-fee-discovery contract until real-account acceptance is complete.
+savings-plan fee-discovery contract. Live acceptance found no machine-readable
+promotion signal in the tested metadata or ordinary-order cost response.
 
 The Home Assistant support floor for the 1.18.x/1.19.x release lines is
 **2026.7.0**. The project targets the current and immediately previous monthly Home
 Assistant release, subject to automated compatibility checks.
 
 Gateway App versions 1.16.1 and later remain compatible with the established REST
-portfolio schema 1 and health schema 5. Experimental probe testing requires Gateway
-App v1.19.0-rc1 because older Apps intentionally contain no cost-indication POST.
+portfolio schema 1 and health schema 5. Experimental brokerage diagnostics require Gateway App v1.19.0-rc2 because older
+Apps intentionally contain no cost-indication POST.
 
 ## Getting help
 

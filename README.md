@@ -1,4 +1,4 @@
-# Portfolio Architect v1.19.0-rc1
+# Portfolio Architect v1.19.0-rc2
 
 Portfolio Architect is a Home Assistant-native portfolio overview, policy-check,
 and deterministic investment-planning system. It supports provider-specific CSV
@@ -7,7 +7,7 @@ credential-isolated Gateway App for live Comdirect data.
 
 Portfolio Architect is advisory software. It cannot validate, submit, modify, or
 cancel trades, transfer money, initiate payments, or read account transactions.
-The v1.19.0-rc1 Gateway adds one explicitly bounded experimental call to Comdirect's
+The v1.19.0-rc2 Gateway adds one explicitly bounded experimental call to Comdirect's
 documented non-submitting ex-ante cost-indication endpoint.
 
 ## Highlights
@@ -18,8 +18,8 @@ documented non-submitting ex-ante cost-indication endpoint.
 - Private two-evaluation Plan Delta & Decision Trace with bounded reason codes and
   recorder-safe attributes.
 - Live Comdirect data through a local credential-isolated Gateway App.
-- Experimental admin-only Comdirect instrument and ordinary-order cost probes with
-  hard-coded endpoints and sanitized, process-local results.
+- Experimental admin-only Comdirect instrument metadata and ordinary-order cost
+  diagnostics with hard-coded endpoints and sanitized, process-local results.
 - Comdirect, DKB, and generic mapped CSV sources with multi-source consolidation.
 - Conservative investment-cash handling and explicit transaction-cost policies.
 - Optional fee-verification freshness checks and copyable recommended-buy ISINs.
@@ -32,17 +32,18 @@ documented non-submitting ex-ante cost-indication endpoint.
 
 ## Release-candidate status
 
-Version 1.19.0-rc1 is an experimental prerelease. The stable known-good baseline
-remains v1.18.0 until the Comdirect probes have been accepted against real promoted
-and regular-fee ETF samples. The v1.19.0-rc1 Gateway App is intentionally marked
-`experimental`.
+Version 1.19.0-rc2 is an experimental prerelease. Live rc1 acceptance confirmed
+that the bounded operations do not validate or submit orders, but also showed that
+`fundFlags`/surcharge metadata and ordinary-order cost indications do not reveal
+current savings-plan promotion status. The stable known-good baseline remains
+v1.18.0, and the v1.19.0-rc2 Gateway App remains marked `experimental`.
 
 ## Installation channels
 
 ### Manual or prerelease testing
 
-Follow `docs/UPGRADE-1.19.0-rc1.md`. The integration and Gateway App must both be
-updated for probe testing. Preserve App-private `/data` and retain v1.18.0 artifacts
+Follow `docs/UPGRADE-1.19.0-rc2.md`. The integration and Gateway App must both be
+updated for brokerage-diagnostic testing. Preserve App-private `/data` and retain v1.18.0 artifacts
 for rollback.
 
 ### Stable HACS installation
@@ -57,7 +58,7 @@ See `docs/PUBLICATION-SETUP.md` and `docs/PUBLISHING.md` for maintainer publicat
 
 - Home Assistant 2026.7.0 or newer
 - Python 3.14 for source validation and Gateway builds
-- Gateway App 1.19.0-rc1 for experimental fee-probe testing
+- Gateway App 1.19.0-rc2 for experimental brokerage diagnostics
 - Gateway App 1.16.1 or newer for the established live portfolio/reserve protocol
 
 The current stable Portfolio Architect release and the immediately preceding stable
@@ -108,4 +109,4 @@ as the live external validation step.
 - `docs/QUALITY.md`
 - `docs/DECISION-TRACE.md`
 - `docs/COMDIRECT-FEE-PROBE.md`
-- `docs/UPGRADE-1.19.0-rc1.md`
+- `docs/UPGRADE-1.19.0-rc2.md`
