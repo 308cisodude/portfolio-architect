@@ -1734,7 +1734,7 @@ views:
   - type: grid
     cards:
     - type: heading
-      heading: Complete portfolio
+      heading: Total portfolio value
       grid_options:
         columns: full
         rows: auto
@@ -2029,7 +2029,7 @@ views:
   - type: grid
     cards:
     - type: heading
-      heading: Current plan drift
+      heading: Current portfolio allocation
       grid_options:
         columns: full
         rows: auto
@@ -4282,7 +4282,7 @@ views:
   - type: grid
     cards:
     - type: heading
-      heading: Gesamtportfolio
+      heading: Gesamtportfoliowert
       grid_options:
         columns: full
         rows: auto
@@ -4577,7 +4577,7 @@ views:
   - type: grid
     cards:
     - type: heading
-      heading: Abweichung im aktuellen Plan
+      heading: Aktuelle Portfolioallokation
       grid_options:
         columns: full
         rows: auto

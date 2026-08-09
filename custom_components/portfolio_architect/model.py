@@ -263,6 +263,7 @@ class HoldingData:
     instrument_type: str
     source_type: str
     current_value_eur: float
+    quantity: float | None
     whole_portfolio_pct: float
     strategy_scope: str
     plan_fund_id: str | None
@@ -284,6 +285,7 @@ class HoldingData:
             "instrument_type": self.instrument_type,
             "source_type": self.source_type,
             "current_value_eur": self.current_value_eur,
+            "quantity": self.quantity,
             "whole_portfolio_pct": self.whole_portfolio_pct,
             "strategy_scope": self.strategy_scope,
             "plan_fund_id": self.plan_fund_id,
@@ -891,6 +893,16 @@ def parse_holdings(value: Any, positions: dict[str, PositionData]) -> dict[str, 
         if scope not in {"current_plan", "outside_scope"}:
             raise PortfolioArchitectDataError(f"holdings[{index}].strategy_scope is invalid")
         value_eur = _required_float(raw, "current_value_eur", index, minimum=0, maximum=MAX_MONEY_EUR)
+        quantity_raw = raw.get("quantity")
+        if quantity_raw is None:
+            quantity = None
+        else:
+            try:
+                quantity = float(quantity_raw)
+            except (TypeError, ValueError) as err:
+                raise PortfolioArchitectDataError(f"holdings[{index}].quantity is invalid") from err
+            if not math.isfinite(quantity) or quantity < 0 or quantity > 1_000_000_000_000:
+                raise PortfolioArchitectDataError(f"holdings[{index}].quantity is invalid")
         whole_pct = _required_float(raw, "whole_portfolio_pct", index, minimum=0, maximum=100)
         plan_fund_id = raw.get("plan_fund_id")
         plan_current_pct_raw = raw.get("plan_current_pct")
@@ -925,6 +937,7 @@ def parse_holdings(value: Any, positions: dict[str, PositionData]) -> dict[str, 
             instrument_type=instrument_type,
             source_type=source_type.strip(),
             current_value_eur=value_eur,
+            quantity=quantity,
             whole_portfolio_pct=whole_pct,
             strategy_scope=scope,
             plan_fund_id=plan_fund_id,
@@ -1794,6 +1807,7 @@ def parse_portfolio_data(
                 instrument_type="etf",
                 source_type="ETF",
                 current_value_eur=position.current_value_eur,
+                quantity=None,
                 whole_portfolio_pct=position.current_pct,
                 strategy_scope="current_plan",
                 plan_fund_id=position.fund_id,

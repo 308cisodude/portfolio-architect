@@ -1725,6 +1725,9 @@
       },
       "additional_investment_cash_required": {
         "name": "Additional investment cash required"
+      },
+      "holding_quantity": {
+        "name": "{holding_name} quantity"
       }
     },
     "binary_sensor": {

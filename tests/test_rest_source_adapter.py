@@ -31,6 +31,7 @@ def _snapshot_payload(*, generated_at: str = "2026-07-30T14:30:00Z") -> dict:
                 "identifier": "A1XB5U",
                 "name": "ETF One",
                 "market_value_eur": "1234.56",
+                "quantity": "12.345678",
                 "isin": "IE00BJ0KDQ92",
                 "instrument_type": "ETF",
             },
@@ -52,6 +53,8 @@ def test_rest_schema_normalises_to_canonical_positions() -> None:
     assert snapshot.generated_at == datetime(2026, 7, 30, 14, 30, tzinfo=timezone.utc)
     assert tuple(snapshot.positions) == ("A1XB5U", "555750")
     assert snapshot.positions["A1XB5U"].value_eur == Decimal("1234.56")
+    assert snapshot.positions["A1XB5U"].quantity == Decimal("12.345678")
+    assert snapshot.positions["555750"].quantity is None
     assert snapshot.positions["A1XB5U"].instrument_type == "etf"
     assert snapshot.positions["555750"].instrument_type == "stock"
 
@@ -68,6 +71,11 @@ def test_rest_schema_rejects_ambiguous_or_duplicate_financial_data() -> None:
     noncanonical_value["positions"][0]["market_value_eur"] = "1,234.56"
     with pytest.raises(ValueError, match="canonical EUR decimal"):
         parse_rest_snapshot(noncanonical_value, now=now)
+
+    numeric_quantity = _snapshot_payload()
+    numeric_quantity["positions"][0]["quantity"] = 12.3
+    with pytest.raises(ValueError, match="quantity must be a decimal string"):
+        parse_rest_snapshot(numeric_quantity, now=now)
 
     duplicate_identifier = _snapshot_payload()
     duplicate_identifier["positions"][1]["identifier"] = "A1XB5U"

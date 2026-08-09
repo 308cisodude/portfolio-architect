@@ -137,6 +137,7 @@ class FakeTransport:
         if first:
             return response({"values": [], "paging": {"matches": 1}})
         amount = "100.25" if depot_id == "D1" else "50.75"
+        quantity = "2.500000" if depot_id == "D1" else "1.250000"
         return response(
             {
                 "values": [
@@ -144,6 +145,7 @@ class FakeTransport:
                         "wkn": "A1XB5U",
                         "instrumentId": "instrument-1",
                         "currentValue": {"value": amount, "unit": "EUR"},
+                        "quantity": {"value": quantity, "unit": "XXX"},
                     }
                 ],
                 "paging": {"matches": 1},
@@ -210,6 +212,8 @@ def test_portfolio_fetch_aggregates_same_wkn_across_depots(tmp_path: Path) -> No
     snapshot = client.fetch_snapshot()
     assert snapshot.positions[0].identifier == "A1XB5U"
     assert str(snapshot.positions[0].market_value_eur) == "151.00"
+    assert snapshot.positions[0].quantity == Decimal("3.750000")
+    assert snapshot.as_dict()["positions"][0]["quantity"] == "3.75"
     assert snapshot.positions[0].isin == "IE00BJ0KDQ92"
     assert snapshot.positions[0].instrument_type == "ETF"
 

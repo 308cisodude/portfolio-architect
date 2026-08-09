@@ -1,8 +1,8 @@
 # Changelog
 
-## 1.18.0
+## 1.18.1
 
-- Aligns Gateway App package metadata with the Portfolio Architect v1.18.0 Plan Delta & Decision Trace release.
+- Aligns Gateway App package metadata with the Portfolio Architect v1.18.1 Plan Delta & Decision Trace release.
 - Gateway runtime and REST contracts remain unchanged from v1.16.0.
 
 ## 1.17.1

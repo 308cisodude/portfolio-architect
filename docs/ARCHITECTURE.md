@@ -64,7 +64,7 @@ established native per-position and plan entities.
 
 ## Plan delta and decision trace
 
-Version 1.18.0 adds a Home Assistant-side temporal adapter after complete payload
+Version 1.18.1 adds a Home Assistant-side temporal adapter after complete payload
 validation. It snapshots only the bounded provider-neutral fields needed to compare
 the two most recent fresh evaluations. The source payload and Gateway contracts do
 not change.

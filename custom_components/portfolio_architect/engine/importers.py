@@ -329,6 +329,7 @@ def read_dkb_positions(csv_path: Path) -> dict[str, Position]:
             instrument_type=_instrument_type(source_type),
             source_type=source_type,
             value_eur=value_eur,
+            quantity=quantity,
         )
         existing = result.get(identifier)
         if existing is None:
@@ -355,6 +356,7 @@ def read_dkb_positions(csv_path: Path) -> dict[str, Position]:
             instrument_type=existing.instrument_type,
             source_type=existing.source_type,
             value_eur=merged_value,
+            quantity=(existing.quantity or Decimal("0")) + (candidate.quantity or Decimal("0")),
         )
     if not result:
         raise ValueError("No valid securities positions found in DKB export")

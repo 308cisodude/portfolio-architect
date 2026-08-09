@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.18.1
+
+- Adds provider-supplied holding-quantity sensors without inferring transaction history.
+- Retains DKB quantities and propagates optional Comdirect quantities through REST schema 1.
+- Keeps quantity unavailable when any aggregated source lacks quantity evidence.
+- Renames the portfolio-value and allocation dashboard headings for clarity.
+- Preserves recommendation, reserve, policy, target-corridor, and decision-trace behavior.
+
 ## 1.18.0
 
 - Adds a private two-evaluation Plan Delta & Decision Trace.

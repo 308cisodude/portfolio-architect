@@ -1717,7 +1717,7 @@
   - type: grid
     cards:
     - type: heading
-      heading: Gesamtportfolio
+      heading: Gesamtportfoliowert
       grid_options:
         columns: full
         rows: auto
@@ -2012,7 +2012,7 @@
   - type: grid
     cards:
     - type: heading
-      heading: Abweichung im aktuellen Plan
+      heading: Aktuelle Portfolioallokation
       grid_options:
         columns: full
         rows: auto

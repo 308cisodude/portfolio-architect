@@ -15,6 +15,7 @@ class Position:
     instrument_type: str
     source_type: str
     value_eur: Decimal
+    quantity: Decimal | None = None
     source_ids: tuple[str, ...] = ()
     source_values_eur: tuple[tuple[str, Decimal], ...] = ()
 
@@ -30,6 +31,7 @@ class Holding:
     instrument_type: str
     source_type: str
     current_value_eur: Decimal
+    quantity: Decimal | None
     whole_portfolio_pct: Decimal
     strategy_scope: str
     plan_fund_id: str | None = None

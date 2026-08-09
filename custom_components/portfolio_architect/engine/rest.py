@@ -23,6 +23,7 @@ MAX_REST_POSITIONS: Final = 512
 MAX_REST_NAME_LENGTH: Final = 160
 MAX_REST_TYPE_LENGTH: Final = 64
 MAX_REST_POSITION_VALUE_EUR: Final = D("1000000000")
+MAX_REST_POSITION_QUANTITY: Final = D("1000000000000")
 MAX_REST_CLOCK_SKEW: Final = timedelta(minutes=5)
 
 _IDENTIFIER_RE = re.compile(r"^[A-Z0-9][A-Z0-9._:/+-]{3,15}$")
@@ -125,6 +126,7 @@ def parse_rest_snapshot(
             required=True,
         )
         value_eur = _parse_market_value(raw.get("market_value_eur"), index=index)
+        quantity = _parse_optional_quantity(raw.get("quantity"), index=index)
 
         positions[identifier] = Position(
             wkn=identifier,
@@ -135,6 +137,7 @@ def parse_rest_snapshot(
             ),
             source_type=source_type,
             value_eur=value_eur,
+            quantity=quantity,
         )
 
     total = sum(item.value_eur for item in positions.values())
@@ -160,6 +163,23 @@ def parse_rest_snapshot(
         investment_reserve_as_of=reserve_as_of,
     )
 
+
+
+def _parse_optional_quantity(value: Any, *, index: int) -> Decimal | None:
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        raise ValueError(f"REST position {index} quantity must be a decimal string")
+    token = value.strip()
+    if _CANONICAL_DECIMAL_RE.fullmatch(token) is None:
+        raise ValueError(f"REST position {index} quantity must be a canonical decimal")
+    try:
+        parsed = D(token)
+    except InvalidOperation as err:
+        raise ValueError(f"REST position {index} quantity is invalid") from err
+    if not parsed.is_finite() or parsed < 0 or parsed > MAX_REST_POSITION_QUANTITY:
+        raise ValueError(f"REST position {index} quantity is outside the allowed range")
+    return parsed
 
 
 def _parse_reserve_value(value: Any) -> Decimal:

@@ -1,4 +1,4 @@
-"""v1.18.0 execution-state and reserve terminology contracts."""
+"""v1.18.1 execution-state and reserve terminology contracts."""
 
 from datetime import datetime, timezone
 from decimal import Decimal
@@ -90,4 +90,4 @@ def test_dashboard_uses_execution_state_not_ambiguous_plan_not_ready() -> None:
 
 
 def test_v1163_version_metadata_is_aligned() -> None:
-    assert 'version = "1.18.0"' in (ROOT / "pyproject.toml").read_text()
+    assert 'version = "1.18.1"' in (ROOT / "pyproject.toml").read_text()

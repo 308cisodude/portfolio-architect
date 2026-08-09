@@ -355,6 +355,9 @@
       },
       "additional_investment_cash_required": {
         "default": "mdi:cash-plus"
+      },
+      "holding_quantity": {
+        "default": "mdi:numeric"
       }
     },
     "binary_sensor": {

@@ -491,6 +491,11 @@ class ComdirectClient:
                         name=existing.name,
                         market_value_eur=existing.market_value_eur
                         + position.market_value_eur,
+                        quantity=(
+                            existing.quantity + position.quantity
+                            if existing.quantity is not None and position.quantity is not None
+                            else None
+                        ),
                         isin=existing.isin,
                         instrument_type=existing.instrument_type,
                     )
@@ -589,6 +594,7 @@ class ComdirectClient:
             metadata = _merge_metadata(metadata, cached)
 
         amount = _amount_eur(raw.get("currentValue"), field="position currentValue")
+        quantity = _optional_position_quantity(raw.get("quantity"))
         name = _instrument_name(metadata, fallback=wkn)
         isin = _instrument_isin(metadata)
         instrument_type = _instrument_type(metadata)
@@ -596,6 +602,7 @@ class ComdirectClient:
             identifier=wkn,
             name=name,
             market_value_eur=amount,
+            quantity=quantity,
             isin=isin,
             instrument_type=instrument_type,
         )
@@ -641,6 +648,22 @@ class ComdirectClient:
         if raw is None:
             return None
         return TokenState.from_dict(raw)
+
+
+def _optional_position_quantity(value: Any) -> Decimal | None:
+    """Return an optional non-negative Comdirect position quantity."""
+    if value is None:
+        return None
+    raw = value.get("value") if isinstance(value, dict) else value
+    if isinstance(raw, bool) or not isinstance(raw, (str, int, float, Decimal)):
+        raise ProtocolError("Comdirect position quantity is invalid")
+    try:
+        parsed = Decimal(str(raw))
+    except Exception as err:
+        raise ProtocolError("Comdirect position quantity is invalid") from err
+    if not parsed.is_finite() or parsed < 0 or parsed > Decimal("1000000000000"):
+        raise ProtocolError("Comdirect position quantity is outside the allowed range")
+    return parsed
 
 
 def _parse_token_response(

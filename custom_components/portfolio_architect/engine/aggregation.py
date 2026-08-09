@@ -113,6 +113,12 @@ def aggregate_sources(sources: Iterable[PortfolioSourceSnapshot]) -> Aggregation
             )
         contributions = tuple(contribution_by_source.items())
         source_ids = tuple(contribution_by_source)
+        quantities = [position.quantity for _, position in members]
+        quantity = (
+            sum((item for item in quantities if item is not None), Decimal("0"))
+            if all(item is not None for item in quantities)
+            else None
+        )
         result[canonical_wkn] = Position(
             wkn=canonical_wkn,
             isin=primary.isin,
@@ -120,6 +126,7 @@ def aggregate_sources(sources: Iterable[PortfolioSourceSnapshot]) -> Aggregation
             instrument_type=primary.instrument_type if len(types) == 1 else "other",
             source_type=primary.source_type,
             value_eur=sum((value for _, value in contributions), Decimal("0")),
+            quantity=quantity,
             source_ids=source_ids,
             source_values_eur=contributions,
         )

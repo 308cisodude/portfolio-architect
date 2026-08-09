@@ -210,6 +210,9 @@ async def async_setup_entry(
                     PortfolioHoldingValueSensor(
                         coordinator=coordinator, entry=entry, position_id=position_id
                     ),
+                    PortfolioHoldingQuantitySensor(
+                        coordinator=coordinator, entry=entry, position_id=position_id
+                    ),
                     PortfolioHoldingScopeSensor(
                         coordinator=coordinator, entry=entry, position_id=position_id
                     ),
@@ -2635,6 +2638,27 @@ class PortfolioHoldingValueSensor(_PortfolioHoldingSensor):
     @property
     def native_value(self) -> float | None:
         return self._holding.current_value_eur if self.available else None
+
+
+class PortfolioHoldingQuantitySensor(_PortfolioHoldingSensor):
+    _attr_translation_key = "holding_quantity"
+    _attr_suggested_display_precision = 8
+    _attr_state_class = SensorStateClass.MEASUREMENT
+
+    def __init__(self, coordinator, entry, position_id: str) -> None:
+        super().__init__(coordinator, entry, position_id, "holding_quantity")
+
+    @property
+    def suggested_object_id(self) -> str:
+        return f"{self._position_id}_holding_quantity"
+
+    @property
+    def available(self) -> bool:
+        return super().available and self._holding.quantity is not None
+
+    @property
+    def native_value(self) -> float | None:
+        return self._holding.quantity if self.available else None
 
 
 class PortfolioHoldingScopeSensor(_PortfolioHoldingSensor):

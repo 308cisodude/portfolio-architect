@@ -27,6 +27,7 @@ class Position:
     identifier: str
     name: str
     market_value_eur: Decimal
+    quantity: Decimal | None = None
     isin: str = ""
     instrument_type: str = "Other"
 
@@ -37,6 +38,8 @@ class Position:
             "market_value_eur": canonical_decimal(self.market_value_eur),
             "instrument_type": self.instrument_type,
         }
+        if self.quantity is not None:
+            data["quantity"] = canonical_decimal(self.quantity)
         if self.isin:
             data["isin"] = self.isin
         return data
@@ -141,6 +144,7 @@ def validate_snapshot(snapshot: PortfolioSnapshot) -> PortfolioSnapshot:
                 identifier=identifier,
                 name=name,
                 market_value_eur=position.market_value_eur,
+                quantity=position.quantity,
                 isin=isin,
                 instrument_type=instrument_type,
             )

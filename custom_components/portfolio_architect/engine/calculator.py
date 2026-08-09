@@ -465,6 +465,7 @@ def _build_holdings(positions, plan_document, recommendations):
                 instrument_type=position.instrument_type,
                 source_type=position.source_type,
                 current_value_eur=position.value_eur,
+                quantity=position.quantity,
                 whole_portfolio_pct=position.value_eur / total * D("100"),
                 strategy_scope="current_plan" if in_plan else "outside_scope",
                 plan_fund_id=target["id"] if target else None,
