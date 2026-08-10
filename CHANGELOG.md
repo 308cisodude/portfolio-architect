@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.18.2
+
+- Removes invalid `measurement` state classes from advisory monetary sensors for Home Assistant compatibility.
+- Preserves monetary device classes, EUR units, entity IDs, unique IDs, values, and calculation semantics.
+- Adds a regression contract that prevents monetary sensors from acquiring the invalid `measurement` state class again.
+- Keeps valid measurement metadata on non-monetary sensors unchanged.
+- Aligns Gateway App package versioning; Gateway runtime and REST/health contracts are unchanged.
+
 ## 1.18.1
 
 - Adds provider-supplied holding-quantity sensors without inferring transaction history.

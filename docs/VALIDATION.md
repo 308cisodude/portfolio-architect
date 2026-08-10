@@ -1,4 +1,4 @@
-# v1.18.1 validation
+# v1.18.2 validation
 
 The release pipeline validates:
 
@@ -6,6 +6,8 @@ The release pipeline validates:
 - JSON and YAML parsing for all shipped configuration, quality-audit, workflow,
   and dashboard files;
 - the complete deterministic regression suite;
+- Home Assistant monetary sensor metadata, including inherited monetary classes and
+  rejection of invalid `measurement` state classes on advisory currency values;
 - executable local REST DNS-pinning behavior, including exact-address connection
   and preservation of the original Host header;
 - local publication-readiness metadata without invented repository URLs;

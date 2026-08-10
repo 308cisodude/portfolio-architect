@@ -84,9 +84,9 @@ def test_current_runtime_versions_are_aligned() -> None:
     manifest = json.loads((COMPONENT / "manifest.json").read_text())
     const = (COMPONENT / "const.py").read_text(encoding="utf-8")
     engine_init = (COMPONENT / "engine" / "__init__.py").read_text(encoding="utf-8")
-    assert manifest["version"] == "1.18.1"
-    assert 'VERSION: Final = "1.18.1"' in const
-    assert '__version__ = "1.18.1"' in engine_init
+    assert manifest["version"] == "1.18.2"
+    assert 'VERSION: Final = "1.18.2"' in const
+    assert '__version__ = "1.18.2"' in engine_init
 
 
 def test_native_monthly_plan_runtime_and_policy_entities_are_registered() -> None:
@@ -164,7 +164,7 @@ def test_v12_plan_and_schedule_contract_is_native_and_fail_closed():
     assert '_first_execution_in_next_period' in schedule
 
 
-def test_v131_restores_statistics_state_class_for_existing_plan_entities() -> None:
+def test_v1182_removes_invalid_statistics_state_class_from_plan_money_entities() -> None:
     sensor = (COMPONENT / "sensor.py").read_text(encoding="utf-8")
 
     for class_name in (
@@ -176,10 +176,8 @@ def test_v131_restores_statistics_state_class_for_existing_plan_entities() -> No
         start = sensor.index(f"class {class_name}")
         next_class = sensor.find("\nclass ", start + 1)
         class_source = sensor[start: next_class if next_class != -1 else None]
-        assert "_attr_state_class = SensorStateClass.MEASUREMENT" in class_source
+        assert "_attr_state_class" not in class_source
 
-    # The configured plan budget did not previously publish long-term statistics;
-    # keep the patch narrow instead of enabling statistics for every money sensor.
-    start = sensor.index("class PortfolioPlanBudgetSensor")
-    next_class = sensor.index("\nclass ", start + 1)
-    assert "_attr_state_class" not in sensor[start:next_class]
+    # Monetary entities remain monetary; only the invalid statistics classification
+    # is removed. The dedicated v1.18.2 metadata contract checks all subclasses.
+    assert "_attr_device_class = SensorDeviceClass.MONETARY" in sensor

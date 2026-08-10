@@ -1,32 +1,43 @@
-# Portfolio Architect 1.18.1
+# Portfolio Architect 1.18.2
 
-Version 1.18.1 is a stable maintenance release focused on holding observability and
-clearer dashboard terminology. It is based directly on the v1.18.0 stable baseline.
+Version 1.18.2 is a stable Home Assistant compatibility maintenance release based
+on the v1.18.1 known-good baseline.
 
-## Holding quantity observability
+## Monetary sensor metadata
 
-- Adds one `holding_quantity` sensor for every whole-portfolio holding.
-- Carries exact provider-supplied quantities through the provider-neutral position and
-  holding model.
-- Comdirect Gateway snapshots expose the optional quantity returned by the position
-  source; DKB CSV imports retain the existing `Stückzahl` value.
-- Multi-depot and multi-source quantities are summed only when every contributing
-  component provides a quantity. If evidence is incomplete, quantity is deliberately
-  unavailable rather than inferred.
-- REST portfolio schema 1 remains backward compatible: `quantity` is optional.
+Home Assistant does not permit `SensorStateClass.MEASUREMENT` for sensors using
+`SensorDeviceClass.MONETARY`. Portfolio Architect previously applied that state
+class to several advisory and planning values, causing Home Assistant to report
+invalid sensor-metadata warnings during integration setup.
 
-## Dashboard terminology
+Version 1.18.2 removes the state class from those monetary entities while retaining
+their monetary device class, EUR unit, values, entity IDs, unique IDs, and display
+precision. The affected categories are:
 
-- Renames **Complete portfolio** to **Total portfolio value**.
-- Renames **Current plan drift** to **Current portfolio allocation**.
-- Applies equivalent German wording: **Gesamtportfoliowert** and
-  **Aktuelle Portfolioallokation**.
+- contribution and recommendation amounts;
+- available, remaining, deferred, and additionally required investment cash;
+- estimated transaction fees and cash outlay;
+- per-instrument proposed purchases.
+
+These values are current/advisory amounts rather than accumulating counters, so
+`TOTAL` semantics are deliberately not introduced.
+
+## Regression protection
+
+A static sensor-metadata contract now discovers monetary sensor classes through
+inheritance and rejects the invalid `MEASUREMENT` state class on them. The contract also
+confirms that valid `MEASUREMENT` state classes remain present on non-monetary
+percentage, duration, quantity, and diagnostic sensors.
 
 ## Stability boundary
 
-- Payload schema 8, REST schema 1, Gateway health schema 5, recommendation logic,
-  target corridor, policy semantics, execution-cost model, reserve logic, Plan Delta
-  semantics, and existing entity IDs are unchanged.
-- No transaction history is introduced and Portfolio Architect does not infer that a
-  quantity change represents an executed recommendation.
+- Portfolio payload schema 8, REST schema 1, and Gateway health schema 5
+  are unchanged.
+- Portfolio values, allocation, policy, target corridor, recommendation distribution,
+  execution-cost calculation, reserve behavior, Plan Delta semantics, and holding
+  quantity semantics are unchanged.
+- Existing entity IDs, unique IDs, configuration entries, dashboards, and stored
+  options remain compatible.
+- Gateway runtime behavior is unchanged from v1.16.0; Gateway App 1.18.2 is package
+  alignment only.
 - The experimental v1.19.0 brokerage-diagnostic work is not included.

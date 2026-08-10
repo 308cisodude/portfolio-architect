@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.18.2
+
+- Aligns Gateway App package metadata with the Portfolio Architect v1.18.2 Home Assistant sensor-metadata maintenance release.
+- Gateway runtime and REST/health contracts remain unchanged from v1.16.0.
+
 ## 1.18.1
 
 - Aligns Gateway App package metadata with the Portfolio Architect v1.18.1 Plan Delta & Decision Trace release.
