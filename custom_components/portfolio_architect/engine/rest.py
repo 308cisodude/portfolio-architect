@@ -29,6 +29,7 @@ MAX_REST_CLOCK_SKEW: Final = timedelta(minutes=5)
 _IDENTIFIER_RE = re.compile(r"^[A-Z0-9][A-Z0-9._:/+-]{3,15}$")
 _ISIN_RE = re.compile(r"^[A-Z]{2}[A-Z0-9]{9}[0-9]$")
 _CANONICAL_DECIMAL_RE = re.compile(r"^(?:0|[1-9][0-9]{0,11})(?:\.[0-9]{1,8})?$")
+_SIGNED_DECIMAL_RE = re.compile(r"^-?(?:0|[1-9][0-9]{0,11})(?:\.[0-9]{1,8})?$")
 
 _INSTRUMENT_TYPE_MAP = {
     "etf": "etf",
@@ -54,6 +55,18 @@ _INSTRUMENT_TYPE_MAP = {
 
 
 @dataclass(frozen=True, slots=True)
+class RestInvestmentCash:
+    """Validated provider-owned cash authorization metadata."""
+
+    account_balance_eur: Decimal
+    eligible_eur: Decimal
+    authorized_eur: Decimal
+    policy: str
+    as_of: datetime
+    cap_eur: Decimal | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class RestSnapshot:
     """One validated provider-neutral portfolio snapshot."""
 
@@ -61,6 +74,7 @@ class RestSnapshot:
     positions: dict[str, Position]
     investment_reserve_eur: Decimal | None = None
     investment_reserve_as_of: datetime | None = None
+    investment_cash: RestInvestmentCash | None = None
 
 
 def parse_rest_snapshot(
@@ -156,13 +170,78 @@ def parse_rest_snapshot(
         reserve_as_of = _parse_generated_at(raw_reserve.get("as_of"), now=now)
         if reserve_as_of > generated_at + MAX_REST_CLOCK_SKEW:
             raise ValueError("REST investment reserve timestamp is newer than the snapshot")
+
+    investment_cash = _parse_investment_cash(payload.get("investment_cash"), now=now)
+    if investment_cash is not None:
+        if investment_cash.as_of > generated_at + MAX_REST_CLOCK_SKEW:
+            raise ValueError("REST investment cash timestamp is newer than the snapshot")
+        if reserve_eur is None or reserve_as_of is None:
+            raise ValueError("REST investment_cash requires investment_reserve compatibility data")
+        if reserve_eur != investment_cash.authorized_eur or reserve_as_of != investment_cash.as_of:
+            raise ValueError("REST investment reserve and authorized cash disagree")
+
     return RestSnapshot(
         generated_at=generated_at,
         positions=positions,
         investment_reserve_eur=reserve_eur,
         investment_reserve_as_of=reserve_as_of,
+        investment_cash=investment_cash,
     )
 
+
+
+def _parse_investment_cash(value: Any, *, now: datetime | None) -> RestInvestmentCash | None:
+    if value is None:
+        return None
+    if not isinstance(value, dict):
+        raise ValueError("REST response investment_cash must be an object")
+    required = {"account_balance_eur", "eligible_eur", "authorized_eur", "policy", "as_of"}
+    allowed = required | {"cap_eur"}
+    if not required.issubset(value) or set(value) - allowed:
+        raise ValueError("REST response investment_cash has an unexpected schema")
+    account_balance = _parse_signed_cash_value(value.get("account_balance_eur"), field="account balance")
+    eligible = _parse_reserve_value(value.get("eligible_eur"))
+    authorized = _parse_reserve_value(value.get("authorized_eur"))
+    policy = value.get("policy")
+    if policy not in {"all_available", "capped"}:
+        raise ValueError("REST investment cash policy is invalid")
+    cap = None
+    if "cap_eur" in value:
+        cap = _parse_reserve_value(value.get("cap_eur"))
+    as_of = _parse_generated_at(value.get("as_of"), now=now)
+    if authorized > eligible:
+        raise ValueError("REST authorized investment cash exceeds eligible cash")
+    if policy == "all_available":
+        if cap is not None or authorized != eligible:
+            raise ValueError("REST all-available cash authorization is inconsistent")
+    else:
+        if cap is None:
+            raise ValueError("REST capped cash authorization requires cap_eur")
+        if authorized != min(eligible, cap):
+            raise ValueError("REST capped cash authorization is inconsistent")
+    return RestInvestmentCash(
+        account_balance_eur=account_balance,
+        eligible_eur=eligible,
+        authorized_eur=authorized,
+        policy=policy,
+        as_of=as_of,
+        cap_eur=cap,
+    )
+
+
+def _parse_signed_cash_value(value: Any, *, field: str) -> Decimal:
+    if not isinstance(value, str):
+        raise ValueError(f"REST investment cash {field} must be a decimal string")
+    token = value.strip()
+    if _SIGNED_DECIMAL_RE.fullmatch(token) is None:
+        raise ValueError(f"REST investment cash {field} must be a canonical EUR decimal")
+    try:
+        parsed = D(token)
+    except InvalidOperation as err:
+        raise ValueError(f"REST investment cash {field} is invalid") from err
+    if not parsed.is_finite() or abs(parsed) > MAX_REST_POSITION_VALUE_EUR:
+        raise ValueError(f"REST investment cash {field} is outside the allowed range")
+    return parsed
 
 
 def _parse_optional_quantity(value: Any, *, index: int) -> Decimal | None:
@@ -284,6 +363,7 @@ __all__ = [
     "MAX_REST_POSITIONS",
     "PROVIDER_LOCAL_REST_JSON",
     "REST_SCHEMA_VERSION",
+    "RestInvestmentCash",
     "RestSnapshot",
     "parse_rest_snapshot",
 ]

@@ -244,7 +244,7 @@ views:
       card:
         type: tile
         entity: sensor.portfolio_architect_available_investment_reserve
-        name: Available investment cash
+        name: Authorized investment cash
         tap_action:
           action: more-info
         icon: mdi:piggy-bank-outline
@@ -2792,7 +2792,7 @@ views:
       card:
         type: tile
         entity: sensor.portfolio_architect_available_investment_reserve
-        name: Verfügbares Anlageguthaben
+        name: Freigegebenes Anlageguthaben
         tap_action:
           action: more-info
         icon: mdi:piggy-bank-outline

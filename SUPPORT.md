@@ -11,14 +11,14 @@ Security and correctness fixes are provided for:
 - the current stable Portfolio Architect release; and
 - the immediately preceding stable release while a documented upgrade path exists.
 
-The Home Assistant support floor for the 1.18.x release line is **2026.7.0**.
+The Home Assistant support floor for the 1.19.x release line is **2026.7.0**.
 The project targets the current and immediately previous monthly Home Assistant
 release, subject to automated compatibility checks. Beta releases receive
 best-effort compatibility only.
 
-Gateway App versions 1.16.1 and later remain protocol-compatible with Portfolio
-Architect 1.18.2. Users do not need to align package versions when the release
-notes say that the Gateway runtime is unchanged.
+Gateway App versions 1.16.1 and later remain compatible with Portfolio Architect
+1.19.0 through the legacy reserve contract. Gateway App 1.19.0 is required for
+the configurable authorized-cash policy and its explanatory metadata.
 
 ## Getting help
 

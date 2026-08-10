@@ -13,6 +13,11 @@ import time
 import threading
 from typing import Any, Callable, Protocol
 
+from .cash_policy import (
+    InvestmentCashPolicy,
+    load_investment_cash_policy,
+    save_investment_cash_policy,
+)
 from .config import ComdirectConfig, normalise_secret, read_secret
 from .errors import (
     AuthenticationError,
@@ -21,7 +26,7 @@ from .errors import (
     ReauthenticationRequired,
     RemoteApiError,
 )
-from .models import MAX_POSITIONS, PortfolioSnapshot, Position, validate_snapshot
+from .models import InvestmentCash, MAX_POSITIONS, PortfolioSnapshot, Position, validate_snapshot
 from .store import load_json_state, save_json_state
 from .transport import ComdirectTransport, HttpResponse, decode_json_response
 
@@ -99,6 +104,7 @@ class AccountBalanceCandidate:
     account_id: str
     display_id: str
     account_type: str
+    account_balance_eur: Decimal
     available_eur: Decimal
     as_of: datetime
 
@@ -364,6 +370,14 @@ class ComdirectClient:
     def clear_investment_account(self) -> None:
         self._config.investment_account_file.unlink(missing_ok=True)
 
+    def investment_cash_policy(self) -> InvestmentCashPolicy:
+        """Return the validated provider-owned authorization policy."""
+        return load_investment_cash_policy(self._config.investment_cash_policy_file)
+
+    def set_investment_cash_policy(self, policy: InvestmentCashPolicy) -> None:
+        """Persist one non-secret cash authorization policy atomically."""
+        save_investment_cash_policy(self._config.investment_cash_policy_file, policy)
+
     def _fetch_account_candidates_locked(
         self, bearer: str
     ) -> tuple[AccountBalanceCandidate, ...]:
@@ -423,6 +437,7 @@ class ComdirectClient:
                     account_id=account_id,
                     display_id=display,
                     account_type=account_type,
+                    account_balance_eur=balance,
                     available_eur=amount,
                     as_of=fetched_at,
                 )
@@ -504,6 +519,7 @@ class ComdirectClient:
 
         reserve_eur = None
         reserve_as_of = None
+        investment_cash = None
         selected_account_id = self.selected_investment_account_id()
         if selected_account_id is not None:
             candidates = self._fetch_account_candidates_locked(bearer)
@@ -513,13 +529,23 @@ class ComdirectClient:
             )
             if selected_account is None:
                 raise ProtocolError("Configured investment account is not present in the live balance response")
-            reserve_eur = selected_account.available_eur
+            policy = self.investment_cash_policy()
+            reserve_eur = policy.authorize(selected_account.available_eur)
             reserve_as_of = selected_account.as_of
+            investment_cash = InvestmentCash(
+                account_balance_eur=selected_account.account_balance_eur,
+                eligible_eur=selected_account.available_eur,
+                authorized_eur=reserve_eur,
+                policy=policy.mode,
+                cap_eur=policy.cap_eur,
+                as_of=selected_account.as_of,
+            )
         snapshot = PortfolioSnapshot(
             generated_at=datetime.now(timezone.utc),
             positions=tuple(combined[key] for key in sorted(combined)),
             investment_reserve_eur=reserve_eur,
             investment_reserve_as_of=reserve_as_of,
+            investment_cash=investment_cash,
         )
         return validate_snapshot(snapshot)
 

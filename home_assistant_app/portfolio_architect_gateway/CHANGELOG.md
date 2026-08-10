@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.19.0
+
+- Adds an admin-only Ingress policy for authorizing all eligible investment cash or capping it at a configured EUR amount.
+- Keeps booked account balance, eligible cash, authorized cash, policy, and optional cap semantically distinct.
+- Publishes additive provider-neutral `investment_cash` metadata while preserving the legacy reserve field as the authorized amount.
+- Stores non-secret policy state atomically in App-private data and rejects malformed capped policies.
+- Adds no trading, transfer, payment, or transaction-history operation.
+
 ## 1.18.2
 
 - Aligns Gateway App package metadata with the Portfolio Architect v1.18.2 Home Assistant sensor-metadata maintenance release.

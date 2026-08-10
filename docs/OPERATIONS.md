@@ -51,19 +51,22 @@ For the Comdirect live-reserve path:
 2. Complete PhotoTAN reauthentication when required.
 3. Discover the bounded list of eligible EUR accounts.
 4. Select the masked dedicated investment/settlement account explicitly.
-5. Reload Portfolio Architect and enable `gateway_balance` reserve mode.
+5. Review the Gateway **Investment cash authorization** policy.
+6. Reload Portfolio Architect and enable `gateway_balance` reserve mode.
 
 The Gateway never guesses the settlement account. If the selected account is
 missing, ambiguous, non-EUR, or lacks both booked-balance and available-cash
 values, the reserve is unavailable and cost-aware recommendations fail closed.
 
-The published reserve is the lower of booked balance and available cash. This
-prevents an overdraft or credit facility from being treated as investable money
-and prevents pending debits from being ignored.
+The Gateway first derives eligible cash as the lower of booked balance and
+available cash. This prevents an overdraft or credit facility from being treated
+as investable money and prevents pending debits from being ignored. It then
+applies the configured authorization policy. `all_available` preserves the full
+eligible amount; `capped` limits the amount Portfolio Architect may allocate.
 
 When the live source is unavailable, Home Assistant may continue to display the
 validated last-known-good portfolio. Do not execute a cost-aware recommendation
-until `Source healthy` and the investment-reserve timestamp are current again.
+until `Source healthy` and the authorized-investment-cash timestamp are current again.
 
 Savings-plan rates are treated as gross cash. A paid percentage savings plan
 therefore reduces the investable principal so principal plus fee does not exceed

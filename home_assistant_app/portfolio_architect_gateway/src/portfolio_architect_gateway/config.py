@@ -109,6 +109,7 @@ class ComdirectConfig:
     password_file: Path
     session_file: Path
     investment_account_file: Path
+    investment_cash_policy_file: Path
     poll_interval_seconds: int
     request_timeout_seconds: int
     mfa_timeout_seconds: int
@@ -194,6 +195,9 @@ class GatewayConfig:
                 ),
                 investment_account_file=_path(
                     comdirect_raw, "investment_account_file", default="/data/investment-account.json"
+                ),
+                investment_cash_policy_file=_path(
+                    comdirect_raw, "investment_cash_policy_file", default="/data/investment-cash-policy.json"
                 ),
                 poll_interval_seconds=_integer(
                     comdirect_raw,

@@ -17,6 +17,7 @@ import threading
 from typing import Any, Callable, Final
 from urllib.parse import parse_qs, urlsplit
 
+from .cash_policy import MODE_ALL_AVAILABLE, MODE_CAPPED, parse_policy_input
 from .comdirect import AccountBalanceCandidate, ComdirectClient
 from .config import ComdirectConfig, GatewayConfig, ServerConfig, normalise_secret
 from .errors import GatewayError, RemoteApiError
@@ -178,6 +179,7 @@ def build_app_config(options: AppOptions, data_directory: Path = APP_DATA_DIRECT
             password_file=data_directory / ".password-not-persisted",
             session_file=data_directory / "comdirect-session.json",
             investment_account_file=data_directory / "investment-account.json",
+            investment_cash_policy_file=data_directory / "investment-cash-policy.json",
             poll_interval_seconds=options.poll_interval_seconds,
             request_timeout_seconds=options.request_timeout_seconds,
             mfa_timeout_seconds=options.mfa_timeout_seconds,
@@ -241,6 +243,7 @@ class AppController:
     def status_document(self) -> dict[str, Any]:
         bootstrap = self.bootstrap_view()
         account = self.account_view()
+        policy = self.client.investment_cash_policy()
         return {
             "bootstrap": {
                 "state": bootstrap.state,
@@ -254,6 +257,10 @@ class AppController:
                 "selected": account.selected_label is not None,
                 "selected_label": account.selected_label,
                 "candidates": list(account.candidates),
+            },
+            "investment_cash_policy": {
+                "mode": policy.mode,
+                "cap_eur": format(policy.cap_eur, "f") if policy.cap_eur is not None else None,
             },
             "gateway": self.gateway_state.health_document(version=5),
             "client_credentials_configured": (
@@ -297,6 +304,7 @@ class AppController:
                 {
                     "token": token,
                     "label": label,
+                    "account_balance_eur": format(candidate.account_balance_eur, "f"),
                     "available_eur": format(candidate.available_eur, "f"),
                     "as_of": candidate.as_of.isoformat(timespec="seconds"),
                 }
@@ -358,6 +366,14 @@ class AppController:
                 None,
                 (),
             )
+
+    def set_investment_cash_policy(self, *, mode: str, cap_eur: str) -> None:
+        """Persist a validated authorization policy and refresh the live snapshot."""
+        policy = parse_policy_input(mode, cap_eur)
+        self.client.set_investment_cash_policy(policy)
+        refreshed = self.gateway_state.refresh(trigger="manual")
+        if not refreshed:
+            _LOGGER.warning("Investment cash policy saved, but the live refresh did not complete")
 
     def start_bootstrap(
         self,
@@ -574,6 +590,7 @@ class IngressRequestHandler(BaseHTTPRequestHandler):
             "/discover-accounts",
             "/select-account",
             "/clear-account",
+            "/set-cash-policy",
         }:
             self._empty(HTTPStatus.NOT_FOUND)
             return
@@ -597,7 +614,7 @@ class IngressRequestHandler(BaseHTTPRequestHandler):
                 body.decode("utf-8"),
                 keep_blank_values=True,
                 strict_parsing=True,
-                max_num_fields=8 if path == "/bootstrap" else 3,
+                max_num_fields=8 if path == "/bootstrap" else (4 if path == "/set-cash-policy" else 3),
             )
             csrf = _single(values, "csrf")
             if not secrets.compare_digest(
@@ -627,6 +644,14 @@ class IngressRequestHandler(BaseHTTPRequestHandler):
                     raise ValueError("Unexpected account-selection form field")
                 self.ingress_server.controller.select_investment_account(
                     _single(values, "selection")
+                )
+                accepted = True
+            elif path == "/set-cash-policy":
+                if set(values) != {"csrf", "mode", "cap_eur"}:
+                    raise ValueError("Unexpected cash-policy form field")
+                self.ingress_server.controller.set_investment_cash_policy(
+                    mode=_single(values, "mode"),
+                    cap_eur=_single(values, "cap_eur"),
                 )
                 accepted = True
             else:
@@ -754,10 +779,16 @@ class IngressRequestHandler(BaseHTTPRequestHandler):
         account_state = escape(str(account["state"]))
         account_message = escape(str(account["message"]))
         selected_label = escape(str(account.get("selected_label") or "None selected"))
+        cash_policy = document["investment_cash_policy"]
+        cash_policy_mode = str(cash_policy.get("mode") or MODE_ALL_AVAILABLE)
+        cash_policy_cap = str(cash_policy.get("cap_eur") or "")
+        all_available_selected = " selected" if cash_policy_mode == MODE_ALL_AVAILABLE else ""
+        capped_selected = " selected" if cash_policy_mode == MODE_CAPPED else ""
         candidate_options = "".join(
             "<option value=\"" + escape(str(item["token"]), quote=True) + "\">"
             + escape(str(item["label"]))
-            + " · €" + escape(str(item["available_eur"]))
+            + " · eligible €" + escape(str(item["available_eur"]))
+            + " · balance €" + escape(str(item["account_balance_eur"]))
             + "</option>"
             for item in account.get("candidates", [])
         )
@@ -792,7 +823,16 @@ class IngressRequestHandler(BaseHTTPRequestHandler):
 <section><h2>Dedicated investment account</h2><p>State: <strong id="investment-account-state">{account_state}</strong></p><p id="investment-account-message">{account_message}</p><p>Selected: <strong id="investment-account-selected">{selected_label}</strong></p>
 <form method="post" action="discover-accounts" autocomplete="off"><input type="hidden" name="csrf" value="{csrf}"><button type="submit">Discover eligible EUR accounts</button></form>
 {selection_form}{clear_form}
-<p class="small">Only a masked account label, available EUR cash and timestamp are shown in this admin-only page. The account identifier stays in App-private storage and is never sent to Home Assistant.</p></section>
+<p class="small">Only a masked account label, raw EUR balance, eligible non-borrowed cash and timestamp are shown in this admin-only page. The account identifier stays in App-private storage and is never sent to Home Assistant.</p></section>
+<section><h2>Investment cash authorization</h2>
+<form method="post" action="set-cash-policy" autocomplete="off">
+<input type="hidden" name="csrf" value="{csrf}">
+<label for="cash-policy-mode">Authorization policy</label><select id="cash-policy-mode" name="mode" required>
+<option value="all_available"{all_available_selected}>All eligible cash</option>
+<option value="capped"{capped_selected}>Cap eligible cash</option></select>
+<label for="cash-policy-cap">Cap in EUR (required only for capped policy)</label><input id="cash-policy-cap" name="cap_eur" inputmode="decimal" maxlength="16" value="{escape(cash_policy_cap, quote=True)}">
+<button type="submit">Save authorization policy</button></form>
+<p class="small">The Gateway first excludes unavailable, pending or credit-funded cash. This policy then decides how much of the remaining eligible cash Portfolio Architect is authorized to allocate. The default preserves existing behavior: all eligible cash.</p></section>
 <section><h2>Comdirect bootstrap / reauthentication</h2><form method="post" action="bootstrap" autocomplete="off">
 <input type="hidden" name="csrf" value="{csrf}">
 <div class="grid"><div><label for="client_id">API client ID</label><input id="client_id" name="client_id" maxlength="512" required></div><div><label for="client_secret">API client secret</label><input id="client_secret" name="client_secret" type="password" maxlength="1024" required></div></div>

@@ -139,10 +139,17 @@ The execution policies are:
 - `efficiency_first`: defer until the fee ceiling is met.
 
 The Gateway may publish one optional `investment_reserve` object in REST schema 1.
-It contains only a bounded EUR amount and timestamp. The selected Comdirect
-account identifier stays in App-private storage. The Gateway computes usable
-cash conservatively as the lower of the booked balance and available cash,
-clamped at zero, and omits the reserve if either field is unavailable or invalid.
+From v1.19.0 its amount is explicitly the cash the Gateway authorizes Portfolio
+Architect to allocate. The selected Comdirect account identifier stays in
+App-private storage. The Gateway first computes eligible cash conservatively as
+the lower of booked balance and available cash, clamped at zero, then applies its
+provider-owned `all_available` or `capped` authorization policy.
+
+An additive `investment_cash` object can explain the decision with the bounded
+booked account balance, eligible cash, authorized cash, policy, optional cap, and
+timestamp. The legacy reserve amount must equal the authorized amount. This keeps
+allocation provider-neutral while allowing each future Gateway to enforce its own
+cash policy.
 
 The reserve is advisory input only. Neither the Gateway nor the Home Assistant
 integration contains an order, transfer, or payment operation.

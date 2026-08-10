@@ -150,6 +150,16 @@ def calculate_portfolio_payload_from_positions(
         execution_config = portfolio.get("execution")
     reserve_value = source_metadata.get("investment_reserve_eur")
     available_reserve = D(str(reserve_value)) if reserve_value is not None else None
+    cash_authorization_present = all(
+        key in source_metadata
+        for key in (
+            "investment_account_balance_eur",
+            "eligible_investment_cash_eur",
+            "authorized_investment_cash_eur",
+            "investment_cash_authorization_policy",
+            "investment_cash_authorization_cap_eur",
+        )
+    )
     recommendations = allocate_buys(
         positions,
         portfolio,
@@ -346,6 +356,17 @@ def calculate_portfolio_payload_from_positions(
                 else ("unavailable" if reserve_required_but_unavailable else "contribution")
             ),
             "investment_reserve_as_of": source_metadata.get("investment_reserve_as_of"),
+            **(
+                {
+                    "investment_account_balance_eur": source_metadata["investment_account_balance_eur"],
+                    "eligible_investment_cash_eur": source_metadata["eligible_investment_cash_eur"],
+                    "authorized_investment_cash_eur": source_metadata["authorized_investment_cash_eur"],
+                    "investment_cash_authorization_policy": source_metadata["investment_cash_authorization_policy"],
+                    "investment_cash_authorization_cap_eur": source_metadata["investment_cash_authorization_cap_eur"],
+                }
+                if cash_authorization_present
+                else {}
+            ),
             "execution_policy": (
                 str(execution_config.get("policy", "monthly_continuity"))
                 if isinstance(execution_config, dict) and execution_enabled

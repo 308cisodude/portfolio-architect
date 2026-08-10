@@ -221,3 +221,47 @@ def test_rest_schema_rejects_ambiguous_investment_reserve() -> None:
     }
     with pytest.raises(ValueError, match="newer than the snapshot"):
         parse_rest_snapshot(newer_than_snapshot, now=now)
+
+
+def test_rest_schema_accepts_and_cross_checks_authorized_investment_cash() -> None:
+    now = datetime(2026, 7, 30, 15, 0, tzinfo=timezone.utc)
+    payload = _snapshot_payload()
+    payload["investment_reserve"] = {
+        "available_eur": "100",
+        "as_of": "2026-07-30T14:29:00Z",
+    }
+    payload["investment_cash"] = {
+        "account_balance_eur": "8601.53",
+        "eligible_eur": "8601.53",
+        "authorized_eur": "100",
+        "policy": "capped",
+        "cap_eur": "100",
+        "as_of": "2026-07-30T14:29:00Z",
+    }
+    snapshot = parse_rest_snapshot(payload, now=now)
+    assert snapshot.investment_reserve_eur == Decimal("100")
+    assert snapshot.investment_cash is not None
+    assert snapshot.investment_cash.account_balance_eur == Decimal("8601.53")
+    assert snapshot.investment_cash.eligible_eur == Decimal("8601.53")
+    assert snapshot.investment_cash.authorized_eur == Decimal("100")
+    assert snapshot.investment_cash.policy == "capped"
+    assert snapshot.investment_cash.cap_eur == Decimal("100")
+
+
+def test_rest_schema_rejects_inconsistent_cash_authorization() -> None:
+    now = datetime(2026, 7, 30, 15, 0, tzinfo=timezone.utc)
+    payload = _snapshot_payload()
+    payload["investment_reserve"] = {
+        "available_eur": "200",
+        "as_of": "2026-07-30T14:29:00Z",
+    }
+    payload["investment_cash"] = {
+        "account_balance_eur": "8601.53",
+        "eligible_eur": "8601.53",
+        "authorized_eur": "100",
+        "policy": "capped",
+        "cap_eur": "100",
+        "as_of": "2026-07-30T14:29:00Z",
+    }
+    with pytest.raises(ValueError, match="authorized cash disagree"):
+        parse_rest_snapshot(payload, now=now)

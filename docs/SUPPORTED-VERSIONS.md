@@ -8,7 +8,7 @@ releases may continue to work but are not actively supported.
 
 ## Home Assistant
 
-The 1.18.x release line requires Home Assistant 2026.7.0 or newer. CI validates
+The 1.19.x release line requires Home Assistant 2026.7.0 or newer. CI validates
 project tests on Python 3.14, HACS metadata, and the deliberately pinned hassfest
 validator snapshot. The project targets the current and immediately previous
 monthly Home Assistant release.
@@ -20,9 +20,10 @@ snapshot.
 
 ## Gateway compatibility
 
-Portfolio Architect 1.18.2 accepts the established REST portfolio schema 1 and
-Gateway health schemas 1 through 5. Gateway App 1.16.1 and later remain supported
-when release notes state that the Gateway protocol is unchanged.
+Portfolio Architect 1.19.0 accepts REST portfolio schema 1, including the optional
+additive `investment_cash` authorization metadata, and Gateway health schemas 1
+through 5. Gateway App 1.16.1 and later remain compatible with the legacy reserve
+contract; Gateway App 1.19.0 is required to configure cash authorization policies.
 
 ## Security fixes
 

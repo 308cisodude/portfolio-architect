@@ -1632,13 +1632,25 @@
         }
       },
       "available_investment_reserve": {
-        "name": "Available investment cash",
+        "name": "Authorized investment cash",
         "state_attributes": {
           "reserve_source": {
             "name": "Reserve source"
           },
           "reserve_as_of": {
             "name": "Balance timestamp"
+          },
+          "investment_account_balance_eur": {
+            "name": "Selected account balance"
+          },
+          "eligible_investment_cash_eur": {
+            "name": "Eligible investment cash"
+          },
+          "authorization_policy": {
+            "name": "Authorization policy"
+          },
+          "authorization_cap_eur": {
+            "name": "Authorization cap"
           }
         }
       },
@@ -1683,7 +1695,7 @@
         "name": "Investment reserve source",
         "state": {
           "contribution": "Current contribution",
-          "gateway_balance": "Gateway account balance",
+          "gateway_balance": "Gateway authorized cash",
           "unavailable": "Unavailable"
         }
       },
@@ -1710,7 +1722,7 @@
             "name": "Deferred purchases"
           },
           "available_investment_cash_eur": {
-            "name": "Available investment cash"
+            "name": "Authorized investment cash"
           },
           "cash_after_recommended_purchases_eur": {
             "name": "Cash after recommended purchases"
@@ -2181,7 +2193,7 @@
           "execution_max_cost_ratio_pct": "Maximum estimated transaction fees as a percentage of the proposed order value.",
           "execution_max_deferral_periods": "Balanced mode may exceed the cost ceiling after this many accumulated contribution periods.",
           "execution_max_orders": "Limits how many separate fee-bearing orders are proposed for one execution.",
-          "execution_reserve_mode": "Gateway balance requires an explicitly selected dedicated Comdirect account. Contribution-only uses only the current plan contribution.",
+          "execution_reserve_mode": "Gateway authorized cash requires an explicitly selected dedicated Comdirect account. Contribution-only uses only the current plan contribution.",
           "manual_settlement_fee_eur": "Configure the additional fixed settlement charge observed for the selected execution route."
         }
       },
@@ -2311,7 +2323,7 @@
     "execution_reserve_mode": {
       "options": {
         "contribution_only": "Current contribution only",
-        "gateway_balance": "Selected Gateway account balance"
+        "gateway_balance": "Gateway authorized cash"
       }
     }
   },

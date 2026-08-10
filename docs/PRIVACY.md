@@ -21,23 +21,29 @@ Gateway authentication material remains inside App-private storage.
 
 DKB depot numbers are read only as transient in-memory comparison keys for same-depot export deduplication. They are never persisted, logged, included in payloads, diagnostics, fixtures, or entity attributes.
 
-## Investment-reserve privacy
+## Authorized-investment-cash privacy
 
-The Gateway account-discovery screen is available only through authenticated,
-admin-only Home Assistant Ingress. It presents bounded masked choices and uses
-short-lived random browser-selection tokens rather than exposing account IDs in
-HTML forms.
+The Gateway account-discovery and cash-policy screens are available only through
+authenticated, admin-only Home Assistant Ingress. They present bounded masked
+choices and use short-lived random browser-selection tokens rather than exposing
+account IDs in HTML forms.
 
-The selected Comdirect account identifier is stored only in the Gateway App's
-private data directory with restrictive file permissions. The public Portfolio
-Architect REST snapshot may contain only:
+The selected Comdirect account identifier and non-secret authorization policy are
+stored only in the Gateway App's private data directory with restrictive file
+permissions. The public provider-neutral snapshot may contain these bounded
+monetary facts:
 
-- the usable EUR investment-reserve amount;
-- the reserve timestamp.
+- the booked balance of the selected account;
+- eligible non-borrowed investment cash;
+- the authorized investment cash amount;
+- authorization policy and optional cap;
+- the corresponding timestamp.
 
-IBANs, account numbers, account IDs, account-holder names, account labels,
-transactions, credit limits, and raw balance documents are not exposed to Home
-Assistant entities, diagnostics, logs, or release fixtures.
+This deliberate disclosure lets Home Assistant explain why the amount available
+for allocation differs from the selected account balance. IBANs, account numbers,
+account IDs, account-holder names, account labels, transactions, credit limits,
+raw bank response documents, and authentication material remain excluded from
+entities, diagnostics, logs, and release fixtures.
 
 ## Decision-trace privacy
 

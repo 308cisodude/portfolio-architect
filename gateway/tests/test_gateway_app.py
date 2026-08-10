@@ -16,6 +16,7 @@ from portfolio_architect_gateway.app import (
     build_app_config,
     ensure_api_token,
 )
+from portfolio_architect_gateway.cash_policy import InvestmentCashPolicy
 from portfolio_architect_gateway.comdirect import AccountBalanceCandidate
 from portfolio_architect_gateway.models import PortfolioSnapshot, Position
 from portfolio_architect_gateway.server import GatewayState
@@ -30,6 +31,7 @@ class FakeBootstrapClient:
             account_id="account-internal-1",
             display_id="DE00123456789012345678",
             account_type="Girokonto",
+            account_balance_eur=Decimal("1050.00"),
             available_eur=Decimal("1050.00"),
             as_of=datetime.now(timezone.utc).replace(microsecond=0),
         )
@@ -54,6 +56,12 @@ class FakeBootstrapClient:
 
     def clear_investment_account(self):
         self.selected_account_id = None
+
+    def investment_cash_policy(self):
+        return getattr(self, "cash_policy", InvestmentCashPolicy())
+
+    def set_investment_cash_policy(self, policy):
+        self.cash_policy = policy
 
     def fetch_snapshot(self):
         selected = self.selected_account_id is not None
@@ -88,6 +96,7 @@ def test_app_options_and_private_runtime_config(tmp_path: Path) -> None:
     assert config.comdirect.depot_ids == ("D1",)
     assert config.comdirect.username_file.name == ".username-not-persisted"
     assert config.comdirect.password_file.name == ".password-not-persisted"
+    assert config.comdirect.investment_cash_policy_file.name == "investment-cash-policy.json"
 
 
 def test_app_api_token_is_stable_and_private(tmp_path: Path) -> None:
@@ -313,6 +322,7 @@ def test_ingress_discovers_and_selects_masked_investment_account(tmp_path: Path)
         assert len(account["candidates"]) == 1
         candidate = account["candidates"][0]
         assert candidate["label"].endswith("…5678")
+        assert candidate["account_balance_eur"] == "1050.00"
         assert candidate["available_eur"] == "1050.00"
         assert "account-internal-1" not in json.dumps(account)
 
@@ -373,6 +383,52 @@ def test_ingress_page_polls_every_mutable_runtime_status_without_reload(tmp_path
         assert "classList.toggle('ok'" in body
         assert "classList.toggle('warn'" in body
         assert "update();setInterval(update,2000)" in body
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=5)
+
+
+def test_ingress_updates_investment_cash_authorization_policy(tmp_path: Path) -> None:
+    controller, client = _controller(tmp_path)
+    server = IngressHttpServer(
+        ("127.0.0.1", 0),
+        controller,
+        allowed_sources=frozenset({"127.0.0.1"}),
+        require_user_header=True,
+    )
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        connection = http.client.HTTPConnection(
+            "127.0.0.1", server.server_address[1], timeout=5
+        )
+        form = urlencode(
+            {
+                "csrf": controller.csrf_token,
+                "mode": "capped",
+                "cap_eur": "100",
+            }
+        )
+        connection.request(
+            "POST",
+            "/set-cash-policy",
+            body=form,
+            headers={
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Content-Length": str(len(form.encode())),
+                "X-Remote-User-Id": "admin",
+            },
+        )
+        response = connection.getresponse()
+        assert response.status == 303
+        response.read()
+        assert client.investment_cash_policy().mode == "capped"
+        assert client.investment_cash_policy().cap_eur == Decimal("100")
+        assert controller.status_document()["investment_cash_policy"] == {
+            "mode": "capped",
+            "cap_eur": "100",
+        }
     finally:
         server.shutdown()
         server.server_close()

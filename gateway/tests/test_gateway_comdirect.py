@@ -5,6 +5,7 @@ import json
 
 import pytest
 
+from portfolio_architect_gateway.cash_policy import InvestmentCashPolicy, MODE_CAPPED
 from portfolio_architect_gateway.comdirect import ComdirectClient, TokenState
 from portfolio_architect_gateway.config import ComdirectConfig
 from portfolio_architect_gateway.errors import ProtocolError
@@ -186,6 +187,7 @@ def config(tmp_path: Path) -> ComdirectConfig:
         password_file=paths["password"],
         session_file=tmp_path / "session.json",
         investment_account_file=tmp_path / "investment-account.json",
+        investment_cash_policy_file=tmp_path / "investment-cash-policy.json",
         poll_interval_seconds=900,
         request_timeout_seconds=20,
         mfa_timeout_seconds=180,
@@ -241,8 +243,14 @@ def test_investment_account_selection_is_masked_and_added_to_snapshot(tmp_path: 
     snapshot = client.fetch_snapshot()
     assert snapshot.investment_reserve_eur == Decimal("1050.00")
     assert snapshot.investment_reserve_as_of is not None
+    assert snapshot.investment_cash is not None
+    assert snapshot.investment_cash.account_balance_eur == Decimal("1050.00")
+    assert snapshot.investment_cash.eligible_eur == Decimal("1050.00")
+    assert snapshot.investment_cash.authorized_eur == Decimal("1050.00")
+    assert snapshot.investment_cash.policy == "all_available"
     document = snapshot.as_dict()
     assert document["investment_reserve"]["available_eur"] == "1050"
+    assert document["investment_cash"]["authorized_eur"] == "1050"
     assert "ACCOUNT-1" not in json.dumps(document)
     assert "5678" not in json.dumps(document)
 
@@ -496,3 +504,29 @@ def test_oauth_error_parser_retains_only_bounded_machine_code() -> None:
     assert _oauth_error_code(b'{"error":"INVALID-GRANT"}', "application/json") is None
     assert _oauth_error_code(b'{"error":"invalid_grant","error":"other"}', "application/json") is None
     assert _oauth_error_code(b'not-json', "application/json") is None
+
+
+def test_capped_investment_cash_policy_limits_legacy_reserve_and_preserves_cash_facts(tmp_path: Path) -> None:
+    transport = FakeTransport()
+    client = ComdirectClient(config(tmp_path), transport=transport, clock=lambda: 1000)
+    client.bootstrap(prompt=lambda _message: "", output=lambda _message: None)
+    candidate = client.discover_investment_accounts()[0]
+    client.select_investment_account(candidate.account_id)
+    client.set_investment_cash_policy(
+        InvestmentCashPolicy(mode=MODE_CAPPED, cap_eur=Decimal("100"))
+    )
+
+    snapshot = client.fetch_snapshot()
+    assert snapshot.investment_reserve_eur == Decimal("100")
+    assert snapshot.investment_cash is not None
+    assert snapshot.investment_cash.account_balance_eur == Decimal("1050.00")
+    assert snapshot.investment_cash.eligible_eur == Decimal("1050.00")
+    assert snapshot.investment_cash.authorized_eur == Decimal("100")
+    assert snapshot.investment_cash.cap_eur == Decimal("100")
+    assert snapshot.investment_cash.policy == MODE_CAPPED
+    document = snapshot.as_dict()
+    assert document["investment_reserve"]["available_eur"] == "100"
+    assert document["investment_cash"]["account_balance_eur"] == "1050"
+    assert document["investment_cash"]["eligible_eur"] == "1050"
+    assert document["investment_cash"]["authorized_eur"] == "100"
+    assert document["investment_cash"]["cap_eur"] == "100"
