@@ -99,6 +99,13 @@ _EXECUTION_UX_KEYS = {
     "execution_state",
     "additional_investment_cash_required_eur",
 }
+_CASH_AUTHORIZATION_KEYS = {
+    "investment_account_balance_eur",
+    "eligible_investment_cash_eur",
+    "authorized_investment_cash_eur",
+    "investment_cash_authorization_policy",
+    "investment_cash_authorization_cap_eur",
+}
 _PLAN_CONFIGURATION_KEYS = {
     "contribution_per_execution_eur",
     "plan_budget_amount_eur",
@@ -350,6 +357,11 @@ class MonthlyPlanData:
     remaining_reserve_eur: float = 0.0
     reserve_source: str = "contribution"
     reserve_as_of: datetime | None = None
+    investment_account_balance_eur: float | None = None
+    eligible_investment_cash_eur: float | None = None
+    authorized_investment_cash_eur: float | None = None
+    investment_cash_authorization_policy: str | None = None
+    investment_cash_authorization_cap_eur: float | None = None
     execution_policy: str = "legacy_distribution"
     max_cost_ratio_pct: float = 0.0
     max_orders_per_execution: int = 32
@@ -1163,6 +1175,45 @@ def _parse_monthly_plan(
         _summary_float(summary, "available_investment_reserve_eur", minimum=0, maximum=MAX_MONEY_EUR)
         if execution_present else contribution
     )
+    cash_authorization_present = _CASH_AUTHORIZATION_KEYS.intersection(summary)
+    if cash_authorization_present and cash_authorization_present != _CASH_AUTHORIZATION_KEYS:
+        raise PortfolioArchitectDataError("summary contains an incomplete investment cash authorization contract")
+    investment_account_balance = None
+    eligible_investment_cash = None
+    authorized_investment_cash = None
+    cash_authorization_policy = None
+    cash_authorization_cap = None
+    if cash_authorization_present:
+        investment_account_balance = _summary_float(
+            summary, "investment_account_balance_eur", minimum=-MAX_MONEY_EUR, maximum=MAX_MONEY_EUR
+        )
+        eligible_investment_cash = _summary_float(
+            summary, "eligible_investment_cash_eur", minimum=0, maximum=MAX_MONEY_EUR
+        )
+        authorized_investment_cash = _summary_float(
+            summary, "authorized_investment_cash_eur", minimum=0, maximum=MAX_MONEY_EUR
+        )
+        cash_authorization_policy = summary.get("investment_cash_authorization_policy")
+        if cash_authorization_policy not in {"all_available", "capped"}:
+            raise PortfolioArchitectDataError("summary.investment_cash_authorization_policy is invalid")
+        cap_raw = summary.get("investment_cash_authorization_cap_eur")
+        if cap_raw is not None:
+            cash_authorization_cap = _summary_float(
+                summary, "investment_cash_authorization_cap_eur", minimum=0, maximum=MAX_MONEY_EUR
+            )
+        if authorized_investment_cash > eligible_investment_cash + 0.01:
+            raise PortfolioArchitectDataError("summary authorized investment cash exceeds eligible cash")
+        if cash_authorization_policy == "all_available":
+            if cash_authorization_cap is not None or not math.isclose(
+                authorized_investment_cash, eligible_investment_cash, rel_tol=0, abs_tol=0.01
+            ):
+                raise PortfolioArchitectDataError("summary all-available investment cash authorization is inconsistent")
+        else:
+            if cash_authorization_cap is None or not math.isclose(
+                authorized_investment_cash, min(eligible_investment_cash, cash_authorization_cap), rel_tol=0, abs_tol=0.01
+            ):
+                raise PortfolioArchitectDataError("summary capped investment cash authorization is inconsistent")
+
     if not execution_present and recommended > contribution + 0.01:
         raise PortfolioArchitectDataError(
             "summary.recommended_total_eur exceeds the contribution"
@@ -1321,6 +1372,10 @@ def _parse_monthly_plan(
         reserve_source = summary.get("investment_reserve_source")
         if reserve_source not in {"contribution", "gateway_balance", "unavailable"}:
             raise PortfolioArchitectDataError("summary.investment_reserve_source is invalid")
+        if cash_authorization_present and reserve_source == "gateway_balance" and not math.isclose(
+            available_reserve, authorized_investment_cash or 0.0, rel_tol=0, abs_tol=0.01
+        ):
+            raise PortfolioArchitectDataError("summary available investment reserve disagrees with authorized cash")
         reserve_as_of_raw = summary.get("investment_reserve_as_of")
         reserve_as_of = None
         if reserve_as_of_raw is not None:
@@ -1420,6 +1475,11 @@ def _parse_monthly_plan(
         remaining_reserve_eur=remaining_reserve,
         reserve_source=reserve_source,
         reserve_as_of=reserve_as_of,
+        investment_account_balance_eur=investment_account_balance,
+        eligible_investment_cash_eur=eligible_investment_cash,
+        authorized_investment_cash_eur=authorized_investment_cash,
+        investment_cash_authorization_policy=cash_authorization_policy,
+        investment_cash_authorization_cap_eur=cash_authorization_cap,
         execution_policy=execution_policy,
         max_cost_ratio_pct=max_cost_ratio,
         max_orders_per_execution=max_orders,

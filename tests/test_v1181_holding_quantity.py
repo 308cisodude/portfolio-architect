@@ -69,9 +69,10 @@ def test_dashboard_uses_accepted_terminology() -> None:
     assert "heading: Current plan drift" not in source
 
 
-def test_release_is_stable_1_18_1_without_experimental_probe_code() -> None:
+def test_stable_release_excludes_experimental_brokerage_probe_code() -> None:
     manifest = json.loads((COMPONENT / "manifest.json").read_text())
-    assert manifest["version"] == "1.18.2"
+    assert manifest["version"] == "1.19.0"
     assert not (ROOT / "gateway" / "src" / "portfolio_architect_gateway" / "probe.py").exists()
     notes = (ROOT / "docs" / "RELEASE-NOTES.md").read_text()
-    assert "experimental v1.19.0 brokerage-diagnostic work is not included" in notes
+    assert "v1.19.0-rc2" in notes
+    assert "does **not** promote those experimental diagnostics" in notes

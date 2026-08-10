@@ -97,7 +97,7 @@ from .engine.importers import (
     select_latest_dkb_exports,
 )
 from .engine.models import Position
-from .engine.rest import PROVIDER_LOCAL_REST_JSON
+from .engine.rest import PROVIDER_LOCAL_REST_JSON, RestInvestmentCash
 from .last_known_good import RestLastKnownGoodStore, configuration_fingerprint
 from .model import PortfolioArchitectDataError, PortfolioData, parse_portfolio_data
 from .rest_client import (
@@ -177,6 +177,7 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
         self._rest_snapshot_position_count: int | None = None
         self._rest_investment_reserve_eur = None
         self._rest_investment_reserve_as_of: datetime | None = None
+        self._rest_investment_cash: RestInvestmentCash | None = None
         self.rest_snapshot_integrity_verified: bool | None = None
         self.rest_snapshot_integrity_error: str | None = None
         self._last_configuration_modified: datetime | None = None
@@ -929,6 +930,7 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
             generated_at = snapshot.generated_at
             self._rest_investment_reserve_eur = snapshot.investment_reserve_eur
             self._rest_investment_reserve_as_of = snapshot.investment_reserve_as_of
+            self._rest_investment_cash = snapshot.investment_cash
             if (
                 self._rest_snapshot_generated_at is not None
                 and generated_at < self._rest_snapshot_generated_at
@@ -979,6 +981,7 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
                 self.supplemental_dkb_paths,
                 self._rest_investment_reserve_eur,
                 self._rest_investment_reserve_as_of,
+                self._rest_investment_cash,
             )
             data = _parse_payload(payload)
         except SupplementalPortfolioSourceError as err:
@@ -1284,6 +1287,7 @@ def _calculate_rest_payload(
     supplemental_paths: tuple[SupplementalCsvPath, ...],
     investment_reserve_eur,
     investment_reserve_as_of: datetime | None,
+    investment_cash: RestInvestmentCash | None,
 ) -> tuple[dict[str, Any], AggregationResult]:
     primary = PortfolioSourceSnapshot(
         source_id="comdirect",
@@ -1316,6 +1320,17 @@ def _calculate_rest_payload(
                     "investment_reserve_as_of": investment_reserve_as_of.isoformat(),
                 }
                 if investment_reserve_eur is not None and investment_reserve_as_of is not None
+                else {}
+            ),
+            **(
+                {
+                    "investment_account_balance_eur": investment_cash.account_balance_eur,
+                    "eligible_investment_cash_eur": investment_cash.eligible_eur,
+                    "authorized_investment_cash_eur": investment_cash.authorized_eur,
+                    "investment_cash_authorization_policy": investment_cash.policy,
+                    "investment_cash_authorization_cap_eur": investment_cash.cap_eur,
+                }
+                if investment_cash is not None
                 else {}
             ),
         },

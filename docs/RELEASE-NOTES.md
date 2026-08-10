@@ -1,43 +1,69 @@
-# Portfolio Architect 1.18.2
+# Portfolio Architect 1.19.0
 
-Version 1.18.2 is a stable Home Assistant compatibility maintenance release based
-on the v1.18.1 known-good baseline.
+Version 1.19.0 adds **provider-owned authorized investment cash** while preserving
+Portfolio Architect's provider-neutral allocation role.
 
-## Monetary sensor metadata
+## Authorized Cash Policy
 
-Home Assistant does not permit `SensorStateClass.MEASUREMENT` for sensors using
-`SensorDeviceClass.MONETARY`. Portfolio Architect previously applied that state
-class to several advisory and planning values, causing Home Assistant to report
-invalid sensor-metadata warnings during integration setup.
+The Gateway now separates four concepts for the explicitly selected investment
+account:
 
-Version 1.18.2 removes the state class from those monetary entities while retaining
-their monetary device class, EUR unit, values, entity IDs, unique IDs, and display
-precision. The affected categories are:
+- the bank-reported booked account balance;
+- eligible investment cash, conservatively limited to the lower of booked balance
+  and available cash and clamped at zero;
+- the Gateway authorization policy; and
+- the amount Portfolio Architect is actually authorized to allocate.
 
-- contribution and recommendation amounts;
-- available, remaining, deferred, and additionally required investment cash;
-- estimated transaction fees and cash outlay;
-- per-instrument proposed purchases.
+The Comdirect Gateway supports two policies through its admin-only Ingress UI:
 
-These values are current/advisory amounts rather than accumulating counters, so
-`TOTAL` semantics are deliberately not introduced.
+- `all_available` — authorize all eligible cash; this is the default and preserves
+  the behavior of existing installations;
+- `capped` — authorize no more than a configured EUR cap.
 
-## Regression protection
+A capped policy fails closed if its cap is missing or invalid. Policy state is
+non-secret, stored atomically in App-private data, and does not expose an account
+identifier.
 
-A static sensor-metadata contract now discovers monetary sensor classes through
-inheritance and rejects the invalid `MEASUREMENT` state class on them. The contract also
-confirms that valid `MEASUREMENT` state classes remain present on non-monetary
-percentage, duration, quantity, and diagnostic sensors.
+## REST compatibility
 
-## Stability boundary
+The Home Assistant payload remains **payload schema 8**, REST remains **REST schema 1**, and Gateway health remains **Gateway health schema 5**. No schema-version bump is required because the cash metadata is additive and optional.
 
-- Portfolio payload schema 8, REST schema 1, and Gateway health schema 5
-  are unchanged.
-- Portfolio values, allocation, policy, target corridor, recommendation distribution,
-  execution-cost calculation, reserve behavior, Plan Delta semantics, and holding
-  quantity semantics are unchanged.
-- Existing entity IDs, unique IDs, configuration entries, dashboards, and stored
-  options remain compatible.
-- Gateway runtime behavior is unchanged from v1.16.0; Gateway App 1.18.2 is package
-  alignment only.
-- The experimental v1.19.0 brokerage-diagnostic work is not included.
+REST schema 1 remains the wire-contract version. The established
+`investment_reserve.available_eur` field now carries the **authorized** amount.
+A new optional additive `investment_cash` object can expose the bounded account
+balance, eligible cash, authorized cash, policy, optional cap, and timestamp.
+Portfolio Architect cross-checks the new object against the legacy reserve before
+using it.
+
+This is deliberately bidirectionally compatible:
+
+- Portfolio Architect 1.19.0 still accepts older Gateways that publish only
+  `investment_reserve`;
+- older Portfolio Architect releases ignore the additive `investment_cash` object
+  and continue to consume the authorized amount through `investment_reserve`.
+
+## Home Assistant semantics
+
+The existing `sensor.portfolio_architect_available_investment_reserve` entity ID
+is retained, but its display name is now **Authorized investment cash**. When the
+new Gateway metadata is available, the entity also exposes the selected account
+balance, eligible investment cash, authorization policy, and optional cap as
+bounded attributes.
+
+No trading, order, transfer, payment, or transaction-history capability is added.
+Portfolio Architect still decides allocation; the Gateway only decides how much
+cash it is allowed to offer to the allocator.
+
+## Provider scope
+
+The implementation is provider-neutral at the REST and calculation boundaries,
+but the released live Gateway remains Comdirect-specific. DKB supplemental CSV
+sources do not provide cash balances and are therefore unchanged. A future DKB
+Gateway can apply the same authorization contract, for example with a capped cash
+policy, without changing Portfolio Architect's allocation engine.
+
+## Experimental branch note
+
+The historical `v1.19.0-rc2` tag belongs to the separate experimental brokerage-
+diagnostics work. Stable 1.19.0 is based on the accepted 1.18.2 stable line and
+does **not** promote those experimental diagnostics.

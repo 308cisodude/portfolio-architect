@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.19.0
+
+- Adds Gateway-owned investment-cash authorization with `all_available` and fail-closed `capped` policies.
+- Separates bank-reported account balance, eligible non-borrowed cash, and the amount Portfolio Architect is authorized to allocate.
+- Extends REST schema 1 additively with bounded `investment_cash` metadata while retaining `investment_reserve.available_eur` as the authorized compatibility value.
+- Renames the existing reserve entity display name to **Authorized investment cash** without changing its entity ID or unique ID.
+- Preserves compatibility with older supported Gateways and keeps DKB supplemental CSV behavior unchanged.
+- Excludes the historical experimental `v1.19.0-rc2` brokerage diagnostics from the stable release.
+
 ## 1.18.2
 
 - Removes invalid `measurement` state classes from advisory monetary sensors for Home Assistant compatibility.

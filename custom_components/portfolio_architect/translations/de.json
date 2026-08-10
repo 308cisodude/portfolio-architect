@@ -1632,13 +1632,25 @@
         }
       },
       "available_investment_reserve": {
-        "name": "Verfügbares Anlageguthaben",
+        "name": "Freigegebenes Anlageguthaben",
         "state_attributes": {
           "reserve_source": {
             "name": "Quelle der Reserve"
           },
           "reserve_as_of": {
             "name": "Zeitpunkt des Kontostands"
+          },
+          "investment_account_balance_eur": {
+            "name": "Kontostand des ausgewählten Kontos"
+          },
+          "eligible_investment_cash_eur": {
+            "name": "Geeignetes Anlageguthaben"
+          },
+          "authorization_policy": {
+            "name": "Freigaberichtlinie"
+          },
+          "authorization_cap_eur": {
+            "name": "Freigabeobergrenze"
           }
         }
       },
@@ -1683,7 +1695,7 @@
         "name": "Quelle der Anlagereserve",
         "state": {
           "contribution": "Aktueller Beitrag",
-          "gateway_balance": "Kontostand des Gateways",
+          "gateway_balance": "Vom Gateway freigegebenes Anlageguthaben",
           "unavailable": "Nicht verfügbar"
         }
       },
@@ -1710,7 +1722,7 @@
             "name": "Zurückgestellte Käufe"
           },
           "available_investment_cash_eur": {
-            "name": "Verfügbares Anlageguthaben"
+            "name": "Freigegebenes Anlageguthaben"
           },
           "cash_after_recommended_purchases_eur": {
             "name": "Guthaben nach empfohlenen Käufen"
@@ -2181,7 +2193,7 @@
           "execution_max_cost_ratio_pct": "Maximale geschätzte Transaktionskosten in Prozent des vorgeschlagenen Orderwerts.",
           "execution_max_deferral_periods": "Im ausgewogenen Modus darf die Kostenquote nach dieser Anzahl angesammelter Beitragsperioden überschritten werden.",
           "execution_max_orders": "Begrenzt die Anzahl separater kostenpflichtiger Orders je Ausführung.",
-          "execution_reserve_mode": "Der Gateway-Kontostand erfordert ein ausdrücklich ausgewähltes dediziertes Comdirect-Konto. Nur aktueller Beitrag verwendet ausschließlich den Planbeitrag.",
+          "execution_reserve_mode": "Vom Gateway freigegebenes Anlageguthaben erfordert ein ausdrücklich ausgewähltes dediziertes Comdirect-Konto. Nur aktueller Beitrag verwendet ausschließlich den Planbeitrag.",
           "manual_settlement_fee_eur": "Zusätzliches fixes Abwicklungsentgelt des gewählten Ausführungswegs."
         }
       },
@@ -2311,7 +2323,7 @@
     "execution_reserve_mode": {
       "options": {
         "contribution_only": "Nur aktueller Beitrag",
-        "gateway_balance": "Kontostand des ausgewählten Gateway-Kontos"
+        "gateway_balance": "Vom Gateway freigegebenes Anlageguthaben"
       }
     }
   },

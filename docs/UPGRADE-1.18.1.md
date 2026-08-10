@@ -2,7 +2,7 @@
 
 Version 1.18.1 is a stable observability and dashboard-language maintenance release.
 It is built from the v1.18.0 stable baseline and does not include the experimental
-v1.19.0 brokerage-diagnostic branch.
+`v1.19.0-rc2` brokerage-diagnostic branch.
 
 ## 1. Update through HACS
 

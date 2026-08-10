@@ -1,8 +1,8 @@
 name: Portfolio Architect Gateway
-version: 1.18.2
+version: 1.19.0
 slug: portfolio_architect_gateway
-description: Read-only Comdirect gateway for Portfolio Architect with private investment-reserve
-  selection and live recovery diagnostics.
+description: Read-only Comdirect gateway for Portfolio Architect with private account selection,
+  authorized investment cash, and live recovery diagnostics.
 url: https://developers.home-assistant.io/docs/apps/
 arch:
 - amd64

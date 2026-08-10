@@ -55,24 +55,49 @@ account identifiers, and depot numbers are not used as public source identities.
 
 Multiple configured files from the same DKB depot are treated as dated snapshots, not separate portfolios. Only the newest export date contributes. Different depots remain independent sources.
 
-## Optional investment reserve in REST schema 1
+## Optional authorized investment cash in REST schema 1
 
-A conforming local REST source may add this optional top-level object:
+A conforming local REST source may continue to publish the established
+compatibility object:
 
 ```json
 {
   "investment_reserve": {
-    "available_eur": "350.00",
-    "as_of": "2026-08-01T00:00:00+02:00"
+    "available_eur": "100",
+    "as_of": "2026-08-10T20:59:00Z"
   }
 }
 ```
 
-Both fields are required when the object is present. `available_eur` must be a
-canonical non-negative decimal string, and `as_of` must be a timezone-aware
-bounded timestamp. Numeric JSON values, partial objects, negative amounts,
-naive timestamps, and implausibly future timestamps are rejected.
+Both fields are required when the object is present. `available_eur` is the amount
+Portfolio Architect is authorized to allocate. It must be a canonical
+non-negative decimal string; `as_of` must be a timezone-aware bounded timestamp.
 
-The reserve is optional so existing REST sources remain schema-compatible. Its
-absence does not invalidate the portfolio snapshot; it makes live-reserve-based
-execution unavailable.
+Version 1.19.0 adds an optional explanatory object without changing the schema
+version:
+
+```json
+{
+  "investment_cash": {
+    "account_balance_eur": "8601.53",
+    "eligible_eur": "8601.53",
+    "authorized_eur": "100",
+    "policy": "capped",
+    "cap_eur": "100",
+    "as_of": "2026-08-10T20:59:00Z"
+  }
+}
+```
+
+`account_balance_eur` may be signed. The other amounts are non-negative. Policy is
+`all_available` or `capped`; `cap_eur` is required only for `capped`. The
+authorized amount may not exceed eligible cash and must equal eligible cash for
+`all_available`, or `min(eligible_eur, cap_eur)` for `capped`.
+
+When `investment_cash` is present, the compatibility `investment_reserve` object
+is also required, with the same timestamp and an `available_eur` value equal to
+`authorized_eur`. Portfolio Architect rejects inconsistent pairs. Older supported
+REST sources may omit `investment_cash` entirely.
+
+Numeric JSON values, partial objects, inconsistent policies, invalid decimals,
+naive timestamps, and implausibly future timestamps are rejected.

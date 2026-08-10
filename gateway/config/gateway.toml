@@ -21,6 +21,7 @@ username_file = "/run/secrets/comdirect_username"
 password_file = "/run/secrets/comdirect_password"
 session_file = "/data/comdirect-session.json"
 investment_account_file = "/data/investment-account.json"
+investment_cash_policy_file = "/data/investment-cash-policy.json"
 poll_interval_seconds = 900
 request_timeout_seconds = 20
 mfa_timeout_seconds = 180

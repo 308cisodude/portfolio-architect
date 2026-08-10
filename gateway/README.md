@@ -1,15 +1,12 @@
-# Portfolio Architect Gateway v1.18.2
+# Portfolio Architect Gateway v1.19.0
 
-The gateway is a dedicated, dependency-free Python service that converts the
-Comdirect depot API into Portfolio Architect REST schema 1. Version 1.16.0 added
-an optional, privacy-bounded investment-reserve path for the native Home
-Assistant App deployment.
+The Gateway is a dedicated, dependency-free Python service that converts the
+Comdirect depot API into provider-neutral Portfolio Architect REST schema 1.
+Version 1.19.0 adds a provider-owned authorization decision for investment cash.
 
-The standalone deployment remains suitable for the existing read-only portfolio
-snapshot. Account discovery and explicit settlement-account selection are
-intentionally delivered through the authenticated Home Assistant App Ingress UI
-in this release; a standalone gateway without that private selection state omits
-the optional investment reserve.
+The released Home Assistant App provides the authenticated Ingress workflow for
+account discovery, explicit account selection, cash-policy configuration, and
+Comdirect bootstrap/reauthentication.
 
 ## Security boundary
 
@@ -17,57 +14,64 @@ The running service:
 
 - exposes authenticated `GET /api/v1/portfolio` and optional authenticated
   `GET /healthz` only;
-- binds served snapshots to SHA-256, ETag, and position-count metadata;
-- has no order, order-book, trading, transfer, payment, or account-transaction
-  endpoint;
-- contains a bounded outbound allowlist for OAuth/session activation and the
-  read paths required for depots, positions, instrument metadata, and account
-  balances;
+- contains no order, trading, transfer, payment, or account-transaction endpoint;
+- uses only the bounded Comdirect read paths required for depots, positions,
+  instrument metadata, and account balances;
 - never reads the Comdirect username or password after bootstrap;
-- persists OAuth/session material, the last provider-neutral snapshot, and—only
-  after explicit App selection—the private account identifier;
-- never logs credentials, bearer tokens, cookies, account identifiers,
-  instrument names, quantities, or monetary values;
-- fails closed on redirects, malformed/non-EUR amounts, invalid JSON, duplicate
-  identities, excessive pagination, oversized responses, or incomplete balance
-  semantics.
+- persists OAuth/session material, the last validated snapshot, the explicitly
+  selected private account identifier, and non-secret cash-policy state;
+- never publishes the account identifier, IBAN, account label, account holder,
+  credit limit, transaction history, or bank authentication material;
+- fails closed on redirects, malformed amounts, invalid policy state, invalid
+  JSON, duplicate identities, excessive pagination, oversized responses, or
+  incomplete balance semantics.
 
 The Comdirect OAuth token may contain broader brokerage scope than this service
 needs. Read-only enforcement therefore occurs in the implementation and
-deployment boundary rather than through an assumption about token scope.
+container boundary rather than by assuming bank-side token scoping.
 
-## Investment-reserve semantics
+## Authorized investment cash
 
-The App discovers eligible EUR accounts only after an authenticated session is
-available. The user explicitly chooses a masked account. The account identifier
-stays in App-private storage.
+For every refresh, the Gateway requires both booked balance and available cash
+for the explicitly selected EUR account. It first computes **eligible cash** as
+the lower value, clamped at zero. That prevents overdraft/credit facilities and
+pending debits from increasing the advisory budget.
 
-For every refresh, the Gateway requires both the booked balance and the available
-cash value for that selected account. It publishes the lower value, clamped at
-zero, as the usable investment reserve. This prevents credit facilities and
-pending debits from inflating the advisory purchase budget.
+The Gateway then applies one authorization policy:
 
-The public snapshot contains only:
+- `all_available`: authorize all eligible cash; this is the default and preserves
+  the pre-1.19 behavior;
+- `capped`: authorize no more than a configured EUR cap.
+
+The public snapshot retains the compatibility object and adds bounded metadata:
 
 ```json
 {
   "investment_reserve": {
-    "available_eur": "350.00",
-    "as_of": "2026-08-01T00:00:00+02:00"
+    "available_eur": "100",
+    "as_of": "2026-08-10T20:59:00Z"
+  },
+  "investment_cash": {
+    "account_balance_eur": "8601.53",
+    "eligible_eur": "8601.53",
+    "authorized_eur": "100",
+    "policy": "capped",
+    "cap_eur": "100",
+    "as_of": "2026-08-10T20:59:00Z"
   }
 }
 ```
 
-No IBAN, account number, account label, transaction, credit limit, or raw balance
-document is published.
+`investment_reserve.available_eur` always equals `authorized_eur`. This preserves
+compatibility with older Portfolio Architect releases while allowing new releases
+to explain why the authorized amount differs from the account balance.
+
+The bounded numeric account balance is intentionally provider-neutral metadata;
+no account identifier or source balance document leaves the Gateway.
 
 ## Deployment
 
-Use the native Home Assistant App bundle for the account-selection workflow.
-Update in place and never remove App data during a normal upgrade. Existing OAuth
-state, Gateway bearer token, API credentials, cached snapshot, and selected
-account survive an in-place update.
-
-The selected-account reserve semantics were validated live before the v1.17.1
-publication milestone and remain unchanged in v1.18.2. The Gateway runtime
-remains unchanged from v1.16.0.
+Use the native Home Assistant App bundle for the complete workflow. Update in
+place and never remove App data during a normal upgrade. Existing OAuth state,
+Gateway bearer token, API credentials, cached snapshot, selected account, and
+cash-policy state survive an in-place update.

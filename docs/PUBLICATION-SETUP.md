@@ -78,7 +78,7 @@ are the live compatibility check.
 
 ## 4. Publish
 
-Create an annotated `v1.18.2` tag that points to the reviewed release commit and
+Create an annotated `v1.19.0` tag that points to the reviewed release commit and
 push it. The release workflow verifies that the tag matches the integration
 version, rebuilds all artifacts, generates attestations, creates a draft release,
 uploads every asset, and publishes the completed release.

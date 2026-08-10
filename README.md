@@ -1,4 +1,4 @@
-# Portfolio Architect v1.18.2
+# Portfolio Architect v1.19.0
 
 Portfolio Architect is a Home Assistant-native portfolio overview, policy-check,
 and deterministic investment-planning system. It supports provider-specific CSV
@@ -16,7 +16,8 @@ transfer, payment, or account-transaction capability.
 - Private two-evaluation Plan Delta & Decision Trace with bounded reason codes and recorder-safe attributes.
 - Live Comdirect data through a local credential-isolated Gateway App.
 - Comdirect, DKB, and generic mapped CSV sources with multi-source consolidation.
-- Conservative investment-cash handling and explicit transaction-cost policies.
+- Provider-owned authorized investment cash with conservative eligibility and optional Gateway caps.
+- Explicit transaction-cost and execution policies.
 - Reproducible release archives, SHA-256 manifests, SPDX 2.3 SBOMs, and release
   provenance workflows.
 - Immutable GitHub Action and validator-image dependencies, plus a hash-locked
@@ -53,7 +54,7 @@ See `docs/PUBLICATION-SETUP.md` and `docs/PUBLISHING.md`.
 
 - Home Assistant 2026.7.0 or newer
 - Python 3.14 for source validation and Gateway builds
-- Gateway App 1.16.1 or newer when using the established live Comdirect protocol
+- Gateway App 1.16.1 or newer for the established live Comdirect protocol; Gateway App 1.19.0 for configurable cash authorization
 
 The current stable Portfolio Architect release and the immediately preceding
 stable release receive security and correctness fixes while a documented upgrade
@@ -62,10 +63,10 @@ path exists. See `SUPPORT.md` and `docs/SUPPORTED-VERSIONS.md`.
 ## Privacy and security
 
 Bank authentication remains inside the local Gateway App. Home Assistant receives
-only the bounded provider-neutral portfolio and health contracts. The selected
-investment account identifier, IBAN, account holder, transaction history, OAuth
-material, qSession cookie, and bank credentials are not included in the public
-portfolio snapshot or diagnostics.
+only bounded provider-neutral portfolio, authorized-cash, and health contracts.
+The selected investment account identifier, IBAN, account holder, transaction
+history, OAuth material, qSession cookie, and bank credentials are not included
+in the public portfolio snapshot or diagnostics.
 
 Never expose the Gateway REST port to an untrusted network.
 
@@ -98,4 +99,4 @@ GitHub-hosted runners as the live external validation step.
 - `docs/PUBLISHING.md`
 - `docs/QUALITY.md`
 - `docs/DECISION-TRACE.md`
-- `docs/UPGRADE-1.18.2.md`
+- `docs/UPGRADE-1.19.0.md`

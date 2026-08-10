@@ -70,9 +70,9 @@ def test_execution_ux_contract_is_additive_for_old_v1162_payloads() -> None:
 def test_translations_use_clear_investment_cash_terminology() -> None:
     en = json.loads((COMPONENT / "translations/en.json").read_text())
     de = json.loads((COMPONENT / "translations/de.json").read_text())
-    assert en["entity"]["sensor"]["available_investment_reserve"]["name"] == "Available investment cash"
+    assert en["entity"]["sensor"]["available_investment_reserve"]["name"] == "Authorized investment cash"
     assert en["entity"]["sensor"]["remaining_investment_reserve"]["name"] == "Cash after recommended purchases"
-    assert de["entity"]["sensor"]["available_investment_reserve"]["name"] == "Verfügbares Anlageguthaben"
+    assert de["entity"]["sensor"]["available_investment_reserve"]["name"] == "Freigegebenes Anlageguthaben"
     assert "execution_state" in en["entity"]["sensor"]
     assert "execution_state" in de["entity"]["sensor"]
 
@@ -84,10 +84,10 @@ def test_dashboard_uses_execution_state_not_ambiguous_plan_not_ready() -> None:
     assert "Plan nicht bereit" not in dashboard
     assert "Waiting for investment cash" in dashboard
     assert "Warten auf Anlageguthaben" in dashboard
-    assert "Available investment cash" in dashboard
+    assert "Authorized investment cash" in dashboard
     assert "Cash after recommended purchases" in dashboard
     assert "sensor.portfolio_architect_additional_investment_cash_required" in dashboard
 
 
 def test_v1163_version_metadata_is_aligned() -> None:
-    assert 'version = "1.18.2"' in (ROOT / "pyproject.toml").read_text()
+    assert 'version = "1.19.0"' in (ROOT / "pyproject.toml").read_text()

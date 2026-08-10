@@ -1,4 +1,4 @@
-# v1.18.2 validation
+# v1.19.0 validation
 
 The release pipeline validates:
 
@@ -8,6 +8,9 @@ The release pipeline validates:
 - the complete deterministic regression suite;
 - Home Assistant monetary sensor metadata, including inherited monetary classes and
   rejection of invalid `measurement` state classes on advisory currency values;
+- provider-owned investment-cash authorization, including default all-available
+  behavior, capped authorization, malformed-cap rejection, REST cross-checks, and
+  proof that allocation uses authorized rather than unrestricted eligible cash;
 - executable local REST DNS-pinning behavior, including exact-address connection
   and preservation of the original Host header;
 - local publication-readiness metadata without invented repository URLs;

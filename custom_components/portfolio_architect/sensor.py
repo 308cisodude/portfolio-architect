@@ -588,7 +588,7 @@ class PortfolioUnallocatedContributionSensor(_PortfolioMonthlyMoneySensor):
 
 
 class PortfolioAvailableInvestmentReserveSensor(_PortfolioMonthlyMoneySensor):
-    """Usable reserve from the configured source or current contribution."""
+    """Cash Portfolio Architect is currently authorized to allocate."""
 
     _attr_translation_key = "available_investment_reserve"
     value_attribute = "available_reserve_eur"
@@ -603,6 +603,10 @@ class PortfolioAvailableInvestmentReserveSensor(_PortfolioMonthlyMoneySensor):
         return {
             "reserve_source": plan.reserve_source,
             "reserve_as_of": plan.reserve_as_of.isoformat() if plan.reserve_as_of else None,
+            "investment_account_balance_eur": plan.investment_account_balance_eur,
+            "eligible_investment_cash_eur": plan.eligible_investment_cash_eur,
+            "authorization_policy": plan.investment_cash_authorization_policy,
+            "authorization_cap_eur": plan.investment_cash_authorization_cap_eur,
             **base,
         }
 

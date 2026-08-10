@@ -18,6 +18,7 @@ MAX_POSITION_VALUE_EUR: Final = Decimal("1000000000")
 _IDENTIFIER_RE = re.compile(r"^[A-Z0-9][A-Z0-9._:/+-]{3,15}$")
 _ISIN_RE = re.compile(r"^[A-Z]{2}[A-Z0-9]{9}[0-9]$")
 _DECIMAL_RE = re.compile(r"^(?:0|[1-9][0-9]{0,11})(?:\.[0-9]{1,8})?$")
+_SIGNED_DECIMAL_RE = re.compile(r"^-?(?:0|[1-9][0-9]{0,11})(?:\.[0-9]{1,8})?$")
 
 
 @dataclass(frozen=True, slots=True)
@@ -46,6 +47,30 @@ class Position:
 
 
 @dataclass(frozen=True, slots=True)
+class InvestmentCash:
+    """Provider-side cash facts and authorization decision."""
+
+    account_balance_eur: Decimal
+    eligible_eur: Decimal
+    authorized_eur: Decimal
+    policy: str
+    as_of: datetime
+    cap_eur: Decimal | None = None
+
+    def as_dict(self) -> dict[str, str]:
+        data = {
+            "account_balance_eur": canonical_signed_decimal(self.account_balance_eur),
+            "eligible_eur": canonical_decimal(self.eligible_eur),
+            "authorized_eur": canonical_decimal(self.authorized_eur),
+            "policy": self.policy,
+            "as_of": _utc_timestamp(self.as_of),
+        }
+        if self.cap_eur is not None:
+            data["cap_eur"] = canonical_decimal(self.cap_eur)
+        return data
+
+
+@dataclass(frozen=True, slots=True)
 class PortfolioSnapshot:
     """One immutable schema-1 REST snapshot."""
 
@@ -53,11 +78,10 @@ class PortfolioSnapshot:
     positions: tuple[Position, ...]
     investment_reserve_eur: Decimal | None = None
     investment_reserve_as_of: datetime | None = None
+    investment_cash: InvestmentCash | None = None
 
     def as_dict(self) -> dict[str, Any]:
-        timestamp = self.generated_at.astimezone(timezone.utc).isoformat(timespec="seconds")
-        if timestamp.endswith("+00:00"):
-            timestamp = f"{timestamp[:-6]}Z"
+        timestamp = _utc_timestamp(self.generated_at)
         data = {
             "schema_version": 1,
             "generated_at": timestamp,
@@ -65,13 +89,13 @@ class PortfolioSnapshot:
             "positions": [position.as_dict() for position in self.positions],
         }
         if self.investment_reserve_eur is not None and self.investment_reserve_as_of is not None:
-            reserve_timestamp = self.investment_reserve_as_of.astimezone(timezone.utc).isoformat(timespec="seconds")
-            if reserve_timestamp.endswith("+00:00"):
-                reserve_timestamp = f"{reserve_timestamp[:-6]}Z"
+            reserve_timestamp = _utc_timestamp(self.investment_reserve_as_of)
             data["investment_reserve"] = {
                 "available_eur": canonical_decimal(self.investment_reserve_eur),
                 "as_of": reserve_timestamp,
             }
+        if self.investment_cash is not None:
+            data["investment_cash"] = self.investment_cash.as_dict()
         return data
 
     def to_bytes(self) -> bytes:
@@ -88,6 +112,21 @@ class PortfolioSnapshot:
     @property
     def etag(self) -> str:
         return f'"sha256-{hashlib.sha256(self.to_bytes()).hexdigest()}"'
+
+
+def canonical_signed_decimal(value: Decimal) -> str:
+    """Render a finite signed Decimal without grouping or exponent notation."""
+    if not isinstance(value, Decimal) or not value.is_finite():
+        raise ProtocolError("Signed cash value must be a finite decimal")
+    token = format(value, "f")
+    if "." in token:
+        token = token.rstrip("0").rstrip(".")
+    token = token or "0"
+    if token == "-0":
+        token = "0"
+    if _SIGNED_DECIMAL_RE.fullmatch(token) is None:
+        raise ProtocolError("Signed cash value is outside the canonical REST decimal contract")
+    return token
 
 
 def canonical_decimal(value: Decimal) -> str:
@@ -162,11 +201,54 @@ def validate_snapshot(snapshot: PortfolioSnapshot) -> PortfolioSnapshot:
         if reserve_as_of is None or reserve_as_of.tzinfo is None or reserve_as_of.utcoffset() is None:
             raise ProtocolError("Investment reserve timestamp must include a timezone")
         reserve_as_of = reserve_as_of.astimezone(timezone.utc)
+
+    investment_cash = snapshot.investment_cash
+    if investment_cash is not None:
+        canonical_signed_decimal(investment_cash.account_balance_eur)
+        canonical_decimal(investment_cash.eligible_eur)
+        canonical_decimal(investment_cash.authorized_eur)
+        if abs(investment_cash.account_balance_eur) > MAX_POSITION_VALUE_EUR:
+            raise ProtocolError("Investment account balance exceeds the contract limit")
+        if investment_cash.eligible_eur > MAX_POSITION_VALUE_EUR or investment_cash.authorized_eur > MAX_POSITION_VALUE_EUR:
+            raise ProtocolError("Investment cash exceeds the contract limit")
+        if investment_cash.cap_eur is not None:
+            canonical_decimal(investment_cash.cap_eur)
+            if investment_cash.cap_eur > MAX_POSITION_VALUE_EUR:
+                raise ProtocolError("Investment cash cap exceeds the contract limit")
+        if investment_cash.policy not in {"all_available", "capped"}:
+            raise ProtocolError("Investment cash policy is invalid")
+        if investment_cash.as_of.tzinfo is None or investment_cash.as_of.utcoffset() is None:
+            raise ProtocolError("Investment cash timestamp must include a timezone")
+        if investment_cash.authorized_eur > investment_cash.eligible_eur:
+            raise ProtocolError("Authorized investment cash exceeds eligible cash")
+        if investment_cash.policy == "all_available":
+            if investment_cash.cap_eur is not None or investment_cash.authorized_eur != investment_cash.eligible_eur:
+                raise ProtocolError("All-available investment cash policy is inconsistent")
+        else:
+            if investment_cash.cap_eur is None:
+                raise ProtocolError("Capped investment cash policy requires a cap")
+            if investment_cash.authorized_eur != min(investment_cash.eligible_eur, investment_cash.cap_eur):
+                raise ProtocolError("Capped investment cash authorization is inconsistent")
+        cash_as_of = investment_cash.as_of.astimezone(timezone.utc)
+        investment_cash = InvestmentCash(
+            account_balance_eur=investment_cash.account_balance_eur,
+            eligible_eur=investment_cash.eligible_eur,
+            authorized_eur=investment_cash.authorized_eur,
+            policy=investment_cash.policy,
+            as_of=cash_as_of,
+            cap_eur=investment_cash.cap_eur,
+        )
+        if reserve is None or reserve_as_of is None:
+            raise ProtocolError("Investment cash requires the backward-compatible investment reserve")
+        if reserve != investment_cash.authorized_eur or reserve_as_of != cash_as_of:
+            raise ProtocolError("Investment reserve and authorized investment cash disagree")
+
     result = PortfolioSnapshot(
         generated_at=snapshot.generated_at.astimezone(timezone.utc),
         positions=tuple(validated),
         investment_reserve_eur=reserve,
         investment_reserve_as_of=reserve_as_of,
+        investment_cash=investment_cash,
     )
     result.to_bytes()
     return result
@@ -242,14 +324,61 @@ def parse_snapshot_bytes(data: bytes) -> PortfolioSnapshot:
             reserve_as_of = datetime.fromisoformat(reserve_timestamp)
         except ValueError as err:
             raise ProtocolError("Cached snapshot investment reserve timestamp is invalid") from err
+    investment_cash = _parse_cached_investment_cash(raw.get("investment_cash"))
     return validate_snapshot(
         PortfolioSnapshot(
             generated_at=generated_at,
             positions=tuple(positions),
             investment_reserve_eur=reserve_eur,
             investment_reserve_as_of=reserve_as_of,
+            investment_cash=investment_cash,
         )
     )
+
+
+def _parse_cached_investment_cash(raw: Any) -> InvestmentCash | None:
+    if raw is None:
+        return None
+    if not isinstance(raw, dict):
+        raise ProtocolError("Cached snapshot investment cash is invalid")
+    required = {"account_balance_eur", "eligible_eur", "authorized_eur", "policy", "as_of"}
+    allowed = required | {"cap_eur"}
+    if not required.issubset(raw) or set(raw) - allowed:
+        raise ProtocolError("Cached snapshot investment cash has an unexpected schema")
+    balance = _cached_decimal(raw.get("account_balance_eur"), signed=True, field="account balance")
+    eligible = _cached_decimal(raw.get("eligible_eur"), signed=False, field="eligible cash")
+    authorized = _cached_decimal(raw.get("authorized_eur"), signed=False, field="authorized cash")
+    cap = None
+    if "cap_eur" in raw:
+        cap = _cached_decimal(raw.get("cap_eur"), signed=False, field="cash cap")
+    policy = raw.get("policy")
+    if not isinstance(policy, str):
+        raise ProtocolError("Cached snapshot investment cash policy is invalid")
+    timestamp = raw.get("as_of")
+    if not isinstance(timestamp, str):
+        raise ProtocolError("Cached snapshot investment cash timestamp is invalid")
+    if timestamp.endswith("Z"):
+        timestamp = f"{timestamp[:-1]}+00:00"
+    try:
+        as_of = datetime.fromisoformat(timestamp)
+    except ValueError as err:
+        raise ProtocolError("Cached snapshot investment cash timestamp is invalid") from err
+    return InvestmentCash(balance, eligible, authorized, policy, as_of, cap)
+
+
+def _cached_decimal(value: Any, *, signed: bool, field: str) -> Decimal:
+    pattern = _SIGNED_DECIMAL_RE if signed else _DECIMAL_RE
+    if not isinstance(value, str) or pattern.fullmatch(value) is None:
+        raise ProtocolError(f"Cached snapshot {field} is invalid")
+    try:
+        return Decimal(value)
+    except InvalidOperation as err:
+        raise ProtocolError(f"Cached snapshot {field} is invalid") from err
+
+
+def _utc_timestamp(value: datetime) -> str:
+    token = value.astimezone(timezone.utc).isoformat(timespec="seconds")
+    return f"{token[:-6]}Z" if token.endswith("+00:00") else token
 
 
 def _clean_text(value: str, *, maximum: int, field: str) -> str:
