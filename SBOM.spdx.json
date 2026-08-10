@@ -1,14 +1,14 @@
 {
   "SPDXID": "SPDXRef-DOCUMENT",
   "creationInfo": {
-    "created": "2026-08-03T00:00:00Z",
+    "created": "2026-08-10T00:00:00Z",
     "creators": [
       "Tool: Portfolio Architect release tooling"
     ]
   },
   "dataLicense": "CC0-1.0",
-  "documentNamespace": "urn:uuid:37578c47-25df-5cb4-a17a-0672a9142849",
-  "name": "Portfolio Architect v1.18.1 SBOM",
+  "documentNamespace": "urn:uuid:259eda06-0c80-5102-86bd-08e8f5cbec46",
+  "name": "Portfolio Architect v1.18.2 SBOM",
   "packages": [
     {
       "SPDXID": "SPDXRef-Package-Integration",
@@ -19,7 +19,7 @@
       "licenseDeclared": "MIT",
       "name": "Portfolio Architect Home Assistant integration",
       "supplier": "Organization: Portfolio Architect contributors",
-      "versionInfo": "1.18.1"
+      "versionInfo": "1.18.2"
     },
     {
       "SPDXID": "SPDXRef-Package-Gateway",
@@ -30,7 +30,7 @@
       "licenseDeclared": "MIT",
       "name": "Portfolio Architect Gateway App",
       "supplier": "Organization: Portfolio Architect contributors",
-      "versionInfo": "1.18.1"
+      "versionInfo": "1.18.2"
     },
     {
       "SPDXID": "SPDXRef-Package-PythonBase",

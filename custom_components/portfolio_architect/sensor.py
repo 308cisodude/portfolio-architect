@@ -571,21 +571,18 @@ class PortfolioMonthlyContributionSensor(_PortfolioMonthlyMoneySensor):
     """Contribution allocated to the next individual execution."""
 
     _attr_translation_key = "contribution_per_execution"
-    _attr_state_class = SensorStateClass.MEASUREMENT
     value_attribute = "contribution_per_execution_eur"
     object_id = "monthly_contribution"
 
 
 class PortfolioRecommendedTotalSensor(_PortfolioMonthlyMoneySensor):
     _attr_translation_key = "recommended_total"
-    _attr_state_class = SensorStateClass.MEASUREMENT
     value_attribute = "recommended_total_eur"
     object_id = "recommended_total"
 
 
 class PortfolioUnallocatedContributionSensor(_PortfolioMonthlyMoneySensor):
     _attr_translation_key = "unallocated_contribution"
-    _attr_state_class = SensorStateClass.MEASUREMENT
     value_attribute = "unallocated_contribution_eur"
     object_id = "unallocated_contribution"
 
@@ -594,7 +591,6 @@ class PortfolioAvailableInvestmentReserveSensor(_PortfolioMonthlyMoneySensor):
     """Usable reserve from the configured source or current contribution."""
 
     _attr_translation_key = "available_investment_reserve"
-    _attr_state_class = SensorStateClass.MEASUREMENT
     value_attribute = "available_reserve_eur"
     object_id = "available_investment_reserve"
 
@@ -613,14 +609,12 @@ class PortfolioAvailableInvestmentReserveSensor(_PortfolioMonthlyMoneySensor):
 
 class PortfolioRemainingInvestmentReserveSensor(_PortfolioMonthlyMoneySensor):
     _attr_translation_key = "remaining_investment_reserve"
-    _attr_state_class = SensorStateClass.MEASUREMENT
     value_attribute = "remaining_reserve_eur"
     object_id = "remaining_investment_reserve"
 
 
 class PortfolioDeferredContributionSensor(_PortfolioMonthlyMoneySensor):
     _attr_translation_key = "deferred_contribution"
-    _attr_state_class = SensorStateClass.MEASUREMENT
     value_attribute = "deferred_contribution_eur"
     object_id = "deferred_contribution"
 
@@ -648,14 +642,12 @@ class PortfolioDeferredContributionSensor(_PortfolioMonthlyMoneySensor):
 
 class PortfolioEstimatedTransactionFeesSensor(_PortfolioMonthlyMoneySensor):
     _attr_translation_key = "estimated_transaction_fees"
-    _attr_state_class = SensorStateClass.MEASUREMENT
     value_attribute = "estimated_transaction_fees_eur"
     object_id = "estimated_transaction_fees"
 
 
 class PortfolioEstimatedCashOutlaySensor(_PortfolioMonthlyMoneySensor):
     _attr_translation_key = "estimated_cash_outlay"
-    _attr_state_class = SensorStateClass.MEASUREMENT
     value_attribute = "estimated_cash_outlay_eur"
     object_id = "estimated_cash_outlay"
 
@@ -816,7 +808,6 @@ class PortfolioAdditionalInvestmentCashRequiredSensor(_PortfolioMonthlyMoneySens
     """Additional cash required before the next eligible execution."""
 
     _attr_translation_key = "additional_investment_cash_required"
-    _attr_state_class = SensorStateClass.MEASUREMENT
     value_attribute = "additional_investment_cash_required_eur"
     object_id = "additional_investment_cash_required"
 
@@ -1447,7 +1438,6 @@ class PortfolioProposedBuySensor(
     _attr_has_entity_name = True
     _attr_translation_key = "proposed_buy"
     _attr_device_class = SensorDeviceClass.MONETARY
-    _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_native_unit_of_measurement = CURRENCY_EUR
     _attr_suggested_display_precision = 2
 

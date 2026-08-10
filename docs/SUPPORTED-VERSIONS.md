@@ -20,7 +20,7 @@ snapshot.
 
 ## Gateway compatibility
 
-Portfolio Architect 1.18.1 accepts the established REST portfolio schema 1 and
+Portfolio Architect 1.18.2 accepts the established REST portfolio schema 1 and
 Gateway health schemas 1 through 5. Gateway App 1.16.1 and later remain supported
 when release notes state that the Gateway protocol is unchanged.
 
