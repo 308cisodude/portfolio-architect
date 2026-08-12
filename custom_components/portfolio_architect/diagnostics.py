@@ -108,12 +108,16 @@ async def async_get_config_entry_diagnostics(
             else None
         ),
         "gateway_health_error": coordinator.gateway_health_error,
+        "gateway_health_observed_at": _isoformat(
+            coordinator.gateway_health_observed_at
+        ),
         "home_assistant_last_known_good": {
             "active": coordinator.using_home_assistant_last_known_good,
             "snapshot_generated_at": _isoformat(
                 coordinator.gateway_snapshot_generated_at
             ),
             "snapshot_age_seconds": coordinator.gateway_snapshot_age_seconds,
+            "retention_max_age_seconds": coordinator.home_assistant_lkg_max_age_seconds,
             "accepted_sha256": coordinator.rest_snapshot_sha256,
             "accepted_position_count": coordinator.rest_snapshot_position_count,
             "consecutive_gateway_failures": (
@@ -128,6 +132,10 @@ async def async_get_config_entry_diagnostics(
             "attention_reason": coordinator.gateway_attention_reason,
             "recommended_action": coordinator.gateway_recommended_action,
             "refresh_overdue": coordinator.is_gateway_refresh_overdue(),
+            "refresh_overdue_evidence_current": (
+                coordinator.gateway_refresh_overdue_evidence_current
+            ),
+            "health_observed_at": _isoformat(coordinator.gateway_health_observed_at),
             "last_refresh_failure_at": _isoformat(
                 coordinator.gateway_last_refresh_failure_at
             ),
@@ -157,6 +165,8 @@ async def async_get_config_entry_diagnostics(
         "last_update_success": coordinator.last_update_success,
         "last_successful_refresh": _isoformat(coordinator.data_timestamp),
         "data_fresh": coordinator.is_data_fresh(),
+        "plan_actionable": coordinator.plan_actionable,
+        "plan_actionability_reason": coordinator.plan_actionability_reason,
         "freshness_mode": coordinator.freshness_mode,
         "freshness_threshold_hours": coordinator.freshness_hours,
         "review_schedule": {

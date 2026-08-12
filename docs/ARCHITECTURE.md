@@ -46,6 +46,43 @@ cannot restore a cache created for a different aggregate.
 
 Same-depot DKB exports are collapsed before aggregation by selecting the newest source-owned export date. This prevents historical CSV files from double-counting one portfolio.
 
+## Graceful degradation and actionability
+
+Version 1.20.0 separates **trusted informational continuity** from **authorization
+to create a new investment action**. A validated REST calculation may be retained
+as Home Assistant last-known-good while it remains inside the bounded cache
+retention window. An incoming snapshot that regresses in time or fails fingerprint,
+position-count, or health cross-checks is rejected and cannot replace that accepted
+calculation.
+
+```text
+trusted live snapshot
+        │
+        ├── healthy + fresh + live ──→ informational data + actionable plan
+        │
+        └── source degrades ─────────→ trusted LKG informational data
+                                      holdings / allocation / policy remain
+                                      cash authorization / new purchases stop
+```
+
+For REST sources, actionability requires fresh data, available Gateway health, no
+active integrity failure, no Home Assistant LKG replay, no reauthentication
+requirement, and effective `live` operating mode. This is an output-boundary
+control as well as a presentation choice: stale authorized cash and purchase
+recommendations are made unavailable rather than being presented as current.
+
+The Home Assistant LKG retention limit uses a positive Gateway-advertised maximum
+cache age when known and otherwise falls back to seven days. Normal data freshness
+remains a separate, shorter policy; exceeding the freshness window can leave
+holdings visible while making the plan non-actionable.
+
+Refresh-overdue telemetry follows the same evidence rule. The coordinator records
+when a health document was observed. A scheduled deadline can be classified as
+overdue only if a health observation obtained at or after the deadline plus grace
+still advertises that missed deadline. Local passage of time cannot turn an old
+health sample into proof of failure. Snapshot age and expiry are derived locally
+from the accepted timestamp.
+
 ## Allocation overview presentation contract
 
 Version 1.13.0 adds a presentation-only adapter in

@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.20.0
+
+- Adds bounded graceful degradation so a previously validated REST portfolio remains informationally available during longer live-source outages instead of collapsing the whole portfolio to unavailable.
+- Separates trusted informational data from actionable planning: cached or degraded holdings, allocation, and policy remain visible, while authorized cash and new purchase recommendations require a fresh, healthy, live source.
+- Rejects timestamp-regressed or integrity-inconsistent incoming snapshots without discarding the previously accepted last-known-good calculation.
+- Fixes false `refresh_overdue` alarms by requiring a health observation obtained after the missed deadline plus grace; an old schedule timestamp can no longer become failure evidence by itself.
+- Derives snapshot age and retention countdown locally from the accepted snapshot timestamp and updates their entities on the existing minute tick.
+- Adds transparent AI-assisted development disclosure and `AI_POLICY.md` while retaining human-controlled branch, merge, tag, and release decisions.
+- Preserves payload schema 8, REST schema 1, Gateway health schema 5, entity IDs, unique IDs, authorized-cash semantics, and the read-only Gateway surface.
+
 ## 1.19.1
 
 - Fixes the Gateway Ingress transition from `capped` to `all_available` when a browser still submits the previous cap value.

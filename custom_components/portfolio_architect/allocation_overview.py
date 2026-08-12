@@ -18,11 +18,13 @@ def _rounded(value: object, quantum: Decimal) -> float:
     return 0.0 if result == 0 else result
 
 
-def _position_row(position: Any, corridor_pp: float) -> dict[str, Any]:
+def _position_row(
+    position: Any, corridor_pp: float, *, include_actionable: bool = True
+) -> dict[str, Any]:
     """Build one bounded, presentation-ready allocation row."""
     deviation_eur = float(position.deviation_eur)
     target_pct = float(position.target_pct)
-    return {
+    row = {
         "fund_id": position.fund_id,
         "fund_name": position.name,
         "wkn": position.wkn,
@@ -36,8 +38,6 @@ def _position_row(position: Any, corridor_pp: float) -> dict[str, Any]:
         "deviation_eur": _rounded(deviation_eur, _MONEY_QUANTUM),
         "value_gap_eur": _rounded(max(0.0, -deviation_eur), _MONEY_QUANTUM),
         "excess_value_eur": _rounded(max(0.0, deviation_eur), _MONEY_QUANTUM),
-        "proposed_buy_eur": _rounded(position.proposed_buy_eur, _MONEY_QUANTUM),
-        "buy_enabled": bool(position.buy_enabled),
         "corridor_lower_pct": _rounded(
             max(0.0, target_pct - corridor_pp), _PERCENT_QUANTUM
         ),
@@ -45,6 +45,12 @@ def _position_row(position: Any, corridor_pp: float) -> dict[str, Any]:
             min(100.0, target_pct + corridor_pp), _PERCENT_QUANTUM
         ),
     }
+    if include_actionable:
+        row["proposed_buy_eur"] = _rounded(
+            position.proposed_buy_eur, _MONEY_QUANTUM
+        )
+        row["buy_enabled"] = bool(position.buy_enabled)
+    return row
 
 
 def _sort_key(position: Any) -> tuple[float, str, str]:
@@ -69,7 +75,9 @@ def allocation_overview_state(data: Any) -> str:
     )
 
 
-def build_allocation_overview(data: Any) -> dict[str, Any]:
+def build_allocation_overview(
+    data: Any, *, include_actionable: bool = True
+) -> dict[str, Any]:
     """Return sorted allocation rows and summary metadata for Home Assistant."""
     corridor_pp = float(data.allocation.corridor_pp)
     groups: dict[str, list[Any]] = {status: [] for status in _STATUS_ORDER}
@@ -78,7 +86,9 @@ def build_allocation_overview(data: Any) -> dict[str, Any]:
 
     rows = {
         status: [
-            _position_row(position, corridor_pp)
+            _position_row(
+                position, corridor_pp, include_actionable=include_actionable
+            )
             for position in sorted(groups[status], key=_sort_key)
         ]
         for status in _STATUS_ORDER

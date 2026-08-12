@@ -32,6 +32,14 @@ User-visible text must be provided in both English and German. Dashboard changes
 must remain usable with native Home Assistant cards and without third-party
 frontend dependencies.
 
+## AI-assisted contributions
+
+Read `AI_POLICY.md` before submitting AI-assisted work. Material AI assistance
+should be disclosed in the pull request. Contributors remain responsible for the
+changes they submit; autonomous publication is not accepted. Architecture- and
+security-sensitive changes should explain the human-reviewed invariants, trust
+boundaries, and validation evidence.
+
 ## Release changes
 
 - Patch releases repair defects without changing public contracts.

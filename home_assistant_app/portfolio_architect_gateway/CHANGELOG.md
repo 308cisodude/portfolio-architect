@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.20.0
+
+- Aligns Gateway App package metadata with Portfolio Architect v1.20.0 graceful degradation and trustworthy freshness handling.
+- Preserves the v1.19.1 Gateway runtime, authenticated REST schema 1, health schema 5, OAuth/session state, account selection, and authorized-cash policy behavior.
+- Requires no new account selection or PhotoTAN solely because of this package update.
+
 ## 1.19.1
 
 - Fixes switching Investment cash authorization from **Cap eligible cash** back to **All eligible cash** when the previous cap remains in the submitted form.

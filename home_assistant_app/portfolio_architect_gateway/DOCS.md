@@ -1,7 +1,10 @@
-# Portfolio Architect Gateway v1.19.1
+# Portfolio Architect Gateway v1.20.0
 
-Version 1.19.1 fixes the capped-to-all-available Ingress transition for the
-provider-owned investment-cash authorization introduced in 1.19.0.
+Version 1.20.0 aligns this App package with Portfolio Architect's graceful
+degradation and trustworthy-freshness release. Gateway runtime and wire contracts
+are unchanged from 1.19.1, which fixed the capped-to-all-available Ingress
+transition for the provider-owned investment-cash authorization introduced in
+1.19.0.
 
 After completing or refreshing Comdirect authentication, open the App Web UI:
 

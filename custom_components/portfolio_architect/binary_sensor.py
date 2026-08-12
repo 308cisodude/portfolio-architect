@@ -151,7 +151,7 @@ class PortfolioMonthlyPlanReady(
             return None
         return (
             self.coordinator.data.monthly_plan.ready
-            and self.coordinator.is_data_fresh()
+            and self.coordinator.plan_actionable
         )
 
     @property
@@ -160,19 +160,25 @@ class PortfolioMonthlyPlanReady(
         if not self.available:
             return base
         plan = self.coordinator.data.monthly_plan
-        return {
+        attributes = {
             "contribution_per_execution_eur": plan.contribution_per_execution_eur,
             "plan_budget_amount_eur": plan.budget_amount_eur,
             "plan_budget_basis": plan.budget_basis,
             "plan_frequency": plan.frequency,
             "scheduled_executions_per_period": plan.executions_per_period,
-            "recommended_total_eur": plan.recommended_total_eur,
-            "unallocated_contribution_eur": plan.unallocated_contribution_eur,
-            "purchase_count": plan.purchase_count,
             "data_fresh": self.coordinator.is_data_fresh(),
+            "plan_actionable": self.coordinator.plan_actionable,
+            "actionability_reason": self.coordinator.plan_actionability_reason,
             "freshness_mode": self.coordinator.freshness_mode,
             **base,
         }
+        if self.coordinator.plan_actionable:
+            attributes.update({
+                "recommended_total_eur": plan.recommended_total_eur,
+                "unallocated_contribution_eur": plan.unallocated_contribution_eur,
+                "purchase_count": plan.purchase_count,
+            })
+        return attributes
 
 
 class PortfolioReviewScheduleConfigured(
@@ -419,6 +425,9 @@ class PortfolioSourceHealthy(
                 and health is not None
                 and health.status == "ok"
                 and not health.reauthentication_required
+                and not self.coordinator.using_home_assistant_last_known_good
+                and self.coordinator.rest_snapshot_integrity_error is None
+                and self.coordinator.gateway_operating_mode == "live"
             )
         return self.coordinator.last_update_success
 
@@ -475,7 +484,7 @@ class PortfolioGatewayReauthenticationRequired(
 class PortfolioGatewayUsingLastKnownGoodSnapshot(
     CoordinatorEntity[PortfolioArchitectCoordinator], BinarySensorEntity
 ):
-    """Whether the Gateway is serving a valid cached snapshot after a live failure."""
+    """Whether PA is using a valid Gateway or Home Assistant cached snapshot."""
 
     _attr_has_entity_name = True
     _attr_translation_key = "gateway_using_last_known_good_snapshot"
@@ -618,6 +627,12 @@ class PortfolioGatewayRefreshOverdue(
             ),
             "poll_interval_seconds": health.poll_interval_seconds if health else None,
             "refresh_in_progress": health.refresh_in_progress if health else None,
+            "health_observed_at": _isoformat(
+                self.coordinator.gateway_health_observed_at
+            ),
+            "overdue_evidence_current": (
+                self.coordinator.gateway_refresh_overdue_evidence_current
+            ),
             **_source_attributes(self.coordinator),
         }
 
@@ -850,6 +865,9 @@ def _source_attributes(coordinator: PortfolioArchitectCoordinator) -> dict[str, 
         "source_last_changed": _isoformat(coordinator.source_last_changed),
         "source_last_updated": _isoformat(coordinator.source_last_updated),
         "last_successful_refresh": _isoformat(coordinator.data_timestamp),
+        "data_fresh": coordinator.is_data_fresh(),
+        "plan_actionable": coordinator.plan_actionable,
+        "plan_actionability_reason": coordinator.plan_actionability_reason,
     }
     if coordinator.source_entity_id is not None:
         attributes["source_entity_id"] = coordinator.source_entity_id
