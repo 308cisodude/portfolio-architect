@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.19.1
+
+- Fixes the Gateway Ingress transition from `capped` to `all_available` when a browser still submits the previous cap value.
+- Makes server-side policy parsing authoritative: `all_available` canonicalizes any irrelevant submitted cap to `None` before persistence.
+- Keeps persisted-state validation strict, so malformed on-disk `all_available` policies that contain a cap are still rejected.
+- Improves the Ingress form UX by clearing/disabling the cap field outside capped mode without relying on client-side behavior for correctness.
+- Preserves authorized-cash calculations, REST schema 1, payload schema 8, Gateway health schema 5, entity IDs, and allocation semantics.
+
 ## 1.19.0
 
 - Adds Gateway-owned investment-cash authorization with `all_available` and fail-closed `capped` policies.

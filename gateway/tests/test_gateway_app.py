@@ -403,7 +403,8 @@ def test_ingress_updates_investment_cash_authorization_policy(tmp_path: Path) ->
         connection = http.client.HTTPConnection(
             "127.0.0.1", server.server_address[1], timeout=5
         )
-        form = urlencode(
+
+        capped_form = urlencode(
             {
                 "csrf": controller.csrf_token,
                 "mode": "capped",
@@ -413,10 +414,10 @@ def test_ingress_updates_investment_cash_authorization_policy(tmp_path: Path) ->
         connection.request(
             "POST",
             "/set-cash-policy",
-            body=form,
+            body=capped_form,
             headers={
                 "Content-Type": "application/x-www-form-urlencoded",
-                "Content-Length": str(len(form.encode())),
+                "Content-Length": str(len(capped_form.encode())),
                 "X-Remote-User-Id": "admin",
             },
         )
@@ -425,10 +426,68 @@ def test_ingress_updates_investment_cash_authorization_policy(tmp_path: Path) ->
         response.read()
         assert client.investment_cash_policy().mode == "capped"
         assert client.investment_cash_policy().cap_eur == Decimal("100")
+
+        # Reproduce the v1.19.0 transition bug: browsers can retain the old cap
+        # field while the operator switches the policy back to all_available.
+        stale_cap_form = urlencode(
+            {
+                "csrf": controller.csrf_token,
+                "mode": "all_available",
+                "cap_eur": "100",
+            }
+        )
+        connection.request(
+            "POST",
+            "/set-cash-policy",
+            body=stale_cap_form,
+            headers={
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Content-Length": str(len(stale_cap_form.encode())),
+                "X-Remote-User-Id": "admin",
+            },
+        )
+        response = connection.getresponse()
+        assert response.status == 303
+        response.read()
+        assert client.investment_cash_policy().mode == "all_available"
+        assert client.investment_cash_policy().cap_eur is None
         assert controller.status_document()["investment_cash_policy"] == {
-            "mode": "capped",
-            "cap_eur": "100",
+            "mode": "all_available",
+            "cap_eur": None,
         }
+
+        # A disabled HTML control is omitted from a form submission. The server
+        # therefore accepts the canonical all_available request without cap_eur.
+        omitted_cap_form = urlencode(
+            {
+                "csrf": controller.csrf_token,
+                "mode": "all_available",
+            }
+        )
+        connection.request(
+            "POST",
+            "/set-cash-policy",
+            body=omitted_cap_form,
+            headers={
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Content-Length": str(len(omitted_cap_form.encode())),
+                "X-Remote-User-Id": "admin",
+            },
+        )
+        response = connection.getresponse()
+        assert response.status == 303
+        response.read()
+        assert client.investment_cash_policy().mode == "all_available"
+        assert client.investment_cash_policy().cap_eur is None
+
+        connection.request("GET", "/", headers={"X-Remote-User-Id": "admin"})
+        response = connection.getresponse()
+        page = response.read().decode()
+        assert response.status == 200
+        assert "function syncCashPolicy()" in page
+        assert "cap.disabled=!capped" in page
+        assert "cap.required=capped" in page
+        assert "if(!capped)cap.value=''" in page
     finally:
         server.shutdown()
         server.server_close()

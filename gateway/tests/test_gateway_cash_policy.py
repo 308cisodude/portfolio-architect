@@ -42,5 +42,25 @@ def test_capped_policy_fails_closed_without_a_valid_cap(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="canonical EUR amount"):
         parse_policy_input("capped", "100,00")
-    with pytest.raises(ValueError, match="must not include a cap"):
-        parse_policy_input("all_available", "100")
+
+
+def test_all_available_form_normalizes_stale_cap_away(tmp_path: Path) -> None:
+    policy = parse_policy_input("all_available", "100")
+    assert policy.mode == MODE_ALL_AVAILABLE
+    assert policy.cap_eur is None
+
+    path = tmp_path / "investment-cash-policy.json"
+    save_investment_cash_policy(path, policy)
+    assert load_investment_cash_policy(path) == policy
+    assert '"cap_eur"' not in path.read_text(encoding="utf-8")
+
+
+def test_persisted_all_available_policy_with_cap_still_fails_closed(tmp_path: Path) -> None:
+    path = tmp_path / "investment-cash-policy.json"
+    path.write_text(
+        '{"schema_version":1,"mode":"all_available","cap_eur":"100"}',
+        encoding="utf-8",
+    )
+    path.chmod(0o600)
+    with pytest.raises(ProtocolError, match="must not define a cap"):
+        load_investment_cash_policy(path)

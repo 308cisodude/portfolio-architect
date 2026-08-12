@@ -17,8 +17,9 @@ release, subject to automated compatibility checks. Beta releases receive
 best-effort compatibility only.
 
 Gateway App versions 1.16.1 and later remain compatible with Portfolio Architect
-1.19.0 through the legacy reserve contract. Gateway App 1.19.0 is required for
-the configurable authorized-cash policy and its explanatory metadata.
+1.19.1 through the legacy reserve contract. Gateway App 1.19.0 or newer is required
+for the configurable authorized-cash policy and its explanatory metadata; 1.19.1
+contains the corrected capped-to-all-available Ingress transition.
 
 ## Getting help
 

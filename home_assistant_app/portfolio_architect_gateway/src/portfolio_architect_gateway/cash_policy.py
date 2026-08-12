@@ -87,8 +87,9 @@ def parse_policy_input(mode: str, cap_eur: str) -> InvestmentCashPolicy:
     """Validate one bounded Ingress form submission."""
     cleaned_mode = mode.strip()
     if cleaned_mode == MODE_ALL_AVAILABLE:
-        if cap_eur.strip():
-            raise ValueError("All-available policy must not include a cap")
+        # A cap has no semantics in all-available mode. Ignore any stale browser
+        # field value and persist the canonical policy without a cap. The strict
+        # persisted-state loader still rejects malformed all-available policy files.
         return InvestmentCashPolicy(mode=MODE_ALL_AVAILABLE)
     if cleaned_mode != MODE_CAPPED:
         raise ValueError("Unknown investment cash policy")

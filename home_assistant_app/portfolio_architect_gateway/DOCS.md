@@ -1,7 +1,7 @@
-# Portfolio Architect Gateway v1.19.0
+# Portfolio Architect Gateway v1.19.1
 
-Version 1.19.0 adds provider-owned investment-cash authorization to the existing
-read-only Comdirect Gateway runtime.
+Version 1.19.1 fixes the capped-to-all-available Ingress transition for the
+provider-owned investment-cash authorization introduced in 1.19.0.
 
 After completing or refreshing Comdirect authentication, open the App Web UI:
 
@@ -18,8 +18,9 @@ policy. Portfolio Architect receives the authorized amount through the existing
 reserve field plus additive explanatory cash metadata.
 
 The default `all_available` policy requires no migration action and preserves the
-behavior of existing installations. A capped policy with missing or malformed cap
-state fails closed.
+behavior of existing installations. A stale cap submitted while switching back to
+`all_available` is discarded server-side and never persisted. A capped policy with
+missing or malformed cap state still fails closed.
 
 The update preserves App-private API credentials, OAuth/session state, Gateway
 bearer token, cached snapshot, selected account, and cash policy. Never uninstall
