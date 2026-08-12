@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.20.1
+
+- Aligns Gateway App package metadata with Portfolio Architect v1.20.1.
+- Keeps Gateway runtime and REST/health contracts unchanged from v1.20.0.
+- Adds release regression coverage confirming cached snapshot integrity metadata remains available while Comdirect reauthentication is required.
+
 ## 1.20.0
 
 - Aligns Gateway App package metadata with Portfolio Architect v1.20.0 graceful degradation and trustworthy freshness handling.

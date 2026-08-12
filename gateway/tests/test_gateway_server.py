@@ -5,7 +5,7 @@ import http.client
 import threading
 
 from portfolio_architect_gateway.config import ComdirectConfig, GatewayConfig, ServerConfig
-from portfolio_architect_gateway.errors import GatewayError
+from portfolio_architect_gateway.errors import GatewayError, ReauthenticationRequired
 from portfolio_architect_gateway.models import PortfolioSnapshot, Position
 from portfolio_architect_gateway.server import GatewayHttpServer, GatewayState
 from portfolio_architect_gateway.store import save_snapshot
@@ -376,6 +376,30 @@ def test_refresh_loop_keeps_fixed_cadence_after_request_duration(monkeypatch) ->
     assert state.due_values[0] is None
     assert state.due_values[-1] is None
 
+
+
+def test_reauthentication_health_retains_cached_snapshot_integrity_metadata(tmp_path: Path) -> None:
+    class ReauthClient:
+        def fetch_snapshot(self):
+            raise ReauthenticationRequired("simulated")
+
+    config = _config(tmp_path)
+    state = GatewayState(config, ReauthClient())
+    cached = state.snapshot_view()
+    assert cached is not None
+
+    assert state.refresh(trigger="startup") is False
+    health = state.health_document(version=5)
+
+    assert health["status"] == "degraded"
+    assert health["operating_mode"] == "reauthentication_required"
+    assert health["reauthentication_required"] is True
+    assert health["snapshot_available"] is True
+    assert health["snapshot_generated_at"] == cached.generated_at.isoformat(timespec="seconds")
+    assert health["snapshot_sha256"] == cached.sha256
+    assert health["snapshot_position_count"] == cached.position_count
+    assert health["last_refresh_failure_class"] == "reauthentication_required"
+    assert health["recommended_action"] == "reauthenticate"
 
 def test_gateway_health_v5_reports_classified_recovery_guidance(tmp_path: Path) -> None:
     from portfolio_architect_gateway.errors import RemoteApiError

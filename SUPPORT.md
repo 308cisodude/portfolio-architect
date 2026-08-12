@@ -17,9 +17,9 @@ release, subject to automated compatibility checks. Beta releases receive
 best-effort compatibility only.
 
 Gateway App versions 1.16.1 and later remain compatible with Portfolio Architect
-1.20.0 through the legacy reserve contract. Gateway App 1.19.0 or newer is required
+1.20.1 through the legacy reserve contract. Gateway App 1.19.0 or newer is required
 for configurable authorized-cash policy metadata; 1.19.1 or newer contains the
-corrected capped-to-all-available Ingress transition. The normal release channel
+corrected capped-to-all-available Ingress transition. Version 1.20.1 fixes LKG entity propagation while preserving the v1.20.0 resilience contract. The normal release channel
 keeps the integration and Gateway App package versions aligned.
 
 ## Getting help

@@ -97,3 +97,8 @@ Savings-plan rates are treated as gross cash. A paid percentage savings plan
 therefore reduces the investable principal so principal plus fee does not exceed
 the configured reserve. Manual-order recommendations likewise reserve cash for
 estimated fees in addition to the order principal.
+
+
+### v1.20.1 LKG propagation
+
+When a live REST cycle falls back to the Home Assistant last-known-good calculation, Portfolio Architect still completes the coordinator cycle and notifies entities even if the retained portfolio calculation itself is unchanged. Informational holdings may remain available, while authorized cash and recommendation-derived entities immediately become unavailable until live actionability returns. Integrity Repairs represent integrity evidence from the current refresh path and are not carried into an unrelated transport/calculation fallback.
