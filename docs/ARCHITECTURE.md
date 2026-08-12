@@ -55,6 +55,8 @@ retention window. An incoming snapshot that regresses in time or fails fingerpri
 position-count, or health cross-checks is rejected and cannot replace that accepted
 calculation.
 
+Version 1.20.1 makes coordinator notifications part of that boundary: a completed update cycle publishes changed health/LKG/actionability metadata even when the retained portfolio calculation is byte-for-byte equivalent to the previous one. This prevents stale live entity states from masking degraded operation.
+
 ```text
 trusted live snapshot
         │

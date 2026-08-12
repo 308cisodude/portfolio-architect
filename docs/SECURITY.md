@@ -375,3 +375,8 @@ cache.
   and
 - AI-assisted development is disclosed in `AI_POLICY.md`; publication remains an
   explicit maintainer-controlled process rather than an autonomous agent action.
+
+
+## v1.20.1 degraded-state publication controls
+
+A degraded update is a security-relevant state transition even when the trusted last-known-good portfolio calculation is unchanged. Portfolio Architect therefore notifies entity listeners for every completed coordinator cycle so stale live-state entities cannot continue to expose authorized cash or recommendation values after actionability has been revoked. Integrity-failure Repairs are tied to current integrity evidence; unrelated transport or calculation failures do not inherit an older mismatch reason.

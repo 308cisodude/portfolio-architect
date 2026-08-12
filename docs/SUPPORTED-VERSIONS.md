@@ -20,12 +20,12 @@ snapshot.
 
 ## Gateway compatibility
 
-Portfolio Architect 1.20.0 accepts REST portfolio schema 1, including the optional
+Portfolio Architect 1.20.1 accepts REST portfolio schema 1, including the optional
 additive `investment_cash` authorization metadata, and Gateway health schemas 1
 through 5. Gateway App 1.16.1 and later remain compatible with the legacy reserve
 contract; Gateway App 1.19.0 or newer is required to configure cash authorization
 policies, and 1.19.1 or newer contains the corrected capped-to-all-available
-Ingress transition. Gateway App 1.20.0 is protocol-compatible with 1.19.1 and is
+Ingress transition. Gateway App 1.20.1 is protocol-compatible with 1.20.0/1.19.1 and is
 version-aligned with the current stable integration.
 
 ## Security fixes

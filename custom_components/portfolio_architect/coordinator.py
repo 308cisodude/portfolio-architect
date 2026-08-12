@@ -155,7 +155,7 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
             name=DOMAIN,
             config_entry=entry,
             update_interval=update_interval,
-            always_update=False,
+            always_update=True,
         )
 
         self.source_entity_id: str | None = None
@@ -1054,6 +1054,7 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
                 return self._use_home_assistant_last_known_good(
                     message,
                     configuration_sha256=configuration_sha256,
+                    integrity_failure=True,
                 )
 
         try:
@@ -1068,6 +1069,7 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
             return self._use_home_assistant_last_known_good(
                 str(err),
                 configuration_sha256=configuration_sha256,
+                integrity_failure=True,
             )
 
         if reuse_existing_data:
@@ -1155,8 +1157,15 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
         *,
         configuration_sha256: str,
         retry_after: float | None = None,
+        integrity_failure: bool = False,
     ) -> PortfolioData:
         """Publish the private HA cache as a successful degraded coordinator update."""
+        # Integrity errors describe evidence from the current refresh attempt.
+        # Do not carry an older mismatch into an unrelated transport, bank-auth,
+        # or calculation failure. The fingerprint of the last accepted snapshot
+        # remains preserved separately and is still checked on the next live read.
+        if not integrity_failure:
+            self.rest_snapshot_integrity_error = None
         if (
             self._last_known_good_payload is None
             or self._last_known_good_configuration_sha256 != configuration_sha256

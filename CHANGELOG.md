@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.20.1
+
+- Fixes graceful-degradation entity propagation when the coordinator republishes the same trusted `PortfolioData` with changed LKG, health, or actionability metadata.
+- Ensures LKG entry immediately updates health entities and makes authorized cash, recommendations, fees, outlay, and other actionability-sensitive entities unavailable while informational holdings remain visible.
+- Makes coordinator listener notifications authoritative for each completed update cycle instead of suppressing them when only out-of-band coordinator metadata changed.
+- Keeps integrity Repairs tied to current integrity evidence so an unrelated transport or calculation fallback does not republish a stale integrity-failure reason.
+- Adds regression coverage that a reauthentication-required Gateway continues to expose integrity metadata for its cached snapshot.
+- Preserves payload schema 8, REST schema 1, Gateway health schema 5, entity IDs, unique IDs, authorized-cash semantics, and v1.20.0 LKG retention rules.
+
 ## 1.20.0
 
 - Adds bounded graceful degradation so a previously validated REST portfolio remains informationally available during longer live-source outages instead of collapsing the whole portfolio to unavailable.
