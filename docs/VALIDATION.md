@@ -1,4 +1,4 @@
-# v1.19.0 validation
+# v1.19.1 validation
 
 The release pipeline validates:
 
@@ -11,6 +11,9 @@ The release pipeline validates:
 - provider-owned investment-cash authorization, including default all-available
   behavior, capped authorization, malformed-cap rejection, REST cross-checks, and
   proof that allocation uses authorized rather than unrestricted eligible cash;
+- the capped-to-all-available Ingress transition, including stale-cap
+  normalization, omission of the disabled cap field, and server-side authority
+  independent of client-side form behavior;
 - executable local REST DNS-pinning behavior, including exact-address connection
   and preservation of the original Host header;
 - local publication-readiness metadata without invented repository URLs;

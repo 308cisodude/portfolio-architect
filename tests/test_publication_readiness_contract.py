@@ -43,12 +43,13 @@ def test_publication_metadata_and_docs_are_present() -> None:
         "docs/PUBLICATION-SETUP.md",
         "docs/UPGRADE-1.15.0.md",
         "docs/UPGRADE-1.19.0.md",
+        "docs/UPGRADE-1.19.1.md",
     ]
     for relative in required:
         assert (ROOT / relative).is_file(), relative
     sbom = json.loads((ROOT / "SBOM.spdx.json").read_text())
     assert sbom["spdxVersion"] == "SPDX-2.3"
-    assert {package["versionInfo"] for package in sbom["packages"][:2]} == {"1.19.0"}
+    assert {package["versionInfo"] for package in sbom["packages"][:2]} == {"1.19.1"}
 
 
 def test_release_and_operational_tools_have_expected_modes() -> None:

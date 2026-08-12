@@ -1,4 +1,4 @@
-# Portfolio Architect v1.19.0
+# Portfolio Architect v1.19.1
 
 Portfolio Architect is a Home Assistant-native portfolio overview, policy-check,
 and deterministic investment-planning system. It supports provider-specific CSV
@@ -54,7 +54,7 @@ See `docs/PUBLICATION-SETUP.md` and `docs/PUBLISHING.md`.
 
 - Home Assistant 2026.7.0 or newer
 - Python 3.14 for source validation and Gateway builds
-- Gateway App 1.16.1 or newer for the established live Comdirect protocol; Gateway App 1.19.0 for configurable cash authorization
+- Gateway App 1.16.1 or newer for the established live Comdirect protocol; Gateway App 1.19.0 or newer for configurable cash authorization; 1.19.1 fixes the capped-to-all-available policy transition
 
 The current stable Portfolio Architect release and the immediately preceding
 stable release receive security and correctness fixes while a documented upgrade
@@ -99,4 +99,5 @@ GitHub-hosted runners as the live external validation step.
 - `docs/PUBLISHING.md`
 - `docs/QUALITY.md`
 - `docs/DECISION-TRACE.md`
+- `docs/UPGRADE-1.19.1.md`
 - `docs/UPGRADE-1.19.0.md`

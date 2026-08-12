@@ -1,69 +1,41 @@
-# Portfolio Architect 1.19.0
+# Portfolio Architect 1.19.1
 
-Version 1.19.0 adds **provider-owned authorized investment cash** while preserving
-Portfolio Architect's provider-neutral allocation role.
+Version 1.19.1 is a focused maintenance release for the Gateway-side Authorized
+Cash Policy introduced in 1.19.0.
 
-## Authorized Cash Policy
+## Fixed policy transition
 
-The Gateway now separates four concepts for the explicitly selected investment
-account:
+The 1.19.0 Ingress form could retain the previous EUR cap when an operator
+switched from `capped` to `all_available`. The browser then submitted both
+`mode=all_available` and the stale cap. The 1.19.0 server rejected that
+combination with HTTP 400, leaving the previously persisted capped policy safely
+in place until the cap field was manually cleared.
 
-- the bank-reported booked account balance;
-- eligible investment cash, conservatively limited to the lower of booked balance
-  and available cash and clamped at zero;
-- the Gateway authorization policy; and
-- the amount Portfolio Architect is actually authorized to allocate.
+Version 1.19.1 changes the boundary so that policy semantics, not browser field
+state, decide correctness. For an `all_available` submission, the server ignores
+any irrelevant cap value and persists the canonical policy with no cap. A form
+submission that omits the disabled cap field is accepted as well.
 
-The Comdirect Gateway supports two policies through its admin-only Ingress UI:
+Capped mode remains strict: a valid canonical non-negative EUR cap is required.
+The persisted-state loader is also unchanged in principle and still rejects a
+malformed on-disk `all_available` policy that contains a cap.
 
-- `all_available` — authorize all eligible cash; this is the default and preserves
-  the behavior of existing installations;
-- `capped` — authorize no more than a configured EUR cap.
+## Ingress usability
 
-A capped policy fails closed if its cap is missing or invalid. Policy state is
-non-secret, stored atomically in App-private data, and does not expose an account
-identifier.
+The Ingress page now clears and disables the cap control whenever **All eligible
+cash** is selected, and enables/requires it for **Cap eligible cash**. This
+client-side behavior is only a usability aid; the server-side parser remains the
+authoritative validation and normalization boundary.
 
-## REST compatibility
+## Compatibility
 
-The Home Assistant payload remains **payload schema 8**, REST remains **REST schema 1**, and Gateway health remains **Gateway health schema 5**. No schema-version bump is required because the cash metadata is additive and optional.
-
-REST schema 1 remains the wire-contract version. The established
-`investment_reserve.available_eur` field now carries the **authorized** amount.
-A new optional additive `investment_cash` object can expose the bounded account
-balance, eligible cash, authorized cash, policy, optional cap, and timestamp.
-Portfolio Architect cross-checks the new object against the legacy reserve before
-using it.
-
-This is deliberately bidirectionally compatible:
-
-- Portfolio Architect 1.19.0 still accepts older Gateways that publish only
-  `investment_reserve`;
-- older Portfolio Architect releases ignore the additive `investment_cash` object
-  and continue to consume the authorized amount through `investment_reserve`.
-
-## Home Assistant semantics
-
-The existing `sensor.portfolio_architect_available_investment_reserve` entity ID
-is retained, but its display name is now **Authorized investment cash**. When the
-new Gateway metadata is available, the entity also exposes the selected account
-balance, eligible investment cash, authorization policy, and optional cap as
-bounded attributes.
+Portfolio calculations and allocation behavior are unchanged. Payload schema 8,
+REST schema 1, Gateway health schema 5, entity IDs, unique IDs, authentication
+state, selected-account state, and the provider-neutral cash metadata contract
+are unchanged.
 
 No trading, order, transfer, payment, or transaction-history capability is added.
-Portfolio Architect still decides allocation; the Gateway only decides how much
-cash it is allowed to offer to the allocator.
-
-## Provider scope
-
-The implementation is provider-neutral at the REST and calculation boundaries,
-but the released live Gateway remains Comdirect-specific. DKB supplemental CSV
-sources do not provide cash balances and are therefore unchanged. A future DKB
-Gateway can apply the same authorization contract, for example with a capped cash
-policy, without changing Portfolio Architect's allocation engine.
-
 ## Experimental branch note
 
-The historical `v1.19.0-rc2` tag belongs to the separate experimental brokerage-
-diagnostics work. Stable 1.19.0 is based on the accepted 1.18.2 stable line and
-does **not** promote those experimental diagnostics.
+The historical `v1.19.0-rc2` tag remains a separate experimental brokerage-
+diagnostics branch. Stable 1.19.1 does **not** promote those experimental diagnostics.

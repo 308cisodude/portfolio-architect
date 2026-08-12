@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.19.1
+
+- Fixes switching Investment cash authorization from **Cap eligible cash** back to **All eligible cash** when the previous cap remains in the submitted form.
+- Canonicalizes `all_available` server-side to a policy with no cap, while retaining strict validation of persisted policy files.
+- Clears and disables the cap control in the Ingress UI outside capped mode as a usability aid only; server-side validation remains authoritative.
+- Preserves the read-only Gateway surface, cash calculations, REST/health schemas, authentication state, and App-private policy storage.
+
 ## 1.19.0
 
 - Adds an admin-only Ingress policy for authorizing all eligible investment cash or capping it at a configured EUR amount.
