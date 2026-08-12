@@ -56,6 +56,7 @@ from .const import (
     DEFAULT_CONFIG_DIRECTORY,
     DEFAULT_CSV_PATH,
     DEFAULT_FRESHNESS_HOURS,
+    DEFAULT_HOME_ASSISTANT_LKG_MAX_AGE_SECONDS,
     DEFAULT_REVIEW_LEAD_DAYS,
     DEFAULT_SOURCE_ENTITY_ID,
     DEFAULT_UPDATE_INTERVAL_MINUTES,
@@ -100,6 +101,12 @@ from .engine.models import Position
 from .engine.rest import PROVIDER_LOCAL_REST_JSON, RestInvestmentCash
 from .last_known_good import RestLastKnownGoodStore, configuration_fingerprint
 from .model import PortfolioArchitectDataError, PortfolioData, parse_portfolio_data
+from .resilience import (
+    refresh_overdue_is_evidenced,
+    snapshot_age_seconds,
+    snapshot_expires_in_seconds,
+    snapshot_within_retention,
+)
 from .rest_client import (
     PortfolioRestAuthenticationError,
     PortfolioRestError,
@@ -183,6 +190,8 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
         self._last_configuration_modified: datetime | None = None
         self.gateway_health: GatewayHealth | None = None
         self.gateway_health_error: str | None = None
+        self._gateway_health_observed_at: datetime | None = None
+        self._gateway_max_cached_snapshot_age_seconds: int | None = None
         self._last_known_good_store: RestLastKnownGoodStore | None = None
         self._last_known_good_payload: dict[str, Any] | None = None
         self._last_known_good_configuration_sha256: str | None = None
@@ -254,7 +263,7 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
 
     @property
     def using_home_assistant_last_known_good(self) -> bool:
-        """Return whether HA is serving its private cache because the Gateway is unreachable."""
+        """Return whether HA is serving its private validated cache after live degradation."""
         return self._using_home_assistant_last_known_good
 
     async def async_restore_last_known_good(self) -> bool:
@@ -280,6 +289,15 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
                 configuration_sha256=configuration_sha256,
             )
             if cached is None:
+                return False
+            if not snapshot_within_retention(
+                cached.snapshot_generated_at,
+                maximum_age_seconds=self.home_assistant_lkg_max_age_seconds,
+                now=dt_util.utcnow(),
+            ):
+                _LOGGER.info(
+                    "Ignoring Portfolio Architect last-known-good cache beyond its retention window"
+                )
                 return False
             data = _parse_payload(cached.payload)
         except (OSError, ValueError, PortfolioArchitectDataError) as err:
@@ -380,19 +398,36 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
 
     @property
     def gateway_status(self) -> str:
-        """Return the explicit local gateway status for REST sources."""
+        """Return the effective Gateway status for the data PA is serving."""
         if self.source_type != SOURCE_TYPE_REST_API:
             return "not_configured"
+        if self._using_home_assistant_last_known_good:
+            return "degraded"
         if self.gateway_health is None:
-            return "degraded" if self._using_home_assistant_last_known_good else "unavailable"
+            return "unavailable"
         return self.gateway_health.status
 
     @property
     def gateway_snapshot_generated_at(self) -> datetime | None:
-        """Return the live snapshot timestamp advertised or accepted locally."""
+        """Return the timestamp of the snapshot PA has actually accepted."""
+        if self._rest_snapshot_generated_at is not None:
+            return self._rest_snapshot_generated_at
         if self.gateway_health is not None:
             return self.gateway_health.snapshot_generated_at
-        return self._rest_snapshot_generated_at
+        return None
+
+    @property
+    def gateway_health_observed_at(self) -> datetime | None:
+        """Return when PA last obtained a validated Gateway health document."""
+        return self._gateway_health_observed_at
+
+    @property
+    def home_assistant_lkg_max_age_seconds(self) -> int:
+        """Return the bounded informational retention window for HA-private LKG."""
+        advertised = self._gateway_max_cached_snapshot_age_seconds
+        if advertised is not None and advertised > 0:
+            return advertised
+        return DEFAULT_HOME_ASSISTANT_LKG_MAX_AGE_SECONDS
 
     @property
     def rest_snapshot_sha256(self) -> str | None:
@@ -413,16 +448,14 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
 
     @property
     def gateway_operating_mode(self) -> str:
-        """Return the explicit live-data operating mode."""
+        """Return the effective live-data operating mode for PA's active data."""
         if self.source_type != SOURCE_TYPE_REST_API:
             return "not_configured"
+        if self._using_home_assistant_last_known_good and self.data is not None:
+            return "last_known_good"
         health = self.gateway_health
         if health is None:
-            return (
-                "last_known_good"
-                if self._using_home_assistant_last_known_good and self.data is not None
-                else "unavailable"
-            )
+            return "unavailable"
         if health.operating_mode is not None:
             return health.operating_mode
         if health.reauthentication_required:
@@ -435,22 +468,25 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
 
     @property
     def gateway_snapshot_age_seconds(self) -> int | None:
-        """Return the Gateway-advertised age of the active snapshot."""
-        health = self.gateway_health
-        if health is None:
-            timestamp = self._rest_snapshot_generated_at
-            if not self._using_home_assistant_last_known_good or timestamp is None:
-                return None
-            return max(0, int((dt_util.utcnow() - timestamp).total_seconds()))
-        return health.snapshot_age_seconds
+        """Return locally derived age of the snapshot PA actually accepted."""
+        return snapshot_age_seconds(
+            self.gateway_snapshot_generated_at,
+            now=dt_util.utcnow(),
+        )
 
     @property
     def gateway_snapshot_expires_in_seconds(self) -> int | None:
-        """Return how long the cached snapshot remains serviceable."""
-        health = self.gateway_health
-        if health is None:
-            return None
-        return health.snapshot_expires_in_seconds
+        """Return locally derived remaining informational retention time."""
+        maximum = None
+        if self.gateway_health is not None:
+            maximum = self.gateway_health.max_cached_snapshot_age_seconds
+        if (maximum is None or maximum <= 0) and self._using_home_assistant_last_known_good:
+            maximum = self.home_assistant_lkg_max_age_seconds
+        return snapshot_expires_in_seconds(
+            self.gateway_snapshot_generated_at,
+            maximum_age_seconds=maximum,
+            now=dt_util.utcnow(),
+        )
 
     @property
     def gateway_consecutive_refresh_failures(self) -> int | None:
@@ -466,12 +502,23 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
 
     @property
     def gateway_using_last_known_good_snapshot(self) -> bool | None:
-        """Return whether calculations use a cached but still valid snapshot."""
+        """Return whether calculations use cached rather than newly live bank data."""
         if self.source_type != SOURCE_TYPE_REST_API:
             return None
         if self.data is None:
             return None
-        return self.gateway_operating_mode == "last_known_good"
+        if self._using_home_assistant_last_known_good:
+            return True
+        health = self.gateway_health
+        if health is None:
+            return False
+        return bool(
+            health.snapshot_available
+            and (
+                health.operating_mode == "last_known_good"
+                or health.reauthentication_required
+            )
+        )
 
     @property
     def gateway_refresh_in_progress(self) -> bool | None:
@@ -531,15 +578,33 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
         return max(60, min(poll_interval // 4, 300))
 
     def is_gateway_refresh_overdue(self, now: datetime | None = None) -> bool | None:
-        """Return whether the fixed-cadence Gateway refresh is materially overdue."""
+        """Return overdue only when a fresh health observation proves the miss."""
+        health = self.gateway_health
+        if health is None:
+            return None
+        return refresh_overdue_is_evidenced(
+            next_refresh_due_at=health.next_refresh_due_at,
+            health_observed_at=self._gateway_health_observed_at,
+            refresh_in_progress=health.refresh_in_progress,
+            grace_seconds=self.gateway_refresh_grace_seconds,
+            now=now or dt_util.utcnow(),
+        )
+
+    @property
+    def gateway_refresh_overdue_evidence_current(self) -> bool | None:
+        """Return whether the latest health sample is new enough to prove overdue."""
         health = self.gateway_health
         grace_seconds = self.gateway_refresh_grace_seconds
-        if health is None or health.next_refresh_due_at is None or grace_seconds is None:
+        observed = self._gateway_health_observed_at
+        if (
+            health is None
+            or health.next_refresh_due_at is None
+            or grace_seconds is None
+            or observed is None
+        ):
             return None
-        if health.refresh_in_progress:
-            return False
-        current = now or dt_util.utcnow()
-        return current > health.next_refresh_due_at + timedelta(seconds=grace_seconds)
+        threshold = health.next_refresh_due_at + timedelta(seconds=grace_seconds)
+        return observed >= threshold
 
     @property
     def gateway_attention_reason(self) -> str:
@@ -724,6 +789,44 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
         return age <= timedelta(hours=self.freshness_hours)
 
     @property
+    def plan_actionable(self) -> bool:
+        """Return whether current source evidence may drive a new investment action."""
+        if self.data is None or not self.is_data_fresh():
+            return False
+        if self.source_type != SOURCE_TYPE_REST_API:
+            return True
+        if self._using_home_assistant_last_known_good:
+            return False
+        if self.rest_snapshot_integrity_error is not None:
+            return False
+        health = self.gateway_health
+        if health is None or health.reauthentication_required:
+            return False
+        return self.gateway_operating_mode == "live"
+
+    @property
+    def plan_actionability_reason(self) -> str:
+        """Return one bounded reason for the current plan-actionability decision."""
+        if self.data is None:
+            return "data_unavailable"
+        if not self.is_data_fresh():
+            return "data_stale"
+        if self.source_type != SOURCE_TYPE_REST_API:
+            return "actionable"
+        if self.rest_snapshot_integrity_error is not None:
+            return "integrity_failure"
+        if self._using_home_assistant_last_known_good:
+            return "last_known_good"
+        health = self.gateway_health
+        if health is None:
+            return "health_unavailable"
+        if health.reauthentication_required:
+            return "reauthentication_required"
+        if self.gateway_operating_mode != "live":
+            return "source_degraded"
+        return "actionable"
+
+    @property
     def review_schedule_configured(self) -> bool:
         """Return whether a recurring execution schedule has been configured."""
         return self.schedule_config is not None
@@ -849,6 +952,7 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
         self.last_valid_source_updated = csv_modified
         self.gateway_health = None
         self.gateway_health_error = None
+        self._gateway_health_observed_at = None
         self._rest_snapshot_sha256 = None
         self._rest_snapshot_position_count = None
         self.rest_snapshot_integrity_verified = None
@@ -857,7 +961,7 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
         return data
 
     async def _async_update_rest_api(self) -> PortfolioData:
-        """Fetch live REST data, falling back to HA-private validated data on transport loss."""
+        """Fetch REST data and retain HA-private validated data on live-source degradation."""
         if self.rest_source_config is None or self.configuration_path is None:
             raise UpdateFailed("Local REST portfolio source is not configured")
 
@@ -878,12 +982,18 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
                 self.gateway_health = await async_fetch_gateway_health(
                     self.hass, self.rest_source_config
                 )
+                self._gateway_health_observed_at = dt_util.utcnow()
+                if self.gateway_health.max_cached_snapshot_age_seconds is not None:
+                    self._gateway_max_cached_snapshot_age_seconds = (
+                        self.gateway_health.max_cached_snapshot_age_seconds
+                    )
                 self.gateway_health_error = None
                 self._sync_gateway_issues()
             except PortfolioRestAuthenticationError:
                 raise
             except PortfolioRestError as health_err:
                 self.gateway_health = None
+                self._gateway_health_observed_at = None
                 self.gateway_health_error = str(health_err)
             result = await async_fetch_rest_snapshot(
                 self.hass,
@@ -941,7 +1051,10 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
                 )
                 self.rest_snapshot_integrity_error = message
                 self._sync_gateway_issues()
-                raise UpdateFailed(message)
+                return self._use_home_assistant_last_known_good(
+                    message,
+                    configuration_sha256=configuration_sha256,
+                )
 
         try:
             integrity_verified = self._validate_rest_snapshot_integrity(
@@ -952,7 +1065,10 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
         except PortfolioRestError as err:
             self.rest_snapshot_integrity_error = str(err)
             self._sync_gateway_issues()
-            raise UpdateFailed(str(err)) from err
+            return self._use_home_assistant_last_known_good(
+                str(err),
+                configuration_sha256=configuration_sha256,
+            )
 
         if reuse_existing_data:
             if result.snapshot_sha256 is not None:
@@ -1049,12 +1165,21 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
             if retry_after is not None:
                 raise UpdateFailed(message, retry_after=retry_after)
             raise UpdateFailed(message)
+        if not snapshot_within_retention(
+            self._rest_snapshot_generated_at,
+            maximum_age_seconds=self.home_assistant_lkg_max_age_seconds,
+            now=dt_util.utcnow(),
+        ):
+            expired = "Stored last-known-good portfolio snapshot exceeded its retention window"
+            if retry_after is not None:
+                raise UpdateFailed(expired, retry_after=retry_after)
+            raise UpdateFailed(expired)
         try:
             data = _parse_payload(self._last_known_good_payload)
         except PortfolioArchitectDataError as err:
             raise UpdateFailed("Stored last-known-good portfolio payload is invalid") from err
-        self.gateway_health = None
-        self.gateway_health_error = message
+        if self.gateway_health is None:
+            self.gateway_health_error = message
         self._using_home_assistant_last_known_good = True
         self._home_assistant_cache_failure_count += 1
         self._home_assistant_cache_last_failure_at = dt_util.utcnow()
@@ -1063,7 +1188,7 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
         self.last_valid_source_updated = self._rest_snapshot_generated_at
         self._sync_gateway_issues()
         _LOGGER.warning(
-            "Gateway unavailable; retaining the validated Home Assistant last-known-good calculation"
+            "Live source degraded; retaining the validated Home Assistant last-known-good calculation"
         )
         return data
 

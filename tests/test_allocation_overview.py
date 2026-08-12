@@ -150,6 +150,32 @@ def test_zero_value_position_remains_visible_and_bounded() -> None:
     assert row["corridor_upper_pct"] == 6.0
 
 
+
+def test_degraded_overview_omits_actionable_purchase_fields() -> None:
+    data = _data(
+        _position(
+            "under",
+            name="Under",
+            status="underweight",
+            drift=-2.0,
+            current_pct=8.0,
+            target_pct=10.0,
+            deviation_eur=-200.0,
+            proposed_buy=125.0,
+            buy_enabled=True,
+        )
+    )
+
+    row = MODULE.build_allocation_overview(
+        data, include_actionable=False
+    )["underweight"][0]
+
+    assert "proposed_buy_eur" not in row
+    assert "buy_enabled" not in row
+    assert row["current_pct"] == 8.0
+    assert row["target_pct"] == 10.0
+    assert row["value_gap_eur"] == 200.0
+
 def test_aggregate_state_is_binary_without_hysteresis() -> None:
     on_target = _data(
         _position("target", name="Target", status="on_target", drift=0.5, current_pct=10.5, target_pct=10, deviation_eur=50)
@@ -166,4 +192,4 @@ def test_sensor_handles_unavailable_or_missing_data_before_building_attributes()
     source = (ROOT / "custom_components" / "portfolio_architect" / "sensor.py").read_text()
     assert "PortfolioAllocationOverviewSensor(coordinator, entry)" in source
     assert source.count("if not self.available or self.coordinator.data is None:") >= 2
-    assert "return {**build_allocation_overview(self.coordinator.data), **base}" in source
+    assert "include_actionable=self.coordinator.plan_actionable" in source

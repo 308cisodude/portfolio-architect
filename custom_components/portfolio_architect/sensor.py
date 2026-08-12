@@ -491,7 +491,13 @@ class PortfolioAllocationOverviewSensor(
         base = _source_attributes(self.coordinator)
         if not self.available or self.coordinator.data is None:
             return base
-        return {**build_allocation_overview(self.coordinator.data), **base}
+        return {
+            **build_allocation_overview(
+                self.coordinator.data,
+                include_actionable=self.coordinator.plan_actionable,
+            ),
+            **base,
+        }
 
 
 class PortfolioPlanChangeSensor(
@@ -541,6 +547,7 @@ class _PortfolioMonthlyMoneySensor(
 
     value_attribute: str
     object_id: str
+    requires_actionable_source: bool = False
 
     def __init__(self, coordinator: PortfolioArchitectCoordinator, entry: ConfigEntry) -> None:
         super().__init__(coordinator, context=self.object_id)
@@ -551,6 +558,12 @@ class _PortfolioMonthlyMoneySensor(
     @property
     def suggested_object_id(self) -> str:
         return self.object_id
+
+    @property
+    def available(self) -> bool:
+        return super().available and (
+            not self.requires_actionable_source or self.coordinator.plan_actionable
+        )
 
     @property
     def native_value(self) -> float | None:
@@ -576,12 +589,14 @@ class PortfolioMonthlyContributionSensor(_PortfolioMonthlyMoneySensor):
 
 
 class PortfolioRecommendedTotalSensor(_PortfolioMonthlyMoneySensor):
+    requires_actionable_source = True
     _attr_translation_key = "recommended_total"
     value_attribute = "recommended_total_eur"
     object_id = "recommended_total"
 
 
 class PortfolioUnallocatedContributionSensor(_PortfolioMonthlyMoneySensor):
+    requires_actionable_source = True
     _attr_translation_key = "unallocated_contribution"
     value_attribute = "unallocated_contribution_eur"
     object_id = "unallocated_contribution"
@@ -589,6 +604,8 @@ class PortfolioUnallocatedContributionSensor(_PortfolioMonthlyMoneySensor):
 
 class PortfolioAvailableInvestmentReserveSensor(_PortfolioMonthlyMoneySensor):
     """Cash Portfolio Architect is currently authorized to allocate."""
+
+    requires_actionable_source = True
 
     _attr_translation_key = "available_investment_reserve"
     value_attribute = "available_reserve_eur"
@@ -612,12 +629,14 @@ class PortfolioAvailableInvestmentReserveSensor(_PortfolioMonthlyMoneySensor):
 
 
 class PortfolioRemainingInvestmentReserveSensor(_PortfolioMonthlyMoneySensor):
+    requires_actionable_source = True
     _attr_translation_key = "remaining_investment_reserve"
     value_attribute = "remaining_reserve_eur"
     object_id = "remaining_investment_reserve"
 
 
 class PortfolioDeferredContributionSensor(_PortfolioMonthlyMoneySensor):
+    requires_actionable_source = True
     _attr_translation_key = "deferred_contribution"
     value_attribute = "deferred_contribution_eur"
     object_id = "deferred_contribution"
@@ -645,12 +664,14 @@ class PortfolioDeferredContributionSensor(_PortfolioMonthlyMoneySensor):
 
 
 class PortfolioEstimatedTransactionFeesSensor(_PortfolioMonthlyMoneySensor):
+    requires_actionable_source = True
     _attr_translation_key = "estimated_transaction_fees"
     value_attribute = "estimated_transaction_fees_eur"
     object_id = "estimated_transaction_fees"
 
 
 class PortfolioEstimatedCashOutlaySensor(_PortfolioMonthlyMoneySensor):
+    requires_actionable_source = True
     _attr_translation_key = "estimated_cash_outlay"
     value_attribute = "estimated_cash_outlay_eur"
     object_id = "estimated_cash_outlay"
@@ -671,6 +692,10 @@ class PortfolioDeferredPurchaseCountSensor(
     @property
     def suggested_object_id(self) -> str:
         return "deferred_purchase_count"
+
+    @property
+    def available(self) -> bool:
+        return super().available and self.coordinator.plan_actionable
 
     @property
     def native_value(self) -> int | None:
@@ -700,6 +725,10 @@ class PortfolioPurchaseCountSensor(
         return "purchase_count"
 
     @property
+    def available(self) -> bool:
+        return super().available and self.coordinator.plan_actionable
+
+    @property
     def native_value(self) -> int | None:
         return self.coordinator.data.monthly_plan.purchase_count if self.available else None
 
@@ -713,6 +742,7 @@ class _PortfolioPlanEnumSensor(
     _attr_device_class = SensorDeviceClass.ENUM
     value_attribute: str
     object_id: str
+    requires_actionable_source: bool = False
 
     def __init__(self, coordinator: PortfolioArchitectCoordinator, entry: ConfigEntry) -> None:
         super().__init__(coordinator, context=self.object_id)
@@ -723,6 +753,12 @@ class _PortfolioPlanEnumSensor(
     @property
     def suggested_object_id(self) -> str:
         return self.object_id
+
+    @property
+    def available(self) -> bool:
+        return super().available and (
+            not self.requires_actionable_source or self.coordinator.plan_actionable
+        )
 
     @property
     def native_value(self) -> str | None:
@@ -777,6 +813,8 @@ class PortfolioExecutionPolicySensor(_PortfolioPlanEnumSensor):
 class PortfolioExecutionStateSensor(_PortfolioPlanEnumSensor):
     """Operational state of the next investment-plan execution."""
 
+    requires_actionable_source = True
+
     _attr_translation_key = "execution_state"
     _attr_options = [
         "ready",
@@ -811,12 +849,15 @@ class PortfolioExecutionStateSensor(_PortfolioPlanEnumSensor):
 class PortfolioAdditionalInvestmentCashRequiredSensor(_PortfolioMonthlyMoneySensor):
     """Additional cash required before the next eligible execution."""
 
+    requires_actionable_source = True
+
     _attr_translation_key = "additional_investment_cash_required"
     value_attribute = "additional_investment_cash_required_eur"
     object_id = "additional_investment_cash_required"
 
 
 class PortfolioInvestmentReserveSourceSensor(_PortfolioPlanEnumSensor):
+    requires_actionable_source = True
     _attr_translation_key = "investment_reserve_source"
     _attr_options = ["contribution", "gateway_balance", "unavailable"]
     value_attribute = "reserve_source"
@@ -1238,7 +1279,7 @@ class _PortfolioPositionDetailSensor(
         base = _source_attributes(self.coordinator)
         if not self.available:
             return base
-        return {**self._position.attributes, **base}
+        return {**_position_attributes(self.coordinator, self._position), **base}
 
 
 class PortfolioAllocationExplanationSensor(_PortfolioPositionDetailSensor):
@@ -1296,6 +1337,10 @@ class PortfolioPurchaseExplanationSensor(_PortfolioPositionDetailSensor):
     @property
     def suggested_object_id(self) -> str:
         return f"{self._fund_id}_purchase_explanation"
+
+    @property
+    def available(self) -> bool:
+        return super().available and self.coordinator.plan_actionable
 
     @property
     def native_value(self) -> str | None:
@@ -1470,6 +1515,7 @@ class PortfolioProposedBuySensor(
     def available(self) -> bool:
         return (
             super().available
+            and self.coordinator.plan_actionable
             and self._fund_id in self.coordinator.data.positions
             and self._position.is_target_position
         )
@@ -1548,13 +1594,15 @@ class PortfolioInstrumentIsinSensor(
         if not self.available:
             return base
         position = self._position
-        return {
+        attributes = {
             "fund_name": position.name,
             "wkn": position.wkn,
             "fund_id": position.fund_id,
-            "proposed_buy_eur": position.proposed_buy_eur,
             **base,
         }
+        if self.coordinator.plan_actionable:
+            attributes["proposed_buy_eur"] = position.proposed_buy_eur
+        return attributes
 
 
 class _PortfolioPlanScheduleDateSensor(
@@ -1867,9 +1915,9 @@ class PortfolioGatewayStatusSensor(
             "consecutive_refresh_failures": (
                 health.consecutive_refresh_failures if health else None
             ),
-            "snapshot_age_seconds": (health.snapshot_age_seconds if health else None),
+            "snapshot_age_seconds": self.coordinator.gateway_snapshot_age_seconds,
             "snapshot_expires_in_seconds": (
-                health.snapshot_expires_in_seconds if health else None
+                self.coordinator.gateway_snapshot_expires_in_seconds
             ),
             "refresh_in_progress": (
                 health.refresh_in_progress if health else None
@@ -1959,9 +2007,9 @@ class PortfolioGatewayOperatingModeSensor(
             "consecutive_refresh_failures": (
                 health.consecutive_refresh_failures if health else None
             ),
-            "snapshot_age_seconds": (health.snapshot_age_seconds if health else None),
+            "snapshot_age_seconds": self.coordinator.gateway_snapshot_age_seconds,
             "snapshot_expires_in_seconds": (
-                health.snapshot_expires_in_seconds if health else None
+                self.coordinator.gateway_snapshot_expires_in_seconds
             ),
             **_source_attributes(self.coordinator),
         }
@@ -2110,6 +2158,12 @@ class PortfolioGatewayRefreshScheduleSensor(
             "grace_seconds": self.coordinator.gateway_refresh_grace_seconds,
             "poll_interval_seconds": health.poll_interval_seconds if health else None,
             "refresh_in_progress": health.refresh_in_progress if health else None,
+            "health_observed_at": _isoformat(
+                self.coordinator.gateway_health_observed_at
+            ),
+            "overdue_evidence_current": (
+                self.coordinator.gateway_refresh_overdue_evidence_current
+            ),
             **_source_attributes(self.coordinator),
         }
 
@@ -2393,7 +2447,9 @@ class PortfolioGatewaySnapshotGeneratedSensor(
 
 
 class PortfolioGatewaySnapshotAgeSensor(
-    CoordinatorEntity[PortfolioArchitectCoordinator], SensorEntity
+    _MinuteTickEntity,
+    CoordinatorEntity[PortfolioArchitectCoordinator],
+    SensorEntity,
 ):
     """Age of the active Gateway snapshot."""
 
@@ -2427,7 +2483,9 @@ class PortfolioGatewaySnapshotAgeSensor(
 
 
 class PortfolioGatewaySnapshotExpiresInSensor(
-    CoordinatorEntity[PortfolioArchitectCoordinator], SensorEntity
+    _MinuteTickEntity,
+    CoordinatorEntity[PortfolioArchitectCoordinator],
+    SensorEntity,
 ):
     """Remaining service window for the cached Gateway snapshot."""
 
@@ -2735,7 +2793,33 @@ class PortfolioAllocationSensor(
         }
         if self._kind is AllocationKind.TARGET:
             return {**identity, **base}
-        return {**position.attributes, **base}
+        return {**_position_attributes(self.coordinator, position), **base}
+
+
+_ACTIONABLE_POSITION_ATTRIBUTE_KEYS = frozenset({
+    "buy_enabled",
+    "proposed_buy_eur",
+    "execution_route",
+    "estimated_fee_eur",
+    "estimated_cash_outlay_eur",
+    "estimated_cost_ratio_pct",
+    "recommendation_reason",
+    "additional_reserve_required_eur",
+    "deferred",
+})
+
+
+def _position_attributes(
+    coordinator: PortfolioArchitectCoordinator,
+    position: PositionData,
+) -> dict[str, Any]:
+    """Return position attributes without stale action guidance in degraded mode."""
+    attributes = dict(position.attributes)
+    if coordinator.plan_actionable:
+        return attributes
+    for key in _ACTIONABLE_POSITION_ATTRIBUTE_KEYS:
+        attributes.pop(key, None)
+    return attributes
 
 
 def _position_source_contributions(
@@ -2831,6 +2915,9 @@ def _source_attributes(coordinator: PortfolioArchitectCoordinator) -> dict[str, 
         "source_last_changed": _isoformat(coordinator.source_last_changed),
         "source_last_updated": _isoformat(coordinator.source_last_updated),
         "last_successful_refresh": _isoformat(_runtime_timestamp(coordinator)),
+        "data_fresh": coordinator.is_data_fresh(),
+        "plan_actionable": coordinator.plan_actionable,
+        "plan_actionability_reason": coordinator.plan_actionability_reason,
     }
     if coordinator.source_entity_id is not None:
         attributes["source_entity_id"] = coordinator.source_entity_id

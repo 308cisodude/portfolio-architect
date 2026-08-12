@@ -5,12 +5,37 @@
 A healthy deployment shows `Source healthy`, `Data fresh`, `Gateway status: OK`,
 `Operating mode: Live`, and `Snapshot verified`.
 
-## Gateway outage
+## Gateway outage and degraded operation
 
-After at least one successful REST evaluation, a complete Gateway outage uses the
-Home Assistant-side last-known-good calculation. Portfolio, policy, architecture,
-and plan entities remain available while runtime health reports the transport
-failure. Freshness still ages from the validated snapshot timestamp.
+After at least one successful REST evaluation, a complete Gateway outage can use
+the private Home Assistant last-known-good calculation while it remains inside the
+bounded retention window. Holdings, quantities, portfolio value, allocation,
+architecture, and policy remain available as **informational stale data**. Runtime
+health reports the degraded source and freshness continues to age from the accepted
+snapshot timestamp.
+
+Cash-based actionability is deliberately stricter. While Home Assistant LKG is
+active, Gateway health is unavailable, reauthentication is required, an integrity
+error is active, the source is stale, or the effective Gateway mode is not `live`,
+authorized investment cash and new purchase recommendations are unavailable. Do
+not treat a retained portfolio display as permission to execute a stale plan.
+
+If the trusted cache exceeds its retention limit or no configuration-matching LKG
+exists, the affected data becomes unavailable. A later valid live snapshot
+automatically returns the integration to normal operation without manual cache
+cleanup.
+
+### Refresh-overdue diagnostics
+
+`Refresh overdue` requires a current Gateway health observation that actually
+proves a missed deadline. If the last health sample was taken before the scheduled
+refresh plus grace, locally ticking dashboard entities may show `due_now`, but they
+do not escalate that old sample into an overdue failure. The next normal health
+observation can confirm either the successful refresh or a real miss.
+
+`Snapshot age` and `Snapshot expires in` are calculated from the accepted snapshot
+timestamp and update locally once per minute. They do not cause additional bank or
+portfolio API calls.
 
 ## Backups
 

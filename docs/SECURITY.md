@@ -355,3 +355,23 @@ cache.
   update;
 - detailed trace attributes are excluded from recorder history; and
 - diagnostics intentionally omit monetary trace deltas.
+
+## v1.20.0 graceful-degradation controls
+
+- a failed, timestamp-regressed, or integrity-inconsistent incoming REST snapshot
+  cannot replace the previously accepted validated calculation;
+- Home Assistant last-known-good retention is explicitly bounded by the positive
+  Gateway-advertised maximum cache age when available, with a seven-day fallback;
+- cached holdings and allocation are informational only: REST investment cash,
+  proposed purchases, fees/outlay, and reserve-derived execution state require a
+  fresh, healthy, live source before they are exposed as actionable values;
+- configuration binding remains mandatory for cache replay, so changing portfolio
+  inputs prevents restoration of a calculation produced for a different setup;
+- refresh-overdue state requires a health observation obtained after the scheduled
+  deadline plus grace while the Gateway still advertises the miss; local time
+  alone cannot upgrade stale schedule telemetry into failure evidence;
+- snapshot age and retention countdown are calculated from the accepted snapshot
+  timestamp rather than trusting a frozen age value from an earlier health poll;
+  and
+- AI-assisted development is disclosed in `AI_POLICY.md`; publication remains an
+  explicit maintainer-controlled process rather than an autonomous agent action.

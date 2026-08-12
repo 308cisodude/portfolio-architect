@@ -6,6 +6,11 @@
 
 ## Compatibility
 
+## AI assistance
+
+If generative AI materially assisted this change, describe where it was used and
+the architecture/security invariants reviewed by the submitter. See `AI_POLICY.md`.
+
 ## Validation
 
 - [ ] English and German translations updated when needed

@@ -1,8 +1,12 @@
-# Portfolio Architect Gateway App v1.19.1
+# Portfolio Architect Gateway App v1.20.0
 
 Native Home Assistant App packaging for the read-only Comdirect Gateway. The App
 exposes no LAN port, uses an admin-only Ingress UI, runs the long-lived process as
 UID/GID 65532, and keeps Comdirect and Gateway credentials in App-private data.
+
+Version 1.20.0 aligns the App package with Portfolio Architect's graceful
+degradation and freshness release. Gateway runtime, REST schema 1, health schema 5,
+authentication, and cash-policy behavior remain unchanged from 1.19.1.
 
 Version 1.19.1 fixes the **Investment cash authorization** transition from a capped policy back to all eligible cash. Version 1.19.0 introduced the feature. After explicitly selecting
 an eligible EUR account, the Gateway distinguishes the booked account balance,
