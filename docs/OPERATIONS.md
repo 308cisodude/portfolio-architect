@@ -72,7 +72,7 @@ recommendation behaviour until it is enabled.
 
 For the Comdirect live-reserve path:
 
-1. Open the Portfolio Architect Gateway App Web UI.
+1. Open the Portfolio Architect Gateway — Comdirect App Web UI.
 2. Complete PhotoTAN reauthentication when required.
 3. Discover the bounded list of eligible EUR accounts.
 4. Select the masked dedicated investment/settlement account explicitly.

@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.23.0
+
+- Introduces a provider-neutral `PortfolioProvider` runtime contract for the common hardened Gateway server.
+- Removes the common server's direct type/import dependency on `ComdirectClient`; the released provider remains Comdirect.
+- Adds Gateway health schema 6 with bounded non-secret `provider_id` while retaining health schemas 1 through 5 unchanged.
+- Makes the Home Assistant REST client negotiate health schema 6 with explicit v5→v1 fallbacks for older supported Gateways.
+- Renames the visible existing App to **Portfolio Architect Gateway — Comdirect** while retaining the established `portfolio_architect_gateway` slug and App-private state.
+- Documents reserved future App identities for DKB and Trade Republic without shipping non-functional provider runtimes.
+- Preserves payload schema 8, REST schema 1, entity IDs, calculations, authorized-cash semantics, LKG/actionability behavior, and the v1.22 publication/privacy controls.
+
 ## 1.22.0
 
 - Makes publication privacy hygiene a fail-closed release invariant.

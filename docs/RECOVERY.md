@@ -54,7 +54,7 @@ Architect after connectivity returns.
 ## Gateway requests PhotoTAN after restart
 
 A prolonged App stop can allow the bank-issued refresh session to expire. Open
-the protected Portfolio Architect Gateway Ingress page and complete the PhotoTAN
+the protected Portfolio Architect Gateway — Comdirect Ingress page and complete the PhotoTAN
 bootstrap again. Do not uninstall the App, remove its data, regenerate the
 Gateway bearer token, or reconfigure the Home Assistant integration.
 

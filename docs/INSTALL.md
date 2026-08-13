@@ -40,7 +40,7 @@ For Comdirect API access on Home Assistant OS, copy the complete
 ```
 
 In Home Assistant, open **Settings → Apps → App store**, select the three-dot
-menu, choose **Check for updates**, and install **Portfolio Architect Gateway**
+menu, choose **Check for updates**, and install **Portfolio Architect Gateway — Comdirect**
 from **Local apps**. Start the App and open its Web UI to perform the PhotoTAN
 bootstrap.
 
@@ -97,4 +97,4 @@ grep -n '^VERSION' /config/custom_components/portfolio_architect/const.py
 grep -n '^__version__' /config/custom_components/portfolio_architect/engine/__init__.py
 ```
 
-All three markers must report `1.22.0`.
+All three markers must report `1.23.0`.

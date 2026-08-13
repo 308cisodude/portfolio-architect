@@ -71,8 +71,8 @@ def test_dashboard_uses_accepted_terminology() -> None:
 
 def test_stable_release_excludes_experimental_brokerage_probe_code() -> None:
     manifest = json.loads((COMPONENT / "manifest.json").read_text())
-    assert manifest["version"] == "1.22.0"
+    assert manifest["version"] == "1.23.0"
     assert not (ROOT / "gateway" / "src" / "portfolio_architect_gateway" / "probe.py").exists()
     notes = (ROOT / "docs" / "RELEASE-NOTES.md").read_text()
     assert "v1.19.0-rc2" in notes
-    assert "does **not** promote those experimental diagnostics" in notes
+    assert "not promoted by this release" in notes

@@ -24,6 +24,8 @@ from portfolio_architect_gateway.store import save_snapshot
 
 
 class FakeBootstrapClient:
+    provider_id = "comdirect"
+    poll_interval_seconds = 900
     def __init__(self) -> None:
         self.credentials = None
         self.selected_account_id = None

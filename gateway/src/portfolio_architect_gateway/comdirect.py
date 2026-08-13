@@ -118,6 +118,16 @@ class AccountBalanceCandidate:
 class ComdirectClient:
     """Own the required login/session flow and expose only portfolio reads."""
 
+    @property
+    def provider_id(self) -> str:
+        """Return the stable provider identity exposed by health schema 6."""
+        return "comdirect"
+
+    @property
+    def poll_interval_seconds(self) -> int:
+        """Return the validated refresh cadence consumed by the common server."""
+        return self._config.poll_interval_seconds
+
     def __init__(
         self,
         config: ComdirectConfig,

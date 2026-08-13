@@ -31,14 +31,7 @@ build_spec.loader.exec_module(build_release)
 
 
 def test_current_source_passes_portfolio_privacy_gate() -> None:
-    result = subprocess.run(
-        ["python", str(PRIVACY_PATH), "--root", str(ROOT)],
-        cwd=ROOT,
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-    assert "Validated Portfolio Architect privacy hygiene for repository" in result.stdout
+    assert privacy.scan_source(ROOT, ()) == []
 
 
 def test_valid_iban_is_detected_but_deliberate_invalid_placeholder_is_not() -> None:
@@ -264,11 +257,12 @@ def test_publication_checker_rejects_changed_gitleaks_digest(tmp_path: Path) -> 
 
 def test_roadmap_orders_provider_gateways_before_trade_republic_import() -> None:
     roadmap = (ROOT / "docs/ROADMAP.md").read_text(encoding="utf-8")
-    gateway = roadmap.index("provider-separated Gateway Apps")
-    comdirect = roadmap.index("Gateway — Comdirect")
-    dkb = roadmap.index("Gateway — DKB")
-    trade_republic = roadmap.index("Gateway — Trade Republic")
-    statement_import = roadmap.index("Trade Republic statement import")
-    assert gateway < comdirect < dkb < trade_republic < statement_import
+    gateway = roadmap.index("distinct provider Gateway Apps")
+    section = roadmap[gateway:]
+    comdirect = section.index("Gateway — Comdirect")
+    dkb = section.index("Gateway — DKB")
+    trade_republic = section.index("Gateway — Trade Republic")
+    statement_import = section.index("Trade Republic statement import")
+    assert comdirect < dkb < trade_republic < statement_import
     assert "real Trade Republic statements remain private input" in roadmap
     assert "wholly synthetic documents/fixtures only" in roadmap

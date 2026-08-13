@@ -5,18 +5,26 @@ import http.client
 import threading
 
 from portfolio_architect_gateway.config import ComdirectConfig, GatewayConfig, ServerConfig
-from portfolio_architect_gateway.errors import GatewayError, ReauthenticationRequired
+from portfolio_architect_gateway.errors import (
+    ConfigurationError,
+    GatewayError,
+    ReauthenticationRequired,
+)
 from portfolio_architect_gateway.models import PortfolioSnapshot, Position
 from portfolio_architect_gateway.server import GatewayHttpServer, GatewayState
 from portfolio_architect_gateway.store import save_snapshot
 
 
 class NoNetworkClient:
+    provider_id = "comdirect"
+    poll_interval_seconds = 900
     def fetch_snapshot(self):
         raise AssertionError("network refresh is not part of the HTTP contract test")
 
 
 class FailingClient:
+    provider_id = "comdirect"
+    poll_interval_seconds = 900
     def fetch_snapshot(self):
         raise GatewayError("simulated")
 
@@ -243,6 +251,8 @@ def test_gateway_tracks_last_known_good_after_refresh_failure(tmp_path: Path) ->
 
 
 class BlockingClient:
+    provider_id = "comdirect"
+    poll_interval_seconds = 900
     def __init__(self) -> None:
         self.started = threading.Event()
         self.release = threading.Event()
@@ -380,6 +390,8 @@ def test_refresh_loop_keeps_fixed_cadence_after_request_duration(monkeypatch) ->
 
 def test_reauthentication_health_retains_cached_snapshot_integrity_metadata(tmp_path: Path) -> None:
     class ReauthClient:
+        provider_id = "comdirect"
+        poll_interval_seconds = 900
         def fetch_snapshot(self):
             raise ReauthenticationRequired("simulated")
 
@@ -405,6 +417,8 @@ def test_gateway_health_v5_reports_classified_recovery_guidance(tmp_path: Path) 
     from portfolio_architect_gateway.errors import RemoteApiError
 
     class RateLimitedClient:
+        provider_id = "comdirect"
+        poll_interval_seconds = 900
         def fetch_snapshot(self):
             raise RemoteApiError(
                 429,
@@ -428,6 +442,8 @@ def test_gateway_health_v5_reports_classified_recovery_guidance(tmp_path: Path) 
 
 def test_gateway_health_v5_clears_failure_guidance_after_success(tmp_path: Path) -> None:
     class ToggleClient:
+        provider_id = "comdirect"
+        poll_interval_seconds = 900
         def __init__(self) -> None:
             self.fail = True
 
@@ -462,3 +478,35 @@ def test_gateway_health_v5_clears_failure_guidance_after_success(tmp_path: Path)
     assert recovered["last_refresh_failure_class"] is None
     assert recovered["recommended_action"] == "none"
     assert recovered["retry_after_seconds"] is None
+
+
+def test_gateway_health_v6_reports_bounded_provider_identity(tmp_path: Path) -> None:
+    state = GatewayState(_config(tmp_path), NoNetworkClient())
+    health = state.health_document(version=6)
+    assert health["health_schema_version"] == 6
+    assert health["provider_id"] == "comdirect"
+    assert "provider_account_id" not in health
+    assert "account_id" not in health
+    assert "depot_id" not in health
+
+
+def test_gateway_rejects_invalid_provider_runtime_metadata(tmp_path: Path) -> None:
+    class InvalidProviderIdClient(NoNetworkClient):
+        provider_id = "Comdirect Account"
+
+    class InvalidCadenceClient(NoNetworkClient):
+        poll_interval_seconds = 1
+
+    try:
+        GatewayState(_config(tmp_path), InvalidProviderIdClient())
+    except ConfigurationError as err:
+        assert "provider ID" in str(err)
+    else:  # pragma: no cover - regression guard
+        raise AssertionError("invalid provider identity must fail closed")
+
+    try:
+        GatewayState(_config(tmp_path), InvalidCadenceClient())
+    except ConfigurationError as err:
+        assert "poll interval" in str(err)
+    else:  # pragma: no cover - regression guard
+        raise AssertionError("invalid provider cadence must fail closed")

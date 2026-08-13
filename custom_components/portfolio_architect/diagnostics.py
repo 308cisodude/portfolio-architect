@@ -53,6 +53,7 @@ async def async_get_config_entry_diagnostics(
                 "health_schema_version": (
                     coordinator.gateway_health.health_schema_version
                 ),
+                "provider_id": coordinator.gateway_health.provider_id,
                 "snapshot_sha256": coordinator.gateway_health.snapshot_sha256,
                 "snapshot_position_count": (
                     coordinator.gateway_health.snapshot_position_count

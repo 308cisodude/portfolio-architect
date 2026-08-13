@@ -18,30 +18,46 @@ acceptance before it becomes a stable release.
 - Clarify that the supplied Lovelace dashboard is a reference configuration and is
   never overwritten automatically by HACS or the integration.
 
-## Next milestone — provider-separated Gateway Apps
+## v1.23.0 — provider-aware Gateway foundation
 
-Split the provider boundary into distinct Home Assistant Apps for:
+- Make the common Gateway server depend on a provider-neutral runtime protocol
+  instead of `ComdirectClient`.
+- Add bounded provider identity to Gateway health schema 6 while retaining schemas
+  1 through 5 unchanged.
+- Rename the visible existing App to **Portfolio Architect Gateway — Comdirect**
+  while retaining the established `portfolio_architect_gateway` slug and private
+  App data for in-place migration.
+- Reserve distinct official App identities for DKB and Trade Republic without
+  publishing non-functional provider runtimes.
+- Keep Comdirect authentication, account selection, cash authorization and
+  upstream failure handling isolated in the Comdirect provider implementation.
+
+## Next milestone — distinct provider Gateway Apps
+
+The provider boundary is one Home Assistant App per provider:
 
 1. **Portfolio Architect Gateway — Comdirect**
 2. **Portfolio Architect Gateway — DKB**
 3. **Portfolio Architect Gateway — Trade Republic**
 
-The Apps should share the provider-neutral Portfolio Architect REST contracts and
-common hardened infrastructure where appropriate, while keeping provider-specific
-authentication, parsing, persistence, failure handling, and operator UX isolated.
-A provider App does not imply that every provider offers the same online API
-capabilities; each App must expose only capabilities that can be supported safely
-for that provider.
+Comdirect is the established live provider and becomes explicitly provider-named in
+v1.23.0. The DKB and Trade Republic Apps must become separately installable only
+when each has a real, bounded and tested provider acquisition path. They share the
+provider-neutral Portfolio Architect REST/server contracts and hardened common
+infrastructure where appropriate, while keeping provider-specific authentication,
+parsing, persistence, failure handling and operator UX isolated.
 
+A provider App does not imply that every provider offers the same online API
+capabilities. Each App exposes only what can be supported safely for that provider.
 Migration from the existing Comdirect-specific Gateway App must preserve the
-read-only boundary, cached-state safety, authorization semantics, and existing
-Home Assistant configuration wherever technically possible.
+read-only boundary, cached-state safety, authorization semantics, and existing Home
+Assistant configuration wherever technically possible.
 
 ## Following milestone — Trade Republic statement import
 
-Add local import support for supported Trade Republic statement documents and map
-the extracted holdings data into Portfolio Architect's provider-neutral source
-model.
+Add local import support for supported Trade Republic statement documents inside
+the separate Trade Republic Gateway App and map the extracted holdings into
+Portfolio Architect's provider-neutral source model.
 
 Privacy is a hard design constraint for this work:
 

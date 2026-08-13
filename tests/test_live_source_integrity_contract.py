@@ -15,11 +15,11 @@ def test_component_versions_are_compatible() -> None:
     engine = (COMPONENT / "engine" / "__init__.py").read_text()
     app = yaml.safe_load((APP / "config.yaml").read_text())
     gateway = (APP / "src" / "portfolio_architect_gateway" / "__init__.py").read_text()
-    assert manifest["version"] == "1.22.0"
-    assert 'VERSION: Final = "1.22.0"' in const
-    assert '__version__ = "1.22.0"' in engine
-    assert app["version"] == "1.22.0"
-    assert '__version__ = "1.22.0"' in gateway
+    assert manifest["version"] == "1.23.0"
+    assert 'VERSION: Final = "1.23.0"' in const
+    assert '__version__ = "1.23.0"' in engine
+    assert app["version"] == "1.23.0"
+    assert '__version__ = "1.23.0"' in gateway
     assert app["stage"] == "stable"
 
 
@@ -31,7 +31,7 @@ def test_integrity_headers_and_versioned_health_are_implemented() -> None:
     assert "X-Portfolio-Position-Count" in server
     assert "HEALTH_V3_MEDIA_TYPE" in server
     assert "HEALTH_V4_MEDIA_TYPE" in server
-    assert "health_document(version=5" in (
+    assert "health_document(version=6" in (
         APP / "src" / "portfolio_architect_gateway" / "app.py"
     ).read_text()
     assert "hashlib.sha256(body).hexdigest()" in transport
@@ -76,4 +76,4 @@ def test_last_known_good_health_entities_are_present() -> None:
     assert "PortfolioGatewayUsingLastKnownGoodSnapshot" in binary
     assert '"operating_mode"' in diagnostics
     assert '"consecutive_refresh_failures"' in diagnostics
-    assert '"requested_health_schema_version": 5' in transport
+    assert '"requested_health_schema_version": 6' in transport

@@ -1963,6 +1963,7 @@ class PortfolioGatewayStatusSensor(
             "health_schema_version": (
                 health.health_schema_version if health else None
             ),
+            "provider_id": health.provider_id if health else None,
             "snapshot_sha256": health.snapshot_sha256 if health else None,
             "snapshot_position_count": (
                 health.snapshot_position_count if health else None

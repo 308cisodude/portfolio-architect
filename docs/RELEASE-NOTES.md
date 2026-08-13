@@ -1,68 +1,66 @@
-# Portfolio Architect 1.22.0
+# Portfolio Architect 1.23.0
 
-Version 1.22.0 makes confidentiality and privacy part of the same fail-closed
-release discipline already used for tests, archive verification, immutable
-dependencies, and reproducible packaging. Runtime portfolio behavior remains based
-on the accepted 1.21.0 release.
+Version 1.23.0 establishes the provider-aware Gateway foundation needed for
+separate Comdirect, DKB and Trade Republic Home Assistant Apps without changing
+the portfolio calculation or the read-only financial boundary.
 
-## Publication and privacy gate
+## Provider-neutral Gateway runtime contract
 
-A new `tools/check_privacy.py` validates repository source, complete reachable Git history in protected CI, and built release artifacts. It rejects high-risk private-document/file classes, unexpected images,
-unapproved CSV exports, valid IBANs, private-key material, and provider identity
-literals that are not unmistakably synthetic. Findings report rule and location
-without printing the matched private value.
+The hardened Gateway server now consumes a minimal `PortfolioProvider` protocol
+rather than importing `ComdirectClient`. A provider supplies only a bounded
+machine-readable provider identity, its validated refresh cadence and a validated
+provider-neutral snapshot.
 
-The checker also rejects source symlinks, and release staging excludes local virtual-environment directories so local developer state cannot be pulled into a source archive accidentally.
+The released implementation remains Comdirect. `ComdirectClient` now implements
+that protocol explicitly while its OAuth/bootstrap, account discovery, selected
+account, cash authorization and upstream API behavior remain provider-specific.
 
-The approved public data boundary remains deliberate: public instrument identifiers
-such as ISINs, generic provider names, the generic CSV example, and the existing
-sanitized/synthetic Comdirect and DKB fixtures are permitted. Real broker exports,
-statements, credentials, account/depot/customer identifiers, and attributable
-account-holder material are not.
+## Gateway health schema 6
 
-Maintainers may additionally pass an exact private-literal file located outside the
-repository. This provides a local check for known real identifiers without putting
-the values into source control or CI configuration.
+Health schema 6 adds exactly one provider field:
 
-## Independent secret scanning
+```json
+{
+  "provider_id": "comdirect"
+}
+```
 
-The protected validation and immutable-release workflows first repeat the Portfolio Architect-specific privacy scan across complete Git history, then use the official Gitleaks
-v8.30.0 container by immutable SHA-256 digest. They scan:
+The value is bounded and non-secret. Account IDs, depot IDs, IBANs and authentication
+material are not exposed. Health schemas 1 through 5 remain available unchanged.
+Portfolio Architect 1.23.0 negotiates schema 6 first and includes older health
+media types as fallbacks, preserving rich recovery telemetry with older supported
+Gateway versions.
 
-- the exact tracked source tree;
-- the complete Git patch history; and
-- safely staged contents of every release artifact.
+The Gateway status entity and privacy-conscious diagnostics expose `provider_id`
+when schema 6 is available.
 
-Git history is produced explicitly by Git and streamed to Gitleaks stdin, so the
-pipeline does not rely on Gitleaks' internal `git log` execution. Gitleaks v8.30.1
-is intentionally not used because its upstream release has reported silent-detection
-and packaging regressions.
+## Distinct Comdirect App identity without migration
 
-The release workflow completes both the Portfolio Architect privacy gate and
-Gitleaks scan before artifact attestation or GitHub release publication.
+The existing App is now visibly named **Portfolio Architect Gateway — Comdirect**.
+Its existing slug remains `portfolio_architect_gateway`, deliberately preserving
+its Home Assistant identity and App-private data. No credential, OAuth/session,
+API-token, account-selection, cash-policy or cached-snapshot migration is needed.
 
-## Dashboard ownership clarified
+The reserved future App identities are documented as:
 
-The supplied bilingual Lovelace dashboard remains a static reference configuration.
-Once a user copies/imports it into Home Assistant, it is user-owned configuration.
-HACS and Portfolio Architect do not overwrite it automatically. Version 1.22.0 does
-not require a dashboard replacement after the accepted v1.21.0 dashboard update.
+- Portfolio Architect Gateway — DKB (`portfolio_architect_gateway_dkb`)
+- Portfolio Architect Gateway — Trade Republic (`portfolio_architect_gateway_trade_republic`)
 
-## Roadmap
-
-The next planned architectural milestone is distinct Comdirect, DKB, and Trade
-Republic Gateway Apps behind provider-neutral Portfolio Architect contracts. The
-following milestone is local Trade Republic statement-document import using only
-wholly synthetic public test material.
+No DKB or Trade Republic acquisition runtime is shipped in 1.23.0. This release
+creates the clean common boundary first rather than publishing non-functional
+provider Apps.
 
 ## Compatibility and safety
 
-Payload schema 8, REST schema 1, Gateway health schema 5, entity IDs,
-unique IDs, v1.21 actionability, authorized-cash semantics, LKG behavior, portfolio
-calculations, recommendation logic, and the read-only Gateway API surface are
-unchanged. The Gateway package is version-aligned to 1.22.0; its banking runtime
-behavior is unchanged from 1.20.1.
+- Payload schema 8 is unchanged.
+- REST portfolio schema 1 is unchanged.
+- Gateway health schema 6 is additive; schemas 1–5 remain supported.
+- Portfolio calculations, allocation corridors, policy, cost-aware execution,
+  authorized investment cash, v1.20/v1.20.1 LKG behavior, v1.21 actionability and
+  v1.22 publication/privacy controls are unchanged.
+- Existing Home Assistant entity IDs and unique IDs are unchanged.
+- The v1.21 reference dashboard remains current; no dashboard replacement is required.
+- No trading, order, transfer, payment, or transaction-history capability is added.
 
-No trading, order, transfer, payment, or transaction-history capability is added.
-
-The historical `v1.19.0-rc2` tag remains a separate experimental brokerage-diagnostics branch. Stable 1.22.0 does **not** promote those experimental diagnostics or their probe code.
+The historical `v1.19.0-rc2` brokerage-diagnostics branch remains separate and is
+not promoted by this release.
