@@ -77,7 +77,14 @@ jobs:
           do
             name="portfolio-architect-${app}-smoke"
             image="portfolio-architect-${app}:validation"
-            docker run --detach --name "${name}" "${image}" >/dev/null
+            mapfile -t provider_env < <(
+              python tools/provider_shell_env.py "home_assistant_app/${app}/config.yaml"
+            )
+            test "${#provider_env[@]}" -eq 2
+            docker run --detach --name "${name}" \
+              --env "PA_PROVIDER_ID=${provider_env[0]}" \
+              --env "PA_PROVIDER_NAME=${provider_env[1]}" \
+              "${image}" >/dev/null
             sleep 2
             if ! test "$(docker inspect --format '{{.State.Running}}' "${name}")" = "true"; then
               docker logs "${name}" >&2 || true

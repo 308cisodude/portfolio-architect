@@ -53,3 +53,36 @@ def test_shell_dockerfiles_import_real_startup_module_during_build() -> None:
     for app in SHELLS:
         dockerfile = (app / "Dockerfile").read_text(encoding="utf-8")
         assert "import portfolio_architect_gateway.pending_app" in dockerfile
+
+
+def test_provider_shell_smoke_env_matches_home_assistant_app_metadata() -> None:
+    """CI must launch shells with the same provider environment Supervisor supplies."""
+    import importlib.util
+    import yaml
+
+    helper_path = ROOT / "tools" / "provider_shell_env.py"
+    spec = importlib.util.spec_from_file_location("provider_shell_env", helper_path)
+    assert spec is not None and spec.loader is not None
+    helper = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(helper)
+
+    expected = {
+        "portfolio_architect_gateway_dkb": ("dkb", "DKB"),
+        "portfolio_architect_gateway_trade_republic": ("trade_republic", "Trade Republic"),
+    }
+    for app_name, values in expected.items():
+        config_path = ROOT / "home_assistant_app" / app_name / "config.yaml"
+        config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+        assert (
+            config["environment"]["PA_PROVIDER_ID"],
+            config["environment"]["PA_PROVIDER_NAME"],
+        ) == values
+        assert helper.load_environment(config_path) == values
+
+
+def test_provider_shell_smoke_workflows_supply_supervisor_environment() -> None:
+    for workflow_name in ("validate.yml", "release.yml"):
+        workflow = (ROOT / ".github" / "workflows" / workflow_name).read_text(encoding="utf-8")
+        assert 'python tools/provider_shell_env.py "home_assistant_app/${app}/config.yaml"' in workflow
+        assert '--env "PA_PROVIDER_ID=${provider_env[0]}"' in workflow
+        assert '--env "PA_PROVIDER_NAME=${provider_env[1]}"' in workflow
