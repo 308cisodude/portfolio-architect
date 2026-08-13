@@ -17,6 +17,9 @@ LOCKFILE_RELATIVE = Path("requirements/ci-python-3.14-linux-x86_64.txt")
 LOCKED_PYTHON_WORKFLOWS = ("validate.yml", "release.yml")
 LOCKED_RUNNER = "ubuntu-24.04"
 LOCKED_PYTHON = "3.14.6"
+
+GITLEAKS_IMAGE = "ghcr.io/gitleaks/gitleaks@sha256:691af3c7c5a48b16f187ce3446d5f194838f91238f27270ed36eef6359a574d9"
+GITLEAKS_WORKFLOWS = ("validate.yml", "release.yml")
 REQUIREMENT_RE = re.compile(
     r"^(?P<name>[A-Za-z0-9_.-]+)==(?P<version>[^\s\\]+)"
     r"(?P<hashes>(?:\s+--hash=sha256:[0-9a-f]{64})+)$"
@@ -127,6 +130,31 @@ def validate_hash_locked_python_toolchain(root: Path) -> None:
         )
 
 
+def validate_privacy_publication_gate(root: Path) -> None:
+    """Require the reviewed privacy checker and immutable Gitleaks execution path."""
+    privacy = root / "tools/check_privacy.py"
+    runner = root / "tools/run_gitleaks_ci.sh"
+    require(privacy.is_file(), "Missing Portfolio Architect privacy checker")
+    require(runner.is_file(), "Missing pinned Gitleaks CI runner")
+    runner_text = runner.read_text(encoding="utf-8")
+    require(GITLEAKS_IMAGE in runner_text, "Gitleaks CI runner is not pinned to the reviewed image")
+    require("git log -p --all --no-ext-diff --text" in runner_text, "Gitleaks history scan must consume complete Git patches explicitly")
+    require("--history" in runner_text, "Portfolio-specific privacy gate must scan complete Git history")
+    require("gitleaks_8.30.1" not in runner_text and "v8.30.1" not in runner_text, "Gitleaks v8.30.1 must not be used")
+    for workflow_name in GITLEAKS_WORKFLOWS:
+        workflow = root / ".github/workflows" / workflow_name
+        text = workflow.read_text(encoding="utf-8")
+        require(GITLEAKS_IMAGE in text, f"{workflow_name} is missing the reviewed Gitleaks image")
+        require("bash tools/run_gitleaks_ci.sh dist" in text, f"{workflow_name} does not execute the Gitleaks privacy scan")
+    validate_workflow = (root / ".github/workflows/validate.yml").read_text(encoding="utf-8")
+    require("fetch-depth: 0" in validate_workflow, "Validate workflow must fetch complete history for secret scanning")
+    release = (root / ".github/workflows/release.yml").read_text(encoding="utf-8")
+    scan_index = release.find("bash tools/run_gitleaks_ci.sh dist")
+    attest_index = release.find("uses: actions/attest@")
+    publish_index = release.find("gh release create")
+    require(scan_index >= 0 and attest_index > scan_index and publish_index > scan_index, "Release secret scan must complete before attestation and publication")
+
+
 def validate(root: Path, strict: bool) -> None:
     manifest = read_json(root / "custom_components/portfolio_architect/manifest.json")
     hacs = read_json(root / "hacs.json")
@@ -160,12 +188,16 @@ def validate(root: Path, strict: bool) -> None:
         "docs/PUBLISHING.md",
         "docs/SUPPORTED-VERSIONS.md",
         "docs/QUALITY-SCALE-AUDIT.md",
+        "docs/ROADMAP.md",
+        "tools/check_privacy.py",
+        "tools/run_gitleaks_ci.sh",
     ]
     for relative in required_files:
         require((root / relative).is_file(), f"Missing publication file: {relative}")
 
     validate_immutable_workflow_dependencies(root)
     validate_hash_locked_python_toolchain(root)
+    validate_privacy_publication_gate(root)
 
     if not strict:
         return
@@ -201,6 +233,8 @@ def validate(root: Path, strict: bool) -> None:
         "/.github/dependabot.yml",
         "/tools/configure_publication.py",
         "/tools/check_publication.py",
+        "/tools/check_privacy.py",
+        "/tools/run_gitleaks_ci.sh",
         "/tools/release_check.sh",
         "/custom_components/portfolio_architect/",
         "/home_assistant_app/portfolio_architect_gateway/",

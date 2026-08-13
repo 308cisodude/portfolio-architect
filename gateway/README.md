@@ -1,8 +1,8 @@
-# Portfolio Architect Gateway v1.21.0
+# Portfolio Architect Gateway v1.22.0
 
 The Gateway is a dedicated, dependency-free Python service that converts the
 Comdirect depot API into provider-neutral Portfolio Architect REST schema 1.
-Version 1.21.0 aligns the Gateway package with Portfolio Architect's execution-semantics release. Gateway banking runtime behavior and REST/health contracts remain unchanged from 1.20.1; execution scheduling/actionability is interpreted by the Home Assistant integration.
+Version 1.22.0 aligns the Gateway package with Portfolio Architect's publication/privacy-hardening release. Gateway banking runtime behavior and REST/health contracts remain unchanged from 1.20.1; the v1.22 changes are confined to source/publication controls and package version alignment.
 
 The released Home Assistant App provides the authenticated Ingress workflow for
 account discovery, explicit account selection, cash-policy configuration, and

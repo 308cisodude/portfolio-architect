@@ -126,6 +126,8 @@ def test_publication_configurator_writes_real_repository_contract(tmp_path: Path
     assert "@octocat" in codeowners
     assert "/.github/workflows/ @octocat" in codeowners
     assert "/tools/check_publication.py @octocat" in codeowners
+    assert "/tools/check_privacy.py @octocat" in codeowners
+    assert "/tools/run_gitleaks_ci.sh @octocat" in codeowners
     assert not (target / ".github/CODEOWNERS.example").exists()
     assert not (target / "PACKAGE-MANIFEST.json").exists()
     assert not (target / "SHA256SUMS").exists()
@@ -148,7 +150,7 @@ def test_hacs_metadata_and_stable_release_archive(tmp_path: Path) -> None:
         text=True,
     )
     stable = tmp_path / "portfolio_architect.zip"
-    versioned = tmp_path / "portfolio-architect-v1.21.0-ha-dropin.zip"
+    versioned = tmp_path / "portfolio-architect-v1.22.0-ha-dropin.zip"
     assert stable.is_file()
     assert versioned.is_file()
     assert _sha256(stable) != _sha256(versioned)

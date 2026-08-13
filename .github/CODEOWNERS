@@ -4,6 +4,8 @@
 /.github/dependabot.yml @308cisodude
 /tools/configure_publication.py @308cisodude
 /tools/check_publication.py @308cisodude
+/tools/check_privacy.py @308cisodude
+/tools/run_gitleaks_ci.sh @308cisodude
 /tools/release_check.sh @308cisodude
 /custom_components/portfolio_architect/ @308cisodude
 /home_assistant_app/portfolio_architect_gateway/ @308cisodude

@@ -1,4 +1,4 @@
-# Portfolio Architect v1.21.0
+# Portfolio Architect v1.22.0
 
 Portfolio Architect is a Home Assistant-native portfolio overview, policy-check,
 and deterministic investment-planning system. It supports provider-specific CSV
@@ -23,6 +23,8 @@ transfer, payment, or account-transaction capability.
 - Explicit transaction-cost and execution policies.
 - Reproducible release archives, SHA-256 manifests, SPDX 2.3 SBOMs, and release
   provenance workflows.
+- Fail-closed publication privacy checks plus immutable Gitleaks scanning of the
+  tracked tree, complete Git patch history, and built release artifacts.
 - Immutable GitHub Action and validator-image dependencies, plus a hash-locked
   Python validation toolchain, enforced by local and release checks.
 - DNS-pinned local REST transport that binds the validated private address set to
@@ -57,7 +59,7 @@ See `docs/PUBLICATION-SETUP.md` and `docs/PUBLISHING.md`.
 
 - Home Assistant 2026.7.0 or newer
 - Python 3.14 for source validation and Gateway builds
-- Gateway App 1.16.1 or newer for the established live Comdirect protocol; Gateway App 1.19.0 or newer for configurable cash authorization; 1.19.1 or newer includes the corrected capped-to-all-available transition; 1.20.1 or newer includes the LKG entity-propagation fix; 1.21.0 adds execution/actionability semantics without changing Gateway banking behavior
+- Gateway App 1.16.1 or newer for the established live Comdirect protocol; Gateway App 1.19.0 or newer for configurable cash authorization; 1.19.1 or newer includes the corrected capped-to-all-available transition; 1.20.1 or newer includes the LKG entity-propagation fix; 1.21.0 adds execution/actionability semantics; 1.22.0 is publication/privacy hardening with unchanged Gateway banking behavior
 
 The current stable Portfolio Architect release and the immediately preceding
 stable release receive security and correctness fixes while a documented upgrade
@@ -96,10 +98,12 @@ python -m pip install \
 ```
 
 The lock targets CPython 3.14.6 on Linux x86-64. The local pipeline compiles
-Python, parses structured files, checks immutable publication contracts, runs the
-complete regression suite, builds reproducible archives, and verifies checksums
-and ZIP safety. Digest-pinned HACS and hassfest containers execute on
-GitHub-hosted runners as the live external validation step.
+Python, parses structured files, checks immutable publication and privacy
+contracts, runs the complete regression suite, builds reproducible archives, and
+verifies checksums, ZIP safety, and artifact privacy. Digest-pinned HACS, hassfest,
+and Gitleaks containers execute on GitHub-hosted runners as external publication
+validation. The Gitleaks gate covers the tracked tree, complete Git patch history,
+and built release contents before publication.
 
 ## Documentation
 
@@ -110,9 +114,11 @@ GitHub-hosted runners as the live external validation step.
 - `docs/PRIVACY.md`
 - `docs/SECURITY.md`
 - `docs/PUBLISHING.md`
+- `docs/ROADMAP.md`
 - `docs/QUALITY.md`
 - `docs/DECISION-TRACE.md`
 - `AI_POLICY.md`
+- `docs/UPGRADE-1.22.0.md`
 - `docs/UPGRADE-1.21.0.md`
 - `docs/UPGRADE-1.20.1.md`
 - `docs/UPGRADE-1.20.0.md`

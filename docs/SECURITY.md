@@ -384,3 +384,16 @@ A degraded update is a security-relevant state transition even when the trusted 
 ## v1.21 schedule and actionability evidence boundary
 
 Portfolio Architect does not treat a scheduled execution date, a past scheduled date, or a holding-quantity change as evidence that a trade occurred. Version 1.21.0 exposes current actionability as bounded advisory state derived from freshness, integrity, Gateway/LKG health, and execution readiness. The new entity has no write path to a bank or broker and does not alter the read-only Gateway security boundary.
+
+## v1.22 publication confidentiality controls
+
+Publication is fail-closed on both Portfolio Architect-specific privacy checks and
+an independently pinned Gitleaks scan. The protected workflows scan the tracked
+source tree, complete Git patch history, and generated release contents before a
+release can be attested or published. The Gitleaks container is pinned by SHA-256
+and runs without network access or Linux capabilities.
+
+The privacy checker also rejects raw broker documents, unapproved exports,
+unexpected images/screenshots, private key material, valid IBANs, and suspicious
+provider identity literals unless they are unmistakably synthetic test values.
+Findings never print exact private-literal contents.

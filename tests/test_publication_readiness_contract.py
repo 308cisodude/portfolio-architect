@@ -45,13 +45,14 @@ def test_publication_metadata_and_docs_are_present() -> None:
         "docs/UPGRADE-1.19.0.md",
         "docs/UPGRADE-1.19.1.md",
         "docs/UPGRADE-1.21.0.md",
+        "docs/UPGRADE-1.22.0.md",
         "AI_POLICY.md",
     ]
     for relative in required:
         assert (ROOT / relative).is_file(), relative
     sbom = json.loads((ROOT / "SBOM.spdx.json").read_text())
     assert sbom["spdxVersion"] == "SPDX-2.3"
-    assert {package["versionInfo"] for package in sbom["packages"][:2]} == {"1.21.0"}
+    assert {package["versionInfo"] for package in sbom["packages"][:2]} == {"1.22.0"}
 
 
 def test_release_and_operational_tools_have_expected_modes() -> None:
@@ -60,6 +61,7 @@ def test_release_and_operational_tools_have_expected_modes() -> None:
         "tools/verify_release.py",
         "tools/configure_publication.py",
         "tools/check_publication.py",
+        "tools/check_privacy.py",
     ]
     shell_tools = [
         "tools/release_check.sh",

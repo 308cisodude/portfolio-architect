@@ -15,5 +15,6 @@ the architecture/security invariants reviewed by the submitter. See `AI_POLICY.m
 
 - [ ] English and German translations updated when needed
 - [ ] Existing entity IDs and schemas preserved or migration documented
-- [ ] `./tools/release_check.sh` passes
-- [ ] No secrets, private portfolio data, or generated caches included
+- [ ] Protected `Validate release`, HACS, and hassfest checks pass
+- [ ] `./tools/release_check.sh` passes when run in the supported POSIX/Linux validation environment
+- [ ] No secrets, private portfolio data, raw broker documents, unapproved exports, or generated caches included

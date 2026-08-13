@@ -8,6 +8,17 @@ Conditional, Glance, and Distribution cards. It avoids Markdown, custom cards,
 Entities cards, Entity-filter cards, JavaScript, and nested fixed-column Grid
 cards. Sections rearrange across desktop, tablet, and smartphone widths.
 
+## Reference-dashboard ownership
+
+This YAML is a static reference configuration, not integration-owned Home Assistant
+state. Once it is copied/imported into a Home Assistant dashboard, that copy is
+user-owned configuration. HACS updates only the custom integration package; neither
+HACS nor Portfolio Architect automatically overwrites an imported dashboard.
+
+When a future release changes the reference layout, the corresponding upgrade guide
+will say so explicitly. Users can then review/import the newer YAML deliberately,
+without risking silent replacement of local dashboard customizations.
+
 The investment-plan section shows budget, frequency, contribution per execution,
 execution count, scheduled execution, current actionability, last evaluation, and current buy recommendations. Runtime
 health shows the active source provider, last evaluation, snapshot freshness-window status, next plan review, Gateway operating mode, snapshot age, next live

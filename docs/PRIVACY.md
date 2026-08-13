@@ -59,3 +59,20 @@ Gateway session data. Detailed plan-change attributes are excluded from Home
 Assistant recorder history; only the bounded enum state may be retained according to
 the user's recorder policy. Diagnostics omit monetary trace values and expose only
 the state, timestamps, categories, counts, and changed fund IDs.
+
+## v1.22 publication privacy gate
+
+The public repository, complete reachable Git history in protected CI, and release artifacts are subject to a fail-closed privacy check. Raw broker statements/exports, unexpected screenshots, private key/container
+formats, valid IBANs, and non-synthetic provider identity literals are rejected.
+The checker reports only rule/location metadata and does not echo a detected exact
+private literal.
+
+Public security identifiers (for example ISINs), generic provider names, and wholly
+synthetic fixtures remain permitted. The approved CSV allowlist is intentionally
+small and explicit. A maintainer may supply additional known private literals from a
+file outside the repository for local exact matching; the literal file itself is
+rejected if placed inside the repository.
+
+Release ZIPs are scanned by content rather than trusted merely because the source
+tree was clean. This makes confidentiality a release invariant independent of the
+existing reproducibility, checksum, manifest, and archive-safety controls.
