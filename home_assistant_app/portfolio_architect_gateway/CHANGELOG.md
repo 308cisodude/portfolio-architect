@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.21.0
+
+- Aligns Gateway App package metadata with Portfolio Architect v1.21.0.
+- Keeps Gateway banking runtime behavior, REST portfolio schema 1, and health schema 5 unchanged from v1.20.1.
+- Execution scheduling/actionability semantics remain Home Assistant integration concerns; no trading or transaction capability is added.
+
 ## 1.20.1
 
 - Aligns Gateway App package metadata with Portfolio Architect v1.20.1.

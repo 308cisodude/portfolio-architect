@@ -9,9 +9,8 @@ Entities cards, Entity-filter cards, JavaScript, and nested fixed-column Grid
 cards. Sections rearrange across desktop, tablet, and smartphone widths.
 
 The investment-plan section shows budget, frequency, contribution per execution,
-execution count, planned execution, and current buy recommendations. Runtime
-health shows the active source provider, last evaluation, schedule-aware
-freshness, next plan review, Gateway operating mode, snapshot age, next live
+execution count, scheduled execution, current actionability, last evaluation, and current buy recommendations. Runtime
+health shows the active source provider, last evaluation, snapshot freshness-window status, next plan review, Gateway operating mode, snapshot age, next live
 refresh, refresh duration and trigger, and conditional last-known-good,
 refresh-running, operator-attention, recovery-action, last-failure, and
 refresh-overdue indicators. Schedule cards remain hidden until a recurring

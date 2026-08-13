@@ -1,4 +1,4 @@
-# Portfolio Architect v1.20.1
+# Portfolio Architect v1.21.0
 
 Portfolio Architect is a Home Assistant-native portfolio overview, policy-check,
 and deterministic investment-planning system. It supports provider-specific CSV
@@ -19,6 +19,7 @@ transfer, payment, or account-transaction capability.
 - Provider-owned authorized investment cash with conservative eligibility and optional Gateway caps.
 - Bounded graceful degradation: trusted LKG holdings stay informationally available while stale bank cash and new investment actions fail closed.
 - Evidence-based Gateway refresh diagnostics and locally time-derived snapshot freshness.
+- Separate scheduled-execution, last-evaluation, and current-actionability semantics; past schedule dates never imply transaction execution.
 - Explicit transaction-cost and execution policies.
 - Reproducible release archives, SHA-256 manifests, SPDX 2.3 SBOMs, and release
   provenance workflows.
@@ -56,7 +57,7 @@ See `docs/PUBLICATION-SETUP.md` and `docs/PUBLISHING.md`.
 
 - Home Assistant 2026.7.0 or newer
 - Python 3.14 for source validation and Gateway builds
-- Gateway App 1.16.1 or newer for the established live Comdirect protocol; Gateway App 1.19.0 or newer for configurable cash authorization; 1.19.1 or newer includes the corrected capped-to-all-available transition; 1.20.1 includes the LKG entity-propagation fix
+- Gateway App 1.16.1 or newer for the established live Comdirect protocol; Gateway App 1.19.0 or newer for configurable cash authorization; 1.19.1 or newer includes the corrected capped-to-all-available transition; 1.20.1 or newer includes the LKG entity-propagation fix; 1.21.0 adds execution/actionability semantics without changing Gateway banking behavior
 
 The current stable Portfolio Architect release and the immediately preceding
 stable release receive security and correctness fixes while a documented upgrade
@@ -112,6 +113,7 @@ GitHub-hosted runners as the live external validation step.
 - `docs/QUALITY.md`
 - `docs/DECISION-TRACE.md`
 - `AI_POLICY.md`
+- `docs/UPGRADE-1.21.0.md`
 - `docs/UPGRADE-1.20.1.md`
 - `docs/UPGRADE-1.20.0.md`
 - `docs/UPGRADE-1.19.1.md`

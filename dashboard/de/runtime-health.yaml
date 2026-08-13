@@ -42,12 +42,12 @@ cards:
   card:
     type: tile
     entity: binary_sensor.portfolio_architect_data_fresh
-    name: Daten aktuell
+    name: Snapshot-Aktualität
     tap_action:
       action: more-info
     color: green
     icon: mdi:clock-check-outline
-    hide_state: true
+    hide_state: false
   grid_options:
     columns: 6
     rows: auto
@@ -59,12 +59,12 @@ cards:
   card:
     type: tile
     entity: binary_sensor.portfolio_architect_data_fresh
-    name: Daten veraltet
+    name: Snapshot-Aktualität
     tap_action:
       action: more-info
     color: amber
     icon: mdi:clock-alert-outline
-    hide_state: true
+    hide_state: false
   grid_options:
     columns: 6
     rows: auto

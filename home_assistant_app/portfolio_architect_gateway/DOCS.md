@@ -1,9 +1,6 @@
-# Portfolio Architect Gateway v1.20.1
+# Portfolio Architect Gateway v1.21.0
 
-Version 1.20.1 aligns this App package with Portfolio Architect's LKG
-entity-propagation maintenance release. Gateway runtime and wire contracts remain
-unchanged from 1.20.0. Existing cash authorization, bootstrap, account-selection,
-and cached-snapshot behavior are retained.
+Version 1.21.0 aligns this App package with Portfolio Architect's execution-semantics release. Gateway banking behavior and wire contracts remain unchanged from 1.20.1. Existing cash authorization, bootstrap, account-selection, and cached-snapshot behavior are retained.
 
 After completing or refreshing Comdirect authentication, open the App Web UI:
 

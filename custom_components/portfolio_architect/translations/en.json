@@ -229,7 +229,7 @@
             "name": "Payload schema"
           },
           "planned_execution_on": {
-            "name": "Planned execution"
+            "name": "Scheduled execution"
           },
           "next_plan_review_on": {
             "name": "Next plan review"
@@ -1058,13 +1058,13 @@
         }
       },
       "planned_execution": {
-        "name": "Planned execution",
+        "name": "Scheduled execution",
         "state_attributes": {
           "evaluated_on": {
             "name": "Evaluated on"
           },
           "planned_execution_on": {
-            "name": "Planned execution"
+            "name": "Scheduled execution"
           },
           "next_review_on": {
             "name": "Next plan review"
@@ -1102,7 +1102,7 @@
             "name": "Evaluated on"
           },
           "planned_execution_on": {
-            "name": "Planned execution"
+            "name": "Scheduled execution"
           },
           "next_review_on": {
             "name": "Next plan review"
@@ -1740,6 +1740,65 @@
       },
       "holding_quantity": {
         "name": "{holding_name} quantity"
+      },
+      "plan_actionability": {
+        "name": "Current actionability",
+        "state": {
+          "actionable_now": "Actionable now",
+          "scheduled": "Scheduled",
+          "overdue_actionable": "Overdue but actionable",
+          "not_ready": "Not ready",
+          "not_actionable": "Not actionable"
+        },
+        "state_attributes": {
+          "source_actionable": {
+            "name": "Source actionable"
+          },
+          "actionability_reason": {
+            "name": "Actionability reason",
+            "state": {
+              "actionable": "Actionable",
+              "data_unavailable": "Data unavailable",
+              "data_stale": "Snapshot outside freshness window",
+              "integrity_failure": "Integrity failure",
+              "last_known_good": "Last-known-good snapshot",
+              "health_unavailable": "Gateway health unavailable",
+              "reauthentication_required": "Reauthentication required",
+              "source_degraded": "Source degraded"
+            }
+          },
+          "execution_state": {
+            "name": "Execution state",
+            "state": {
+              "ready": "Ready to invest",
+              "waiting_for_reserve": "Waiting for investment cash",
+              "deferred_for_cost_efficiency": "Deferred for cost efficiency",
+              "no_eligible_purchase": "No eligible purchase",
+              "reserve_unavailable": "Investment cash unavailable"
+            }
+          },
+          "plan_ready": {
+            "name": "Plan ready"
+          },
+          "evaluated_at": {
+            "name": "Last evaluated"
+          },
+          "scheduled_execution_on": {
+            "name": "Scheduled execution"
+          },
+          "schedule_relation": {
+            "name": "Schedule relation",
+            "state": {
+              "not_configured": "Not configured",
+              "upcoming": "Upcoming",
+              "due_today": "Due today",
+              "past_scheduled_date": "Past scheduled date"
+            }
+          },
+          "days_until_scheduled_execution": {
+            "name": "Days until scheduled execution"
+          }
+        }
       }
     },
     "binary_sensor": {
@@ -1827,7 +1886,7 @@
             "name": "Purchase count"
           },
           "data_fresh": {
-            "name": "Data fresh"
+            "name": "Snapshot within freshness window"
           },
           "freshness_mode": {
             "name": "Freshness mode",
@@ -1851,10 +1910,10 @@
         }
       },
       "data_fresh": {
-        "name": "Data freshness",
+        "name": "Snapshot freshness",
         "state": {
-          "on": "Fresh",
-          "off": "Stale"
+          "on": "Within freshness window",
+          "off": "Outside freshness window"
         },
         "state_attributes": {
           "freshness_threshold_hours": {
@@ -1868,7 +1927,7 @@
             }
           },
           "fresh_through": {
-            "name": "Fresh through"
+            "name": "Within window through"
           }
         }
       },
@@ -1951,7 +2010,7 @@
             "name": "Evaluated on"
           },
           "planned_execution_on": {
-            "name": "Planned execution"
+            "name": "Scheduled execution"
           },
           "next_review_on": {
             "name": "Next plan review"
