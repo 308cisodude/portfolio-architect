@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.24.1
+
+- Fixes startup of the isolated DKB provider shell by removing an accidental runtime dependency on the Comdirect-only configuration module.
+- Adds build-time startup-module import validation and protected container smoke testing.
+- Keeps the App experimental, manual-only, fail-closed and without live DKB acquisition.
+
 ## 1.24.0
 
 - Creates the separate DKB Home Assistant App identity.

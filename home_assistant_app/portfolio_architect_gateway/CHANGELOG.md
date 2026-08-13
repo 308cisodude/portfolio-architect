@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.24.1
+
+- Aligns the Comdirect App package with the v1.24.1 provider-shell startup hotfix.
+- Keeps the established Comdirect runtime, slug, credentials/session state, selected account, cash policy, API token and cached snapshot unchanged.
+- Uses the provider-neutral common server with the Comdirect configuration import restricted to type checking only.
+
 ## 1.24.0
 
 - Renames the visible App to **Portfolio Architect Gateway — Comdirect** while retaining the existing slug and private App data.

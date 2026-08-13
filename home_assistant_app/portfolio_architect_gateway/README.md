@@ -1,12 +1,12 @@
-# Portfolio Architect Gateway — Comdirect App v1.24.0
+# Portfolio Architect Gateway — Comdirect App v1.24.1
 
 Native Home Assistant App packaging for the read-only Comdirect provider Gateway.
 The App exposes no LAN port, uses an admin-only Ingress UI, runs the long-lived
 process as UID/GID 65532, and keeps Comdirect and Gateway credentials in App-private
 data.
 
-Version 1.24.0 introduces the provider-aware common Gateway boundary and health
-schema 6. The App publishes the bounded non-secret `provider_id: comdirect` while
+Version 1.24.1 is the provider-shell startup hotfix for the distinct App architecture. The provider-aware common Gateway boundary and health
+schema 6 remain unchanged. The App publishes the bounded non-secret `provider_id: comdirect` while
 retaining REST schema 1, existing authentication, account-selection, cash-policy,
 LKG and recovery behavior.
 

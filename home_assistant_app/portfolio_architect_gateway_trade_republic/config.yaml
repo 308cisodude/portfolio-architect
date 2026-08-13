@@ -1,5 +1,5 @@
 name: Portfolio Architect Gateway — Trade Republic
-version: 1.24.0
+version: 1.24.1
 slug: portfolio_architect_gateway_trade_republic
 description: Isolated provider Gateway package for Portfolio Architect; live Trade Republic acquisition is not implemented in this release.
 url: https://developers.home-assistant.io/docs/apps/

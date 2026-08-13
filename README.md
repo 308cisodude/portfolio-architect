@@ -1,4 +1,4 @@
-# Portfolio Architect v1.24.0
+# Portfolio Architect v1.24.1
 
 Portfolio Architect is a Home Assistant-native portfolio overview, policy-check,
 and deterministic investment-planning system. It supports provider-specific CSV
@@ -33,7 +33,7 @@ transfer, payment, or account-transaction capability.
 
 ## Provider Gateway Apps
 
-Version 1.24.0 publishes separate Comdirect, DKB and Trade Republic Home Assistant App identities. Comdirect remains the stable live provider; DKB and Trade Republic are experimental manual-only shells until their provider-specific acquisition milestones.
+Version 1.24.1 retains the separate Comdirect, DKB and Trade Republic Home Assistant App identities introduced in 1.24.0 and fixes startup of the experimental DKB/TR shells. Comdirect remains the stable live provider; DKB and Trade Republic are experimental manual-only shells until their provider-specific acquisition milestones.
 
 ## Installation channels
 
@@ -64,7 +64,7 @@ See `docs/PUBLICATION-SETUP.md` and `docs/PUBLISHING.md`.
 
 - Home Assistant 2026.7.0 or newer
 - Python 3.14 for source validation and Gateway builds
-- Gateway App 1.16.1 or newer for the established live Comdirect protocol; Gateway App 1.19.0 or newer for configurable cash authorization; 1.19.1 or newer includes the corrected capped-to-all-available transition; 1.20.1 or newer includes the LKG entity-propagation fix; 1.21.0 adds execution/actionability semantics; 1.22.0 adds publication/privacy hardening; 1.24.0 adds the provider-aware Gateway contract and health schema 6
+- Gateway App 1.16.1 or newer for the established live Comdirect protocol; Gateway App 1.19.0 or newer for configurable cash authorization; 1.19.1 or newer includes the corrected capped-to-all-available transition; 1.20.1 or newer includes the LKG entity-propagation fix; 1.21.0 adds execution/actionability semantics; 1.22.0 adds publication/privacy hardening; 1.24.1 includes the distinct-provider shell startup hotfix on top of the provider-aware Gateway contract and health schema 6
 
 The current stable Portfolio Architect release and the immediately preceding
 stable release receive security and correctness fixes while a documented upgrade
@@ -124,6 +124,7 @@ and built release contents before publication.
 - `docs/QUALITY.md`
 - `docs/DECISION-TRACE.md`
 - `AI_POLICY.md`
+- `docs/UPGRADE-1.24.1.md`
 - `docs/UPGRADE-1.24.0.md`
 - `docs/UPGRADE-1.22.0.md`
 - `docs/UPGRADE-1.21.0.md`

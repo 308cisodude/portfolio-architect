@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.24.1
+
+- Fixes DKB and Trade Republic provider-shell startup after v1.24.0 live acceptance exposed a runtime import of the Comdirect-only `config.py` module from the reduced shell package.
+- Moves the `GatewayConfig` import in the common server behind `TYPE_CHECKING`; runtime server state remains based on provider-neutral `ServerConfig`.
+- Adds isolated-package regression coverage that imports the exact DKB/TR runtime subset with `config.py` absent.
+- Makes DKB/TR Docker builds import the real `pending_app` startup module instead of only the package root.
+- Adds protected container smoke tests that require both experimental shells to remain running and listen on their Ingress and private REST ports before merge/publication.
+- Preserves Comdirect behavior, payload schema 8, REST portfolio schema 1, Gateway health schema 6, provider identities, read-only semantics, and the v1.24 provider-App split.
+
 ## 1.24.0
 
 - Introduces a provider-neutral `PortfolioProvider` runtime contract for the common hardened Gateway server.

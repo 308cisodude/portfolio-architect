@@ -1,34 +1,28 @@
-# Portfolio Architect 1.24.0
+# Portfolio Architect 1.24.1
 
-Version 1.24.0 turns the v1.23 provider identities into three separately installable Home Assistant App packages while preserving the established Comdirect runtime and all portfolio semantics.
+Version 1.24.1 is a focused startup hotfix for the distinct DKB and Trade Republic provider Apps introduced in 1.24.0. Portfolio calculations, Comdirect banking behavior, wire schemas and provider identities are unchanged.
 
-## Three provider App identities
+## Provider-shell startup fix
 
-- **Portfolio Architect Gateway — Comdirect** keeps the historical `portfolio_architect_gateway` slug, stable channel, and existing private state.
-- **Portfolio Architect Gateway — DKB** is published under `portfolio_architect_gateway_dkb`.
-- **Portfolio Architect Gateway — Trade Republic** is published under `portfolio_architect_gateway_trade_republic`.
+Live acceptance of v1.24.0 found that the DKB shell exited before opening its Ingress page. The reduced DKB/TR packages intentionally omit Comdirect-specific modules, but the shared `server.py` still imported the Comdirect `GatewayConfig` type at runtime. That caused `ModuleNotFoundError: portfolio_architect_gateway.config` before either shell server could start.
 
-No DKB or Trade Republic acquisition runtime is shipped by v1.24.0. DKB and Trade Republic are experimental, manual-only provider shells in this release. They establish Supervisor identity, isolated private storage, a persistent local API token, provider health identity and an in-place upgrade path. They deliberately do not provide live portfolio acquisition yet.
+Version 1.24.1 keeps `GatewayConfig` only as a type-checking import. Runtime `GatewayState` and `create_server()` continue to consume provider-neutral `ServerConfig`, so the architectural isolation introduced in v1.24.0 is preserved rather than weakened. The same latent defect is fixed for both DKB and Trade Republic.
 
-## Shared hardened runtime
+## Stronger release gates
 
-The common Gateway state/server path now consumes provider-neutral `ServerConfig` directly. Server configuration and secret-file handling are separated from the Comdirect-specific configuration model. DKB/TR packages contain only the audited provider-neutral runtime subset; they do not contain `ComdirectClient`, the Comdirect transport, OAuth/bootstrap UI or cash-policy implementation.
+Regression coverage now imports `pending_app` from the exact reduced DKB/TR package layout with `config.py` absent. The shell Dockerfiles import the real startup module during image build, and protected validation starts both built shell containers and requires them to remain running with the Ingress and private REST listeners available before merge or immutable publication.
 
-A synchronization tool and regression contract require the App build-context copies to remain byte-identical with the canonical `gateway/src` sources.
+## Compatibility
 
-## Release packaging
-
-The immutable release now publishes three distinct Gateway App archives: the historical Comdirect asset plus DKB and Trade Republic App ZIPs. Source/history/artifact privacy scans and Gitleaks cover all of them before publication.
-
-## Compatibility and safety
-
-- Payload schema 8: unchanged.
+- Portfolio payload schema 8: unchanged.
 - REST portfolio schema 1: unchanged.
-- Gateway health schema 6: unchanged; schemas 1–5 remain supported for backward compatibility.
-- Existing entity IDs and unique IDs: unchanged.
-- Comdirect credentials/session, selected account, authorized-cash policy, API token and cached snapshot: retained in place.
-- v1.20/v1.20.1 LKG behavior and v1.21 schedule/actionability semantics: unchanged.
-- DKB/TR shells do not claim live acquisition.
-- Trade Republic statement-document parsing is not included; it remains the v1.25.0 milestone.
-- The experimental v1.19.0-rc2 brokerage-diagnostic code is not promoted by this release and remains excluded from stable.
+- Gateway health schema 6: unchanged; `provider_id` remains bounded provider provenance only, and schemas 1–5 remain supported.
+- Existing entity IDs, actionability, authorized-cash and LKG semantics: unchanged.
+- Existing Comdirect App slug/private state and authentication: unchanged.
+- No DKB or Trade Republic acquisition runtime is shipped; both remain experimental, manual-only provider shells.
+- Trade Republic statement-document import remains the next milestone.
 - No trading, order, transfer, payment, or transaction-history capability is added.
+
+## Experimental branch note
+
+The historical `v1.19.0-rc2` brokerage-diagnostics tag remains separate experimental work. That experimental code is not promoted by this release.

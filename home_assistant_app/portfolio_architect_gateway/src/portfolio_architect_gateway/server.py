@@ -14,11 +14,13 @@ import secrets
 import ssl
 import threading
 import time
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any, Callable
 
 from . import __version__
-from .config import GatewayConfig
 from .runtime_config import ServerConfig, read_secret
+
+if TYPE_CHECKING:
+    from .config import GatewayConfig
 from .errors import (
     AuthenticationError,
     ConfigurationError,
