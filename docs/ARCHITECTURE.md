@@ -61,6 +61,8 @@ remain available unchanged. This creates the stable seam for separate DKB and Tr
 Republic Apps without pretending those provider runtimes already exist. See
 `docs/GATEWAY-PROVIDERS.md`.
 
+Version 1.24.1 fixes the reduced DKB/TR shell packaging without expanding that boundary: the optional Comdirect `GatewayConfig` type import is evaluated only during static type checking, while runtime server code remains based on `ServerConfig`.
+
 ## Graceful degradation and actionability
 
 Version 1.20.0 separates **trusted informational continuity** from **authorization

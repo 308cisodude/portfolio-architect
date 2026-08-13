@@ -1,7 +1,8 @@
-# Portfolio Architect Gateway — Comdirect v1.24.0
+# Portfolio Architect Gateway — Comdirect v1.24.1
 
-Version 1.24.0 makes the common Gateway runtime provider-aware while preserving the
-existing Comdirect App identity and private state. Gateway health schema 6 now
+Version 1.24.1 preserves the provider-aware common Gateway runtime and existing
+Comdirect App identity/private state while fixing startup packaging for the separate
+DKB and Trade Republic shells. Gateway health schema 6 now
 reports `provider_id: comdirect`; REST portfolio schema 1 and all existing
 Comdirect cash/bootstrap behavior remain compatible.
 
@@ -29,5 +30,5 @@ OAuth/session state, Gateway bearer token, cached snapshot, selected account and
 cash policy. Never uninstall the App or remove its data for a normal update.
 
 The Gateway remains GET-only and contains no trading, transfer, payment, or
-transaction-history operation. DKB and Trade Republic provider Apps are separate
-future packages; they are not emulated by this Comdirect App.
+transaction-history operation. DKB and Trade Republic provider Apps are separate packages; they are not emulated
+by this Comdirect App.

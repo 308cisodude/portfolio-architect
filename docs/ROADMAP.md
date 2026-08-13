@@ -12,6 +12,8 @@ Completed: the hardened Gateway server consumes a provider-neutral runtime contr
 
 ## v1.24.0 — distinct provider Gateway Apps
 
+Completed with live-acceptance follow-up in v1.24.1.
+
 - Publish three separate Supervisor App identities in this order: **Portfolio Architect Gateway — Comdirect**, **Portfolio Architect Gateway — DKB**, and **Portfolio Architect Gateway — Trade Republic**.
 - Keep Comdirect stable and updateable in place under `portfolio_architect_gateway`.
 - Give DKB and Trade Republic independent slugs and `/data/gateway` private volumes.
@@ -19,6 +21,10 @@ Completed: the hardened Gateway server consumes a provider-neutral runtime contr
 - Ship DKB/TR as experimental, manual-only, fail-closed provider shells. They establish installable identities and future in-place upgrade paths but deliberately do not claim live acquisition yet.
 - Publish separate release ZIPs for all three provider Apps.
 - Preserve payload schema 8, REST portfolio schema 1, Gateway health schema 6, existing Home Assistant entity IDs, Comdirect cash/LKG behavior, and the v1.22 privacy gate.
+
+## v1.24.1 — provider-shell startup hotfix
+
+Completed: remove the accidental runtime import of the Comdirect-only configuration module from the reduced DKB/TR package, and require isolated-package import plus running-container smoke tests in protected CI.
 
 ## v1.25.0 — Trade Republic statement import
 

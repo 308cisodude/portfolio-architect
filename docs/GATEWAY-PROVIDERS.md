@@ -20,6 +20,8 @@ The Comdirect slug is retained permanently so existing credentials, OAuth/sessio
 
 No DKB or Trade Republic acquisition runtime is shipped by v1.24.0. The DKB/TR packages are deliberately `manual_only` and experimental in v1.24.0. They can be installed and started for package/isolation acceptance, but `fetch_snapshot()` fails closed with a configuration error and `/api/v1/portfolio` has no snapshot to serve. Their admin-only Ingress page states explicitly that live acquisition is not yet implemented.
 
+Version 1.24.1 fixes the shell startup packaging discovered during v1.24.0 live acceptance. The common server no longer requires the Comdirect-only configuration module at runtime, and protected CI now starts both reduced shell containers before publication. No provider acquisition capability is added.
+
 ## Shared source and packaging rule
 
 Home Assistant builds each App from its own directory. To avoid independent implementations drifting, the repository keeps one canonical Gateway Python source tree under `gateway/src/portfolio_architect_gateway`. The Comdirect App vendors the complete canonical package. DKB/TR vendor only the audited provider-neutral subset required by the shell. `tools/sync_gateway_app_sources.py` performs synchronization and regression tests require byte identity.

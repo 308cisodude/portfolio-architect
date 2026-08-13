@@ -53,6 +53,26 @@ jobs:
               --tag "portfolio-architect-${app}:validation" \
               "home_assistant_app/${app}"
           done
+      - name: Smoke-test provider shell containers
+        shell: bash
+        run: |
+          for app in \
+            portfolio_architect_gateway_dkb \
+            portfolio_architect_gateway_trade_republic
+          do
+            name="portfolio-architect-${app}-smoke"
+            image="portfolio-architect-${app}:validation"
+            docker run --detach --name "${name}" "${image}" >/dev/null
+            sleep 2
+            if ! test "$(docker inspect --format '{{.State.Running}}' "${name}")" = "true"; then
+              docker logs "${name}" >&2 || true
+              docker rm -f "${name}" >/dev/null 2>&1 || true
+              exit 1
+            fi
+            docker exec "${name}" /usr/local/bin/python3.14 -c \
+              'import socket; [socket.create_connection(("127.0.0.1", port), 2).close() for port in (8099, 8787)]'
+            docker rm -f "${name}" >/dev/null
+          done
       - name: Scan source, history, and release artifacts for secrets
         env:
           GITLEAKS_IMAGE: ghcr.io/gitleaks/gitleaks@sha256:691af3c7c5a48b16f187ce3446d5f194838f91238f27270ed36eef6359a574d9

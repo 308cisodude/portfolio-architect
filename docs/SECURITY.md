@@ -412,3 +412,8 @@ Reserved future DKB and Trade Republic App identities are separate security
 boundaries with separate private state; v1.24.0 does not ship either acquisition
 runtime. No provider contract introduces a trading, order, transfer, payment, or
 transaction-history write path.
+
+## v1.24.1 provider-shell runtime isolation
+
+The reduced DKB and Trade Republic App packages intentionally exclude Comdirect-specific configuration, authentication and transport modules. Version 1.24.1 makes the remaining `GatewayConfig` reference in the common server type-check-only, so importing or starting a provider shell cannot require the omitted Comdirect module at runtime. Protected CI imports the exact reduced package and starts both shell containers before publication, preventing packaging drift from weakening the provider boundary or producing a dead Ingress endpoint.
+
