@@ -1,35 +1,19 @@
-# v1.23.0 validation
+# v1.24.0 validation
 
-Portfolio Architect v1.23.0 retains the complete publication/privacy and runtime
-regression pipeline and adds provider-boundary and health-schema-6 contracts.
+Portfolio Architect v1.24.0 retains the complete publication/privacy and runtime regression pipeline and adds distinct-provider-App packaging/isolation contracts. Validation must prove:
 
-Validation must prove:
+- three unique App slugs exist and all package versions align with 1.24.0;
+- the established Comdirect App remains stable and retains `portfolio_architect_gateway`;
+- DKB/TR are experimental, manual-only, least-privilege and independently isolated;
+- the DKB/TR source packages contain only the audited provider-neutral runtime subset and no Comdirect client/transport implementation;
+- provider-shell portfolio acquisition fails closed and its Ingress API is read-only;
+- `GatewayState` and `create_server()` depend only on provider-neutral `ServerConfig`;
+- the release builder emits and verifier requires three distinct Gateway App ZIPs;
+- all physical App runtime copies remain byte-identical to the canonical Gateway source files;
+- payload schema 8, REST schema 1, health schema 6, authorized-cash, LKG and actionability semantics remain unchanged;
+- source, Git history and every built artifact pass the v1.22 privacy/Gitleaks gates; and
+- release archives remain reproducible and pass checksum, manifest, ZIP path and payload-alignment verification.
 
-- the common Gateway server depends on `PortfolioProvider`, not `ComdirectClient`;
-- the current Comdirect client implements the provider identity, refresh cadence
-  and provider-neutral snapshot contract;
-- health schema 6 adds only a bounded `provider_id` and schemas 1–5 remain
-  negotiable for backward compatibility;
-- the Home Assistant REST client parses schema 6 strictly and advertises older
-  health media types as fallbacks;
-- Gateway status attributes/diagnostics expose provider identity without account,
-  depot, IBAN or credential material;
-- the existing Comdirect App slug and private data paths remain stable while its
-  visible name becomes provider-specific;
-- DKB and Trade Republic App names/slugs are architecture reservations only and
-  no unsupported acquisition capability is published;
-- payload schema 8, REST portfolio schema 1, authorized-cash, LKG and v1.21
-  actionability semantics remain unchanged;
-- source, Git history and built artifacts still pass the v1.22 fail-closed privacy
-  controls and immutable Gitleaks publication gate; and
-- release archives remain reproducible and pass checksum, manifest, ZIP path and
-  payload-alignment verification.
+Run the supported validation with `./tools/release_check.sh`. Protected GitHub Validate release, HACS and hassfest jobs remain mandatory before merge/tagging.
 
-Run the complete supported local validation with:
-
-```bash
-./tools/release_check.sh
-```
-
-Protected GitHub Validate release, HACS and hassfest jobs remain mandatory before
-merge/tagging.
+Protected GitHub validation and immutable release each build all three provider App Docker contexts for amd64 without publishing images.

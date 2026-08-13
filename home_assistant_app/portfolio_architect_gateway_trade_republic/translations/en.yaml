@@ -1,0 +1,9 @@
+configuration:
+  max_cached_snapshot_age_seconds:
+    name: Maximum cached snapshot age
+    description: Reserved provider snapshot age limit; no live snapshot is produced in this release.
+  health_endpoint_enabled:
+    name: Enable authenticated health endpoint
+    description: Expose the authenticated /healthz endpoint on the private REST service.
+network:
+  8787/tcp: Private Portfolio Architect REST endpoint; keep the host port disabled.

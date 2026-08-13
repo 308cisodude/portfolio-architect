@@ -17,7 +17,8 @@ import time
 from typing import Any, Callable
 
 from . import __version__
-from .config import GatewayConfig, read_secret
+from .config import GatewayConfig
+from .runtime_config import ServerConfig, read_secret
 from .errors import (
     AuthenticationError,
     ConfigurationError,
@@ -58,7 +59,7 @@ class SnapshotView:
 class GatewayState:
     """Thread-safe last-known-good snapshot and sanitized health state."""
 
-    def __init__(self, config: GatewayConfig, client: PortfolioProvider) -> None:
+    def __init__(self, config: ServerConfig, client: PortfolioProvider) -> None:
         self._config = config
         self._client = client
         self._provider_id = normalise_provider_id(client.provider_id)
@@ -67,7 +68,7 @@ class GatewayState:
         )
         self._lock = threading.RLock()
         self._snapshot: PortfolioSnapshot | None = load_snapshot(
-            config.server.snapshot_file
+            config.snapshot_file
         )
         self._last_refresh_success: datetime | None = (
             self._snapshot.generated_at.astimezone(timezone.utc)
@@ -172,7 +173,7 @@ class GatewayState:
         success = False
         try:
             snapshot = self._client.fetch_snapshot()
-            save_snapshot(self._config.server.snapshot_file, snapshot)
+            save_snapshot(self._config.snapshot_file, snapshot)
         except ReauthenticationRequired:
             self._record_refresh_failure(
                 attempted_at=attempted_at,
@@ -291,7 +292,7 @@ class GatewayState:
             snapshot = self._snapshot
         if snapshot is None:
             return None
-        maximum = self._config.server.max_cached_snapshot_age_seconds
+        maximum = self._config.max_cached_snapshot_age_seconds
         if maximum:
             age = (
                 datetime.now(timezone.utc)
@@ -342,7 +343,7 @@ class GatewayState:
             generated = snapshot.generated_at.astimezone(timezone.utc)
             generated_at = generated.isoformat(timespec="seconds")
             snapshot_age_seconds = max(0, int((now - generated).total_seconds()))
-            maximum = self._config.server.max_cached_snapshot_age_seconds
+            maximum = self._config.max_cached_snapshot_age_seconds
             if maximum:
                 snapshot_expires_in_seconds = max(0, maximum - snapshot_age_seconds)
 
@@ -378,7 +379,7 @@ class GatewayState:
                         self._poll_interval_seconds
                     ),
                     "max_cached_snapshot_age_seconds": (
-                        self._config.server.max_cached_snapshot_age_seconds
+                        self._config.max_cached_snapshot_age_seconds
                     ),
                 }
             )
@@ -626,25 +627,25 @@ class GatewayRequestHandler(BaseHTTPRequestHandler):
         _LOGGER.info("Gateway request completed for client %s", self.client_address[0])
 
 
-def create_server(config: GatewayConfig, state: GatewayState) -> GatewayHttpServer:
+def create_server(config: ServerConfig, state: GatewayState) -> GatewayHttpServer:
     token = read_secret(
-        config.server.api_token_file,
+        config.api_token_file,
         name="gateway API token",
         minimum=32,
         maximum=512,
     )
     server = GatewayHttpServer(
-        (config.server.bind, config.server.port),
+        (config.bind, config.port),
         state,
         token,
-        health_endpoint_enabled=config.server.health_endpoint_enabled,
+        health_endpoint_enabled=config.health_endpoint_enabled,
     )
-    if config.server.tls_cert_file and config.server.tls_key_file:
+    if config.tls_cert_file and config.tls_key_file:
         context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
         context.minimum_version = ssl.TLSVersion.TLSv1_2
         context.load_cert_chain(
-            certfile=config.server.tls_cert_file,
-            keyfile=config.server.tls_key_file,
+            certfile=config.tls_cert_file,
+            keyfile=config.tls_key_file,
         )
         server.socket = context.wrap_socket(server.socket, server_side=True)
     return server
@@ -683,7 +684,7 @@ def run_refresh_loop(
 
 
 def serve(config: GatewayConfig, client: PortfolioProvider) -> None:
-    state = GatewayState(config, client)
+    state = GatewayState(config.server, client)
     stop_event = threading.Event()
     refresher = threading.Thread(
         target=run_refresh_loop,
@@ -691,7 +692,7 @@ def serve(config: GatewayConfig, client: PortfolioProvider) -> None:
         name="portfolio-refresh",
         daemon=True,
     )
-    server = create_server(config, state)
+    server = create_server(config.server, state)
     refresher.start()
     scheme = "https" if config.server.tls_cert_file else "http"
     _LOGGER.info(

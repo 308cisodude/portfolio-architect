@@ -1,78 +1,37 @@
 # Provider Gateway architecture
 
-Portfolio Architect keeps provider acquisition isolated from the Home Assistant
-integration. Every live provider Gateway is a separate supervised Home Assistant
-App with private provider state and a common read-only Portfolio Architect REST
-boundary.
+Portfolio Architect keeps provider acquisition isolated from the Home Assistant integration. Every provider Gateway has a separate supervised Home Assistant App identity and private provider state while sharing the audited read-only REST/server contract.
 
-## v1.23.0 foundation
+## Common runtime boundary
 
-Version 1.23.0 makes the existing Gateway runtime explicitly provider-aware before
-additional providers are implemented.
+The hardened server consumes only a bounded `provider_id`, a validated refresh interval and `fetch_snapshot()` returning REST-schema-1 provider-neutral data. Gateway health schema 6 adds only the non-secret `provider_id`; schemas 1 through 5 remain compatible.
 
-The common hardened server consumes only this minimal provider contract:
-
-- a bounded non-secret `provider_id`;
-- a validated refresh interval; and
-- a `fetch_snapshot()` operation returning REST-schema-1 provider-neutral data.
-
-The common server no longer imports or type-depends on `ComdirectClient`. Provider
-specific authentication, account discovery, cash semantics and bootstrap UI remain
-inside the Comdirect implementation.
-
-Gateway health schema 6 adds only `provider_id`. Health schemas 1 through 5 remain
-available unchanged for older Portfolio Architect installations. Portfolio
-Architect 1.23.0 requests schema 6 while advertising schemas 5 through 1 as
-fallbacks, so an older supported Gateway continues to provide its richest known
-health document.
+Version 1.24.0 further moves server configuration and secret-file handling into provider-neutral runtime code. `GatewayState` and `create_server()` consume `ServerConfig` directly rather than the complete Comdirect configuration.
 
 ## Official App identities
 
-The provider App boundary is intentionally one App per provider:
+| Provider | Display name | App slug | v1.24 state |
+| --- | --- | --- | --- |
+| Comdirect | Portfolio Architect Gateway — Comdirect | `portfolio_architect_gateway` | stable live provider |
+| DKB | Portfolio Architect Gateway — DKB | `portfolio_architect_gateway_dkb` | experimental provider shell |
+| Trade Republic | Portfolio Architect Gateway — Trade Republic | `portfolio_architect_gateway_trade_republic` | experimental provider shell |
 
-| Provider | Display name | App slug |
-| --- | --- | --- |
-| Comdirect | Portfolio Architect Gateway — Comdirect | `portfolio_architect_gateway` |
-| DKB | Portfolio Architect Gateway — DKB | `portfolio_architect_gateway_dkb` |
-| Trade Republic | Portfolio Architect Gateway — Trade Republic | `portfolio_architect_gateway_trade_republic` |
+The Comdirect slug is retained permanently so existing credentials, OAuth/session state, selected account, cash policy, API token and cached snapshot remain in place. DKB and Trade Republic have distinct slugs, therefore Supervisor gives each an independent App identity and private `/data` volume.
 
-The existing Comdirect slug is retained permanently for in-place migration of the
-installed App. Renaming that slug would create a new Home Assistant App identity
-and would unnecessarily strand the current private App data. The visible name can
-change without changing the App identity.
+No DKB or Trade Republic acquisition runtime is shipped by v1.24.0. The DKB/TR packages are deliberately `manual_only` and experimental in v1.24.0. They can be installed and started for package/isolation acceptance, but `fetch_snapshot()` fails closed with a configuration error and `/api/v1/portfolio` has no snapshot to serve. Their admin-only Ingress page states explicitly that live acquisition is not yet implemented.
 
-No DKB or Trade Republic acquisition runtime is shipped by v1.23.0. Their names
-and slugs are architecture reservations, not claims of supported connectivity.
-They become installable only when their provider-specific acquisition path,
-failure semantics, private persistence and acceptance tests exist.
+## Shared source and packaging rule
+
+Home Assistant builds each App from its own directory. To avoid independent implementations drifting, the repository keeps one canonical Gateway Python source tree under `gateway/src/portfolio_architect_gateway`. The Comdirect App vendors the complete canonical package. DKB/TR vendor only the audited provider-neutral subset required by the shell. `tools/sync_gateway_app_sources.py` performs synchronization and regression tests require byte identity.
+
+Physical copies in App build contexts are packaging copies, not independent forks of the runtime. Provider-specific acquisition/authentication/parsing modules are not copied into unrelated provider Apps.
 
 ## Isolation rules
 
-Each provider App must own its own private App volume. Credentials, sessions,
-selected accounts, imported source documents, caches and provider diagnostics are
-never shared between provider Apps.
+Credentials, sessions, selected accounts, imported source documents, caches and provider diagnostics are never shared between provider Apps. Provider-specific inputs are transformed into the common snapshot model only after provider validation succeeds. The common REST server does not parse provider documents or perform provider authentication.
 
-Provider-specific inputs may be transformed into the common snapshot model only
-after their own validation succeeds. The common REST server receives the validated
-provider-neutral result; it does not parse provider documents or perform provider
-authentication.
+The REST service remains bearer-authenticated and GET-only. No provider App may gain order, trade, transfer, payment or transaction-history write capabilities merely because its upstream provider offers them.
 
-The REST server remains GET-only. A provider adapter must not gain order, trade,
-transfer, payment, transaction-history or other write capabilities merely because
-its upstream provider offers them.
+## Next provider milestone
 
-## Future provider rollout
-
-The next provider-App work can reuse the common server/storage/model boundary but
-must implement provider-specific behavior independently:
-
-- **DKB:** choose a supported, local and privacy-preserving acquisition method and
-  map it into the provider-neutral snapshot contract.
-- **Trade Republic:** establish the separate App boundary first; statement-document
-  import is the following milestone and must fail closed on unsupported or
-  ambiguous documents.
-
-Portfolio Architect currently supports one primary REST source plus its established
-supplemental-source model. Supporting simultaneous primary REST Gateways is a
-separate Home Assistant configuration/aggregation decision and must not be implied
-by the provider-server refactor alone.
+Portfolio Architect v1.25.0 will implement supported Trade Republic statement-document import inside the already separate Trade Republic App. Real documents remain private input; public regression fixtures must be wholly synthetic. DKB live acquisition remains a later provider-specific design.

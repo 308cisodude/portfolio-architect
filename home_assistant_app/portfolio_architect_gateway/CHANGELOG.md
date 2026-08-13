@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.23.0
+## 1.24.0
 
 - Renames the visible App to **Portfolio Architect Gateway — Comdirect** while retaining the existing slug and private App data.
 - Implements the provider-neutral Gateway runtime contract through the existing Comdirect client.

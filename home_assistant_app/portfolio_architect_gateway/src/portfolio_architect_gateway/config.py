@@ -6,18 +6,14 @@ from dataclasses import dataclass
 from pathlib import Path
 import ipaddress
 import os
-import re
-import stat
 import tomllib
 from typing import Any, Final
 from urllib.parse import urlsplit
 
 from .errors import ConfigurationError
+from .runtime_config import ServerConfig, normalise_secret, read_secret
 
 MAX_CONFIG_BYTES: Final = 64 * 1024
-MAX_SECRET_BYTES: Final = 4096
-_SECRET_RE = re.compile(r"^[^\x00-\x1f\x7f]+$")
-
 
 def _expect_table(raw: dict[str, Any], name: str) -> dict[str, Any]:
     value = raw.get(name)
@@ -82,20 +78,6 @@ def _optional_path(table: dict[str, Any], key: str) -> Path | None:
     if not path.is_absolute():
         raise ConfigurationError(f"{key} must be an absolute path")
     return path
-
-
-@dataclass(frozen=True, slots=True)
-class ServerConfig:
-    """Local HTTP server configuration."""
-
-    bind: str
-    port: int
-    api_token_file: Path
-    snapshot_file: Path
-    max_cached_snapshot_age_seconds: int
-    tls_cert_file: Path | None
-    tls_key_file: Path | None
-    health_endpoint_enabled: bool
 
 
 @dataclass(frozen=True, slots=True)
@@ -253,41 +235,6 @@ def _validate_comdirect_base_url(value: str) -> str:
         raise ConfigurationError("comdirect.base_url must not contain a path")
     return "https://api.comdirect.de"
 
-
-def normalise_secret(value: str, *, name: str, minimum: int = 1, maximum: int = 4096) -> str:
-    """Validate one in-memory secret without logging or transforming it."""
-    if not isinstance(value, str):
-        raise ConfigurationError(f"Secret for {name} must be text")
-    if not minimum <= len(value) <= maximum or _SECRET_RE.fullmatch(value) is None:
-        raise ConfigurationError(f"Secret for {name} has an invalid length or characters")
-    return value
-
-
-def read_secret(path: Path, *, name: str, minimum: int = 1, maximum: int = 4096) -> str:
-    """Read one bounded secret and reject group/world-readable regular files."""
-    try:
-        st = path.stat()
-    except OSError as err:
-        raise ConfigurationError(f"Cannot access secret file for {name}: {path}") from err
-    if st.st_size > MAX_SECRET_BYTES:
-        raise ConfigurationError(f"Secret file for {name} is too large")
-    if stat.S_ISREG(st.st_mode):
-        broad = st.st_mode & (stat.S_IRWXG | stat.S_IRWXO)
-        writable = st.st_mode & (stat.S_IWGRP | stat.S_IWOTH)
-        docker_secret = path.is_relative_to(Path("/run/secrets"))
-        if writable or (broad and not docker_secret):
-            raise ConfigurationError(
-                f"Secret file for {name} has unsafe group or other permissions"
-            )
-    try:
-        value = path.read_text(encoding="utf-8")
-    except (OSError, UnicodeError) as err:
-        raise ConfigurationError(f"Cannot read secret file for {name}") from err
-    if value.endswith("\n"):
-        value = value[:-1]
-    if value.endswith("\r"):
-        value = value[:-1]
-    return normalise_secret(value, name=name, minimum=minimum, maximum=maximum)
 
 
 def validate_runtime_files(config: GatewayConfig, *, bootstrap: bool) -> None:

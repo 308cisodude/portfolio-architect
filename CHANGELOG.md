@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.23.0
+## 1.24.0
 
 - Introduces a provider-neutral `PortfolioProvider` runtime contract for the common hardened Gateway server.
 - Removes the common server's direct type/import dependency on `ComdirectClient`; the released provider remains Comdirect.

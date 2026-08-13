@@ -48,7 +48,7 @@ Same-depot DKB exports are collapsed before aggregation by selecting the newest 
 
 ## Provider Gateway boundary
 
-Version 1.23.0 separates the common Gateway runtime from the provider client type.
+Version 1.24.0 separates the common Gateway runtime from the provider client type.
 The authenticated HTTP server, snapshot storage, health/LKG state and provider-neutral
 REST model consume a minimal `PortfolioProvider` contract: a bounded provider ID, a
 validated refresh cadence and `fetch_snapshot()`. The common server does not import

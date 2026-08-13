@@ -54,7 +54,7 @@ owner review.
 2. Run `./tools/release_check.sh` from a clean checkout.
 3. Verify the generated archives with `tools/verify_release.py`.
 4. Review release notes, checksums, SPDX SBOM, integration drop-in, stable HACS
-   archive, Gateway App archive, and complete source archive together.
+   archive, all three provider Gateway App archives, and complete source archive together.
 5. Create and push the exact semantic-version tag.
 6. Let `.github/workflows/release.yml` build, attest, upload, and publish the
    complete draft release.
