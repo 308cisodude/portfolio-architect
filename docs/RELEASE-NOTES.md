@@ -1,33 +1,68 @@
-# Portfolio Architect 1.21.0
+# Portfolio Architect 1.22.0
 
-Version 1.21.0 is an execution-semantics and clarity release. It does not add trade execution or transaction-history capability.
+Version 1.22.0 makes confidentiality and privacy part of the same fail-closed
+release discipline already used for tests, archive verification, immutable
+dependencies, and reproducible packaging. Runtime portfolio behavior remains based
+on the accepted 1.21.0 release.
 
-## Scheduled execution is context, not evidence
+## Publication and privacy gate
 
-The existing `sensor.portfolio_architect_planned_execution` entity keeps its entity ID and date value for compatibility, but its display name is now **Scheduled execution**. A scheduled date may legitimately be in the past while a recommendation remains valid. The date therefore describes the plan cycle that the latest evaluation was prepared for; it is not proof that an order was placed, that a transaction occurred, or that the recommendation automatically expired.
+A new `tools/check_privacy.py` validates repository source, complete reachable Git history in protected CI, and built release artifacts. It rejects high-risk private-document/file classes, unexpected images,
+unapproved CSV exports, valid IBANs, private-key material, and provider identity
+literals that are not unmistakably synthetic. Findings report rule and location
+without printing the matched private value.
 
-## Current actionability
+The checker also rejects source symlinks, and release staging excludes local virtual-environment directories so local developer state cannot be pulled into a source archive accidentally.
 
-A new `sensor.portfolio_architect_plan_actionability` exposes the current relationship between source trust, execution readiness, and schedule timing. Its bounded states are:
+The approved public data boundary remains deliberate: public instrument identifiers
+such as ISINs, generic provider names, the generic CSV example, and the existing
+sanitized/synthetic Comdirect and DKB fixtures are permitted. Real broker exports,
+statements, credentials, account/depot/customer identifiers, and attributable
+account-holder material are not.
 
-- `scheduled` — the source is actionable, the execution state is ready, and the scheduled date is still ahead;
-- `actionable_now` — the plan is ready and the scheduled date is today, or no recurring execution schedule is configured;
-- `overdue_actionable` — the scheduled date has passed but the current trusted recommendation is still actionable;
-- `not_ready` — the source is actionable but the execution state is not ready;
-- `not_actionable` — freshness, LKG, integrity, reauthentication, or Gateway health prevents a new investment action.
+Maintainers may additionally pass an exact private-literal file located outside the
+repository. This provides a local check for known real identifiers without putting
+the values into source control or CI configuration.
 
-Attributes expose the last evaluation timestamp, scheduled execution date, schedule relation, days until the scheduled date, execution state, and the existing bounded actionability reason. This is advisory state only; it does not infer transaction history.
+## Independent secret scanning
 
-## Dashboard and freshness wording
+The protected validation and immutable-release workflows first repeat the Portfolio Architect-specific privacy scan across complete Git history, then use the official Gitleaks
+v8.30.0 container by immutable SHA-256 digest. They scan:
 
-The reference dashboard now presents **Scheduled execution**, **Actionability**, and **Last evaluated** as separate concepts. Runtime health also labels the existing freshness binary sensor as **Snapshot freshness** and shows its translated state (**Within freshness window** / **Outside freshness window**). This makes the v1.20 LKG state coherent: a live source can be unavailable while a previously validated snapshot remains inside its allowed freshness window.
+- the exact tracked source tree;
+- the complete Git patch history; and
+- safely staged contents of every release artifact.
 
-## Compatibility
+Git history is produced explicitly by Git and streamed to Gitleaks stdin, so the
+pipeline does not rely on Gitleaks' internal `git log` execution. Gitleaks v8.30.1
+is intentionally not used because its upstream release has reported silent-detection
+and packaging regressions.
 
-Payload schema 8, REST schema 1 (portfolio), Gateway health schema 5, existing entity IDs, existing unique IDs, cash-authorization semantics, LKG retention, and the read-only Gateway API surface are unchanged. The Gateway package is version-aligned to 1.21.0; its banking runtime behavior is unchanged.
+The release workflow completes both the Portfolio Architect privacy gate and
+Gitleaks scan before artifact attestation or GitHub release publication.
 
-No trading, order, transfer, payment, or transaction-history capability is added. A quantity change remains a holdings observation, not proof of a trade.
+## Dashboard ownership clarified
 
-## Experimental branch note
+The supplied bilingual Lovelace dashboard remains a static reference configuration.
+Once a user copies/imports it into Home Assistant, it is user-owned configuration.
+HACS and Portfolio Architect do not overwrite it automatically. Version 1.22.0 does
+not require a dashboard replacement after the accepted v1.21.0 dashboard update.
 
-The historical `v1.19.0-rc2` tag remains a separate experimental brokerage-diagnostics branch. Stable 1.21.0 does **not** promote those experimental diagnostics.
+## Roadmap
+
+The next planned architectural milestone is distinct Comdirect, DKB, and Trade
+Republic Gateway Apps behind provider-neutral Portfolio Architect contracts. The
+following milestone is local Trade Republic statement-document import using only
+wholly synthetic public test material.
+
+## Compatibility and safety
+
+Payload schema 8, REST schema 1, Gateway health schema 5, entity IDs,
+unique IDs, v1.21 actionability, authorized-cash semantics, LKG behavior, portfolio
+calculations, recommendation logic, and the read-only Gateway API surface are
+unchanged. The Gateway package is version-aligned to 1.22.0; its banking runtime
+behavior is unchanged from 1.20.1.
+
+No trading, order, transfer, payment, or transaction-history capability is added.
+
+The historical `v1.19.0-rc2` tag remains a separate experimental brokerage-diagnostics branch. Stable 1.22.0 does **not** promote those experimental diagnostics or their probe code.

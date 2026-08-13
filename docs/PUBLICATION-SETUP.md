@@ -54,8 +54,8 @@ python tools/check_publication.py --strict
 
 Strict validation rejects mutable GitHub Action refs, workflow GHCR images without
 SHA-256 digests, a floating or non-hash-enforcing Python validation toolchain,
-incomplete ownership rules, placeholder repository metadata, and a lingering
-example CODEOWNERS file.
+missing privacy/Gitleaks publication gates, incomplete ownership rules, placeholder
+repository metadata, and a lingering example CODEOWNERS file.
 
 ## 3. Validate before tagging
 
@@ -71,14 +71,15 @@ Run the local pipeline from a clean checkout as an independent check:
 ./tools/release_check.sh
 ```
 
-The local environment validates workflow structure, pinned references, and the
-Python wheel lock, but does not execute the two external OCI validator images or
-the exact GitHub-hosted Python 3.14.6 environment. Their first GitHub-hosted runs
-are the live compatibility check.
+The local environment validates workflow structure, pinned references, privacy
+contracts, and the Python wheel lock, but does not execute the external HACS,
+hassfest, or Gitleaks OCI images or the exact GitHub-hosted Python 3.14.6
+environment. Their GitHub-hosted runs are the authoritative external acceptance
+check.
 
 ## 4. Publish
 
-Create an annotated `v1.21.0` tag that points to the reviewed release commit and
+Create an annotated `v1.22.0` tag that points to the reviewed release commit and
 push it. The release workflow verifies that the tag matches the integration
 version, rebuilds all artifacts, generates attestations, creates a draft release,
 uploads every asset, and publishes the completed release.

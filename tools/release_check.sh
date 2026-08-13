@@ -20,6 +20,8 @@ for path in root.rglob('*.yaml'):
     yaml.safe_load(path.read_text(encoding='utf-8'))
 PY
 python tools/check_publication.py
+python tools/check_privacy.py --root .
 pytest -q
 python tools/build_release.py --output dist
 python tools/verify_release.py --dist dist
+python tools/check_privacy.py --root . --dist dist

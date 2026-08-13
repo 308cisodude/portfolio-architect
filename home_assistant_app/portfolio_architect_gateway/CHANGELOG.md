@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.22.0
+
+- Aligns Gateway App package metadata with Portfolio Architect v1.22.0 publication/privacy hardening.
+- Keeps Gateway banking runtime behavior, REST portfolio schema 1, and health schema 5 unchanged from v1.20.1.
+- Adds no provider capability, authentication change, trading path, or transaction-history behavior.
+
 ## 1.21.0
 
 - Aligns Gateway App package metadata with Portfolio Architect v1.21.0.

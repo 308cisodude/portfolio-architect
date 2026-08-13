@@ -16,7 +16,7 @@ from pathlib import Path, PurePosixPath
 from typing import Iterable
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-EXCLUDED_PARTS = {".git", ".pytest_cache", "__pycache__", "dist"}
+EXCLUDED_PARTS = {".git", ".pytest_cache", "__pycache__", "dist", ".venv", "venv"}
 EXCLUDED_SUFFIXES = {".pyc", ".pyo"}
 EXCLUDED_ROOT_FILES = {"PACKAGE-MANIFEST.json", "SHA256SUMS"}
 ZIP_EPOCH = (1980, 1, 1, 0, 0, 0)
@@ -46,6 +46,16 @@ def source_files() -> list[Path]:
         (path for path in PROJECT_ROOT.rglob("*") if include_path(path)),
         key=lambda item: item.relative_to(PROJECT_ROOT).as_posix(),
     )
+
+
+def reject_source_symlinks(root: Path = PROJECT_ROOT) -> None:
+    """Refuse release staging through filesystem links outside the source tree."""
+    for path in sorted(root.rglob("*")):
+        relative = path.relative_to(root)
+        if any(part in EXCLUDED_PARTS for part in relative.parts):
+            continue
+        if path.is_symlink():
+            raise SystemExit(f"Release source must not contain symlinks: {relative.as_posix()}")
 
 
 def write_json(path: Path, value: object) -> None:
@@ -132,6 +142,7 @@ def validate_version(version: str) -> None:
 
 
 def build(output: Path) -> list[Path]:
+    reject_source_symlinks()
     version = read_version()
     validate_version(version)
     output = output.resolve()

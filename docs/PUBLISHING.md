@@ -71,3 +71,20 @@ artifacts.
 
 The Gateway is a local read-only bridge. Port 8787 must not be exposed to
 untrusted networks.
+
+## v1.22 privacy publication gate
+
+Every publication candidate must pass `tools/check_privacy.py` on the repository and
+on the built `dist/` artifacts. Protected GitHub validation additionally applies the
+same Portfolio Architect-specific rules to complete reachable Git history. Protected GitHub validation additionally executes
+`tools/run_gitleaks_ci.sh`, which scans the tracked tree, complete Git patch history,
+and staged release contents with the reviewed immutable Gitleaks image.
+
+Do not create a Gitleaks baseline for first-party Portfolio Architect source. The
+expected state is zero unexplained secret findings. Do not suppress an attributable
+account/identity finding merely because it appears in a fixture; public fixtures
+must be wholly synthetic.
+
+For a local maintainer-only exact check, place one known private literal per line in
+a file **outside** the repository and run `tools/check_privacy.py` with
+`--private-literals <path>`. Never commit that file.

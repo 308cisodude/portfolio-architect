@@ -20,13 +20,23 @@ python -m pip install \
 The lock targets CPython 3.14.6 on Linux x86-64. Dependency updates must retain
 exact versions and reviewed wheel hashes for the full direct and transitive set.
 
+The complete local shell pipeline is designed for a POSIX/Linux execution
+environment. Native Windows can legitimately differ on executable bits, POSIX file
+modes, and directory fsync behavior; do not change security semantics merely to make
+those platform-specific assertions pass locally. For Windows maintainers, the
+protected GitHub **Validate release** workflow is the authoritative full regression
+and publication check.
+
 GitHub pull requests must also pass HACS and hassfest validation after repository
-publication metadata has been configured.
+publication metadata has been configured. The protected validation workflow runs
+the v1.22 privacy gate and immutable Gitleaks source/history/artifact scan before
+release artifacts are accepted.
 
 A change that affects the REST or Gateway health contract must retain backward
 compatibility or include an explicit schema migration. Do not commit credentials,
-OAuth material, bearer tokens, account identifiers, private snapshots, exported
-CSV files, Home Assistant `.storage` data, or generated Python caches.
+OAuth material, bearer tokens, account identifiers, private snapshots, raw broker
+documents, unapproved exported CSV files, Home Assistant `.storage` data, or
+generated Python caches. Public broker fixtures must be wholly synthetic.
 
 User-visible text must be provided in both English and German. Dashboard changes
 must remain usable with native Home Assistant cards and without third-party

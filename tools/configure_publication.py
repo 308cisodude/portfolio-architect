@@ -76,6 +76,8 @@ def configure(root: Path, repository: str, codeowners: list[str]) -> None:
         f"/.github/dependabot.yml {owners}\n"
         f"/tools/configure_publication.py {owners}\n"
         f"/tools/check_publication.py {owners}\n"
+        f"/tools/check_privacy.py {owners}\n"
+        f"/tools/run_gitleaks_ci.sh {owners}\n"
         f"/tools/release_check.sh {owners}\n"
         f"/custom_components/portfolio_architect/ {owners}\n"
         f"/home_assistant_app/portfolio_architect_gateway/ {owners}\n"

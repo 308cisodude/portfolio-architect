@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.22.0
+
+- Makes publication privacy hygiene a fail-closed release invariant.
+- Adds Portfolio Architect-specific source and release-artifact checks for attributable account material, raw broker documents, unapproved exports, unexpected images, valid IBANs, key material, and non-synthetic provider identity literals.
+- Adds digest-pinned Gitleaks v8.30.0 scanning of the tracked tree, complete Git patch history, and built release contents in protected validation and immutable-release workflows.
+- Requires full Git history in the validation workflow and runs the secret/privacy gates before release attestation or publication.
+- Rejects source symlinks and excludes local virtual-environment directories from release staging.
+- Clarifies that copied/imported Lovelace dashboards are user-owned and are not overwritten by HACS or Portfolio Architect.
+- Adds the roadmap for provider-separated Comdirect, DKB, and Trade Republic Gateway Apps followed by Trade Republic statement-document import.
+- Preserves payload schema 8, REST schema 1, Gateway health schema 5, entity IDs, v1.21 actionability, authorized-cash semantics, LKG behavior, calculations, and read-only Gateway banking behavior.
+
 ## 1.21.0
 
 - Separates scheduled execution timing from current recommendation actionability without changing the existing `planned_execution` entity ID.
