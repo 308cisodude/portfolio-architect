@@ -1,66 +1,34 @@
-# Portfolio Architect 1.23.0
+# Portfolio Architect 1.24.0
 
-Version 1.23.0 establishes the provider-aware Gateway foundation needed for
-separate Comdirect, DKB and Trade Republic Home Assistant Apps without changing
-the portfolio calculation or the read-only financial boundary.
+Version 1.24.0 turns the v1.23 provider identities into three separately installable Home Assistant App packages while preserving the established Comdirect runtime and all portfolio semantics.
 
-## Provider-neutral Gateway runtime contract
+## Three provider App identities
 
-The hardened Gateway server now consumes a minimal `PortfolioProvider` protocol
-rather than importing `ComdirectClient`. A provider supplies only a bounded
-machine-readable provider identity, its validated refresh cadence and a validated
-provider-neutral snapshot.
+- **Portfolio Architect Gateway — Comdirect** keeps the historical `portfolio_architect_gateway` slug, stable channel, and existing private state.
+- **Portfolio Architect Gateway — DKB** is published under `portfolio_architect_gateway_dkb`.
+- **Portfolio Architect Gateway — Trade Republic** is published under `portfolio_architect_gateway_trade_republic`.
 
-The released implementation remains Comdirect. `ComdirectClient` now implements
-that protocol explicitly while its OAuth/bootstrap, account discovery, selected
-account, cash authorization and upstream API behavior remain provider-specific.
+No DKB or Trade Republic acquisition runtime is shipped by v1.24.0. DKB and Trade Republic are experimental, manual-only provider shells in this release. They establish Supervisor identity, isolated private storage, a persistent local API token, provider health identity and an in-place upgrade path. They deliberately do not provide live portfolio acquisition yet.
 
-## Gateway health schema 6
+## Shared hardened runtime
 
-Health schema 6 adds exactly one provider field:
+The common Gateway state/server path now consumes provider-neutral `ServerConfig` directly. Server configuration and secret-file handling are separated from the Comdirect-specific configuration model. DKB/TR packages contain only the audited provider-neutral runtime subset; they do not contain `ComdirectClient`, the Comdirect transport, OAuth/bootstrap UI or cash-policy implementation.
 
-```json
-{
-  "provider_id": "comdirect"
-}
-```
+A synchronization tool and regression contract require the App build-context copies to remain byte-identical with the canonical `gateway/src` sources.
 
-The value is bounded and non-secret. Account IDs, depot IDs, IBANs and authentication
-material are not exposed. Health schemas 1 through 5 remain available unchanged.
-Portfolio Architect 1.23.0 negotiates schema 6 first and includes older health
-media types as fallbacks, preserving rich recovery telemetry with older supported
-Gateway versions.
+## Release packaging
 
-The Gateway status entity and privacy-conscious diagnostics expose `provider_id`
-when schema 6 is available.
-
-## Distinct Comdirect App identity without migration
-
-The existing App is now visibly named **Portfolio Architect Gateway — Comdirect**.
-Its existing slug remains `portfolio_architect_gateway`, deliberately preserving
-its Home Assistant identity and App-private data. No credential, OAuth/session,
-API-token, account-selection, cash-policy or cached-snapshot migration is needed.
-
-The reserved future App identities are documented as:
-
-- Portfolio Architect Gateway — DKB (`portfolio_architect_gateway_dkb`)
-- Portfolio Architect Gateway — Trade Republic (`portfolio_architect_gateway_trade_republic`)
-
-No DKB or Trade Republic acquisition runtime is shipped in 1.23.0. This release
-creates the clean common boundary first rather than publishing non-functional
-provider Apps.
+The immutable release now publishes three distinct Gateway App archives: the historical Comdirect asset plus DKB and Trade Republic App ZIPs. Source/history/artifact privacy scans and Gitleaks cover all of them before publication.
 
 ## Compatibility and safety
 
-- Payload schema 8 is unchanged.
-- REST portfolio schema 1 is unchanged.
-- Gateway health schema 6 is additive; schemas 1–5 remain supported.
-- Portfolio calculations, allocation corridors, policy, cost-aware execution,
-  authorized investment cash, v1.20/v1.20.1 LKG behavior, v1.21 actionability and
-  v1.22 publication/privacy controls are unchanged.
-- Existing Home Assistant entity IDs and unique IDs are unchanged.
-- The v1.21 reference dashboard remains current; no dashboard replacement is required.
+- Payload schema 8: unchanged.
+- REST portfolio schema 1: unchanged.
+- Gateway health schema 6: unchanged; schemas 1–5 remain supported for backward compatibility.
+- Existing entity IDs and unique IDs: unchanged.
+- Comdirect credentials/session, selected account, authorized-cash policy, API token and cached snapshot: retained in place.
+- v1.20/v1.20.1 LKG behavior and v1.21 schedule/actionability semantics: unchanged.
+- DKB/TR shells do not claim live acquisition.
+- Trade Republic statement-document parsing is not included; it remains the v1.25.0 milestone.
+- The experimental v1.19.0-rc2 brokerage-diagnostic code is not promoted by this release and remains excluded from stable.
 - No trading, order, transfer, payment, or transaction-history capability is added.
-
-The historical `v1.19.0-rc2` brokerage-diagnostics branch remains separate and is
-not promoted by this release.

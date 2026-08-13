@@ -1,8 +1,8 @@
-# Portfolio Architect Gateway runtime v1.23.0
+# Portfolio Architect Gateway runtime v1.24.0
 
 The Gateway is a dedicated, dependency-free Python service that converts one
 provider-specific portfolio source into provider-neutral Portfolio Architect REST
-schema 1. Version 1.23.0 introduces the common `PortfolioProvider` runtime contract
+schema 1. Version 1.24.0 introduces the common `PortfolioProvider` runtime contract
 and Gateway health schema 6. The released provider implementation remains
 Comdirect.
 
@@ -47,7 +47,7 @@ available unchanged for older Portfolio Architect versions.
 
 The provider contract and official future App identities are documented in
 `docs/GATEWAY-PROVIDERS.md`. No DKB or Trade Republic acquisition runtime is
-included in v1.23.0.
+included in v1.24.0.
 
 ## Authorized investment cash
 
@@ -97,4 +97,4 @@ mode still requires a valid cap, and malformed persisted policy files fail close
 Use the native Home Assistant App bundle for the complete Comdirect workflow.
 Update in place and never remove App data during a normal upgrade. Existing OAuth
 state, Gateway bearer token, API credentials, cached snapshot, selected account,
-and cash-policy state survive the v1.23.0 provider-aware refactor.
+and cash-policy state survive the v1.24.0 provider-aware refactor.

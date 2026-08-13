@@ -122,7 +122,7 @@ def _controller(tmp_path: Path):
     )
     save_snapshot(config.server.snapshot_file, snapshot)
     client = FakeBootstrapClient()
-    state = GatewayState(config, client)
+    state = GatewayState(config.server, client)
     return AppController(config, client, state, token), client
 
 

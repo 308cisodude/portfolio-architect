@@ -90,4 +90,4 @@ def test_dashboard_uses_execution_state_not_ambiguous_plan_not_ready() -> None:
 
 
 def test_v1163_version_metadata_is_aligned() -> None:
-    assert 'version = "1.23.0"' in (ROOT / "pyproject.toml").read_text()
+    assert 'version = "1.24.0"' in (ROOT / "pyproject.toml").read_text()

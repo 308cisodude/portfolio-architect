@@ -1,0 +1,9 @@
+configuration:
+  max_cached_snapshot_age_seconds:
+    name: Maximales Alter des Zwischenspeichers
+    description: Reservierte Altersgrenze für Provider-Snapshots; diese Version erzeugt noch keinen Live-Snapshot.
+  health_endpoint_enabled:
+    name: Authentifizierten Status-Endpunkt aktivieren
+    description: Stellt /healthz am privaten REST-Dienst bereit; der Bearer-Token bleibt erforderlich.
+network:
+  8787/tcp: Privater REST-Endpunkt für Portfolio Architect; Host-Port deaktiviert lassen.

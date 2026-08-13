@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway — Comdirect v1.23.0
+# Portfolio Architect Gateway — Comdirect v1.24.0
 
-Version 1.23.0 makes the common Gateway runtime provider-aware while preserving the
+Version 1.24.0 makes the common Gateway runtime provider-aware while preserving the
 existing Comdirect App identity and private state. Gateway health schema 6 now
 reports `provider_id: comdirect`; REST portfolio schema 1 and all existing
 Comdirect cash/bootstrap behavior remain compatible.

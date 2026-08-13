@@ -12,14 +12,14 @@ import logging
 import os
 from pathlib import Path
 import secrets
-import tempfile
 import threading
 from typing import Any, Callable, Final
 from urllib.parse import parse_qs, urlsplit
 
 from .cash_policy import MODE_ALL_AVAILABLE, MODE_CAPPED, parse_policy_input
 from .comdirect import AccountBalanceCandidate, ComdirectClient
-from .config import ComdirectConfig, GatewayConfig, ServerConfig, normalise_secret
+from .config import ComdirectConfig, GatewayConfig
+from .runtime_config import ServerConfig, atomic_secret, ensure_api_token
 from .errors import GatewayError, RemoteApiError
 from .server import GatewayState, create_server, run_refresh_loop
 
@@ -121,41 +121,6 @@ def _bool(value: Any, name: str) -> bool:
         raise RuntimeError(f"{name} must be true or false")
     return value
 
-
-def _atomic_secret(path: Path, value: str, *, name: str, maximum: int) -> None:
-    cleaned = normalise_secret(value, name=name, maximum=maximum)
-    path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
-    descriptor, temporary_name = tempfile.mkstemp(
-        prefix=f".{path.name}.", dir=path.parent
-    )
-    temporary = Path(temporary_name)
-    try:
-        os.fchmod(descriptor, 0o600)
-        with os.fdopen(descriptor, "w", encoding="utf-8", closefd=True) as handle:
-            handle.write(cleaned)
-            handle.flush()
-            os.fsync(handle.fileno())
-        os.replace(temporary, path)
-        path.chmod(0o600)
-    except Exception:
-        try:
-            os.close(descriptor)
-        except OSError:
-            pass
-        temporary.unlink(missing_ok=True)
-        raise
-
-
-def ensure_api_token(path: Path) -> str:
-    """Return the stable app-local API token, creating it with mode 0600 once."""
-    if path.exists():
-        value = path.read_text(encoding="utf-8")
-        return normalise_secret(
-            value, name="gateway API token", minimum=32, maximum=512
-        )
-    value = secrets.token_urlsafe(48)
-    _atomic_secret(path, value, name="gateway API token", maximum=512)
-    return value
 
 
 def build_app_config(options: AppOptions, data_directory: Path = APP_DATA_DIRECTORY) -> GatewayConfig:
@@ -442,13 +407,13 @@ class AppController:
                 prompt=_reject_non_push_prompt,
                 output=self._bootstrap_output,
             )
-            _atomic_secret(
+            atomic_secret(
                 self.config.comdirect.client_id_file,
                 client_id,
                 name="Comdirect client ID",
                 maximum=512,
             )
-            _atomic_secret(
+            atomic_secret(
                 self.config.comdirect.client_secret_file,
                 client_secret,
                 name="Comdirect client secret",
@@ -991,11 +956,11 @@ def serve_app(
     config = build_app_config(options, data_directory)
     api_token = ensure_api_token(config.server.api_token_file)
     client = ComdirectClient(config.comdirect)
-    state = GatewayState(config, client)
+    state = GatewayState(config.server, client)
     controller = AppController(config, client, state, api_token)
 
     stop_event = threading.Event()
-    gateway_server = create_server(config, state)
+    gateway_server = create_server(config.server, state)
     ingress_server = IngressHttpServer(
         ingress_address,
         controller,

@@ -409,6 +409,6 @@ schemas 1 through 5 for compatibility.
 The existing Comdirect App keeps its historical slug and `/data/gateway` private
 storage so the architectural split does not migrate or copy authentication state.
 Reserved future DKB and Trade Republic App identities are separate security
-boundaries with separate private state; v1.23.0 does not ship either acquisition
+boundaries with separate private state; v1.24.0 does not ship either acquisition
 runtime. No provider contract introduces a trading, order, transfer, payment, or
 transaction-history write path.

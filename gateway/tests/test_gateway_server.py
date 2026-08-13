@@ -76,7 +76,7 @@ def _config(tmp_path: Path) -> GatewayConfig:
 
 def _start(tmp_path: Path):
     config = _config(tmp_path)
-    state = GatewayState(config, NoNetworkClient())
+    state = GatewayState(config.server, NoNetworkClient())
     server = GatewayHttpServer(
         ("127.0.0.1", 0), state, "g" * 64, health_endpoint_enabled=True
     )
@@ -236,7 +236,7 @@ def test_gateway_publishes_snapshot_integrity_metadata(tmp_path: Path) -> None:
 
 def test_gateway_tracks_last_known_good_after_refresh_failure(tmp_path: Path) -> None:
     config = _config(tmp_path)
-    state = GatewayState(config, FailingClient())
+    state = GatewayState(config.server, FailingClient())
     before = state.health_document(version=3)
     assert before["operating_mode"] == "last_known_good"
     assert before["consecutive_refresh_failures"] == 0
@@ -305,7 +305,7 @@ def test_gateway_health_v4_reports_refresh_telemetry(tmp_path: Path) -> None:
 def test_manual_refresh_is_non_overlapping_and_rate_limited(tmp_path: Path) -> None:
     config = _config(tmp_path)
     client = BlockingClient()
-    state = GatewayState(config, client)
+    state = GatewayState(config.server, client)
 
     accepted, retry_after = state.request_manual_refresh()
     assert accepted is True
@@ -341,7 +341,7 @@ def test_manual_refresh_is_non_overlapping_and_rate_limited(tmp_path: Path) -> N
 
 def test_next_scheduled_refresh_timestamp_is_published(tmp_path: Path) -> None:
     config = _config(tmp_path)
-    state = GatewayState(config, NoNetworkClient())
+    state = GatewayState(config.server, NoNetworkClient())
     due = datetime.now(timezone.utc).replace(microsecond=0)
     state.set_next_refresh_due_at(due)
     health = state.health_document(version=4)
@@ -396,7 +396,7 @@ def test_reauthentication_health_retains_cached_snapshot_integrity_metadata(tmp_
             raise ReauthenticationRequired("simulated")
 
     config = _config(tmp_path)
-    state = GatewayState(config, ReauthClient())
+    state = GatewayState(config.server, ReauthClient())
     cached = state.snapshot_view()
     assert cached is not None
 
@@ -428,7 +428,7 @@ def test_gateway_health_v5_reports_classified_recovery_guidance(tmp_path: Path) 
             )
 
     config = _config(tmp_path)
-    state = GatewayState(config, RateLimitedClient())
+    state = GatewayState(config.server, RateLimitedClient())
     assert state.refresh(trigger="scheduled") is False
     health = state.health_document(version=5)
     assert health["health_schema_version"] == 5
@@ -464,7 +464,7 @@ def test_gateway_health_v5_clears_failure_guidance_after_success(tmp_path: Path)
 
     config = _config(tmp_path)
     client = ToggleClient()
-    state = GatewayState(config, client)
+    state = GatewayState(config.server, client)
     assert state.refresh(trigger="scheduled") is False
     failed = state.health_document(version=5)
     assert failed["last_refresh_failure_class"] == "gateway_error"
@@ -481,7 +481,7 @@ def test_gateway_health_v5_clears_failure_guidance_after_success(tmp_path: Path)
 
 
 def test_gateway_health_v6_reports_bounded_provider_identity(tmp_path: Path) -> None:
-    state = GatewayState(_config(tmp_path), NoNetworkClient())
+    state = GatewayState(_config(tmp_path).server, NoNetworkClient())
     health = state.health_document(version=6)
     assert health["health_schema_version"] == 6
     assert health["provider_id"] == "comdirect"
@@ -498,14 +498,14 @@ def test_gateway_rejects_invalid_provider_runtime_metadata(tmp_path: Path) -> No
         poll_interval_seconds = 1
 
     try:
-        GatewayState(_config(tmp_path), InvalidProviderIdClient())
+        GatewayState(_config(tmp_path).server, InvalidProviderIdClient())
     except ConfigurationError as err:
         assert "provider ID" in str(err)
     else:  # pragma: no cover - regression guard
         raise AssertionError("invalid provider identity must fail closed")
 
     try:
-        GatewayState(_config(tmp_path), InvalidCadenceClient())
+        GatewayState(_config(tmp_path).server, InvalidCadenceClient())
     except ConfigurationError as err:
         assert "poll interval" in str(err)
     else:  # pragma: no cover - regression guard

@@ -128,13 +128,9 @@ def validate_version(version: str) -> None:
         "integration": json.loads(
             (PROJECT_ROOT / "custom_components/portfolio_architect/manifest.json").read_text()
         )["version"],
-        "gateway": json.loads(
-            json.dumps(
-                __import__("yaml").safe_load(
-                    (PROJECT_ROOT / "home_assistant_app/portfolio_architect_gateway/config.yaml").read_text()
-                )
-            )
-        )["version"],
+        "gateway_comdirect": __import__("yaml").safe_load((PROJECT_ROOT / "home_assistant_app/portfolio_architect_gateway/config.yaml").read_text())["version"],
+        "gateway_dkb": __import__("yaml").safe_load((PROJECT_ROOT / "home_assistant_app/portfolio_architect_gateway_dkb/config.yaml").read_text())["version"],
+        "gateway_trade_republic": __import__("yaml").safe_load((PROJECT_ROOT / "home_assistant_app/portfolio_architect_gateway_trade_republic/config.yaml").read_text())["version"],
     }
     mismatches = {name: value for name, value in expected.items() if str(value) != version}
     if mismatches:
@@ -172,12 +168,19 @@ def build(output: Path) -> list[Path]:
         hacs_archive = output / "portfolio_architect.zip"
         write_reproducible_zip(hacs_stage, hacs_archive)
 
-        # Home Assistant Gateway App.
-        app_stage = temp / "app" / "portfolio_architect_gateway"
-        copy_tree(PROJECT_ROOT / "home_assistant_app/portfolio_architect_gateway", app_stage)
-        write_checksums(app_stage, app_stage / "SHA256SUMS")
-        app_archive = output / f"portfolio-architect-gateway-app-v{version}.zip"
-        write_reproducible_zip(temp / "app", app_archive)
+        # Home Assistant provider Gateway Apps. Keep the historical Comdirect asset
+        # name for compatibility while publishing DKB/TR as distinct packages.
+        app_specs = (
+            ("portfolio_architect_gateway", f"portfolio-architect-gateway-app-v{version}.zip"),
+            ("portfolio_architect_gateway_dkb", f"portfolio-architect-gateway-dkb-app-v{version}.zip"),
+            ("portfolio_architect_gateway_trade_republic", f"portfolio-architect-gateway-trade-republic-app-v{version}.zip"),
+        )
+        for app_dir, archive_name in app_specs:
+            app_temp = temp / f"app-{app_dir}"
+            app_stage = app_temp / app_dir
+            copy_tree(PROJECT_ROOT / "home_assistant_app" / app_dir, app_stage)
+            write_checksums(app_stage, app_stage / "SHA256SUMS")
+            write_reproducible_zip(app_temp, output / archive_name)
 
         # Complete source release with generated manifest and checksums.
         full_stage = temp / f"portfolio-architect-v{version}"

@@ -238,6 +238,8 @@ def validate(root: Path, strict: bool) -> None:
         "/tools/release_check.sh",
         "/custom_components/portfolio_architect/",
         "/home_assistant_app/portfolio_architect_gateway/",
+        "/home_assistant_app/portfolio_architect_gateway_dkb/",
+        "/home_assistant_app/portfolio_architect_gateway_trade_republic/",
         "/gateway/",
     ):
         require(

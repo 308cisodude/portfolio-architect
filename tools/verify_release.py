@@ -8,6 +8,8 @@ import hashlib
 import json
 import re
 import zipfile
+
+import yaml
 from pathlib import Path, PurePosixPath
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -136,6 +138,63 @@ def verify_integration_archive_layouts(directory: Path, release_version: str) ->
         )
 
 
+
+def verify_gateway_app_archive_layouts(directory: Path, release_version: str) -> None:
+    """Verify provider App identity, archive roots, and shell isolation."""
+    specs = {
+        "portfolio-architect-gateway-app-v%s.zip" % release_version: (
+            "portfolio_architect_gateway",
+            "portfolio_architect_gateway",
+            "stable",
+            None,
+        ),
+        "portfolio-architect-gateway-dkb-app-v%s.zip" % release_version: (
+            "portfolio_architect_gateway_dkb",
+            "portfolio_architect_gateway_dkb",
+            "experimental",
+            "dkb",
+        ),
+        "portfolio-architect-gateway-trade-republic-app-v%s.zip" % release_version: (
+            "portfolio_architect_gateway_trade_republic",
+            "portfolio_architect_gateway_trade_republic",
+            "experimental",
+            "trade_republic",
+        ),
+    }
+    for archive_name, (root, slug, stage, provider_id) in specs.items():
+        path = directory / archive_name
+        prefix = f"{root}/"
+        payload = archive_payload(path, prefix=prefix)
+        required = {"config.yaml", "Dockerfile", "entrypoint.py", "SHA256SUMS"}
+        missing = sorted(required - payload.keys())
+        if missing:
+            raise SystemExit(f"{archive_name} missing App files: {missing}")
+        with zipfile.ZipFile(path) as archive:
+            config = yaml.safe_load(archive.read(prefix + "config.yaml"))
+        if str(config.get("version")) != release_version:
+            raise SystemExit(f"{archive_name} version is not {release_version}")
+        if config.get("slug") != slug:
+            raise SystemExit(f"{archive_name} slug mismatch: {config.get('slug')}")
+        if config.get("stage") != stage:
+            raise SystemExit(f"{archive_name} stage mismatch: {config.get('stage')}")
+        if provider_id is not None:
+            if config.get("boot") != "manual_only":
+                raise SystemExit(f"{archive_name} provider shell must be manual_only")
+            if config.get("environment", {}).get("PA_PROVIDER_ID") != provider_id:
+                raise SystemExit(f"{archive_name} provider identity mismatch")
+            forbidden = {
+                "src/portfolio_architect_gateway/comdirect.py",
+                "src/portfolio_architect_gateway/transport.py",
+                "src/portfolio_architect_gateway/cash_policy.py",
+                "src/portfolio_architect_gateway/app.py",
+                "src/portfolio_architect_gateway/config.py",
+            }
+            leaked = sorted(forbidden & payload.keys())
+            if leaked:
+                raise SystemExit(
+                    f"{archive_name} contains provider-specific Comdirect modules: {leaked}"
+                )
+
 def version() -> str:
     return str(
         json.loads(
@@ -149,6 +208,8 @@ def verify_expected_files(directory: Path, release_version: str) -> None:
         f"portfolio-architect-v{release_version}-ha-dropin.zip",
         "portfolio_architect.zip",
         f"portfolio-architect-gateway-app-v{release_version}.zip",
+        f"portfolio-architect-gateway-dkb-app-v{release_version}.zip",
+        f"portfolio-architect-gateway-trade-republic-app-v{release_version}.zip",
         f"portfolio-architect-v{release_version}.zip",
         f"portfolio-architect-v{release_version}-bilingual-dashboard.yaml",
         f"portfolio-architect-v{release_version}-upgrade-guide.md",
@@ -172,6 +233,7 @@ def main() -> None:
     for archive in sorted(dist.glob("*.zip")):
         verify_zip(archive)
     verify_integration_archive_layouts(dist, release_version)
+    verify_gateway_app_archive_layouts(dist, release_version)
     sbom = json.loads(
         (dist / f"portfolio-architect-v{release_version}-sbom.spdx.json").read_text()
     )

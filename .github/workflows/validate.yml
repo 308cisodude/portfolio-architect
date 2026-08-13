@@ -33,6 +33,26 @@ jobs:
           -r requirements/ci-python-3.14-linux-x86_64.txt
       - name: Run deterministic release pipeline
         run: ./tools/release_check.sh
+      - name: Build provider App images
+        shell: bash
+        run: |
+          version="$(python - <<'PYAPPVERSION'
+          import json
+          from pathlib import Path
+          print(json.loads(Path('custom_components/portfolio_architect/manifest.json').read_text())['version'])
+          PYAPPVERSION
+          )"
+          for app in \
+            portfolio_architect_gateway \
+            portfolio_architect_gateway_dkb \
+            portfolio_architect_gateway_trade_republic
+          do
+            docker build \
+              --build-arg BUILD_VERSION="${version}" \
+              --build-arg BUILD_ARCH=amd64 \
+              --tag "portfolio-architect-${app}:validation" \
+              "home_assistant_app/${app}"
+          done
       - name: Scan source, history, and release artifacts for secrets
         env:
           GITLEAKS_IMAGE: ghcr.io/gitleaks/gitleaks@sha256:691af3c7c5a48b16f187ce3446d5f194838f91238f27270ed36eef6359a574d9
