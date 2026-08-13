@@ -8,12 +8,13 @@ COMPONENT = ROOT / "custom_components" / "portfolio_architect"
 APP = ROOT / "home_assistant_app" / "portfolio_architect_gateway"
 
 
-def test_health_schema_five_is_requested_and_served() -> None:
+def test_current_health_schema_is_requested_and_served() -> None:
     server = (APP / "src" / "portfolio_architect_gateway" / "server.py").read_text()
     client = (COMPONENT / "rest_client.py").read_text()
+    assert "HEALTH_V6_MEDIA_TYPE" in server
     assert "HEALTH_V5_MEDIA_TYPE" in server
-    assert 'health_document(version=5)' in (APP / "src" / "portfolio_architect_gateway" / "app.py").read_text()
-    assert '"requested_health_schema_version": 5' in client
+    assert 'health_document(version=6)' in (APP / "src" / "portfolio_architect_gateway" / "app.py").read_text()
+    assert '"requested_health_schema_version": 6' in client
     for field in (
         "last_refresh_failure_at",
         "last_refresh_failure_class",

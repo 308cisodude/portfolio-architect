@@ -397,3 +397,18 @@ The privacy checker also rejects raw broker documents, unapproved exports,
 unexpected images/screenshots, private key material, valid IBANs, and suspicious
 provider identity literals unless they are unmistakably synthetic test values.
 Findings never print exact private-literal contents.
+
+## v1.23 provider-isolation controls
+
+The hardened Gateway HTTP server now depends on a minimal provider protocol rather
+than directly on the Comdirect client. The provider supplies only a bounded
+`provider_id`, validated refresh cadence, and a validated provider-neutral snapshot.
+Health schema 6 exposes the provider ID for operational provenance while retaining
+schemas 1 through 5 for compatibility.
+
+The existing Comdirect App keeps its historical slug and `/data/gateway` private
+storage so the architectural split does not migrate or copy authentication state.
+Reserved future DKB and Trade Republic App identities are separate security
+boundaries with separate private state; v1.23.0 does not ship either acquisition
+runtime. No provider contract introduces a trading, order, transfer, payment, or
+transaction-history write path.

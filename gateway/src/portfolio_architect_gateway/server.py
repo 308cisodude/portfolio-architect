@@ -17,7 +17,6 @@ import time
 from typing import Any, Callable
 
 from . import __version__
-from .comdirect import ComdirectClient
 from .config import GatewayConfig, read_secret
 from .errors import (
     AuthenticationError,
@@ -28,6 +27,11 @@ from .errors import (
     RemoteApiError,
 )
 from .models import PortfolioSnapshot
+from .provider import (
+    PortfolioProvider,
+    normalise_poll_interval_seconds,
+    normalise_provider_id,
+)
 from .store import load_snapshot, save_snapshot
 
 _LOGGER = logging.getLogger(__name__)
@@ -36,6 +40,7 @@ HEALTH_V2_MEDIA_TYPE = "application/vnd.portfolio-architect.health+json;version=
 HEALTH_V3_MEDIA_TYPE = "application/vnd.portfolio-architect.health+json;version=3"
 HEALTH_V4_MEDIA_TYPE = "application/vnd.portfolio-architect.health+json;version=4"
 HEALTH_V5_MEDIA_TYPE = "application/vnd.portfolio-architect.health+json;version=5"
+HEALTH_V6_MEDIA_TYPE = "application/vnd.portfolio-architect.health+json;version=6"
 REFRESH_TRIGGERS = frozenset({"startup", "scheduled", "manual", "bootstrap"})
 MANUAL_REFRESH_MIN_INTERVAL_SECONDS = 60
 
@@ -53,9 +58,13 @@ class SnapshotView:
 class GatewayState:
     """Thread-safe last-known-good snapshot and sanitized health state."""
 
-    def __init__(self, config: GatewayConfig, client: ComdirectClient) -> None:
+    def __init__(self, config: GatewayConfig, client: PortfolioProvider) -> None:
         self._config = config
         self._client = client
+        self._provider_id = normalise_provider_id(client.provider_id)
+        self._poll_interval_seconds = normalise_poll_interval_seconds(
+            client.poll_interval_seconds
+        )
         self._lock = threading.RLock()
         self._snapshot: PortfolioSnapshot | None = load_snapshot(
             config.server.snapshot_file
@@ -172,7 +181,7 @@ class GatewayState:
                 recommended_action="reauthenticate",
                 reauthentication_required=True,
             )
-            _LOGGER.warning("Portfolio refresh requires a new interactive Comdirect bootstrap")
+            _LOGGER.warning("Portfolio refresh requires provider reauthentication")
         except AuthenticationError as err:
             self._record_refresh_failure(
                 attempted_at=attempted_at,
@@ -302,6 +311,11 @@ class GatewayState:
             position_count=len(snapshot.positions),
         )
 
+    @property
+    def poll_interval_seconds(self) -> int:
+        """Return the validated provider refresh cadence."""
+        return self._poll_interval_seconds
+
     def health_document(self, *, version: int = 1) -> dict[str, Any]:
         with self._lock:
             snapshot = self._snapshot
@@ -355,13 +369,13 @@ class GatewayState:
         if version >= 2:
             document.update(
                 {
-                    "health_schema_version": min(version, 5),
+                    "health_schema_version": min(version, 6),
                     "snapshot_sha256": view.sha256 if view is not None else None,
                     "snapshot_position_count": (
                         view.position_count if view is not None else None
                     ),
                     "poll_interval_seconds": (
-                        self._config.comdirect.poll_interval_seconds
+                        self._poll_interval_seconds
                     ),
                     "max_cached_snapshot_age_seconds": (
                         self._config.server.max_cached_snapshot_age_seconds
@@ -411,6 +425,8 @@ class GatewayState:
                     "retry_after_seconds": retry_after_seconds,
                 }
             )
+        if version >= 6:
+            document["provider_id"] = self._provider_id
         return document
 
 
@@ -528,14 +544,17 @@ class GatewayRequestHandler(BaseHTTPRequestHandler):
 
     def _serve_health(self) -> None:
         accept = self.headers.get("Accept", "")
-        use_v5 = HEALTH_V5_MEDIA_TYPE in accept
-        use_v4 = not use_v5 and HEALTH_V4_MEDIA_TYPE in accept
-        use_v3 = not use_v5 and not use_v4 and HEALTH_V3_MEDIA_TYPE in accept
+        use_v6 = HEALTH_V6_MEDIA_TYPE in accept
+        use_v5 = not use_v6 and HEALTH_V5_MEDIA_TYPE in accept
+        use_v4 = not use_v6 and not use_v5 and HEALTH_V4_MEDIA_TYPE in accept
+        use_v3 = not use_v6 and not use_v5 and not use_v4 and HEALTH_V3_MEDIA_TYPE in accept
         use_v2 = (
-            not use_v5 and not use_v4 and not use_v3
+            not use_v6 and not use_v5 and not use_v4 and not use_v3
             and HEALTH_V2_MEDIA_TYPE in accept
         )
-        version = 5 if use_v5 else 4 if use_v4 else 3 if use_v3 else 2 if use_v2 else 1
+        version = (
+            6 if use_v6 else 5 if use_v5 else 4 if use_v4 else 3 if use_v3 else 2 if use_v2 else 1
+        )
         body = json.dumps(
             self.gateway_server.gateway_state.health_document(version=version),
             sort_keys=True,
@@ -543,7 +562,9 @@ class GatewayRequestHandler(BaseHTTPRequestHandler):
         ).encode("utf-8")
         self.send_response(HTTPStatus.OK)
         content_type = (
-            HEALTH_V5_MEDIA_TYPE
+            HEALTH_V6_MEDIA_TYPE
+            if use_v6
+            else HEALTH_V5_MEDIA_TYPE
             if use_v5
             else HEALTH_V4_MEDIA_TYPE
             if use_v4
@@ -661,12 +682,12 @@ def run_refresh_loop(
             next_deadline += interval_seconds
 
 
-def serve(config: GatewayConfig, client: ComdirectClient) -> None:
+def serve(config: GatewayConfig, client: PortfolioProvider) -> None:
     state = GatewayState(config, client)
     stop_event = threading.Event()
     refresher = threading.Thread(
         target=run_refresh_loop,
-        args=(state, config.comdirect.poll_interval_seconds, stop_event),
+        args=(state, state.poll_interval_seconds, stop_event),
         name="portfolio-refresh",
         daemon=True,
     )

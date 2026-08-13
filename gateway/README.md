@@ -1,12 +1,20 @@
-# Portfolio Architect Gateway v1.22.0
+# Portfolio Architect Gateway runtime v1.23.0
 
-The Gateway is a dedicated, dependency-free Python service that converts the
-Comdirect depot API into provider-neutral Portfolio Architect REST schema 1.
-Version 1.22.0 aligns the Gateway package with Portfolio Architect's publication/privacy-hardening release. Gateway banking runtime behavior and REST/health contracts remain unchanged from 1.20.1; the v1.22 changes are confined to source/publication controls and package version alignment.
+The Gateway is a dedicated, dependency-free Python service that converts one
+provider-specific portfolio source into provider-neutral Portfolio Architect REST
+schema 1. Version 1.23.0 introduces the common `PortfolioProvider` runtime contract
+and Gateway health schema 6. The released provider implementation remains
+Comdirect.
 
-The released Home Assistant App provides the authenticated Ingress workflow for
-account discovery, explicit account selection, cash-policy configuration, and
-Comdirect bootstrap/reauthentication.
+The common authenticated server no longer imports or type-depends on
+`ComdirectClient`. It consumes only a bounded provider ID, the provider refresh
+cadence, and validated provider-neutral snapshots. Comdirect OAuth/bootstrap,
+account discovery, selected-account persistence, cash authorization and upstream
+API behavior remain isolated in the Comdirect implementation.
+
+The released Home Assistant App is displayed as **Portfolio Architect Gateway —
+Comdirect**. Its established slug remains `portfolio_architect_gateway`, preserving
+in-place App updates and App-private state.
 
 ## Security boundary
 
@@ -27,14 +35,25 @@ The running service:
   incomplete balance semantics.
 
 The Comdirect OAuth token may contain broader brokerage scope than this service
-needs. Read-only enforcement therefore occurs in the implementation and
-container boundary rather than by assuming bank-side token scoping.
+needs. Read-only enforcement therefore occurs in the implementation and container
+boundary rather than by assuming bank-side token scoping.
+
+## Provider identity and health
+
+Gateway health schema 6 adds exactly one provider field: `provider_id`. The current
+Comdirect implementation publishes `comdirect`. The identifier is bounded,
+non-secret and carries no account/depot identity. Health schemas 1 through 5 remain
+available unchanged for older Portfolio Architect versions.
+
+The provider contract and official future App identities are documented in
+`docs/GATEWAY-PROVIDERS.md`. No DKB or Trade Republic acquisition runtime is
+included in v1.23.0.
 
 ## Authorized investment cash
 
-For every refresh, the Gateway requires both booked balance and available cash
-for the explicitly selected EUR account. It first computes **eligible cash** as
-the lower value, clamped at zero. That prevents overdraft/credit facilities and
+For every Comdirect refresh, the Gateway requires both booked balance and available
+cash for the explicitly selected EUR account. It first computes **eligible cash**
+as the lower value, clamped at zero. That prevents overdraft/credit facilities and
 pending debits from increasing the advisory budget.
 
 The Gateway then applies one authorization policy:
@@ -75,7 +94,7 @@ mode still requires a valid cap, and malformed persisted policy files fail close
 
 ## Deployment
 
-Use the native Home Assistant App bundle for the complete workflow. Update in
-place and never remove App data during a normal upgrade. Existing OAuth state,
-Gateway bearer token, API credentials, cached snapshot, selected account, and
-cash-policy state survive an in-place update.
+Use the native Home Assistant App bundle for the complete Comdirect workflow.
+Update in place and never remove App data during a normal upgrade. Existing OAuth
+state, Gateway bearer token, API credentials, cached snapshot, selected account,
+and cash-policy state survive the v1.23.0 provider-aware refactor.

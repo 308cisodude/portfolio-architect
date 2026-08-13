@@ -1,6 +1,9 @@
-# Portfolio Architect Gateway v1.22.0
+# Portfolio Architect Gateway — Comdirect v1.23.0
 
-Version 1.22.0 aligns this App package with Portfolio Architect's publication/privacy-hardening release. Gateway banking behavior and wire contracts remain unchanged from 1.20.1. Existing cash authorization, bootstrap, account-selection, and cached-snapshot behavior are retained.
+Version 1.23.0 makes the common Gateway runtime provider-aware while preserving the
+existing Comdirect App identity and private state. Gateway health schema 6 now
+reports `provider_id: comdirect`; REST portfolio schema 1 and all existing
+Comdirect cash/bootstrap behavior remain compatible.
 
 After completing or refreshing Comdirect authentication, open the App Web UI:
 
@@ -21,9 +24,10 @@ behavior of existing installations. A stale cap submitted while switching back t
 `all_available` is discarded server-side and never persisted. A capped policy with
 missing or malformed cap state still fails closed.
 
-The update preserves App-private API credentials, OAuth/session state, Gateway
-bearer token, cached snapshot, selected account, and cash policy. Never uninstall
-the App or remove its data for a normal update.
+The update preserves the existing App slug, App-private API credentials,
+OAuth/session state, Gateway bearer token, cached snapshot, selected account and
+cash policy. Never uninstall the App or remove its data for a normal update.
 
 The Gateway remains GET-only and contains no trading, transfer, payment, or
-transaction-history operation.
+transaction-history operation. DKB and Trade Republic provider Apps are separate
+future packages; they are not emulated by this Comdirect App.

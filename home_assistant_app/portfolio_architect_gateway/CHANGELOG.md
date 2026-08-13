@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.23.0
+
+- Renames the visible App to **Portfolio Architect Gateway — Comdirect** while retaining the existing slug and private App data.
+- Implements the provider-neutral Gateway runtime contract through the existing Comdirect client.
+- Adds health schema 6 with bounded `provider_id: comdirect`; health schemas 1–5 remain available.
+- Preserves Comdirect OAuth/session state, account selection, cash authorization, REST schema 1, GET-only behavior, and cached-snapshot recovery semantics.
+
 ## 1.22.0
 
 - Aligns Gateway App package metadata with Portfolio Architect v1.22.0 publication/privacy hardening.

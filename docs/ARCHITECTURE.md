@@ -46,6 +46,21 @@ cannot restore a cache created for a different aggregate.
 
 Same-depot DKB exports are collapsed before aggregation by selecting the newest source-owned export date. This prevents historical CSV files from double-counting one portfolio.
 
+## Provider Gateway boundary
+
+Version 1.23.0 separates the common Gateway runtime from the provider client type.
+The authenticated HTTP server, snapshot storage, health/LKG state and provider-neutral
+REST model consume a minimal `PortfolioProvider` contract: a bounded provider ID, a
+validated refresh cadence and `fetch_snapshot()`. The common server does not import
+`ComdirectClient`.
+
+The released provider remains Comdirect. Its OAuth/bootstrap, account discovery,
+selected-account persistence and cash-authorization semantics stay provider-specific.
+Gateway health schema 6 adds only the non-secret `provider_id`; health schemas 1–5
+remain available unchanged. This creates the stable seam for separate DKB and Trade
+Republic Apps without pretending those provider runtimes already exist. See
+`docs/GATEWAY-PROVIDERS.md`.
+
 ## Graceful degradation and actionability
 
 Version 1.20.0 separates **trusted informational continuity** from **authorization

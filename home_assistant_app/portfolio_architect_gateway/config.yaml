@@ -1,8 +1,8 @@
-name: Portfolio Architect Gateway
-version: 1.22.0
+name: Portfolio Architect Gateway — Comdirect
+version: 1.23.0
 slug: portfolio_architect_gateway
-description: Read-only Comdirect gateway for Portfolio Architect with private account selection,
-  authorized investment cash, and live recovery diagnostics.
+description: Read-only Comdirect provider Gateway for Portfolio Architect with private account selection,
+  authorized investment cash, provider identity, and live recovery diagnostics.
 url: https://developers.home-assistant.io/docs/apps/
 arch:
 - amd64
@@ -15,7 +15,7 @@ ingress: true
 ingress_port: 8099
 ingress_stream: false
 panel_icon: mdi:shield-key-outline
-panel_title: Portfolio Gateway
+panel_title: Portfolio Gateway — Comdirect
 panel_admin: true
 host_network: false
 hassio_api: false

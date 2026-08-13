@@ -39,6 +39,7 @@ HEALTH_V2_MEDIA_TYPE: Final = "application/vnd.portfolio-architect.health+json;v
 HEALTH_V3_MEDIA_TYPE: Final = "application/vnd.portfolio-architect.health+json;version=3"
 HEALTH_V4_MEDIA_TYPE: Final = "application/vnd.portfolio-architect.health+json;version=4"
 HEALTH_V5_MEDIA_TYPE: Final = "application/vnd.portfolio-architect.health+json;version=5"
+HEALTH_V6_MEDIA_TYPE: Final = "application/vnd.portfolio-architect.health+json;version=6"
 SNAPSHOT_SHA256_HEADER: Final = "X-Portfolio-Snapshot-SHA256"
 SNAPSHOT_POSITION_COUNT_HEADER: Final = "X-Portfolio-Position-Count"
 
@@ -93,7 +94,7 @@ class RestSourceConfig:
             "response_limit_bytes": MAX_REST_RESPONSE_BYTES,
             "request_timeout_seconds": REST_REQUEST_TIMEOUT_SECONDS,
             "snapshot_integrity": "sha256_etag_position_count",
-            "requested_health_schema_version": 5,
+            "requested_health_schema_version": 6,
         }
 
 
@@ -225,6 +226,7 @@ class GatewayHealth:
     last_refresh_failure_class: str | None = None
     recommended_action: str | None = None
     retry_after_seconds: int | None = None
+    provider_id: str | None = None
 
 
 def normalise_rest_endpoint(value: Any) -> str:
@@ -318,7 +320,16 @@ async def async_fetch_gateway_health(
     health_url = gateway_health_url(config.endpoint_url)
     resolved_endpoint = await async_validate_local_rest_endpoint(hass, health_url)
     headers = {
-        "Accept": HEALTH_V5_MEDIA_TYPE,
+        "Accept": ", ".join(
+            (
+                HEALTH_V6_MEDIA_TYPE,
+                HEALTH_V5_MEDIA_TYPE,
+                HEALTH_V4_MEDIA_TYPE,
+                HEALTH_V3_MEDIA_TYPE,
+                HEALTH_V2_MEDIA_TYPE,
+                "application/json",
+            )
+        ),
         "Authorization": f"Bearer {config.api_token}",
     }
     try:
@@ -407,6 +418,7 @@ def _parse_gateway_health(payload: Any) -> GatewayHealth:
         "recommended_action",
         "retry_after_seconds",
     }
+    v6_fields = v5_fields | {"provider_id"}
     keys = set(payload)
     if keys == base_fields:
         health_schema_version = 1
@@ -418,6 +430,8 @@ def _parse_gateway_health(payload: Any) -> GatewayHealth:
         health_schema_version = 4
     elif keys == v5_fields and payload.get("health_schema_version") == 5:
         health_schema_version = 5
+    elif keys == v6_fields and payload.get("health_schema_version") == 6:
+        health_schema_version = 6
     else:
         raise PortfolioRestError("Local gateway health document has an unexpected schema")
 
@@ -456,6 +470,7 @@ def _parse_gateway_health(payload: Any) -> GatewayHealth:
     last_refresh_failure_class = None
     recommended_action = None
     retry_after_seconds = None
+    provider_id = None
     if health_schema_version >= 2:
         snapshot_sha256 = _parse_optional_sha256(
             payload["snapshot_sha256"], "snapshot_sha256"
@@ -662,6 +677,14 @@ def _parse_gateway_health(payload: Any) -> GatewayHealth:
                 "Gateway reauthentication diagnostics are inconsistent"
             )
 
+    if health_schema_version >= 6:
+        provider_id = payload["provider_id"]
+        if (
+            not isinstance(provider_id, str)
+            or re.fullmatch(r"[a-z][a-z0-9_]{1,31}", provider_id) is None
+        ):
+            raise PortfolioRestError("Local gateway provider ID is invalid")
+
     return GatewayHealth(
         gateway_version=version,
         status=status,
@@ -695,6 +718,7 @@ def _parse_gateway_health(payload: Any) -> GatewayHealth:
         last_refresh_failure_class=last_refresh_failure_class,
         recommended_action=recommended_action,
         retry_after_seconds=retry_after_seconds,
+        provider_id=provider_id,
     )
 
 

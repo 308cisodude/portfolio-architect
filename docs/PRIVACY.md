@@ -76,3 +76,16 @@ rejected if placed inside the repository.
 Release ZIPs are scanned by content rather than trusted merely because the source
 tree was clean. This makes confidentiality a release invariant independent of the
 existing reproducibility, checksum, manifest, and archive-safety controls.
+
+## v1.23 provider identity boundary
+
+Gateway health schema 6 adds only a bounded, non-secret machine provider identity
+such as `comdirect`. The value identifies the provider implementation, not a person,
+account, depot, customer, credential, source document, or bank-side resource.
+
+Future DKB and Trade Republic Gateway Apps are required to preserve the same
+boundary: provider-specific authentication state, account/depot identifiers, raw
+source material, and import documents remain inside that provider App's private
+storage or transient processing. The common Portfolio Architect REST and health
+contracts receive only validated provider-neutral portfolio data plus the bounded
+provider identifier needed for operational provenance.

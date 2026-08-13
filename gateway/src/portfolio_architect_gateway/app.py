@@ -262,7 +262,7 @@ class AppController:
                 "mode": policy.mode,
                 "cap_eur": format(policy.cap_eur, "f") if policy.cap_eur is not None else None,
             },
-            "gateway": self.gateway_state.health_document(version=5),
+            "gateway": self.gateway_state.health_document(version=6),
             "client_credentials_configured": (
                 self.config.comdirect.client_id_file.is_file()
                 and self.config.comdirect.client_secret_file.is_file()
@@ -1004,7 +1004,7 @@ def serve_app(
     )
     refresh_thread = threading.Thread(
         target=run_refresh_loop,
-        args=(state, config.comdirect.poll_interval_seconds, stop_event),
+        args=(state, client.poll_interval_seconds, stop_event),
         name="portfolio-refresh",
         daemon=True,
     )
