@@ -192,3 +192,9 @@ cash policy.
 
 The reserve is advisory input only. Neither the Gateway nor the Home Assistant
 integration contains an order, transfer, or payment operation.
+
+## v1.21 execution semantics
+
+Portfolio Architect keeps recurring schedule context separate from present recommendation validity. `planned_execution` remains the stable entity identifier for the execution date associated with the latest evaluation, but the user-facing concept is **Scheduled execution**. The date may be in the past without proving that an order occurred or forcing the recommendation to expire.
+
+Current actionability is derived independently from source freshness/trust, REST/LKG/integrity health, the current execution state, and the relationship between today's date and the scheduled date. The native `plan_actionability` entity exposes only bounded states and metadata; it cannot execute orders and it does not infer transaction history.

@@ -34,6 +34,7 @@ from .coordinator import PortfolioArchitectCoordinator
 from .engine.aggregation import PROVIDER_MULTI_SOURCE
 from .engine.importers import PROVIDER_COMDIRECT, PROVIDER_DKB, PROVIDER_GENERIC_CSV
 from .engine.rest import PROVIDER_LOCAL_REST_JSON
+from .execution_semantics import PLAN_ACTIONABILITY_STATES, derive_plan_actionability
 from .model import HoldingData, PolicyFindingData, PositionData
 
 CURRENCY_EUR = "EUR"
@@ -83,6 +84,7 @@ async def async_setup_entry(
             PortfolioEstimatedCashOutlaySensor(coordinator, entry),
             PortfolioExecutionPolicySensor(coordinator, entry),
             PortfolioExecutionStateSensor(coordinator, entry),
+            PortfolioPlanActionabilitySensor(coordinator, entry),
             PortfolioAdditionalInvestmentCashRequiredSensor(coordinator, entry),
             PortfolioInvestmentReserveSourceSensor(coordinator, entry),
             PortfolioDeferredPurchaseCountSensor(coordinator, entry),
@@ -1605,6 +1607,71 @@ class PortfolioInstrumentIsinSensor(
         return attributes
 
 
+class PortfolioPlanActionabilitySensor(
+    CoordinatorEntity[PortfolioArchitectCoordinator], SensorEntity
+):
+    """Current actionability of the latest recommendation, separate from its schedule."""
+
+    _attr_has_entity_name = True
+    _attr_translation_key = "plan_actionability"
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_options = list(PLAN_ACTIONABILITY_STATES)
+
+    def __init__(self, coordinator: PortfolioArchitectCoordinator, entry: ConfigEntry) -> None:
+        super().__init__(coordinator, context="plan_actionability")
+        source_key = entry.unique_id or entry.entry_id
+        self._attr_unique_id = f"{source_key}_plan_actionability"
+        self._attr_device_info = _device_info(source_key)
+
+    @property
+    def suggested_object_id(self) -> str:
+        return "plan_actionability"
+
+    @property
+    def available(self) -> bool:
+        return self.coordinator.data is not None
+
+    def _semantics(self):
+        if self.coordinator.data is None:
+            return None
+        schedule = self.coordinator.plan_review_schedule()
+        planned_execution_on = schedule.planned_execution_on if schedule else None
+        current_date = dt_util.as_local(dt_util.utcnow()).date()
+        return derive_plan_actionability(
+            source_actionable=self.coordinator.plan_actionable,
+            execution_state=self.coordinator.data.monthly_plan.execution_state,
+            planned_execution_on=planned_execution_on,
+            current_date=current_date,
+        )
+
+    @property
+    def native_value(self) -> str | None:
+        semantics = self._semantics()
+        return semantics.state if semantics is not None else None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        base = _source_attributes(self.coordinator)
+        data = self.coordinator.data
+        semantics = self._semantics()
+        if data is None or semantics is None:
+            return base
+        schedule = self.coordinator.plan_review_schedule()
+        return {
+            "source_actionable": self.coordinator.plan_actionable,
+            "actionability_reason": self.coordinator.plan_actionability_reason,
+            "execution_state": data.monthly_plan.execution_state,
+            "plan_ready": data.monthly_plan.ready,
+            "evaluated_at": _isoformat(_runtime_timestamp(self.coordinator)),
+            "scheduled_execution_on": (
+                schedule.planned_execution_on.isoformat() if schedule else None
+            ),
+            "schedule_relation": semantics.schedule_relation,
+            "days_until_scheduled_execution": semantics.days_until_scheduled_execution,
+            **base,
+        }
+
+
 class _PortfolioPlanScheduleDateSensor(
     CoordinatorEntity[PortfolioArchitectCoordinator], SensorEntity
 ):
@@ -1661,7 +1728,7 @@ class _PortfolioPlanScheduleDateSensor(
 
 
 class PortfolioPlannedExecutionSensor(_PortfolioPlanScheduleDateSensor):
-    """Execution date prepared by the latest successful evaluation."""
+    """Scheduled execution date associated with the latest successful evaluation."""
 
     _attr_translation_key = "planned_execution"
     schedule_attribute = "planned_execution_on"

@@ -229,7 +229,7 @@
             "name": "Payload-Schema"
           },
           "planned_execution_on": {
-            "name": "Vorgesehene Ausführung"
+            "name": "Geplante Ausführung"
           },
           "next_plan_review_on": {
             "name": "Nächste Planprüfung"
@@ -1058,13 +1058,13 @@
         }
       },
       "planned_execution": {
-        "name": "Vorgesehene Ausführung",
+        "name": "Geplante Ausführung",
         "state_attributes": {
           "evaluated_on": {
             "name": "Ausgewertet am"
           },
           "planned_execution_on": {
-            "name": "Vorgesehene Ausführung"
+            "name": "Geplante Ausführung"
           },
           "next_review_on": {
             "name": "Nächste Planprüfung"
@@ -1102,7 +1102,7 @@
             "name": "Ausgewertet am"
           },
           "planned_execution_on": {
-            "name": "Vorgesehene Ausführung"
+            "name": "Geplante Ausführung"
           },
           "next_review_on": {
             "name": "Nächste Planprüfung"
@@ -1740,6 +1740,65 @@
       },
       "holding_quantity": {
         "name": "Stückzahl {holding_name}"
+      },
+      "plan_actionability": {
+        "name": "Aktuelle Umsetzbarkeit",
+        "state": {
+          "actionable_now": "Jetzt umsetzbar",
+          "scheduled": "Geplant",
+          "overdue_actionable": "Überfällig, aber umsetzbar",
+          "not_ready": "Nicht bereit",
+          "not_actionable": "Nicht umsetzbar"
+        },
+        "state_attributes": {
+          "source_actionable": {
+            "name": "Quelle erlaubt Umsetzung"
+          },
+          "actionability_reason": {
+            "name": "Grund der Umsetzbarkeit",
+            "state": {
+              "actionable": "Umsetzbar",
+              "data_unavailable": "Daten nicht verfügbar",
+              "data_stale": "Snapshot außerhalb des Aktualitätsfensters",
+              "integrity_failure": "Integritätsfehler",
+              "last_known_good": "Letzter gültiger Snapshot",
+              "health_unavailable": "Gateway-Status nicht verfügbar",
+              "reauthentication_required": "Erneute Anmeldung erforderlich",
+              "source_degraded": "Quelle beeinträchtigt"
+            }
+          },
+          "execution_state": {
+            "name": "Ausführungsstatus",
+            "state": {
+              "ready": "Bereit zur Investition",
+              "waiting_for_reserve": "Wartet auf Anlageguthaben",
+              "deferred_for_cost_efficiency": "Für Kosteneffizienz zurückgestellt",
+              "no_eligible_purchase": "Kein geeigneter Kauf",
+              "reserve_unavailable": "Anlageguthaben nicht verfügbar"
+            }
+          },
+          "plan_ready": {
+            "name": "Plan bereit"
+          },
+          "evaluated_at": {
+            "name": "Zuletzt ausgewertet"
+          },
+          "scheduled_execution_on": {
+            "name": "Geplante Ausführung"
+          },
+          "schedule_relation": {
+            "name": "Zeitbezug zum Plan",
+            "state": {
+              "not_configured": "Nicht konfiguriert",
+              "upcoming": "Bevorstehend",
+              "due_today": "Heute fällig",
+              "past_scheduled_date": "Geplanter Termin überschritten"
+            }
+          },
+          "days_until_scheduled_execution": {
+            "name": "Tage bis zur geplanten Ausführung"
+          }
+        }
       }
     },
     "binary_sensor": {
@@ -1827,7 +1886,7 @@
             "name": "Anzahl Käufe"
           },
           "data_fresh": {
-            "name": "Daten aktuell"
+            "name": "Snapshot im Aktualitätsfenster"
           },
           "freshness_mode": {
             "name": "Aktualitätsmodus",
@@ -1851,10 +1910,10 @@
         }
       },
       "data_fresh": {
-        "name": "Datenaktualität",
+        "name": "Snapshot-Aktualität",
         "state": {
-          "on": "Aktuell",
-          "off": "Veraltet"
+          "on": "Im Aktualitätsfenster",
+          "off": "Außerhalb des Aktualitätsfensters"
         },
         "state_attributes": {
           "freshness_threshold_hours": {
@@ -1868,7 +1927,7 @@
             }
           },
           "fresh_through": {
-            "name": "Aktuell bis einschließlich"
+            "name": "Im Aktualitätsfenster bis einschließlich"
           }
         }
       },
@@ -1951,7 +2010,7 @@
             "name": "Ausgewertet am"
           },
           "planned_execution_on": {
-            "name": "Vorgesehene Ausführung"
+            "name": "Geplante Ausführung"
           },
           "next_review_on": {
             "name": "Nächste Planprüfung"

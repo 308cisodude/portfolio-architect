@@ -747,7 +747,7 @@ class PortfolioDataFresh(
     CoordinatorEntity[PortfolioArchitectCoordinator],
     BinarySensorEntity,
 ):
-    """Whether the last validated engine payload is still actionable."""
+    """Whether the accepted snapshot is within its configured freshness window."""
 
     _attr_has_entity_name = True
     _attr_translation_key = "data_fresh"

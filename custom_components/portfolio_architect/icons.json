@@ -358,6 +358,16 @@
       },
       "holding_quantity": {
         "default": "mdi:numeric"
+      },
+      "plan_actionability": {
+        "default": "mdi:calendar-check-outline",
+        "state": {
+          "actionable_now": "mdi:play-circle-outline",
+          "scheduled": "mdi:calendar-clock-outline",
+          "overdue_actionable": "mdi:calendar-alert",
+          "not_ready": "mdi:pause-circle-outline",
+          "not_actionable": "mdi:shield-off-outline"
+        }
       }
     },
     "binary_sensor": {

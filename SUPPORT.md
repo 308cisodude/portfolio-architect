@@ -11,15 +11,15 @@ Security and correctness fixes are provided for:
 - the current stable Portfolio Architect release; and
 - the immediately preceding stable release while a documented upgrade path exists.
 
-The Home Assistant support floor for the 1.20.x release line is **2026.7.0**.
+The Home Assistant support floor for the 1.21.x release line is **2026.7.0**.
 The project targets the current and immediately previous monthly Home Assistant
 release, subject to automated compatibility checks. Beta releases receive
 best-effort compatibility only.
 
 Gateway App versions 1.16.1 and later remain compatible with Portfolio Architect
-1.20.1 through the legacy reserve contract. Gateway App 1.19.0 or newer is required
+1.21.0 through the legacy reserve contract. Gateway App 1.19.0 or newer is required
 for configurable authorized-cash policy metadata; 1.19.1 or newer contains the
-corrected capped-to-all-available Ingress transition. Version 1.20.1 fixes LKG entity propagation while preserving the v1.20.0 resilience contract. The normal release channel
+corrected capped-to-all-available Ingress transition. Version 1.20.1 fixes LKG entity propagation while preserving the v1.20.0 resilience contract. Version 1.21.0 adds execution/actionability semantics without changing the Gateway wire protocol. The normal release channel
 keeps the integration and Gateway App package versions aligned.
 
 ## Getting help

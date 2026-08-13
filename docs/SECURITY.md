@@ -380,3 +380,7 @@ cache.
 ## v1.20.1 degraded-state publication controls
 
 A degraded update is a security-relevant state transition even when the trusted last-known-good portfolio calculation is unchanged. Portfolio Architect therefore notifies entity listeners for every completed coordinator cycle so stale live-state entities cannot continue to expose authorized cash or recommendation values after actionability has been revoked. Integrity-failure Repairs are tied to current integrity evidence; unrelated transport or calculation failures do not inherit an older mismatch reason.
+
+## v1.21 schedule and actionability evidence boundary
+
+Portfolio Architect does not treat a scheduled execution date, a past scheduled date, or a holding-quantity change as evidence that a trade occurred. Version 1.21.0 exposes current actionability as bounded advisory state derived from freshness, integrity, Gateway/LKG health, and execution readiness. The new entity has no write path to a bank or broker and does not alter the read-only Gateway security boundary.

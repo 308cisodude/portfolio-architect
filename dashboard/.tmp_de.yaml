@@ -200,10 +200,28 @@
       card:
         type: tile
         entity: sensor.portfolio_architect_planned_execution
-        name: Ausführung
+        name: Geplante Ausführung
         tap_action:
           action: more-info
         icon: mdi:calendar-arrow-right
+      grid_options:
+        columns: 6
+        rows: auto
+    - type: tile
+      entity: sensor.portfolio_architect_plan_actionability
+      name: Umsetzbarkeit
+      tap_action:
+        action: more-info
+      icon: mdi:calendar-check-outline
+      grid_options:
+        columns: 6
+        rows: auto
+    - type: tile
+      entity: sensor.portfolio_architect_last_successful_refresh
+      name: Zuletzt ausgewertet
+      tap_action:
+        action: more-info
+      icon: mdi:clock-check-outline
       grid_options:
         columns: 6
         rows: auto
@@ -1079,12 +1097,12 @@
       card:
         type: tile
         entity: binary_sensor.portfolio_architect_data_fresh
-        name: Daten aktuell
+        name: Snapshot-Aktualität
         tap_action:
           action: more-info
         color: green
         icon: mdi:clock-check-outline
-        hide_state: true
+        hide_state: false
       grid_options:
         columns: 6
         rows: auto
@@ -1096,12 +1114,12 @@
       card:
         type: tile
         entity: binary_sensor.portfolio_architect_data_fresh
-        name: Daten veraltet
+        name: Snapshot-Aktualität
         tap_action:
           action: more-info
         color: amber
         icon: mdi:clock-alert-outline
-        hide_state: true
+        hide_state: false
       grid_options:
         columns: 6
         rows: auto

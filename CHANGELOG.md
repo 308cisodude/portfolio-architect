@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.21.0
+
+- Separates scheduled execution timing from current recommendation actionability without changing the existing `planned_execution` entity ID.
+- Adds `sensor.portfolio_architect_plan_actionability` with bounded states for scheduled, actionable-now, overdue-but-actionable, not-ready, and non-actionable recommendations.
+- Treats a past scheduled date as planning context rather than evidence that a recommendation expired or that any trade occurred.
+- Adds schedule relation, evaluation timestamp, and actionability reason attributes for explainable Home Assistant automations and more-info views.
+- Updates the reference dashboards to show **Scheduled execution**, **Actionability**, and **Last evaluated** separately.
+- Clarifies v1.20 freshness semantics as **Snapshot freshness / Within freshness window**, avoiding the misleading implication that a reachable live bank source is required for a retained trusted snapshot to be fresh enough.
+- Preserves payload schema 8, REST schema 1, Gateway health schema 5, existing entity IDs/unique IDs, authorized-cash behavior, LKG safety, and the read-only/no-transaction-inference boundary.
+
 ## 1.20.1
 
 - Fixes graceful-degradation entity propagation when the coordinator republishes the same trusted `PortfolioData` with changed LKG, health, or actionability metadata.

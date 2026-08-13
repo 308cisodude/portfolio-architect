@@ -2,7 +2,7 @@
 
 ## Healthy REST operation
 
-A healthy deployment shows `Source healthy`, `Data fresh`, `Gateway status: OK`,
+A healthy deployment shows `Source healthy`, a snapshot within the configured freshness window, `Gateway status: OK`,
 `Operating mode: Live`, and `Snapshot verified`.
 
 ## Gateway outage and degraded operation
@@ -102,3 +102,9 @@ estimated fees in addition to the order principal.
 ### v1.20.1 LKG propagation
 
 When a live REST cycle falls back to the Home Assistant last-known-good calculation, Portfolio Architect still completes the coordinator cycle and notifies entities even if the retained portfolio calculation itself is unchanged. Informational holdings may remain available, while authorized cash and recommendation-derived entities immediately become unavailable until live actionability returns. Integrity Repairs represent integrity evidence from the current refresh path and are not carried into an unrelated transport/calculation fallback.
+
+### v1.21 execution/actionability interpretation
+
+Treat **Scheduled execution**, **Last evaluated**, and **Current actionability** as separate operational signals. A past scheduled date is not itself an error and does not prove execution. If the source remains trusted/actionable and the execution state is ready, `overdue_actionable` means the recommendation remains valid even though its planned schedule date has passed.
+
+The runtime-health freshness binary sensor describes whether the accepted snapshot is **within its freshness window**. In LKG operation, the source may be unavailable while that snapshot remains within the window; actionability-sensitive cash and recommendation entities still fail closed under the v1.20 resilience contract.

@@ -773,7 +773,7 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
         return "review_schedule" if self.review_schedule_configured else "age_threshold"
 
     def is_data_fresh(self, now: datetime | None = None) -> bool:
-        """Return whether the last validated snapshot is still actionable."""
+        """Return whether the accepted snapshot is within its freshness window."""
         timestamp = self.oldest_source_generated_at or self.data_timestamp
         if timestamp is None:
             return False

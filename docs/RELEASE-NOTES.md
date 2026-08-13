@@ -1,25 +1,33 @@
-# Portfolio Architect 1.20.1
+# Portfolio Architect 1.21.0
 
-Version 1.20.1 is a focused maintenance release for the graceful-degradation behavior introduced in 1.20.0.
+Version 1.21.0 is an execution-semantics and clarity release. It does not add trade execution or transaction-history capability.
 
-## Entity propagation during LKG
+## Scheduled execution is context, not evidence
 
-Version 1.20.0 could correctly enter Home Assistant last-known-good mode internally while ordinary coordinator entities remained frozen in their previous live state. The coordinator returned the same trusted `PortfolioData`, and `always_update=False` therefore suppressed listener callbacks even though LKG, Gateway health, integrity, and plan-actionability metadata had changed.
+The existing `sensor.portfolio_architect_planned_execution` entity keeps its entity ID and date value for compatibility, but its display name is now **Scheduled execution**. A scheduled date may legitimately be in the past while a recommendation remains valid. The date therefore describes the plan cycle that the latest evaluation was prepared for; it is not proof that an order was placed, that a transaction occurred, or that the recommendation automatically expired.
 
-Version 1.20.1 removes that invalid equality optimization. Every completed coordinator update cycle notifies listeners, so entering LKG immediately publishes the degraded state. Informational holdings, quantities, valuation, allocation, and policy data may remain visible from the trusted cache, while authorized investment cash, recommendations, fees, cash outlay, and plan actionability become unavailable/non-actionable as designed. The same notification rule applies when the source recovers back to live operation.
+## Current actionability
 
-## Integrity Repair lifecycle
+A new `sensor.portfolio_architect_plan_actionability` exposes the current relationship between source trust, execution readiness, and schedule timing. Its bounded states are:
 
-Integrity failures remain fail-closed and continue to preserve the previously accepted snapshot. Version 1.20.1 also makes the integrity error reason specific to the current degraded refresh path: an unrelated transport, rate-limit, supplemental-source, or calculation fallback does not republish an older integrity-failure reason. Actual timestamp regression or snapshot-integrity validation failures explicitly preserve their integrity status while LKG is served.
+- `scheduled` — the source is actionable, the execution state is ready, and the scheduled date is still ahead;
+- `actionable_now` — the plan is ready and the scheduled date is today, or no recurring execution schedule is configured;
+- `overdue_actionable` — the scheduled date has passed but the current trusted recommendation is still actionable;
+- `not_ready` — the source is actionable but the execution state is not ready;
+- `not_actionable` — freshness, LKG, integrity, reauthentication, or Gateway health prevents a new investment action.
 
-Regression coverage also confirms that a Gateway in `reauthentication_required` mode continues to describe its cached snapshot with the same generated timestamp, SHA-256 fingerprint, and position count.
+Attributes expose the last evaluation timestamp, scheduled execution date, schedule relation, days until the scheduled date, execution state, and the existing bounded actionability reason. This is advisory state only; it does not infer transaction history.
+
+## Dashboard and freshness wording
+
+The reference dashboard now presents **Scheduled execution**, **Actionability**, and **Last evaluated** as separate concepts. Runtime health also labels the existing freshness binary sensor as **Snapshot freshness** and shows its translated state (**Within freshness window** / **Outside freshness window**). This makes the v1.20 LKG state coherent: a live source can be unavailable while a previously validated snapshot remains inside its allowed freshness window.
 
 ## Compatibility
 
-Payload schema 8, REST schema 1, Gateway health schema 5, entity IDs, unique IDs, cash-authorization semantics, LKG retention limits, and the read-only Gateway API surface are unchanged. Gateway runtime behavior is unchanged apart from the package version; the new reauthentication test protects the existing health contract.
+Payload schema 8, REST schema 1 (portfolio), Gateway health schema 5, existing entity IDs, existing unique IDs, cash-authorization semantics, LKG retention, and the read-only Gateway API surface are unchanged. The Gateway package is version-aligned to 1.21.0; its banking runtime behavior is unchanged.
 
-No trading, order, transfer, payment, or transaction-history capability is added.
+No trading, order, transfer, payment, or transaction-history capability is added. A quantity change remains a holdings observation, not proof of a trade.
+
 ## Experimental branch note
 
-The historical `v1.19.0-rc2` tag remains a separate experimental brokerage-diagnostics branch. Stable 1.20.1 does **not** promote those experimental diagnostics.
-
+The historical `v1.19.0-rc2` tag remains a separate experimental brokerage-diagnostics branch. Stable 1.21.0 does **not** promote those experimental diagnostics.

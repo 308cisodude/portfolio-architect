@@ -187,10 +187,28 @@ cards:
   card:
     type: tile
     entity: sensor.portfolio_architect_planned_execution
-    name: Execution
+    name: Scheduled execution
     tap_action:
       action: more-info
     icon: mdi:calendar-arrow-right
+  grid_options:
+    columns: 6
+    rows: auto
+- type: tile
+  entity: sensor.portfolio_architect_plan_actionability
+  name: Actionability
+  tap_action:
+    action: more-info
+  icon: mdi:calendar-check-outline
+  grid_options:
+    columns: 6
+    rows: auto
+- type: tile
+  entity: sensor.portfolio_architect_last_successful_refresh
+  name: Last evaluated
+  tap_action:
+    action: more-info
+  icon: mdi:clock-check-outline
   grid_options:
     columns: 6
     rows: auto
