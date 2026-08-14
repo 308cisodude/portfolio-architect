@@ -16,9 +16,9 @@ EXCEPTIONS = "sensor.portfolio_architect_accepted_exception_count"
 ROBOTICS_EXCEPTION = (
     "sensor.portfolio_architect_robotics_accumulating_preferred_policy_exception"
 )
-LAST_EXCEPTION_DECISION = "sensor.portfolio_architect_last_exception_decision"
-NEXT_EXCEPTION_REVIEW = "sensor.portfolio_architect_next_exception_review"
-OVERDUE_EXCEPTION_REVIEW = "sensor.portfolio_architect_oldest_overdue_exception_review"
+LAST_EXCEPTION_DECISION = "date.portfolio_architect_last_exception_decision"
+NEXT_EXCEPTION_REVIEW = "date.portfolio_architect_next_exception_review"
+OVERDUE_EXCEPTION_REVIEW = "date.portfolio_architect_oldest_overdue_exception_review"
 ACTIONABILITY = "sensor.portfolio_architect_plan_actionability"
 RECOMMENDED_TOTAL = "sensor.portfolio_architect_recommended_total"
 PURCHASE_COUNT = "sensor.portfolio_architect_purchase_count"

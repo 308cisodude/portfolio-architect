@@ -1802,6 +1802,23 @@
         }
       }
     },
+    "date": {
+      "planned_execution": {
+        "name": "Scheduled execution"
+      },
+      "next_plan_review": {
+        "name": "Next plan review"
+      },
+      "last_exception_decision": {
+        "name": "Last exception decision"
+      },
+      "next_exception_review": {
+        "name": "Next exception review"
+      },
+      "oldest_overdue_exception_review": {
+        "name": "Oldest overdue exception review"
+      }
+    },
     "binary_sensor": {
       "target_architecture_complete": {
         "name": "Target architecture",

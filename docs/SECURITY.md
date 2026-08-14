@@ -478,3 +478,19 @@ The date-formatting cleanup adds no new entity, attribute, source data, identifi
 credential, endpoint, or provider metadata. Existing native date states are merely
 rendered by Home Assistant's Tile formatter. Source trust, actionable availability,
 privacy controls, and the read-only/no-trading boundary are unchanged.
+
+## v1.26.5 read-only date-presentation boundary
+
+The five new `date.*` entities are presentation mirrors only. They consume the same
+already-calculated Python `date` values exposed by the established authoritative
+DATE sensors and do not read provider state, credentials, endpoint metadata, raw
+broker data, or configuration independently. They add no source, network, storage,
+or calculation privilege.
+
+Because Home Assistant's native `date` domain normally supports `date.set_value`,
+Portfolio Architect explicitly rejects all writes to these mirrors. The reference
+dashboard routes each Tile's more-info action to the authoritative sensor, so the
+normal editable date-domain control is not exposed as an apparent configuration
+path. Planning,
+policy, source trust, LKG behavior, and provider data remain controlled exclusively
+by the existing integration configuration and coordinator state.

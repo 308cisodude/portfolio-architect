@@ -207,14 +207,11 @@ sections:
       state_not: unavailable
     card:
       type: tile
-      entity: sensor.portfolio_architect_planned_execution
+      entity: date.portfolio_architect_planned_execution
       name: Geplante Ausführung
-      state_content: state
-      time_format:
-        type: date
-        style: short
       tap_action:
         action: more-info
+        entity: sensor.portfolio_architect_planned_execution
       icon: mdi:calendar-arrow-right
     grid_options:
       columns: 6
@@ -502,14 +499,11 @@ sections:
       state_not: unavailable
     card:
       type: tile
-      entity: sensor.portfolio_architect_last_exception_decision
+      entity: date.portfolio_architect_last_exception_decision
       name: Letzte Entscheidung
-      state_content: state
-      time_format:
-        type: date
-        style: short
       tap_action:
         action: more-info
+        entity: sensor.portfolio_architect_last_exception_decision
       icon: mdi:calendar-check
     grid_options:
       columns: 6
@@ -521,14 +515,11 @@ sections:
       state: 'on'
     card:
       type: tile
-      entity: sensor.portfolio_architect_oldest_overdue_exception_review
+      entity: date.portfolio_architect_oldest_overdue_exception_review
       name: Überfällige Prüfung
-      state_content: state
-      time_format:
-        type: date
-        style: short
       tap_action:
         action: more-info
+        entity: sensor.portfolio_architect_oldest_overdue_exception_review
       color: red
       icon: mdi:calendar-alert
     grid_options:
@@ -541,14 +532,11 @@ sections:
       state: 'off'
     card:
       type: tile
-      entity: sensor.portfolio_architect_next_exception_review
+      entity: date.portfolio_architect_next_exception_review
       name: Nächste Prüfung
-      state_content: state
-      time_format:
-        type: date
-        style: short
       tap_action:
         action: more-info
+        entity: sensor.portfolio_architect_next_exception_review
       color: amber
       icon: mdi:calendar-clock
     grid_options:
@@ -914,14 +902,11 @@ sections:
       state_not: unavailable
     card:
       type: tile
-      entity: sensor.portfolio_architect_next_plan_review
+      entity: date.portfolio_architect_next_plan_review
       name: Nächste Planprüfung
-      state_content: state
-      time_format:
-        type: date
-        style: short
       tap_action:
         action: more-info
+        entity: sensor.portfolio_architect_next_plan_review
       icon: mdi:calendar-refresh-outline
       color: blue
     grid_options:

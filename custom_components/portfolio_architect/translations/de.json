@@ -1802,6 +1802,23 @@
         }
       }
     },
+    "date": {
+      "planned_execution": {
+        "name": "Geplante Ausführung"
+      },
+      "next_plan_review": {
+        "name": "Nächste Planprüfung"
+      },
+      "last_exception_decision": {
+        "name": "Letzte Ausnahmeentscheidung"
+      },
+      "next_exception_review": {
+        "name": "Nächste Ausnahmeüberprüfung"
+      },
+      "oldest_overdue_exception_review": {
+        "name": "Älteste überfällige Ausnahmeüberprüfung"
+      }
+    },
     "binary_sensor": {
       "target_architecture_complete": {
         "name": "Zielarchitektur",

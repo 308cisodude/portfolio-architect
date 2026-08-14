@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.26.5
+
+- Version alignment for Portfolio Architect 1.26.5.
+- No Comdirect acquisition, authentication, authorized-cash or REST contract change; v1.26.5 adds only Home Assistant-side read-only native date-domain presentation counterparts.
+
 ## 1.26.4
 
 - Version alignment for Portfolio Architect 1.26.4.

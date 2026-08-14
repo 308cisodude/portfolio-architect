@@ -265,12 +265,33 @@ to the policy engine or its machine-readable findings.
 ## v1.26.4 native date presentation boundary
 
 Schedule and policy dates remain native Home Assistant `SensorDeviceClass.DATE`
-entities backed by Python `date` values. The reference dashboard does not duplicate
-those values into locale-specific attributes. Instead, date-only Tile cards request
-the frontend's native short-date rendering through generic `state_content: state`
-and `time_format` configuration.
+entities backed by Python `date` values. Version 1.26.4 deliberately avoided
+duplicating those values into locale-specific attributes and instead asked Tile
+cards to apply generic `state_content: state` plus `time_format` date formatting.
 
-This keeps locale presentation in Home Assistant while preserving one stable
-machine-readable date state for automations, templates, recorder history and API
-consumers. Refresh timestamps remain distinct timestamp entities and retain their
-existing native `datetime` / `short` Tile presentation.
+Live acceptance showed that Home Assistant does not route a `sensor` with device
+class `date` through that Tile formatter, so the visible state remained raw ISO
+`YYYY-MM-DD`. The authoritative sensor model itself was correct and was retained
+unchanged for v1.26.5. Refresh timestamps were unaffected.
+
+## v1.26.5 authoritative-date / presentation-date split
+
+Live acceptance showed that Home Assistant's Tile `time_format` is not applied to a
+`sensor` merely because it uses `SensorDeviceClass.DATE`. Portfolio Architect
+therefore keeps the established `sensor.portfolio_architect_*` date entities as the
+authoritative machine contract and adds a separate, additive Home Assistant
+`date`-platform presentation layer for the five dates shown in the reference
+dashboard.
+
+Each `date.*` counterpart returns the same Python `date` value as its authoritative
+sensor, without string reformatting, timezone conversion, or conversion through a
+fabricated `datetime`. The reference dashboard uses those counterparts only as the
+visible Tile entity; state/availability conditions and all calculation semantics
+continue to reference the original sensors.
+
+Home Assistant's `date` domain normally represents an input. Portfolio Architect's
+presentation entities are deliberately read-only: `date.set_value` is rejected
+fail-closed, and the reference dashboard routes Tile more-info actions to the
+authoritative sensor counterparts so the editable date control is not presented as
+a valid write path.
+The integration adds no service that can modify planning or policy dates.

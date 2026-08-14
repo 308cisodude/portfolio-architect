@@ -91,20 +91,30 @@ policy layout, source-specific outage diagnostics, and atomic LKG recovery. Live
 acceptance exposed one remaining cosmetic inconsistency: date-only Tile states still
 rendered as raw ISO `YYYY-MM-DD` values.
 
-## v1.26.4 — native date-tile formatting cleanup
+## v1.26.4 — native date-tile formatting attempt
 
-Current milestone: close that final v1.26 dashboard inconsistency without adding a
-new presentation-data layer.
+Published. Live acceptance proved that Home Assistant's Tile `time_format` does not
+locale-format a `sensor` state merely because that sensor uses
+`SensorDeviceClass.DATE`; the affected Tiles continued to show raw `YYYY-MM-DD`.
+The underlying DATE sensor contract remained correct and unchanged.
 
-- Keep all schedule/policy date entities as native `SensorDeviceClass.DATE` values.
-- Use Home Assistant native Tile `time_format` with `type: date` and `style: short`
-  for all date-only reference-dashboard tiles.
-- Apply the same generic configuration to English, German, composed, and standalone
-  dashboard variants.
-- Add no locale-specific date attributes, templates, helper sensors, or hard-coded
-  date patterns.
-- Leave refresh-schedule timestamps on native `datetime` / `short` rendering, with
-  no seconds-specific formatting.
+## v1.26.5 — native date-domain presentation
+
+Current milestone: close the v1.26.4 live-acceptance finding through Home
+Assistant's actual `date` entity domain while preserving the established sensor
+contract.
+
+- Keep all five schedule/policy `sensor.portfolio_architect_*` DATE entities
+  unchanged and authoritative.
+- Add additive `date.portfolio_architect_*` counterparts that mirror the same Python
+  `date` values solely for locale-aware frontend rendering.
+- Keep dashboard state/availability conditions and all portfolio logic on the
+  original sensor entities.
+- Reject all writes to the presentation dates and route Tile more-info actions to
+  the authoritative sensors to avoid an editable-date affordance.
+- Remove the ineffective date-only Tile `time_format` override; add no hard-coded
+  date string, locale template, timezone conversion, or fake timestamp.
+- Leave refresh-schedule timestamp rendering unchanged.
 - Keep payload schema 8, REST schema 1, health schema 6 and all provider/acquisition
   contracts unchanged.
 

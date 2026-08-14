@@ -7,7 +7,7 @@ from homeassistant.const import Platform
 DOMAIN: Final = "portfolio_architect"
 INSTANCE_UNIQUE_ID: Final = "portfolio_architect"
 NAME: Final = "Portfolio Architect"
-VERSION: Final = "1.26.4"
+VERSION: Final = "1.26.5"
 
 CONF_SOURCE_TYPE: Final = "source_type"
 
@@ -113,6 +113,6 @@ ATTR_RECOMMENDATIONS: Final = "recommendations"
 ATTR_HOLDINGS: Final = "holdings"
 ATTR_SUMMARY: Final = "summary"
 ATTR_POLICY_FINDINGS: Final = "policy_findings"
-PLATFORMS: Final = [Platform.SENSOR, Platform.BINARY_SENSOR]
+PLATFORMS: Final = [Platform.SENSOR, Platform.BINARY_SENSOR, Platform.DATE]
 
 ALLOCATION_KINDS: Final = ("current", "target")

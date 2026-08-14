@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections import Counter
 from pathlib import Path
 
 import yaml
@@ -11,15 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DASHBOARD = ROOT / "dashboard"
 COMPONENT = ROOT / "custom_components" / "portfolio_architect"
 
-DATE_ENTITIES = {
-    "sensor.portfolio_architect_planned_execution",
-    "sensor.portfolio_architect_next_plan_review",
-    "sensor.portfolio_architect_last_exception_decision",
-    "sensor.portfolio_architect_next_exception_review",
-    "sensor.portfolio_architect_oldest_overdue_exception_review",
-}
 NEXT_REFRESH = "sensor.portfolio_architect_gateway_next_refresh"
-EXPECTED_NATIVE_DATE_FORMAT = {"type": "date", "style": "short"}
 EXPECTED_NATIVE_DATETIME_FORMAT = {"type": "datetime", "style": "short"}
 
 
@@ -40,21 +31,17 @@ def _dashboard_documents() -> list[tuple[Path, object]]:
     return documents
 
 
-def test_every_date_only_reference_tile_uses_native_short_date_format() -> None:
-    counts: Counter[str] = Counter()
-    for path, document in _dashboard_documents():
-        for card in _walk(document):
-            if card.get("type") != "tile" or card.get("entity") not in DATE_ENTITIES:
-                continue
-            entity = card["entity"]
-            counts[entity] += 1
-            assert card.get("state_content") == "state", (path, entity)
-            assert card.get("time_format") == EXPECTED_NATIVE_DATE_FORMAT, (path, entity)
-
-    # Every conceptual date tile exists in the same nine composed/standalone
-    # reference variants; this catches an omitted duplicate during dashboard edits.
-    assert counts == Counter({entity: 9 for entity in DATE_ENTITIES})
-
+def test_v1264_authoritative_date_sensors_are_preserved_for_v1265() -> None:
+    """The failed v1.26.4 Tile workaround must not mutate the data contract."""
+    sensor = (COMPONENT / "sensor.py").read_text(encoding="utf-8")
+    for entity_class in (
+        "PortfolioPlannedExecutionSensor",
+        "PortfolioNextPlanReviewSensor",
+        "PortfolioLastExceptionDecisionSensor",
+        "PortfolioNextExceptionReviewSensor",
+        "PortfolioOldestOverdueExceptionReviewSensor",
+    ):
+        assert entity_class in sensor
 
 def test_refresh_schedule_tiles_keep_native_short_datetime_without_seconds_override() -> None:
     found = 0
