@@ -466,19 +466,13 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
     def unavailable_source_ids(self) -> tuple[str, ...]:
         """Return bounded source identities currently preventing a live aggregate."""
         missing: list[str] = []
-        for provider_id in sorted(self.supplemental_gateway_health_errors):
-            token = f"gateway:{provider_id}"
-            if token not in missing:
-                missing.append(token)
-        for source_id in sorted(self.supplemental_source_errors):
-            if source_id not in missing:
-                missing.append(source_id)
 
-        if (
-            self.source_type == SOURCE_TYPE_REST_API
-            and self._using_home_assistant_last_known_good
-            and not missing
-        ):
+        # Gateway-local LKG is still a non-live source state.  Do not make primary
+        # source identification depend on Portfolio Architect having fallen back to
+        # its separate Home Assistant LKG; a reachable Gateway can itself report
+        # reauthentication_required/last_known_good while continuing to serve its
+        # cached snapshot.
+        if self.source_type == SOURCE_TYPE_REST_API:
             health = self.gateway_health
             if health is None or _gateway_health_operating_mode(health) != "live":
                 provider_id = health.provider_id if health and health.provider_id else None
@@ -486,6 +480,20 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
                     candidate = self.source_summaries[0].get("provider")
                     provider_id = candidate if isinstance(candidate, str) else None
                 missing.append(f"gateway:{provider_id or PROVIDER_LOCAL_REST_JSON}")
+
+        for provider_id in sorted(self.supplemental_gateway_health_errors):
+            token = f"gateway:{provider_id}"
+            if token not in missing:
+                missing.append(token)
+        for provider_id, health in sorted(self.supplemental_gateway_health.items()):
+            if _gateway_health_operating_mode(health) == "live":
+                continue
+            token = f"gateway:{provider_id}"
+            if token not in missing:
+                missing.append(token)
+        for source_id in sorted(self.supplemental_source_errors):
+            if source_id not in missing:
+                missing.append(source_id)
         return tuple(missing)
 
     @property

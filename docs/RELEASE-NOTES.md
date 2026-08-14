@@ -1,75 +1,69 @@
-# Portfolio Architect 1.26.5
+# Portfolio Architect 1.26.6
 
-Version 1.26.5 is a narrow Home Assistant presentation hotfix after v1.26.4 live
-acceptance. Version 1.26.4 correctly kept schedule/policy values as native
-`SensorDeviceClass.DATE` sensors, but the Home Assistant frontend does not apply a
-Tile `time_format` override to that sensor class. The visible Tiles therefore still
-showed raw ISO `YYYY-MM-DD` states.
+Version 1.26.6 is a narrow source-diagnostics hotfix after v1.26.5 live acceptance.
+During a Comdirect PhotoTAN reauthentication event, the primary Gateway remained
+reachable and continued serving its trusted cached snapshot, so Portfolio Architect
+gracefully degraded and disabled new investment actionability as designed. The
+**Source unavailable** Tile nevertheless rendered `None` instead of identifying
+**Comdirect Gateway**.
 
-## Native date-domain presentation
+## Non-live Gateway source identification
 
-The five established sensors remain unchanged and authoritative:
+The unavailable-source metadata no longer depends on Portfolio Architect having
+activated its separate Home Assistant last-known-good cache before the primary REST
+Gateway can be named.
 
-- `sensor.portfolio_architect_planned_execution`
-- `sensor.portfolio_architect_next_plan_review`
-- `sensor.portfolio_architect_last_exception_decision`
-- `sensor.portfolio_architect_next_exception_review`
-- `sensor.portfolio_architect_oldest_overdue_exception_review`
+A configured REST Gateway is now included in the bounded unavailable-source set
+whenever its observed Gateway operating mode is not `live`. This covers, among other
+states:
 
-Version 1.26.5 adds matching Home Assistant `date`-domain presentation entities:
+- `reauthentication_required` while the Gateway still serves its own trusted cached
+  snapshot;
+- `last_known_good` Gateway-local cached operation; and
+- an unreachable/unavailable primary Gateway when Portfolio Architect falls back to
+  its Home Assistant LKG.
 
-- `date.portfolio_architect_planned_execution`
-- `date.portfolio_architect_next_plan_review`
-- `date.portfolio_architect_last_exception_decision`
-- `date.portfolio_architect_next_exception_review`
-- `date.portfolio_architect_oldest_overdue_exception_review`
+The same rule is applied symmetrically to additional REST Gateways whose health is
+available but non-live. Existing supplemental transport/authentication/integrity
+error collection and DKB CSV source diagnostics remain unchanged.
 
-Each counterpart mirrors the same Python `date` value. It does not format a string,
-convert through UTC/local time, or synthesize a timestamp. Home Assistant therefore
-handles visible localization through its normal `date`-domain state formatter.
+The public labels continue to be derived only from bounded provider/source IDs. No
+endpoint URL, bearer token, account identifier, file path, or provider-private state
+is exposed.
 
-Reference-dashboard Tiles use the new `date.*` entities only for display. Existing
-conditional logic, automations, templates, recorder/API consumers, and Portfolio
-Architect calculations can continue to use the unchanged authoritative sensors.
+## No Comdirect authentication change
 
-## Read-only boundary
-
-Home Assistant's `date` domain normally supports `date.set_value`. Portfolio
-Architect's presentation counterparts are intentionally read-only and reject every
-write attempt. Each reference Tile routes `more-info` to the corresponding authoritative
-`sensor.*` entity instead of opening the presentation `date.*` entity. This preserves
-the established inspection UX without exposing the date domain's normal editable
-input control. No Portfolio Architect plan or policy value can be changed through
-these entities.
-
-## Removed v1.26.4 workaround
-
-The affected date-only Tiles no longer carry `state_content: state` plus
-`time_format: {type: date, style: short}`. That configuration was valid Tile YAML
-but did not enter Home Assistant's date formatter for a `sensor` domain entity.
-Refresh-schedule timestamp Tiles remain unchanged on their established native
-`datetime` / `short` formatting.
+Version 1.26.6 does not alter Comdirect OAuth/session persistence, PhotoTAN handling,
+refresh cadence, account selection, authorized investment cash, Gateway shutdown,
+or provider acquisition. A short controlled stop/start test during v1.26.5 live
+acceptance confirmed that normal App restarts preserve the persisted Comdirect
+session state; the diagnostic defect was independent of that behavior.
 
 ## Compatibility
 
 - payload schema 8: unchanged
 - REST portfolio schema 1: unchanged
 - Gateway health schema 6: unchanged; schemas 1–5 remain supported
-- all existing `sensor.*` and `binary_sensor.*` entity IDs / unique IDs: unchanged
-- five additive read-only `date.*` presentation entities
+- existing Home Assistant entity IDs / unique IDs: unchanged
+- v1.26.5 authoritative DATE sensors and read-only native `date.*` presentation
+  counterparts: unchanged
 - provider acquisition/authentication/private state: unchanged
 - Comdirect authorized-cash semantics: unchanged
 - Trade Republic statement import/persisted snapshot: unchanged
 - DKB Gateway: still experimental/manual-only/fail-closed, no acquisition path
 - no trading/order/transfer/payment/transaction-history capability
 
-DKB live Gateway acquisition remains a later provider-specific milestone; v1.26.5 does not promote the experimental DKB shell into a live acquisition source.
+Gateway HTTPS transport hardening remains the next security milestone in v1.27.0.
 
-This release does not move PDF parsing into Portfolio Architect; Trade Republic statement parsing remains isolated in the Trade Republic Gateway App.
+## Historical boundaries
 
-No trading, order, transfer, payment, or transaction-history capability is added by this release.
+DKB live Gateway acquisition remains a later provider-specific milestone; v1.26.6
+does not promote the experimental DKB shell into a live acquisition source. Trade
+Republic statement parsing remains isolated in the Trade Republic Gateway App; this
+release does not move PDF parsing into Portfolio Architect.
 
 The historical experimental `v1.19.0-rc2` brokerage diagnostics/fee-probe work
 remains separate and is not promoted by this release.
 
-Gateway HTTPS transport hardening remains the next security milestone in v1.27.0.
+No trading, order, transfer, payment, or transaction-history capability is added by
+this release.

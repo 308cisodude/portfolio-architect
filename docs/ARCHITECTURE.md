@@ -295,3 +295,18 @@ fail-closed, and the reference dashboard routes Tile more-info actions to the
 authoritative sensor counterparts so the editable date control is not presented as
 a valid write path.
 The integration adds no service that can modify planning or policy dates.
+
+## v1.26.6 non-live Gateway source-diagnostics invariant
+
+Unavailable-source identity is derived from effective REST Gateway health, not from
+which cache layer happens to retain the trusted portfolio. A reachable primary
+Gateway can be non-live while still serving its own last-known-good snapshot; in
+that state Portfolio Architect may not need its separate Home Assistant LKG, but the
+provider is still the source preventing a fully live aggregate.
+
+Accordingly, each configured REST Gateway whose observed operating mode is not
+`live` contributes its bounded `gateway:<provider_id>` identity to the existing
+unavailable-source metadata. Transport/authentication/integrity errors and DKB CSV
+source failures retain their existing collection paths. This affects diagnostics
+only: configured-source atomicity, accepted snapshot calculation, actionability,
+provider acquisition and both REST/health wire schemas are unchanged.

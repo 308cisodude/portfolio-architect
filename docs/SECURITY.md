@@ -494,3 +494,17 @@ normal editable date-domain control is not exposed as an apparent configuration
 path. Planning,
 policy, source trust, LKG behavior, and provider data remain controlled exclusively
 by the existing integration configuration and coordinator state.
+
+## v1.26.6 unavailable-source diagnostic boundary
+
+The non-live Gateway diagnostic fix consumes only health-schema state already
+validated by Portfolio Architect and bounded provider IDs already permitted for
+provenance. It does not add endpoint URLs, bearer tokens, account/depot/customer
+identifiers, configured paths, raw provider responses, or credentials to Home
+Assistant state or diagnostics.
+
+The change does not alter Comdirect OAuth/session persistence, PhotoTAN handling,
+refresh cadence, provider acquisition, Gateway write capabilities, or atomic source
+trust. A Gateway-local cached snapshot remains degraded/non-actionable evidence; the
+hotfix only ensures that the provider responsible for that non-live state is named
+consistently.

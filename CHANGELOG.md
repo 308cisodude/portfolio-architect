@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.26.6
+
+- Fixes the v1.26.5 live-acceptance edge case where a reachable primary Comdirect Gateway in `reauthentication_required` / Gateway-local LKG operation could make **Source unavailable** render `None`.
+- Names every observed non-live REST Gateway through the existing bounded unavailable-source metadata, independent of whether Portfolio Architect has activated its separate Home Assistant LKG.
+- Applies the same non-live-health invariant to additional REST Gateways while preserving existing supplemental transport/authentication/integrity and DKB CSV failure collection.
+- Keeps all source labels privacy-safe and derived only from bounded provider/source IDs; no endpoint, token, account identifier, path, or provider-private state is exposed.
+- Makes no Comdirect OAuth/session, refresh-cadence, provider acquisition, portfolio-calculation, date-presentation, entity-identity, or wire-schema change.
+- Preserves payload schema 8, REST schema 1, Gateway health schema 6, atomic all-configured-source/LKG behavior, and the read-only/no-trading boundary.
+
 ## 1.26.5
 
 - Corrects the v1.26.4 live-acceptance finding that Home Assistant Tile `time_format` does not locale-format `sensor` entities whose device class is `date`.
