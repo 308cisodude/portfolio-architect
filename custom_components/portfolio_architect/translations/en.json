@@ -2219,13 +2219,11 @@
         }
       },
       "sources": {
-        "title": "Supplemental portfolio sources",
-        "description": "Add DKB depot exports to the primary source, one relative CSV path per line. Positions are consolidated by ISIN; depot numbers are ignored.",
-        "data": {
-          "supplemental_dkb_csv_paths": "DKB CSV paths"
-        },
-        "data_description": {
-          "supplemental_dkb_csv_paths": "Relative to /config. Use one current export per DKB depot. If several dated exports of the same depot are configured, only the newest is counted. Up to 8 paths are supported."
+        "title": "Portfolio sources",
+        "description": "Manage supplemental portfolio sources. Every source is normalized before aggregation; provider-specific acquisition stays outside Portfolio Architect.",
+        "menu_options": {
+          "dkb_sources": "DKB CSV sources",
+          "rest_gateways": "Additional REST Gateways"
         }
       },
       "execution": {
@@ -2273,6 +2271,43 @@
           "manual_venue_fee_bps": "100 basis points equal 1%. Enter 0.25 for 0.0025%.",
           "manual_settlement_fee_eur": "Additional fixed settlement charge observed for the selected execution route."
         }
+      },
+      "dkb_sources": {
+        "title": "DKB CSV sources",
+        "description": "Add DKB depot exports to the primary source, one relative CSV path per line. Positions are consolidated by ISIN; depot numbers are ignored.",
+        "data": {
+          "supplemental_dkb_csv_paths": "DKB CSV paths"
+        },
+        "data_description": {
+          "supplemental_dkb_csv_paths": "Relative to /config. Use one current export per DKB depot. If several dated exports of the same depot are configured, only the newest is counted. Up to 8 paths are supported."
+        }
+      },
+      "rest_gateways": {
+        "title": "Additional REST Gateways",
+        "description": "Add or remove independent local Portfolio Architect Gateways. Each Gateway remains separately authenticated and provider-isolated.",
+        "menu_options": {
+          "add_rest_gateway": "Add REST Gateway",
+          "remove_rest_gateway": "Remove REST Gateway"
+        }
+      },
+      "add_rest_gateway": {
+        "title": "Add REST Gateway",
+        "description": "Connect one additional read-only local Gateway. Its health document must expose a stable provider identity and a validated snapshot before it is saved.",
+        "data": {
+          "rest_endpoint_url": "Local Gateway URL",
+          "rest_api_token": "Gateway bearer token"
+        },
+        "data_description": {
+          "rest_endpoint_url": "HTTP or HTTPS portfolio endpoint on a loopback, link-local, or private address.",
+          "rest_api_token": "Dedicated low-privilege bearer token for this Gateway. It is stored only in the Home Assistant config entry options."
+        }
+      },
+      "remove_rest_gateway": {
+        "title": "Remove REST Gateway",
+        "description": "Stop consuming one additional Gateway. The Gateway App and its private data are not changed.",
+        "data": {
+          "provider_id": "Provider"
+        }
       }
     },
     "error": {
@@ -2282,13 +2317,18 @@
       "invalid_schedule": "The recurring schedule is incomplete or invalid.",
       "targets_not_100": "The target weights must total exactly 100% or be explicitly normalised.",
       "invalid_supplemental_source": "At least one supplemental DKB CSV is missing, unsafe, or not a supported DKB depot export.",
-      "too_many_sources": "At most 8 supplemental DKB CSV sources are supported.",
-      "invalid_execution_config": "The execution-cost settings are inconsistent or outside the supported range."
+      "too_many_sources": "At most 8 supplemental portfolio sources are supported in total.",
+      "invalid_execution_config": "The execution-cost settings are inconsistent or outside the supported range.",
+      "invalid_auth": "The local Gateway rejected its bearer token.",
+      "invalid_rest_gateway": "The additional Gateway is unavailable, duplicates an existing provider/endpoint, or does not expose a valid live schema-6 snapshot.",
+      "too_many_rest_gateways": "At most 4 additional REST Gateways are supported."
     },
     "abort": {
       "plan_source_unavailable": "The local portfolio files could not be read for the plan editor.",
       "invalid_plan": "The configured plan failed validation and was not saved.",
-      "plan_already_uses_yaml": "The investment plan already uses portfolio.yaml."
+      "plan_already_uses_yaml": "The investment plan already uses portfolio.yaml.",
+      "no_rest_gateways": "No additional REST Gateways are configured.",
+      "rest_gateways_require_rest_primary": "Additional REST Gateways require the primary Portfolio Architect source to be a REST Gateway."
     }
   },
   "selector": {

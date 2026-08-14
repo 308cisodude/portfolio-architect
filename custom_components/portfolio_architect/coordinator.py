@@ -52,6 +52,7 @@ from .const import (
     CONF_REVIEW_LEAD_DAYS,
     CONF_SOURCE_ENTITY_ID,
     CONF_SUPPLEMENTAL_DKB_CSV_PATHS,
+    CONF_SUPPLEMENTAL_REST_SOURCES,
     CONF_SOURCE_TYPE,
     DEFAULT_CONFIG_DIRECTORY,
     DEFAULT_CSV_PATH,
@@ -61,6 +62,7 @@ from .const import (
     DEFAULT_SOURCE_ENTITY_ID,
     DEFAULT_UPDATE_INTERVAL_MINUTES,
     MAX_SUPPLEMENTAL_SOURCES,
+    MAX_SUPPLEMENTAL_REST_SOURCES,
     DOMAIN,
     MAX_FRESHNESS_HOURS,
     MAX_REVIEW_LEAD_DAYS,
@@ -112,7 +114,9 @@ from .rest_client import (
     PortfolioRestError,
     PortfolioRestRateLimitError,
     GatewayHealth,
+    RestFetchResult,
     RestSourceConfig,
+    SupplementalRestSourceConfig,
     async_fetch_gateway_health,
     async_fetch_rest_snapshot,
 )
@@ -177,6 +181,19 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
             require_exists=False,
             maximum=MAX_SUPPLEMENTAL_SOURCES,
         )
+        self.supplemental_rest_sources: tuple[SupplementalRestSourceConfig, ...] = (
+            _supplemental_rest_sources_from_options(entry.options)
+            if self.source_type == SOURCE_TYPE_REST_API
+            else ()
+        )
+        if (
+            len(self.supplemental_dkb_paths) + len(self.supplemental_rest_sources)
+            > MAX_SUPPLEMENTAL_SOURCES
+        ):
+            raise ValueError("At most 8 supplemental portfolio sources are supported")
+        self.supplemental_gateway_health: dict[str, GatewayHealth] = {}
+        self.supplemental_gateway_health_errors: dict[str, str] = {}
+        self._supplemental_rest_generated_at: dict[str, datetime] = {}
         self._rest_etag: str | None = None
         self._rest_last_modified: str | None = None
         self._rest_snapshot_generated_at: datetime | None = None
@@ -282,6 +299,7 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
                     self.configuration_path.config_directory,
                     self.plan_override,
                     tuple(item.relative for item in self.supplemental_dkb_paths),
+                    _supplemental_rest_identity_tokens(self.supplemental_rest_sources),
                 )
             )
             cached = await self._last_known_good_store.async_load(
@@ -341,7 +359,7 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
             label = self.source_summaries[0].get("label")
             if isinstance(label, str) and label:
                 return label
-        if self.supplemental_dkb_paths:
+        if self.supplemental_dkb_paths or self.supplemental_rest_sources:
             return "Multi-source portfolio"
         if self.local_paths is not None:
             return self.local_paths.csv_relative
@@ -352,7 +370,7 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
     @property
     def source_provider(self) -> str:
         """Return the explicit provider adapter."""
-        if self.supplemental_dkb_paths:
+        if self.supplemental_dkb_paths or self.supplemental_rest_sources:
             return PROVIDER_MULTI_SOURCE
         if self.rest_source_config is not None:
             return PROVIDER_LOCAL_REST_JSON
@@ -366,24 +384,30 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
             if self.rest_source_config is not None
             else self.csv_source_config.as_public_dict()
         )
-        effective_dkb_count = sum(
-            1
-            for item in self.source_summaries
-            if isinstance(item, dict) and item.get("provider") == PROVIDER_DKB
-        )
+        if self.source_summaries:
+            supplemental_summaries = tuple(self.source_summaries[1:])
+            supplemental_providers = [
+                str(item.get("provider"))
+                for item in supplemental_summaries
+                if isinstance(item, dict) and isinstance(item.get("provider"), str)
+            ]
+            supplemental_source_count = len(supplemental_summaries)
+        else:
+            supplemental_providers = [PROVIDER_DKB] * len(self.supplemental_dkb_paths) + [
+                item.provider_id for item in self.supplemental_rest_sources
+            ]
+            supplemental_source_count = len(supplemental_providers)
         return {
             **base,
             "configured_supplemental_path_count": len(self.supplemental_dkb_paths),
-            "supplemental_source_count": (
-                effective_dkb_count
-                if self.source_summaries
-                else len(self.supplemental_dkb_paths)
-            ),
-            "supplemental_providers": [PROVIDER_DKB] * (
-                effective_dkb_count
-                if self.source_summaries
-                else len(self.supplemental_dkb_paths)
-            ),
+            "supplemental_source_count": supplemental_source_count,
+            "supplemental_providers": supplemental_providers,
+            "configured_supplemental_rest_gateway_count": len(self.supplemental_rest_sources),
+            "supplemental_rest_gateways": [
+                item.as_public_dict() for item in self.supplemental_rest_sources
+            ],
+            "provider_count": self.provider_count,
+            "provider_ids": list(self.provider_ids),
         }
 
     @property
@@ -392,20 +416,72 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
         return len(self.source_summaries) if self.source_summaries else 1
 
     @property
+    def provider_ids(self) -> tuple[str, ...]:
+        """Return distinct bounded provider identities contributing to the portfolio."""
+        providers: list[str] = []
+        for item in self.source_summaries:
+            provider = item.get("provider") if isinstance(item, dict) else None
+            if isinstance(provider, str) and provider and provider not in providers:
+                providers.append(provider)
+        if providers:
+            return tuple(providers)
+        if self.rest_source_config is not None and self.gateway_health is not None:
+            provider = self.gateway_health.provider_id or PROVIDER_LOCAL_REST_JSON
+            providers.append(provider)
+        elif self.local_paths is not None:
+            providers.append(self.csv_source_config.provider)
+        for item in self.supplemental_rest_sources:
+            if item.provider_id not in providers:
+                providers.append(item.provider_id)
+        if self.supplemental_dkb_paths and PROVIDER_DKB not in providers:
+            providers.append(PROVIDER_DKB)
+        return tuple(providers or (self.source_provider,))
+
+    @property
+    def provider_count(self) -> int:
+        """Return the number of distinct providers, independent of source instances."""
+        return len(self.provider_ids)
+
+    @property
+    def provider_summary(self) -> str:
+        """Return a compact English dashboard summary without endpoint details."""
+        count = self.provider_count
+        if count > 1:
+            return f"Multi-source portfolio · {count} providers"
+        provider = self.provider_ids[0] if self.provider_ids else self.source_provider
+        return f"{_provider_display_name(provider)} · 1 provider"
+
+    @property
+    def provider_summary_de(self) -> str:
+        """Return a compact German dashboard summary without endpoint details."""
+        count = self.provider_count
+        if count > 1:
+            return f"Portfolio aus mehreren Quellen · {count} Anbieter"
+        provider = self.provider_ids[0] if self.provider_ids else self.source_provider
+        return f"{_provider_display_name(provider)} · 1 Anbieter"
+
+    @property
     def source_conflict_count(self) -> int:
         """Return the number of bounded cross-source identity warnings."""
         return len(self.source_conflicts)
 
     @property
     def gateway_status(self) -> str:
-        """Return the effective Gateway status for the data PA is serving."""
+        """Return the effective aggregate Gateway status for the data PA is serving."""
         if self.source_type != SOURCE_TYPE_REST_API:
             return "not_configured"
         if self._using_home_assistant_last_known_good:
             return "degraded"
         if self.gateway_health is None:
             return "unavailable"
-        return self.gateway_health.status
+        if self.supplemental_gateway_health_errors:
+            return "degraded"
+        supplemental = tuple(self.supplemental_gateway_health.values())
+        if any(item.status == "unavailable" for item in supplemental):
+            return "unavailable"
+        if self.gateway_health.status != "ok" or any(item.status != "ok" for item in supplemental):
+            return "degraded"
+        return "ok"
 
     @property
     def gateway_snapshot_generated_at(self) -> datetime | None:
@@ -448,7 +524,7 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
 
     @property
     def gateway_operating_mode(self) -> str:
-        """Return the effective live-data operating mode for PA's active data."""
+        """Return the effective live-data mode across every configured REST Gateway."""
         if self.source_type != SOURCE_TYPE_REST_API:
             return "not_configured"
         if self._using_home_assistant_last_known_good and self.data is not None:
@@ -456,15 +532,19 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
         health = self.gateway_health
         if health is None:
             return "unavailable"
-        if health.operating_mode is not None:
-            return health.operating_mode
-        if health.reauthentication_required:
-            return "reauthentication_required"
-        if health.status == "ok" and health.snapshot_available:
-            return "live"
-        if health.snapshot_available:
-            return "last_known_good"
-        return "unavailable"
+        primary_mode = _gateway_health_operating_mode(health)
+        if primary_mode != "live":
+            return primary_mode
+        if self.supplemental_gateway_health_errors:
+            return "unavailable"
+        for config in self.supplemental_rest_sources:
+            supplemental = self.supplemental_gateway_health.get(config.provider_id)
+            if supplemental is None:
+                return "unavailable"
+            mode = _gateway_health_operating_mode(supplemental)
+            if mode != "live":
+                return mode
+        return "live"
 
     @property
     def gateway_snapshot_age_seconds(self) -> int | None:
@@ -490,14 +570,12 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
 
     @property
     def gateway_consecutive_refresh_failures(self) -> int | None:
-        """Return the current consecutive live-refresh failure count."""
+        """Return consecutive failures for the aggregate PA actually serves."""
+        if self._using_home_assistant_last_known_good:
+            return self._home_assistant_cache_failure_count
         health = self.gateway_health
         if health is None:
-            return (
-                self._home_assistant_cache_failure_count
-                if self._using_home_assistant_last_known_good
-                else None
-            )
+            return None
         return health.consecutive_refresh_failures
 
     @property
@@ -554,18 +632,27 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
 
     @property
     def gateway_last_refresh_failure_at(self) -> datetime | None:
-        """Return when the active consecutive refresh-failure run began or advanced."""
+        """Return the latest failure timestamp for the aggregate PA is serving."""
+        if self._using_home_assistant_last_known_good:
+            return self._home_assistant_cache_last_failure_at
         health = self.gateway_health
         if health is None:
-            return self._home_assistant_cache_last_failure_at
+            return None
         return health.last_refresh_failure_at
 
     @property
     def gateway_last_refresh_failure_class(self) -> str | None:
-        """Return the sanitized class of the most recent live-refresh failure."""
+        """Return the sanitized class of the latest aggregate refresh failure."""
+        if self._using_home_assistant_last_known_good:
+            if self.supplemental_gateway_health_errors:
+                # Provider IDs are bounded public identities; failure classes are
+                # bounded internal categories and contain no endpoint/token data.
+                return next(iter(self.supplemental_gateway_health_errors.values()))
+            if self.gateway_health is None:
+                return "transport_error"
         health = self.gateway_health
         if health is None:
-            return "transport_error" if self._using_home_assistant_last_known_good else None
+            return None
         return health.last_refresh_failure_class
 
     @property
@@ -622,6 +709,8 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
             return "reauthentication_required"
         if self.rest_snapshot_integrity_error is not None:
             return "integrity_failure"
+        if self.supplemental_gateway_health_errors:
+            return "supplemental_source_unavailable"
         if self.gateway_operating_mode == "unavailable":
             return "snapshot_unavailable"
         if self.is_gateway_refresh_overdue():
@@ -648,7 +737,7 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
             return "none"
         if reason == "reauthentication_required":
             return "reauthenticate"
-        if reason in {"health_unavailable", "transport_error"}:
+        if reason in {"health_unavailable", "transport_error", "supplemental_source_unavailable"}:
             return "check_connectivity"
         if reason in {"rate_limited", "remote_service_error", "last_known_good"}:
             return "wait"
@@ -683,7 +772,7 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
                 active=(
                     not health.reauthentication_required
                     and self.gateway_operating_mode == "last_known_good"
-                    and (health.consecutive_refresh_failures or 0) >= 3
+                    and (self.gateway_consecutive_refresh_failures or 0) >= 3
                 ),
                 severity=ir.IssueSeverity.WARNING,
                 translation_key="gateway_repeated_refresh_failures",
@@ -802,6 +891,8 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
         health = self.gateway_health
         if health is None or health.reauthentication_required:
             return False
+        if self.supplemental_gateway_health_errors:
+            return False
         return self.gateway_operating_mode == "live"
 
     @property
@@ -822,6 +913,8 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
             return "health_unavailable"
         if health.reauthentication_required:
             return "reauthentication_required"
+        if self.supplemental_gateway_health_errors:
+            return "source_degraded"
         if self.gateway_operating_mode != "live":
             return "source_degraded"
         return "actionable"
@@ -972,6 +1065,7 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
                     self.configuration_path.config_directory,
                     self.plan_override,
                     tuple(item.relative for item in self.supplemental_dkb_paths),
+                    _supplemental_rest_identity_tokens(self.supplemental_rest_sources),
                 )
             )
         except (OSError, ValueError) as err:
@@ -1016,6 +1110,16 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
                 str(err), configuration_sha256=configuration_sha256
             )
 
+        if self.supplemental_rest_sources and (
+            self.gateway_health is None
+            or self.gateway_health.health_schema_version < 6
+            or self.gateway_health.provider_id is None
+        ):
+            return self._use_home_assistant_last_known_good(
+                "Multi-Gateway aggregation requires primary Gateway health schema 6 with provider identity",
+                configuration_sha256=configuration_sha256,
+            )
+
         snapshot = result.snapshot
         reuse_existing_data = False
         if snapshot is None:
@@ -1032,6 +1136,7 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
                 self._last_configuration_modified is not None
                 and configuration_modified <= self._last_configuration_modified
                 and not self.supplemental_dkb_paths
+                and not self.supplemental_rest_sources
             )
             positions = self.primary_positions
             generated_at = self._rest_snapshot_generated_at
@@ -1072,6 +1177,41 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
                 integrity_failure=True,
             )
 
+        try:
+            (
+                supplemental_rest_snapshots,
+                supplemental_health,
+                supplemental_health_errors,
+            ) = await _async_fetch_supplemental_rest_snapshots(
+                self.hass, self.supplemental_rest_sources
+            )
+            for item in supplemental_rest_snapshots:
+                previous = self._supplemental_rest_generated_at.get(item.provider)
+                if previous is not None and item.generated_at < previous:
+                    raise PortfolioRestError(
+                        f"{_provider_display_name(item.provider)} Gateway attempted to replace "
+                        "the accepted snapshot with an older snapshot"
+                    )
+        except (SupplementalPortfolioSourceError, PortfolioRestError) as err:
+            self.rest_snapshot_integrity_error = (
+                str(err) if isinstance(err, PortfolioRestError) else None
+            )
+            self.supplemental_gateway_health = {}
+            self.supplemental_gateway_health_errors = (
+                {err.provider_id: err.failure_class}
+                if isinstance(err, SupplementalPortfolioSourceError)
+                and err.provider_id is not None
+                else {}
+            )
+            self._sync_gateway_issues()
+            return self._use_home_assistant_last_known_good(
+                f"Supplemental portfolio source failed: {err}",
+                configuration_sha256=configuration_sha256,
+                integrity_failure=isinstance(err, PortfolioRestError),
+            )
+        self.supplemental_gateway_health = supplemental_health
+        self.supplemental_gateway_health_errors = supplemental_health_errors
+
         if reuse_existing_data:
             if result.snapshot_sha256 is not None:
                 self._rest_snapshot_sha256 = result.snapshot_sha256
@@ -1097,6 +1237,12 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
                 generated_at,
                 self.rest_source_config.endpoint_url,
                 self.supplemental_dkb_paths,
+                supplemental_rest_snapshots,
+                (
+                    self.gateway_health.provider_id
+                    if self.gateway_health is not None and self.gateway_health.provider_id is not None
+                    else PROVIDER_LOCAL_REST_JSON
+                ),
                 self._rest_investment_reserve_eur,
                 self._rest_investment_reserve_as_of,
                 self._rest_investment_cash,
@@ -1115,6 +1261,9 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
 
         self.primary_positions = dict(positions)
         self._apply_aggregation(aggregation)
+        self._supplemental_rest_generated_at = {
+            item.provider: item.generated_at for item in supplemental_rest_snapshots
+        }
         self._rest_snapshot_generated_at = generated_at
         if result.snapshot_sha256 is not None:
             self._rest_snapshot_sha256 = result.snapshot_sha256
@@ -1220,6 +1369,19 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
         self.source_conflicts = tuple(
             item for item in summary.get("source_conflicts", []) if isinstance(item, dict)
         )
+        configured_rest_providers = {item.provider_id for item in self.supplemental_rest_sources}
+        self._supplemental_rest_generated_at = {}
+        for item in self.source_summaries:
+            provider = item.get("provider") if isinstance(item, dict) else None
+            generated = item.get("generated_at") if isinstance(item, dict) else None
+            if provider not in configured_rest_providers or not isinstance(generated, str):
+                continue
+            try:
+                parsed = datetime.fromisoformat(generated.replace("Z", "+00:00"))
+            except ValueError:
+                continue
+            if parsed.tzinfo is not None:
+                self._supplemental_rest_generated_at[provider] = parsed.astimezone(timezone.utc)
         for key, attribute in (
             ("oldest_source_generated_at", "oldest_source_generated_at"),
             ("newest_source_generated_at", "newest_source_generated_at"),
@@ -1322,8 +1484,175 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
         return data
 
 
+def _supplemental_rest_sources_from_options(
+    options: Any,
+) -> tuple[SupplementalRestSourceConfig, ...]:
+    """Load bounded additional Gateway configs from untrusted entry options."""
+    raw = options.get(CONF_SUPPLEMENTAL_REST_SOURCES, []) if hasattr(options, "get") else []
+    if raw in (None, []):
+        return ()
+    if not isinstance(raw, list) or len(raw) > MAX_SUPPLEMENTAL_REST_SOURCES:
+        raise ValueError("Supplemental REST Gateway configuration is invalid")
+    result: list[SupplementalRestSourceConfig] = []
+    seen_endpoints: set[str] = set()
+    seen_providers: set[str] = set()
+    for item in raw:
+        if not isinstance(item, dict):
+            raise ValueError("Supplemental REST Gateway configuration is invalid")
+        config = SupplementalRestSourceConfig.from_mapping(item)
+        if config.endpoint_url in seen_endpoints or config.provider_id in seen_providers:
+            raise ValueError("Supplemental REST Gateway identities must be unique")
+        seen_endpoints.add(config.endpoint_url)
+        seen_providers.add(config.provider_id)
+        result.append(config)
+    return tuple(result)
+
+
+def _supplemental_rest_identity_tokens(
+    sources: tuple[SupplementalRestSourceConfig, ...],
+) -> tuple[str, ...]:
+    """Return public configuration identities used only in the LKG fingerprint."""
+    return tuple(f"{item.provider_id}|{item.endpoint_url}" for item in sources)
+
+
+def _gateway_health_operating_mode(health: GatewayHealth) -> str:
+    """Normalize one Gateway health document into PA's bounded operating modes."""
+    if health.operating_mode is not None:
+        return health.operating_mode
+    if health.reauthentication_required:
+        return "reauthentication_required"
+    if health.status == "ok" and health.snapshot_available:
+        return "live"
+    if health.snapshot_available:
+        return "last_known_good"
+    return "unavailable"
+
+
+def _provider_display_name(provider_id: str) -> str:
+    """Return a bounded non-secret human provider label."""
+    known = {
+        "comdirect": "Comdirect",
+        "dkb": "DKB",
+        "trade_republic": "Trade Republic",
+        PROVIDER_LOCAL_REST_JSON: "Local REST",
+        PROVIDER_MULTI_SOURCE: "Multi-source portfolio",
+    }
+    return known.get(provider_id, provider_id.replace("_", " ").title())
+
+
+def _validate_supplemental_rest_integrity(
+    *,
+    config: SupplementalRestSourceConfig,
+    health: GatewayHealth,
+    result: RestFetchResult,
+) -> PortfolioSourceSnapshot:
+    """Validate one additional Gateway snapshot against its provider health identity."""
+    snapshot = result.snapshot
+    if health.health_schema_version < 6 or health.provider_id != config.provider_id:
+        raise PortfolioRestError("Additional REST Gateway provider identity is invalid")
+    if snapshot is None:
+        raise PortfolioRestError("Additional REST Gateway returned no live snapshot")
+    if result.snapshot_sha256 is None and result.position_count is not None:
+        raise PortfolioRestError("Additional REST Gateway integrity metadata is incomplete")
+    if result.snapshot_sha256 is not None and result.position_count is None:
+        raise PortfolioRestError("Additional REST Gateway integrity metadata is incomplete")
+    if result.position_count is not None and result.position_count != len(snapshot.positions):
+        raise PortfolioRestError("Additional REST Gateway position count is inconsistent")
+    if not health.snapshot_available:
+        raise PortfolioRestError("Additional REST Gateway reports no portfolio snapshot")
+    if (
+        health.snapshot_generated_at is not None
+        and health.snapshot_generated_at != snapshot.generated_at
+    ):
+        raise PortfolioRestError("Additional REST Gateway snapshot timestamp is inconsistent")
+    if (
+        health.snapshot_position_count is not None
+        and health.snapshot_position_count != len(snapshot.positions)
+    ):
+        raise PortfolioRestError("Additional REST Gateway health position count is inconsistent")
+    if (
+        health.snapshot_sha256 is not None
+        and result.snapshot_sha256 is not None
+        and health.snapshot_sha256 != result.snapshot_sha256
+    ):
+        raise PortfolioRestError("Additional REST Gateway snapshot fingerprint is inconsistent")
+    return PortfolioSourceSnapshot(
+        source_id=config.provider_id,
+        provider=config.provider_id,
+        label=_provider_display_name(config.provider_id),
+        generated_at=snapshot.generated_at,
+        positions=snapshot.positions,
+    )
+
+
+async def _async_fetch_supplemental_rest_snapshots(
+    hass: HomeAssistant,
+    configs: tuple[SupplementalRestSourceConfig, ...],
+) -> tuple[tuple[PortfolioSourceSnapshot, ...], dict[str, GatewayHealth], dict[str, str]]:
+    """Fetch additional Gateways atomically with provider-identity health evidence."""
+    snapshots: list[PortfolioSourceSnapshot] = []
+    health_by_provider: dict[str, GatewayHealth] = {}
+    for config in configs:
+        try:
+            health = await async_fetch_gateway_health(hass, config.rest_config)
+        except PortfolioRestAuthenticationError as err:
+            raise SupplementalPortfolioSourceError(
+                f"{_provider_display_name(config.provider_id)} Gateway rejected its bearer token",
+                provider_id=config.provider_id,
+                failure_class="authentication_error",
+            ) from err
+        except (OSError, PortfolioRestError) as err:
+            raise SupplementalPortfolioSourceError(
+                f"{_provider_display_name(config.provider_id)} Gateway health is unavailable",
+                provider_id=config.provider_id,
+                failure_class="transport_error",
+            ) from err
+        if health.health_schema_version < 6 or health.provider_id != config.provider_id:
+            raise SupplementalPortfolioSourceError(
+                f"{_provider_display_name(config.provider_id)} Gateway provider identity changed",
+                provider_id=config.provider_id,
+                failure_class="identity_error",
+            )
+        health_by_provider[config.provider_id] = health
+        try:
+            result = await async_fetch_rest_snapshot(hass, config.rest_config)
+            snapshots.append(
+                _validate_supplemental_rest_integrity(
+                    config=config,
+                    health=health,
+                    result=result,
+                )
+            )
+        except PortfolioRestAuthenticationError as err:
+            raise SupplementalPortfolioSourceError(
+                f"{_provider_display_name(config.provider_id)} Gateway rejected its bearer token",
+                provider_id=config.provider_id,
+                failure_class="authentication_error",
+            ) from err
+        except (OSError, PortfolioRestError, ValueError) as err:
+            raise SupplementalPortfolioSourceError(
+                f"{_provider_display_name(config.provider_id)} Gateway snapshot is unavailable or invalid",
+                provider_id=config.provider_id,
+                failure_class=(
+                    "integrity_error" if isinstance(err, PortfolioRestError) else "transport_error"
+                ),
+            ) from err
+    return tuple(snapshots), health_by_provider, {}
+
+
 class SupplementalPortfolioSourceError(ValueError):
     """Raised when a configured supplemental source cannot be read or aggregated."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        provider_id: str | None = None,
+        failure_class: str = "source_error",
+    ) -> None:
+        super().__init__(message)
+        self.provider_id = provider_id
+        self.failure_class = failure_class
 
 
 def _parse_payload(payload: dict[str, Any]) -> PortfolioData:
@@ -1358,9 +1687,12 @@ def _supplemental_snapshots(
 
 
 def _aggregation_metadata(aggregation: AggregationResult) -> dict[str, Any]:
+    provider_ids = tuple(dict.fromkeys(item.provider for item in aggregation.sources))
     return {
         "source_count": len(aggregation.sources),
         "source_providers": [item.provider for item in aggregation.sources],
+        "provider_count": len(provider_ids),
+        "provider_ids": list(provider_ids),
         "source_summaries": [item.to_dict() for item in aggregation.sources],
         "source_conflict_count": len(aggregation.conflicts),
         "source_conflicts": [item.to_dict() for item in aggregation.conflicts],
@@ -1419,33 +1751,36 @@ def _calculate_rest_payload(
     generated_at: datetime,
     endpoint_url: str,
     supplemental_paths: tuple[SupplementalCsvPath, ...],
+    supplemental_rest_snapshots: tuple[PortfolioSourceSnapshot, ...],
+    primary_provider_id: str,
     investment_reserve_eur,
     investment_reserve_as_of: datetime | None,
     investment_cash: RestInvestmentCash | None,
 ) -> tuple[dict[str, Any], AggregationResult]:
     primary = PortfolioSourceSnapshot(
-        source_id="comdirect",
-        provider=PROVIDER_LOCAL_REST_JSON,
-        label=_endpoint_source_label(endpoint_url),
+        source_id=primary_provider_id,
+        provider=primary_provider_id,
+        label=_provider_display_name(primary_provider_id),
         generated_at=generated_at,
         positions=positions,
     )
     try:
         supplements = _supplemental_snapshots(supplemental_paths)
-        sources = (primary, *supplements)
+        sources = (primary, *supplemental_rest_snapshots, *supplements)
         aggregation = aggregate_sources(sources)
     except (OSError, ValueError) as err:
-        if supplemental_paths:
+        if supplemental_paths or supplemental_rest_snapshots:
             raise SupplementalPortfolioSourceError(str(err)) from err
         raise
-    provider = PROVIDER_MULTI_SOURCE if supplemental_paths else PROVIDER_LOCAL_REST_JSON
+    has_supplements = bool(supplemental_paths or supplemental_rest_snapshots)
+    provider = PROVIDER_MULTI_SOURCE if has_supplements else PROVIDER_LOCAL_REST_JSON
     payload = calculate_portfolio_payload_from_positions(
         aggregation.positions,
         config_directory,
         evaluated_at=max(item.generated_at for item in sources),
         plan_override=plan_override,
         source_provider=provider,
-        source_label=(f"{len(sources)} sources" if supplemental_paths else _endpoint_source_label(endpoint_url)),
+        source_label=(f"{len(sources)} sources" if has_supplements else _provider_display_name(primary_provider_id)),
         source_metadata={
             **_aggregation_metadata(aggregation),
             **(
@@ -1492,6 +1827,7 @@ def _configuration_metadata(
     config_directory: Path,
     plan_override: dict[str, Any] | None,
     supplemental_paths: tuple[str, ...] = (),
+    supplemental_rest_sources: tuple[str, ...] = (),
 ) -> tuple[datetime, str]:
     paths = tuple(configuration_files(config_directory))
     if not paths or any(not path.is_file() for path in paths):
@@ -1507,6 +1843,21 @@ def _configuration_metadata(
         digest.update(
             json.dumps(
                 list(supplemental_paths),
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        )
+        fingerprint = digest.hexdigest()
+    if supplemental_rest_sources:
+        import hashlib
+        import json
+
+        digest = hashlib.sha256()
+        digest.update(fingerprint.encode("ascii"))
+        digest.update(
+            json.dumps(
+                list(supplemental_rest_sources),
                 ensure_ascii=False,
                 sort_keys=True,
                 separators=(",", ":"),

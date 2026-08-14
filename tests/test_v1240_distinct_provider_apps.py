@@ -1,4 +1,4 @@
-"""Regression contracts for v1.25.0 distinct provider Home Assistant Apps."""
+"""Regression contracts for v1.26.0 distinct provider Home Assistant Apps."""
 from __future__ import annotations
 
 import json
@@ -23,10 +23,9 @@ def test_three_provider_apps_have_unique_stable_identities_and_isolated_storage(
     assert configs["dkb"]["slug"]=="portfolio_architect_gateway_dkb"
     assert configs["trade_republic"]["slug"]=="portfolio_architect_gateway_trade_republic"
     assert len({c["slug"] for c in configs.values()})==3
-    assert all(c["version"]=="1.25.0" for c in configs.values())
+    assert all(c["version"]=="1.26.0" for c in configs.values())
     for key in ("dkb","trade_republic"):
         assert configs[key]["stage"]=="experimental"
-        assert configs[key]["boot"]=="manual_only"
         assert configs[key]["host_network"] is False
         assert configs[key]["homeassistant_api"] is False
         assert configs[key]["hassio_api"] is False
@@ -34,6 +33,8 @@ def test_three_provider_apps_have_unique_stable_identities_and_isolated_storage(
         assert configs[key]["ports"]["8787/tcp"] is None
         entry=(APPS[key]/"entrypoint.py").read_text(encoding="utf-8")
         assert 'DATA = Path("/data/gateway")' in entry
+    assert configs["dkb"]["boot"] == "manual_only"
+    assert configs["trade_republic"]["boot"] == "auto"
 
 def test_shell_apps_share_only_audited_provider_neutral_runtime_files():
     for key in ("dkb","trade_republic"):
@@ -84,11 +85,12 @@ def test_provider_capability_boundaries_are_explicit():
     assert "statement" in trade_republic["description"].casefold()
     roadmap=(ROOT/"docs"/"ROADMAP.md").read_text(encoding="utf-8")
     assert "Trade Republic statement import" in roadmap
-    assert "v1.25.0" in roadmap
+    assert "multiple Gateway REST aggregation" in roadmap
+    assert "v1.26.0" in roadmap
 
-def test_current_release_version_is_1250():
+def test_current_release_version_is_1260():
     manifest=json.loads((ROOT/"custom_components"/"portfolio_architect"/"manifest.json").read_text())
-    assert manifest["version"]=="1.25.0"
+    assert manifest["version"]=="1.26.0"
 
 
 def test_protected_workflows_build_all_provider_app_images_before_publication():

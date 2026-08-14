@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.26.0
+
+- Version alignment for Portfolio Architect 1.26.0.
+- No Comdirect acquisition, authentication, cash-policy or REST contract change.
+
 ## 1.25.0
 
 - Version alignment for Portfolio Architect 1.25.0; Comdirect OAuth, account selection, authorized-cash behavior and REST contracts are unchanged.

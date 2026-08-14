@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.26.0
+
+- Version alignment for Portfolio Architect 1.26.0.
+- The validated Trade Republic snapshot service now starts automatically so a configured Portfolio Architect REST consumer survives Home Assistant restarts.
+- The local DEPOTAUSZUG import and REST schema remain unchanged.
+
 ## 1.25.0
 
 - Adds admin-only local import of the supported German `DEPOTAUSZUG` text-PDF statement family.

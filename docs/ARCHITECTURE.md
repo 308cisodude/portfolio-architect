@@ -3,7 +3,7 @@
 ## Data path
 
 ```text
-one primary source + optional DKB CSV supplements
+one primary source + optional REST/CSV supplements
                     ↓
        provider-specific validation
                     ↓
@@ -41,7 +41,8 @@ prevents a live primary source from making an old supplemental export look fresh
 
 The Gateway runs in a separate supervised App container. Home Assistant stores a
 private, validated last-known-good calculation bound to the source configuration.
-The source list is included in that binding, so changing a supplemental path
+The source list, including bounded additional REST provider/endpoint identities, is
+included in that binding. Changing a supplemental path or Gateway set therefore
 cannot restore a cache created for a different aggregate.
 
 Same-depot DKB exports are collapsed before aggregation by selecting the newest source-owned export date. This prevents historical CSV files from double-counting one portfolio.
@@ -64,6 +65,8 @@ Republic Apps without pretending those provider runtimes already exist. See
 Version 1.24.1 fixes the reduced DKB/TR shell packaging without expanding that boundary: the optional Comdirect `GatewayConfig` type import is evaluated only during static type checking, while runtime server code remains based on `ServerConfig`.
 
 Version 1.25.0 adds provider-specific document acquisition only inside the Trade Republic App. The PDF parser and import Ingress handler are not copied into Comdirect, DKB, or the standalone Gateway. A validated statement is converted to the existing `PortfolioSnapshot` model before the common authenticated REST server sees it; the uploaded PDF itself is processed in memory and discarded.
+
+Version 1.26.0 extends only the Home Assistant-side aggregation boundary: an existing primary REST Gateway can be joined by additional independently authenticated Gateway REST snapshots. Every additional Gateway must prove health-schema-6 provider identity and snapshot integrity before it participates. The aggregate remains atomic; a configured provider failure reuses the previous complete matching LKG rather than silently dropping that provider. Source-instance count remains separate from distinct-provider count, while existing per-position provenance is preserved.
 
 ## Graceful degradation and actionability
 

@@ -399,6 +399,8 @@ def calculate_portfolio_payload_from_positions(
             "generated_at": timestamp.isoformat(),
             "source_count": int(source_metadata.get("source_count", 1)),
             "source_providers": list(source_metadata.get("source_providers", [source_provider])),
+            "provider_count": int(source_metadata.get("provider_count", 1)),
+            "provider_ids": list(source_metadata.get("provider_ids", [source_provider])),
             "source_summaries": list(source_metadata.get("source_summaries", [])),
             "source_conflict_count": int(source_metadata.get("source_conflict_count", 0)),
             "source_conflicts": list(source_metadata.get("source_conflicts", [])),

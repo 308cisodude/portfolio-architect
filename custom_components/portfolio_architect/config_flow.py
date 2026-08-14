@@ -71,6 +71,7 @@ from .const import (
     CONF_REVIEW_LEAD_DAYS,
     CONF_SOURCE_PROVIDER,
     CONF_SUPPLEMENTAL_DKB_CSV_PATHS,
+    CONF_SUPPLEMENTAL_REST_SOURCES,
     CONF_SOURCE_TYPE,
     DEFAULT_CONFIG_DIRECTORY,
     DEFAULT_CSV_PATH,
@@ -91,6 +92,7 @@ from .const import (
     EXECUTION_POLICIES,
     EXECUTION_RESERVE_MODES,
     MAX_SUPPLEMENTAL_SOURCES,
+    MAX_SUPPLEMENTAL_REST_SOURCES,
     MIN_EXECUTION_MONTH,
     MIN_EXECUTION_MONTH_OFFSET,
     MIN_FRESHNESS_HOURS,
@@ -140,6 +142,7 @@ from .rest_client import (
     PortfolioRestAuthenticationError,
     PortfolioRestError,
     RestSourceConfig,
+    SupplementalRestSourceConfig,
     async_fetch_gateway_health,
     async_fetch_rest_snapshot,
 )
@@ -570,6 +573,16 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
     async def async_step_sources(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
+        """Choose which supplemental portfolio-source family to configure."""
+        del user_input
+        menu = ["dkb_sources"]
+        if self.config_entry.data.get(CONF_SOURCE_TYPE) == SOURCE_TYPE_REST_API:
+            menu.append("rest_gateways")
+        return self.async_show_menu(step_id="sources", menu_options=menu)
+
+    async def async_step_dkb_sources(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
         """Configure zero or more DKB CSV supplements, one path per line."""
         options = dict(self.config_entry.options)
         stored = options.get(CONF_SUPPLEMENTAL_DKB_CSV_PATHS, [])
@@ -581,7 +594,9 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
             suggested.update(user_input)
             raw = str(user_input.get(CONF_SUPPLEMENTAL_DKB_CSV_PATHS, ""))
             paths = [line.strip() for line in raw.splitlines() if line.strip()]
-            if len(paths) > MAX_SUPPLEMENTAL_SOURCES:
+            raw_rest_sources = options.get(CONF_SUPPLEMENTAL_REST_SOURCES, [])
+            rest_count = len(raw_rest_sources) if isinstance(raw_rest_sources, list) else 0
+            if len(paths) + rest_count > MAX_SUPPLEMENTAL_SOURCES:
                 errors["base"] = "too_many_sources"
             else:
                 try:
@@ -607,7 +622,7 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
                         options.pop(CONF_SUPPLEMENTAL_DKB_CSV_PATHS, None)
                     return self.async_create_entry(data=options)
         return self.async_show_form(
-            step_id="sources",
+            step_id="dkb_sources",
             data_schema=self.add_suggested_values_to_schema(
                 vol.Schema(
                     {
@@ -619,6 +634,168 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
                 suggested,
             ),
             errors=errors,
+        )
+
+    async def async_step_rest_gateways(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Manage additional authenticated local REST Gateways."""
+        del user_input
+        if self.config_entry.data.get(CONF_SOURCE_TYPE) != SOURCE_TYPE_REST_API:
+            return self.async_abort(reason="rest_gateways_require_rest_primary")
+        stored = self.config_entry.options.get(CONF_SUPPLEMENTAL_REST_SOURCES, [])
+        menu = ["add_rest_gateway"]
+        if isinstance(stored, list) and stored:
+            menu.append("remove_rest_gateway")
+        return self.async_show_menu(step_id="rest_gateways", menu_options=menu)
+
+    async def async_step_add_rest_gateway(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Validate and append one provider-identified local REST Gateway."""
+        options = dict(self.config_entry.options)
+        raw_sources = options.get(CONF_SUPPLEMENTAL_REST_SOURCES, [])
+        stored = raw_sources if isinstance(raw_sources, list) else []
+        errors: dict[str, str] = {}
+        suggested = {
+            CONF_REST_ENDPOINT_URL: "",
+            CONF_REST_API_TOKEN: "",
+        }
+        if user_input is not None:
+            suggested.update(user_input)
+            raw_dkb_sources = options.get(CONF_SUPPLEMENTAL_DKB_CSV_PATHS, [])
+            dkb_count = len(raw_dkb_sources) if isinstance(raw_dkb_sources, list) else 0
+            if len(stored) >= MAX_SUPPLEMENTAL_REST_SOURCES:
+                errors["base"] = "too_many_rest_gateways"
+            elif len(stored) + dkb_count >= MAX_SUPPLEMENTAL_SOURCES:
+                errors["base"] = "too_many_sources"
+            else:
+                try:
+                    candidate_transport = RestSourceConfig.from_mapping(user_input)
+                    existing = tuple(
+                        SupplementalRestSourceConfig.from_mapping(item)
+                        for item in stored
+                        if isinstance(item, dict)
+                    )
+                    endpoints = {item.endpoint_url for item in existing}
+                    primary_endpoint = self.config_entry.data.get(CONF_REST_ENDPOINT_URL)
+                    if candidate_transport.endpoint_url in endpoints or (
+                        isinstance(primary_endpoint, str)
+                        and candidate_transport.endpoint_url == RestSourceConfig.from_mapping(
+                            self.config_entry.data
+                        ).endpoint_url
+                    ):
+                        raise ValueError("duplicate endpoint")
+                    health = await async_fetch_gateway_health(self.hass, candidate_transport)
+                    if (
+                        health.health_schema_version < 6
+                        or health.provider_id is None
+                        or health.status != "ok"
+                        or health.reauthentication_required
+                        or not health.snapshot_available
+                    ):
+                        raise PortfolioRestError("Additional Gateway is not ready for live use")
+                    if any(item.provider_id == health.provider_id for item in existing):
+                        raise ValueError("duplicate provider")
+                    if health.provider_id == PROVIDER_DKB and dkb_count:
+                        raise ValueError("provider already configured through DKB CSV")
+                    if self.config_entry.data.get(CONF_SOURCE_TYPE) == SOURCE_TYPE_REST_API:
+                        primary = RestSourceConfig.from_mapping(dict(self.config_entry.data))
+                        primary_health = await async_fetch_gateway_health(self.hass, primary)
+                        if (
+                            primary_health.health_schema_version < 6
+                            or primary_health.provider_id is None
+                            or primary_health.status != "ok"
+                            or primary_health.reauthentication_required
+                            or not primary_health.snapshot_available
+                        ):
+                            raise PortfolioRestError(
+                                "Primary Gateway is not ready for multi-Gateway configuration"
+                            )
+                        if primary_health.provider_id == health.provider_id:
+                            raise ValueError("duplicate provider")
+                    result = await async_fetch_rest_snapshot(self.hass, candidate_transport)
+                    snapshot = result.snapshot
+                    if snapshot is None:
+                        raise PortfolioRestError("Additional Gateway returned no live snapshot")
+                    if result.snapshot_sha256 is None or result.position_count is None:
+                        raise PortfolioRestError(
+                            "Additional Gateway integrity metadata is incomplete"
+                        )
+                    if result.position_count != len(snapshot.positions):
+                        raise PortfolioRestError(
+                            "Additional Gateway position count is inconsistent"
+                        )
+                    if (
+                        health.snapshot_generated_at is None
+                        or health.snapshot_generated_at != snapshot.generated_at
+                        or health.snapshot_position_count != len(snapshot.positions)
+                        or health.snapshot_sha256 != result.snapshot_sha256
+                    ):
+                        raise PortfolioRestError(
+                            "Additional Gateway health does not match its live snapshot"
+                        )
+                except PortfolioRestAuthenticationError:
+                    errors["base"] = "invalid_auth"
+                except (OSError, ValueError, PortfolioRestError):
+                    errors["base"] = "invalid_rest_gateway"
+                else:
+                    configured = SupplementalRestSourceConfig(
+                        provider_id=health.provider_id,
+                        endpoint_url=candidate_transport.endpoint_url,
+                        api_token=candidate_transport.api_token,
+                    )
+                    options[CONF_SUPPLEMENTAL_REST_SOURCES] = [
+                        *stored,
+                        configured.as_storage_dict(),
+                    ]
+                    return self.async_create_entry(data=options)
+        return self.async_show_form(
+            step_id="add_rest_gateway",
+            data_schema=self.add_suggested_values_to_schema(
+                _rest_source_schema(), suggested
+            ),
+            errors=errors,
+        )
+
+    async def async_step_remove_rest_gateway(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Remove one additional Gateway without touching the primary source."""
+        options = dict(self.config_entry.options)
+        raw_sources = options.get(CONF_SUPPLEMENTAL_REST_SOURCES, [])
+        stored = (
+            [
+                SupplementalRestSourceConfig.from_mapping(item)
+                for item in raw_sources
+                if isinstance(item, dict)
+            ]
+            if isinstance(raw_sources, list)
+            else []
+        )
+        if not stored:
+            return self.async_abort(reason="no_rest_gateways")
+        provider_ids = [item.provider_id for item in stored]
+        if user_input is not None:
+            selected = str(user_input["provider_id"])
+            options[CONF_SUPPLEMENTAL_REST_SOURCES] = [
+                item.as_storage_dict() for item in stored if item.provider_id != selected
+            ]
+            if not options[CONF_SUPPLEMENTAL_REST_SOURCES]:
+                options.pop(CONF_SUPPLEMENTAL_REST_SOURCES, None)
+            return self.async_create_entry(data=options)
+        return self.async_show_form(
+            step_id="remove_rest_gateway",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("provider_id"): SelectSelector(
+                        SelectSelectorConfig(
+                            options=provider_ids,
+                            mode=SelectSelectorMode.DROPDOWN,
+                        )
+                    )
+                }
+            ),
         )
 
     async def async_step_execution(

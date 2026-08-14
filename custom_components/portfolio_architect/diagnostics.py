@@ -112,6 +112,22 @@ async def async_get_config_entry_diagnostics(
         "gateway_health_observed_at": _isoformat(
             coordinator.gateway_health_observed_at
         ),
+        "supplemental_gateway_health": {
+            provider_id: {
+                "status": health.status,
+                "operating_mode": health.operating_mode,
+                "snapshot_available": health.snapshot_available,
+                "snapshot_generated_at": _isoformat(health.snapshot_generated_at),
+                "health_schema_version": health.health_schema_version,
+                "provider_id": health.provider_id,
+            }
+            for provider_id, health in sorted(
+                coordinator.supplemental_gateway_health.items()
+            )
+        },
+        "supplemental_gateway_health_errors": dict(
+            sorted(coordinator.supplemental_gateway_health_errors.items())
+        ),
         "home_assistant_last_known_good": {
             "active": coordinator.using_home_assistant_last_known_good,
             "snapshot_generated_at": _isoformat(

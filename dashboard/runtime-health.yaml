@@ -653,6 +653,7 @@ cards:
 - type: tile
   entity: sensor.portfolio_architect_source_provider
   name: Source provider
+  state_content: provider_summary
   tap_action:
     action: more-info
   grid_options:

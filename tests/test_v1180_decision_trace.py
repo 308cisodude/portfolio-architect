@@ -230,16 +230,17 @@ def test_storage_and_diagnostics_keep_the_trace_private_and_integrity_checked() 
 
 def test_v1180_metadata_and_compatibility_contracts_are_aligned() -> None:
     manifest = json.loads((COMPONENT / "manifest.json").read_text())
-    assert manifest["version"] == "1.25.0"
-    assert 'VERSION: Final = "1.25.0"' in (COMPONENT / "const.py").read_text()
-    assert '__version__ = "1.25.0"' in (COMPONENT / "engine" / "__init__.py").read_text()
+    assert manifest["version"] == "1.26.0"
+    assert 'VERSION: Final = "1.26.0"' in (COMPONENT / "const.py").read_text()
+    assert '__version__ = "1.26.0"' in (COMPONENT / "engine" / "__init__.py").read_text()
     release_notes = (ROOT / "docs" / "RELEASE-NOTES.md").read_text()
     assert "payload schema 8" in release_notes.lower()
     assert "REST portfolio schema 1" in release_notes
     assert "Gateway health schema 6" in release_notes
     assert "schemas 1–5 remain supported" in release_notes
     assert not (ROOT / "gateway" / "src" / "portfolio_architect_gateway" / "trade_republic.py").exists()
-    assert "No DKB or Trade Republic acquisition runtime is shipped" in release_notes
+    assert "DKB live Gateway acquisition remains a later" in release_notes
+    assert "does not move PDF parsing into Portfolio Architect" in release_notes
 
 
 def test_persisted_trace_rejects_type_confusion_and_duplicate_keys() -> None:

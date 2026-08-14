@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.26.0
+
+- Adds simultaneous aggregation of multiple independent provider Gateway REST snapshots while preserving the existing primary REST configuration.
+- Validates every additional Gateway with local-only transport, bearer authentication, health schema 6 provider identity, live snapshot, and matching integrity metadata before saving it.
+- Makes multi-Gateway refresh atomic: a configured provider outage or integrity failure retains the previous complete Home Assistant last-known-good aggregate rather than silently dropping that provider.
+- Adds distinct `provider_count` / `provider_ids` metadata alongside source-instance count and existing per-position provenance.
+- Updates the reference dashboard Source provider tile to show a compact distinct-provider summary such as `Multi-source portfolio · 3 providers`.
+- Changes the functional Trade Republic App to `boot: auto` so an accepted statement snapshot remains available to a configured Portfolio Architect consumer across Home Assistant restarts.
+- Preserves payload schema 8, REST portfolio schema 1, Gateway health schema 6, existing entity IDs, Comdirect cash semantics, and the no-trading/write boundary.
+
 ## 1.25.0
 
 - Adds local, admin-only import of the supported German Trade Republic `DEPOTAUSZUG` text-PDF statement family inside the separate Trade Republic Gateway App.

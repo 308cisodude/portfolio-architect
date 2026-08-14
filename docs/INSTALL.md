@@ -79,6 +79,19 @@ The flow calculates and validates the complete source before creating or
 reconfiguring the single service config entry. No YAML integration configuration
 or command-line sensor is required.
 
+### Additional provider Gateways (v1.26)
+
+When the primary source is REST, open **Settings → Devices & services → Portfolio
+Architect → Configure → Portfolio sources → Additional REST Gateways** to add or
+remove other provider Gateway snapshots without replacing the primary source. Each
+additional Gateway requires its internal Home Assistant App-network portfolio
+endpoint on port 8787 and its dedicated bearer token. Portfolio Architect validates
+health schema 6 provider identity and snapshot integrity before saving it.
+
+Keep these endpoints on the private App network; no host/LAN port mapping is
+required. Additional bearer tokens are private config-entry options and are never
+included in diagnostics or portfolio payloads.
+
 ## Native plan configuration
 
 Open **Settings → Devices & services → Portfolio Architect → Configure →
@@ -97,4 +110,4 @@ grep -n '^VERSION' /config/custom_components/portfolio_architect/const.py
 grep -n '^__version__' /config/custom_components/portfolio_architect/engine/__init__.py
 ```
 
-All three markers must report `1.25.0`.
+All three markers must report `1.26.0`.

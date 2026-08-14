@@ -99,6 +99,52 @@ class RestSourceConfig:
 
 
 @dataclass(frozen=True, slots=True)
+class SupplementalRestSourceConfig:
+    """One persisted additional Gateway source with validated provider identity."""
+
+    provider_id: str
+    endpoint_url: str
+    api_token: str
+
+    @classmethod
+    def from_mapping(cls, raw: dict[str, Any]) -> "SupplementalRestSourceConfig":
+        provider_id = raw.get("provider_id")
+        if (
+            not isinstance(provider_id, str)
+            or re.fullmatch(r"[a-z][a-z0-9_]{1,31}", provider_id) is None
+        ):
+            raise PortfolioRestError("Supplemental Gateway provider ID is invalid")
+        transport = RestSourceConfig.from_mapping(raw)
+        return cls(
+            provider_id=provider_id,
+            endpoint_url=transport.endpoint_url,
+            api_token=transport.api_token,
+        )
+
+    @property
+    def rest_config(self) -> RestSourceConfig:
+        return RestSourceConfig(
+            endpoint_url=self.endpoint_url,
+            api_token=self.api_token,
+        )
+
+    def as_storage_dict(self) -> dict[str, str]:
+        return {
+            "provider_id": self.provider_id,
+            "rest_endpoint_url": self.endpoint_url,
+            "rest_api_token": self.api_token,
+        }
+
+    def as_public_dict(self) -> dict[str, Any]:
+        return {
+            "provider_id": self.provider_id,
+            "endpoint": self.endpoint_url,
+            "authentication": "bearer",
+            "token_configured": True,
+        }
+
+
+@dataclass(frozen=True, slots=True)
 class RestFetchResult:
     """One REST request result, including validators and integrity metadata."""
 
