@@ -472,3 +472,9 @@ when the active source is non-actionable. Their German dashboard text is mirrore
 through bounded attributes on the existing actionability sensor; no credentials,
 provider endpoints, account identifiers, raw broker data, or new write capability
 are introduced.
+## v1.26.4 native date formatting boundary
+
+The date-formatting cleanup adds no new entity, attribute, source data, identifier,
+credential, endpoint, or provider metadata. Existing native date states are merely
+rendered by Home Assistant's Tile formatter. Source trust, actionable availability,
+privacy controls, and the read-only/no-trading boundary are unchanged.

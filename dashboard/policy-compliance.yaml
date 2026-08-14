@@ -102,6 +102,10 @@ cards:
     type: tile
     entity: sensor.portfolio_architect_last_exception_decision
     name: Last decision
+    state_content: state
+    time_format:
+      type: date
+      style: short
     tap_action:
       action: more-info
     icon: mdi:calendar-check
@@ -117,6 +121,10 @@ cards:
     type: tile
     entity: sensor.portfolio_architect_oldest_overdue_exception_review
     name: Overdue review
+    state_content: state
+    time_format:
+      type: date
+      style: short
     tap_action:
       action: more-info
     color: red
@@ -133,6 +141,10 @@ cards:
     type: tile
     entity: sensor.portfolio_architect_next_exception_review
     name: Next review
+    state_content: state
+    time_format:
+      type: date
+      style: short
     tap_action:
       action: more-info
     color: amber

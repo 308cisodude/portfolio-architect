@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.26.4
+
+- Version alignment for Portfolio Architect 1.26.4.
+- Statement import, persisted snapshot and REST schema are unchanged; v1.26.4 changes only Home Assistant native date-tile formatting.
+
 ## 1.26.3
 
 - Version alignment for Portfolio Architect 1.26.3.

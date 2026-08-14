@@ -1,70 +1,63 @@
-# Portfolio Architect 1.26.3
+# Portfolio Architect 1.26.4
 
-Version 1.26.3 is a low-risk dashboard/presentation follow-up to v1.26.2. It closes
-the remaining German unavailable-state display edge case found during live
-acceptance and simplifies the policy-compliance section without changing portfolio
-calculation, provider acquisition, wire schemas, or machine-readable entity
-contracts.
+Version 1.26.4 is a narrow reference-dashboard formatting follow-up to v1.26.3.
+Live acceptance of v1.26.3 confirmed the multi-provider, degraded/LKG, German
+unavailable-state and policy-layout behavior, but exposed one remaining visual
+inconsistency: date-only Tile cards still rendered the native ISO `YYYY-MM-DD`
+state instead of using Home Assistant's locale-aware date presentation.
 
-## German unavailable-state presentation
+## Native date-tile formatting
 
-Home Assistant does not render an entity attribute through a Tile card once that
-entity itself becomes unavailable. That affected the always-visible German
-**Zugeordnet** and **Käufe** tiles during degraded/non-actionable LKG operation even
-though the underlying entities exposed `display_state_de: Nicht verfügbar`.
+The reference dashboards now request Home Assistant's native Tile formatter for
+all date-only state tiles:
 
-Version 1.26.3 preserves the existing availability semantics of
-`sensor.portfolio_architect_recommended_total` and
-`sensor.portfolio_architect_purchase_count`. Instead, the always-available
-`sensor.portfolio_architect_plan_actionability` entity exposes bounded presentation
-proxies:
+- Scheduled execution / Geplante Ausführung;
+- Next plan review / Nächste Planprüfung;
+- Last decision / Letzte Entscheidung;
+- Next review / Nächste Prüfung; and
+- Overdue review / Überfällige Prüfung.
 
-- `recommended_total_display_de`; and
-- `purchase_count_display_de`.
+Each tile keeps `state_content: state` and uses the generic Home Assistant
+`time_format` map with `type: date` and `style: short`. No locale-specific date
+string, template, helper entity, or presentation attribute is introduced.
 
-The German reference dashboard uses those attributes for display and keeps the tile
-more-info action pointed at the original monetary/count entity. Machine-readable
-states, availability semantics, IDs, and recorder/API contracts remain unchanged.
+The underlying entities remain native `SensorDeviceClass.DATE` sensors with native
+`date` values. Their machine-readable state/availability contracts therefore stay
+unchanged for automations, templates, recorder history, and API consumers.
 
-## Policy-compliance dashboard simplification
+## Refresh timestamps remain generic
 
-The primary policy dashboard no longer renders the aggregate **Checks** and
-**Opportunities** counters. Their native entities remain available unchanged for
-diagnostics, templates, automations, and API consumers. Concrete optimisation
-opportunity tiles remain visible, so actionable information is not removed.
+The existing refresh-schedule tiles retain their native `datetime` / `short`
+formatting. No explicit `HH:MM:SS` format and no seconds-specific presentation
+layer is added.
 
-The accepted-exception lifecycle is now grouped coherently:
+## Compatibility
 
-- **Exceptions** beside **Robotics exception**;
-- **Last decision** beside **Next review**; and
-- when a review is overdue, the date tile is labelled **Overdue review**.
+Portfolio payload schema 8, REST portfolio schema 1, and Gateway health schema 6
+remain unchanged; health schemas 1–5 remain supported for backward compatibility.
 
-The German equivalents are **Ausnahmen**, **Robotik-Ausnahme**, **Letzte
-Entscheidung**, **Nächste Prüfung**, and **Überfällige Prüfung**. Conditional policy error/warning tiles remain available and are
-shown ahead of the exception lifecycle when attention is required.
-
-## Compatibility and security
-
-The established compatibility baseline remains **payload schema 8**, **REST portfolio schema 1**, and **Gateway health schema 6**; schemas 1–5 remain supported.
-The historical experimental `v1.19.0-rc2` brokerage diagnostics/fee-probe work remains separate and is not promoted by this release.
-No trading, order, transfer, payment, or transaction-history capability is added.
-DKB live Gateway acquisition remains a later provider-specific milestone; v1.26.3 does not promote the experimental DKB shell into a live acquisition source.
-This release does not move PDF parsing into Portfolio Architect; Trade Republic statement parsing remains isolated in the Trade Republic Gateway App.
-
-- payload schema: 8 (unchanged)
+- Portfolio payload schema: 8 (unchanged)
 - REST portfolio schema: 1 (unchanged)
-- Gateway health schema: 6 (unchanged; health schemas 1-5 remain supported)
-- existing entity IDs / unique IDs: unchanged
-- machine-readable entity states and availability contracts: unchanged
+- Gateway health schema: 6 (unchanged; schemas 1-5 remain supported)
+- Existing Home Assistant entity IDs / unique IDs: unchanged
+- Existing machine-readable states and availability semantics: unchanged
+- v1.26.3 policy-layout and German unavailable-state behavior: unchanged
 - v1.26.2 unavailable-source diagnostics: unchanged
-- v1.26.1 ISIN-first identity and WKN fallback: unchanged
-- v1.26 atomic configured-source/LKG behavior: unchanged
-- Comdirect authorized-cash semantics: unchanged
+- v1.26.1 ISIN-first identity and fail-closed collision behavior: unchanged
+- v1.26 configured-source atomic LKG behavior: unchanged
+- Comdirect authentication/account selection/authorized cash: unchanged
 - Trade Republic statement import and persisted snapshot: unchanged
-- DKB Gateway remains an experimental manual-only fail-closed shell
-- no trading, order, transfer, payment, or transaction-history capability
+- DKB Gateway: still experimental/manual-only/fail-closed, no acquisition path
+- No trading/order/transfer/payment/transaction-history capability
 
-The release adds no private identifiers or transport metadata to dashboard
-presentation. The existing privacy/publication gates remain authoritative.
+No trading, order, transfer, payment, or transaction-history capability is added by this release.
+
+DKB live Gateway acquisition remains a later provider-specific milestone; v1.26.4
+does not promote the experimental DKB shell into a live acquisition source. The
+release does not move PDF parsing into Portfolio Architect: Trade Republic statement
+parsing remains isolated in the Trade Republic Gateway App.
+
+The historical experimental `v1.19.0-rc2` brokerage diagnostics/fee-probe work
+remains separate and is not promoted by this release.
 
 Gateway HTTPS transport hardening remains the next security milestone in v1.27.0.

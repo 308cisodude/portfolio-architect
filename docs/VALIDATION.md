@@ -1,28 +1,29 @@
-# v1.26.3 validation
+# v1.26.4 validation
 
-Portfolio Architect v1.26.3 retains the complete v1.26.2 presentation/source-outage,
-v1.26.1 ISIN-first, v1.26 atomic-LKG, provider-App, publication/privacy, and
-reproducible-release regression pipeline.
+Portfolio Architect v1.26.4 retains the complete v1.26.3 dashboard/policy,
+v1.26.2 presentation/source-outage, v1.26.1 ISIN-first, v1.26 atomic-LKG,
+provider-App, publication/privacy, and reproducible-release regression pipeline.
 
 The release-specific contracts must prove:
 
-- integration and all three provider App package versions align with 1.26.3;
+- integration and all three provider App package versions align with 1.26.4;
 - payload schema 8, REST portfolio schema 1 and Gateway health schema 6 remain
   unchanged;
 - existing machine-readable entity IDs, states and availability semantics remain
   stable;
-- the German Allocated/Purchases dashboard values render through bounded attributes
-  of the always-available actionability entity, so `Nicht verfügbar` remains German
-  even while the original actionable sensors are unavailable;
-- the underlying recommended-total and purchase-count sensors continue to fail
-  closed when the source is non-actionable;
-- the policy reference dashboard does not render aggregate Checks/Opportunities
-  counters while their native entities remain implemented;
-- exception count/detail and last-decision/next-review tiles are adjacent and use
-  concise English/German lifecycle labels;
-- concrete optimisation opportunity tiles remain present;
-- conditional policy error/warning tiles remain available when findings require
-  attention;
+- every date-only reference-dashboard Tile for planned execution, next plan review,
+  last exception decision, next exception review and oldest overdue exception
+  review uses `state_content: state` plus native `time_format` type `date`, style
+  `short`;
+- the same generic date contract is present in English, German, composed, and
+  standalone reference-dashboard variants;
+- no locale-specific date display attribute, helper/template sensor, or hard-coded
+  date pattern is added;
+- the existing refresh-schedule timestamp Tiles remain on native `datetime` /
+  `short` rendering and do not add seconds-specific formatting;
+- the underlying schedule/policy date entities remain native
+  `SensorDeviceClass.DATE` sensors returning `date` values;
+- v1.26.3 German unavailable-state and policy-layout regressions remain green;
 - v1.26.2 failed-source identification and translated attention reason/action remain
   unchanged;
 - v1.26.1 ISIN-first identity/collision tests continue to pass unchanged;
@@ -36,9 +37,7 @@ The release-specific contracts must prove:
   payload-alignment verification.
 
 Live acceptance starts from the established three-source/three-provider 7/7
-portfolio. After upgrade, the healthy state must remain unchanged. Temporarily
-stopping Trade Republic must still retain 7/7 as non-actionable LKG, identify the
-failed source, and show German outage diagnostics. In that degraded state the
-**Zugeordnet** and **Käufe** tiles must now render **Nicht verfügbar**, not the
-frontend-language `Unavailable`. After Trade Republic restarts, the dashboard must
-recover to healthy/live 7/7 without reconfiguration or statement re-import.
+v1.26.3 installation. After upgrade, the healthy state and accepted policy/outage
+UX must remain unchanged. The date-only dashboard tiles must use the frontend's
+normal localized short-date presentation rather than raw ISO dates. No seconds-
+specific refresh-time formatting is introduced.

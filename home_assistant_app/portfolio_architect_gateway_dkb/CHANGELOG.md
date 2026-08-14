@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.26.4
+
+- Version alignment for Portfolio Architect 1.26.4.
+- DKB remains an experimental manual-only fail-closed provider shell with no acquisition path; v1.26.4 changes only Home Assistant native date-tile formatting.
+
 ## 1.26.3
 
 - Version alignment for Portfolio Architect 1.26.3.

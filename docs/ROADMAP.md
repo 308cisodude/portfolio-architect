@@ -86,20 +86,25 @@ still exposes an explicit German presentation attribute.
 
 ## v1.26.3 — dashboard presentation and policy-layout follow-up
 
-Current milestone: close that remaining German unavailable-state presentation edge
-without weakening fail-closed entity availability, and simplify the policy section
-around operator-relevant exception lifecycle information.
+Published and live-accepted for the German unavailable-state workaround, compact
+policy layout, source-specific outage diagnostics, and atomic LKG recovery. Live
+acceptance exposed one remaining cosmetic inconsistency: date-only Tile states still
+rendered as raw ISO `YYYY-MM-DD` values.
 
-- Keep actionable recommendation/count entities unavailable when their source is
-  non-actionable.
-- Render German unavailable values through bounded attributes of an entity that
-  remains available during LKG operation.
-- Remove aggregate Checks/Opportunities counters from the primary dashboard while
-  retaining the native entities unchanged.
-- Group accepted-exception count/detail and last-decision/next-review tiles
-  coherently with precise English/German labels.
-- Preserve concrete optimisation opportunity tiles and conditional error/warning
-  indicators.
+## v1.26.4 — native date-tile formatting cleanup
+
+Current milestone: close that final v1.26 dashboard inconsistency without adding a
+new presentation-data layer.
+
+- Keep all schedule/policy date entities as native `SensorDeviceClass.DATE` values.
+- Use Home Assistant native Tile `time_format` with `type: date` and `style: short`
+  for all date-only reference-dashboard tiles.
+- Apply the same generic configuration to English, German, composed, and standalone
+  dashboard variants.
+- Add no locale-specific date attributes, templates, helper sensors, or hard-coded
+  date patterns.
+- Leave refresh-schedule timestamps on native `datetime` / `short` rendering, with
+  no seconds-specific formatting.
 - Keep payload schema 8, REST schema 1, health schema 6 and all provider/acquisition
   contracts unchanged.
 
