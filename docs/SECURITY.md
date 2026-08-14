@@ -417,3 +417,10 @@ transaction-history write path.
 
 The reduced DKB and Trade Republic App packages intentionally exclude Comdirect-specific configuration, authentication and transport modules. Version 1.24.1 makes the remaining `GatewayConfig` reference in the common server type-check-only, so importing or starting a provider shell cannot require the omitted Comdirect module at runtime. Protected CI imports the exact reduced package and starts both shell containers before publication, preventing packaging drift from weakening the provider boundary or producing a dead Ingress endpoint.
 
+
+
+## v1.25.0 Trade Republic statement-import boundary
+
+Trade Republic statement import is available only through the admin-only Supervisor Ingress path. Uploads are bounded to 5 MiB, protected by the existing Supervisor-source/user-header checks plus a per-process CSRF nonce, parsed locally, and never persisted as PDF files. Only the validated provider-neutral snapshot is atomically stored. The importer accepts only the supported unencrypted text-PDF `DEPOTAUSZUG` structure, requires one ISIN per position, verifies the document position count and EUR portfolio total against the parsed holdings, and rejects ambiguous or unsupported structures without replacing the last accepted snapshot.
+
+The provider-specific PDF parser dependency is installed only in the Trade Republic App from an exact version/hash lock. Comdirect, DKB, and the standalone Gateway do not gain PDF parsing code or that dependency. Import errors and logs never echo document text, filenames, account-holder data, depot/account identifiers, addresses, tax data, position values, or instrument identifiers. The App still exposes only authenticated GET portfolio/health endpoints; statement upload does not add trading, order, transfer, payment, or transaction-history functionality.

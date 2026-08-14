@@ -6,7 +6,8 @@ import logging
 import os
 from pathlib import Path
 
-from portfolio_architect_gateway.pending_app import PendingAppOptions, serve_pending_app
+from portfolio_architect_gateway.pending_app import PendingAppOptions
+from portfolio_architect_gateway.trade_republic_app import serve_trade_republic_app
 from portfolio_architect_gateway.provider import normalise_provider_id
 
 APP_UID = 65532
@@ -33,7 +34,9 @@ def main() -> int:
     os.setgid(APP_GID)
     os.setuid(APP_UID)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
-    serve_pending_app(provider_id=provider_id, provider_name=provider_name, options=options)
+    if provider_id != "trade_republic":
+        raise RuntimeError("Trade Republic App provider identity is invalid")
+    serve_trade_republic_app(provider_name=provider_name, options=options)
     return 0
 
 

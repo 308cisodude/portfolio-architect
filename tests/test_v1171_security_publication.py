@@ -150,7 +150,7 @@ def test_hacs_metadata_and_stable_release_archive(tmp_path: Path) -> None:
         text=True,
     )
     stable = tmp_path / "portfolio_architect.zip"
-    versioned = tmp_path / "portfolio-architect-v1.24.1-ha-dropin.zip"
+    versioned = tmp_path / "portfolio-architect-v1.25.0-ha-dropin.zip"
     assert stable.is_file()
     assert versioned.is_file()
     assert _sha256(stable) != _sha256(versioned)
@@ -273,6 +273,7 @@ def test_python_validation_toolchain_is_exact_and_hash_locked() -> None:
         "Pygments==2.20.0": "81a9e26dd42fd28a23a2d169d86d7ac03b46e2f8b59ed4698fb4785f946d0176",
         "PyYAML==6.0.3": "c458b6d084f9b935061bc36216e8a69a7e293a2f1e68bf956dcd9e6cbcd143f5",
         "Pillow==12.2.0": "4bfd07bc812fbd20395212969e41931001fd59eb55a60658b0e5710872e95286",
+        "pypdf==6.15.0": "14e001d6504822cb1ca9c7ed9a69bccb320f59b320730f55af804361abe4d5ee",
     }
     logical: list[str] = []
     pending = ""

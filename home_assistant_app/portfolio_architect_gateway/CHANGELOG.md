@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.25.0
+
+- Version alignment for Portfolio Architect 1.25.0; Comdirect OAuth, account selection, authorized-cash behavior and REST contracts are unchanged.
+- Trade Republic statement parsing remains isolated in the separate Trade Republic App and is not included in this image.
+
 ## 1.24.1
 
 - Aligns the Comdirect App package with the v1.24.1 provider-shell startup hotfix.

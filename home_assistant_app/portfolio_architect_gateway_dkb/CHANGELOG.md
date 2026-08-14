@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.25.0
+
+- Version alignment for Portfolio Architect 1.25.0.
+- DKB remains an experimental manual-only fail-closed provider shell; no DKB acquisition path is introduced.
+- Trade Republic statement parsing remains isolated in the separate Trade Republic App.
+
 ## 1.24.1
 
 - Fixes startup of the isolated DKB provider shell by removing an accidental runtime dependency on the Comdirect-only configuration module.

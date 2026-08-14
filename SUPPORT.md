@@ -11,15 +11,15 @@ Security and correctness fixes are provided for:
 - the current stable Portfolio Architect release; and
 - the immediately preceding stable release while a documented upgrade path exists.
 
-The Home Assistant support floor for the 1.23.x release line is **2026.7.0**.
+The Home Assistant support floor for the 1.25.x release line is **2026.7.0**.
 The project targets the current and immediately previous monthly Home Assistant
 release, subject to automated compatibility checks. Beta releases receive
 best-effort compatibility only.
 
 Gateway App versions 1.16.1 and later remain compatible with Portfolio Architect
-1.24.1 through the legacy reserve contract. Gateway App 1.19.0 or newer is required
+1.25.0 through the legacy reserve contract. Gateway App 1.19.0 or newer is required
 for configurable authorized-cash policy metadata; 1.19.1 or newer contains the
-corrected capped-to-all-available Ingress transition. Version 1.20.1 fixes LKG entity propagation while preserving the v1.20.0 resilience contract. Version 1.21.0 adds execution/actionability semantics without changing the Gateway wire protocol. Version 1.22.0 adds publication/privacy hardening only. Version 1.24.0 introduced the distinct provider App packages; 1.24.1 fixes startup of the experimental DKB/TR shells without changing the provider contract, REST schema 1 or read-only Comdirect behavior. The normal release channel keeps the integration and all three provider App package versions aligned. DKB and Trade Republic remain experimental provider shells and are not supported as live portfolio sources yet.
+corrected capped-to-all-available Ingress transition. Version 1.20.1 fixes LKG entity propagation while preserving the v1.20.0 resilience contract. Version 1.21.0 adds execution/actionability semantics without changing the Gateway wire protocol. Version 1.22.0 adds publication/privacy hardening only. Version 1.24.0 introduced the distinct provider App packages; 1.24.1 fixes startup of the experimental DKB/TR shells. Version 1.25.0 adds local Trade Republic `DEPOTAUSZUG` statement import under the unchanged REST schema 1 contract. The normal release channel keeps the integration and all three provider App package versions aligned. DKB remains an experimental non-live provider shell; Trade Republic remains experimental and supports only the documented statement-import family.
 
 ## Getting help
 
