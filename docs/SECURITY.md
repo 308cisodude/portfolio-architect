@@ -449,3 +449,17 @@ assumed to be a WKN: when a provider uses its ISIN as the identifier, the REST
 adapter retains the ISIN and leaves WKN unavailable. This prevents a provider's
 identifier format from weakening target-matching integrity and adds no new broker
 or network privilege.
+
+## v1.26.2 unavailable-source presentation boundary
+
+Unavailable-source diagnostics are derived only from bounded provider and
+source-instance identities. Gateway bearer tokens, endpoint URLs, DKB CSV paths,
+account/depot/customer identifiers, document contents and position details are not
+copied into source-failure IDs, dashboard summaries, or diagnostics. Generic labels
+are used when a bounded provider/source identity cannot be established.
+
+The release may collect several supplemental Gateway failure classes in one refresh
+for operator presentation, but successful providers are never partially aggregated
+when another configured source fails. The complete configured source set remains an
+atomic trust boundary and the source-set-aware Home Assistant LKG fingerprint is
+unchanged.

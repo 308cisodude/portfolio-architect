@@ -103,6 +103,7 @@ from .engine.models import Position
 from .engine.rest import PROVIDER_LOCAL_REST_JSON, RestInvestmentCash
 from .last_known_good import RestLastKnownGoodStore, configuration_fingerprint
 from .model import PortfolioArchitectDataError, PortfolioData, parse_portfolio_data
+from .presentation import unavailable_source_summary
 from .resilience import (
     refresh_overdue_is_evidenced,
     snapshot_age_seconds,
@@ -193,6 +194,7 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
             raise ValueError("At most 8 supplemental portfolio sources are supported")
         self.supplemental_gateway_health: dict[str, GatewayHealth] = {}
         self.supplemental_gateway_health_errors: dict[str, str] = {}
+        self.supplemental_source_errors: dict[str, str] = {}
         self._supplemental_rest_generated_at: dict[str, datetime] = {}
         self._rest_etag: str | None = None
         self._rest_last_modified: str | None = None
@@ -459,6 +461,47 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
             return f"Portfolio aus mehreren Quellen · {count} Anbieter"
         provider = self.provider_ids[0] if self.provider_ids else self.source_provider
         return f"{_provider_display_name(provider)} · 1 Anbieter"
+
+    @property
+    def unavailable_source_ids(self) -> tuple[str, ...]:
+        """Return bounded source identities currently preventing a live aggregate."""
+        missing: list[str] = []
+        for provider_id in sorted(self.supplemental_gateway_health_errors):
+            token = f"gateway:{provider_id}"
+            if token not in missing:
+                missing.append(token)
+        for source_id in sorted(self.supplemental_source_errors):
+            if source_id not in missing:
+                missing.append(source_id)
+
+        if (
+            self.source_type == SOURCE_TYPE_REST_API
+            and self._using_home_assistant_last_known_good
+            and not missing
+        ):
+            health = self.gateway_health
+            if health is None or _gateway_health_operating_mode(health) != "live":
+                provider_id = health.provider_id if health and health.provider_id else None
+                if provider_id is None and self.source_summaries:
+                    candidate = self.source_summaries[0].get("provider")
+                    provider_id = candidate if isinstance(candidate, str) else None
+                missing.append(f"gateway:{provider_id or PROVIDER_LOCAL_REST_JSON}")
+        return tuple(missing)
+
+    @property
+    def unavailable_source_count(self) -> int:
+        """Return the number of bounded unavailable source identities."""
+        return len(self.unavailable_source_ids)
+
+    @property
+    def unavailable_source_summary(self) -> str:
+        """Return privacy-safe English labels for unavailable configured sources."""
+        return unavailable_source_summary(self.unavailable_source_ids, german=False)
+
+    @property
+    def unavailable_source_summary_de(self) -> str:
+        """Return privacy-safe German labels for unavailable configured sources."""
+        return unavailable_source_summary(self.unavailable_source_ids, german=True)
 
     @property
     def source_conflict_count(self) -> int:
@@ -1185,6 +1228,25 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
             ) = await _async_fetch_supplemental_rest_snapshots(
                 self.hass, self.supplemental_rest_sources
             )
+            if supplemental_health_errors:
+                self.supplemental_gateway_health = supplemental_health
+                self.supplemental_gateway_health_errors = supplemental_health_errors
+                self.supplemental_source_errors = {}
+                integrity_failure = any(
+                    failure == "integrity_error"
+                    for failure in supplemental_health_errors.values()
+                )
+                self.rest_snapshot_integrity_error = (
+                    "Supplemental REST Gateway integrity validation failed"
+                    if integrity_failure
+                    else None
+                )
+                self._sync_gateway_issues()
+                return self._use_home_assistant_last_known_good(
+                    "One or more supplemental REST Gateways are unavailable or invalid",
+                    configuration_sha256=configuration_sha256,
+                    integrity_failure=integrity_failure,
+                )
             for item in supplemental_rest_snapshots:
                 previous = self._supplemental_rest_generated_at.get(item.provider)
                 if previous is not None and item.generated_at < previous:
@@ -1203,6 +1265,12 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
                 and err.provider_id is not None
                 else {}
             )
+            self.supplemental_source_errors = (
+                {err.source_id: err.failure_class}
+                if isinstance(err, SupplementalPortfolioSourceError)
+                and err.source_id is not None
+                else {}
+            )
             self._sync_gateway_issues()
             return self._use_home_assistant_last_known_good(
                 f"Supplemental portfolio source failed: {err}",
@@ -1211,6 +1279,7 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
             )
         self.supplemental_gateway_health = supplemental_health
         self.supplemental_gateway_health_errors = supplemental_health_errors
+        self.supplemental_source_errors = {}
 
         if reuse_existing_data:
             if result.snapshot_sha256 is not None:
@@ -1249,6 +1318,11 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
             )
             data = _parse_payload(payload)
         except SupplementalPortfolioSourceError as err:
+            self.supplemental_source_errors = (
+                {err.source_id: err.failure_class}
+                if err.source_id is not None
+                else {"dkb_csv": err.failure_class}
+            )
             return self._use_home_assistant_last_known_good(
                 f"Supplemental portfolio source failed: {err}",
                 configuration_sha256=configuration_sha256,
@@ -1260,6 +1334,7 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
             )
 
         self.primary_positions = dict(positions)
+        self.supplemental_source_errors = {}
         self._apply_aggregation(aggregation)
         self._supplemental_rest_generated_at = {
             item.provider: item.generated_at for item in supplemental_rest_snapshots
@@ -1540,6 +1615,7 @@ def _provider_display_name(provider_id: str) -> str:
     return known.get(provider_id, provider_id.replace("_", " ").title())
 
 
+
 def _validate_supplemental_rest_integrity(
     *,
     config: SupplementalRestSourceConfig,
@@ -1592,27 +1668,19 @@ async def _async_fetch_supplemental_rest_snapshots(
     """Fetch additional Gateways atomically with provider-identity health evidence."""
     snapshots: list[PortfolioSourceSnapshot] = []
     health_by_provider: dict[str, GatewayHealth] = {}
+    errors: dict[str, str] = {}
     for config in configs:
         try:
             health = await async_fetch_gateway_health(hass, config.rest_config)
-        except PortfolioRestAuthenticationError as err:
-            raise SupplementalPortfolioSourceError(
-                f"{_provider_display_name(config.provider_id)} Gateway rejected its bearer token",
-                provider_id=config.provider_id,
-                failure_class="authentication_error",
-            ) from err
-        except (OSError, PortfolioRestError) as err:
-            raise SupplementalPortfolioSourceError(
-                f"{_provider_display_name(config.provider_id)} Gateway health is unavailable",
-                provider_id=config.provider_id,
-                failure_class="transport_error",
-            ) from err
+        except PortfolioRestAuthenticationError:
+            errors[config.provider_id] = "authentication_error"
+            continue
+        except (OSError, PortfolioRestError):
+            errors[config.provider_id] = "transport_error"
+            continue
         if health.health_schema_version < 6 or health.provider_id != config.provider_id:
-            raise SupplementalPortfolioSourceError(
-                f"{_provider_display_name(config.provider_id)} Gateway provider identity changed",
-                provider_id=config.provider_id,
-                failure_class="identity_error",
-            )
+            errors[config.provider_id] = "identity_error"
+            continue
         health_by_provider[config.provider_id] = health
         try:
             result = await async_fetch_rest_snapshot(hass, config.rest_config)
@@ -1623,21 +1691,15 @@ async def _async_fetch_supplemental_rest_snapshots(
                     result=result,
                 )
             )
-        except PortfolioRestAuthenticationError as err:
-            raise SupplementalPortfolioSourceError(
-                f"{_provider_display_name(config.provider_id)} Gateway rejected its bearer token",
-                provider_id=config.provider_id,
-                failure_class="authentication_error",
-            ) from err
+        except PortfolioRestAuthenticationError:
+            errors[config.provider_id] = "authentication_error"
         except (OSError, PortfolioRestError, ValueError) as err:
-            raise SupplementalPortfolioSourceError(
-                f"{_provider_display_name(config.provider_id)} Gateway snapshot is unavailable or invalid",
-                provider_id=config.provider_id,
-                failure_class=(
-                    "integrity_error" if isinstance(err, PortfolioRestError) else "transport_error"
-                ),
-            ) from err
-    return tuple(snapshots), health_by_provider, {}
+            errors[config.provider_id] = (
+                "integrity_error"
+                if isinstance(err, PortfolioRestError)
+                else "transport_error"
+            )
+    return tuple(snapshots), health_by_provider, errors
 
 
 class SupplementalPortfolioSourceError(ValueError):
@@ -1648,10 +1710,12 @@ class SupplementalPortfolioSourceError(ValueError):
         message: str,
         *,
         provider_id: str | None = None,
+        source_id: str | None = None,
         failure_class: str = "source_error",
     ) -> None:
         super().__init__(message)
         self.provider_id = provider_id
+        self.source_id = source_id
         self.failure_class = failure_class
 
 
@@ -1667,19 +1731,40 @@ def _parse_payload(payload: dict[str, Any]) -> PortfolioData:
 def _supplemental_snapshots(
     supplemental_paths: tuple[SupplementalCsvPath, ...],
 ) -> tuple[PortfolioSourceSnapshot, ...]:
-    selected_paths = select_latest_dkb_exports(
-        tuple(item.path for item in supplemental_paths)
-    )
+    configured_index = {
+        item.path: index for index, item in enumerate(supplemental_paths, start=1)
+    }
+    try:
+        selected_paths = select_latest_dkb_exports(
+            tuple(item.path for item in supplemental_paths)
+        )
+    except (OSError, ValueError) as err:
+        raise SupplementalPortfolioSourceError(
+            "A configured DKB CSV source is unavailable or invalid",
+            provider_id=PROVIDER_DKB,
+            source_id="dkb_csv",
+            failure_class="source_error",
+        ) from err
     snapshots: list[PortfolioSourceSnapshot] = []
     multiple = len(selected_paths) > 1
     for index, path in enumerate(selected_paths, start=1):
-        positions = read_positions(path, CsvSourceConfig(provider=PROVIDER_DKB))
+        configured = configured_index.get(path, index)
+        try:
+            positions = read_positions(path, CsvSourceConfig(provider=PROVIDER_DKB))
+            generated_at = dkb_export_timestamp(path)
+        except (OSError, ValueError) as err:
+            raise SupplementalPortfolioSourceError(
+                f"DKB CSV {configured} is unavailable or invalid",
+                provider_id=PROVIDER_DKB,
+                source_id=f"dkb_csv_{configured}",
+                failure_class="source_error",
+            ) from err
         snapshots.append(
             PortfolioSourceSnapshot(
                 source_id=f"dkb_{index}",
                 provider=PROVIDER_DKB,
                 label=(f"DKB CSV {index}" if multiple else "DKB CSV"),
-                generated_at=dkb_export_timestamp(path),
+                generated_at=generated_at,
                 positions=positions,
             )
         )

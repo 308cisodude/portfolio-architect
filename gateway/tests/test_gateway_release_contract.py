@@ -10,15 +10,15 @@ from portfolio_architect_gateway import __version__  # noqa: E402
 
 
 def test_gateway_and_integration_versions_are_compatible() -> None:
-    assert __version__ == "1.26.1"
+    assert __version__ == "1.26.2"
     component = FULL_ROOT / "custom_components" / "portfolio_architect"
     if component.exists():
         manifest = json.loads((component / "manifest.json").read_text())
         const = (component / "const.py").read_text()
         engine = (component / "engine" / "__init__.py").read_text()
-        assert manifest["version"] == "1.26.1"
-        assert 'VERSION: Final = "1.26.1"' in const
-        assert '__version__ = "1.26.1"' in engine
+        assert manifest["version"] == "1.26.2"
+        assert 'VERSION: Final = "1.26.2"' in const
+        assert '__version__ = "1.26.2"' in engine
 
 
 def test_gateway_package_is_dependency_free() -> None:

@@ -128,6 +128,11 @@ async def async_get_config_entry_diagnostics(
         "supplemental_gateway_health_errors": dict(
             sorted(coordinator.supplemental_gateway_health_errors.items())
         ),
+        "unavailable_sources": {
+            "count": coordinator.unavailable_source_count,
+            "ids": list(coordinator.unavailable_source_ids),
+            "summary": coordinator.unavailable_source_summary,
+        },
         "home_assistant_last_known_good": {
             "active": coordinator.using_home_assistant_last_known_good,
             "snapshot_generated_at": _isoformat(

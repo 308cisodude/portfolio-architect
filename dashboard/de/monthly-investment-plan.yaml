@@ -116,6 +116,7 @@ cards:
   card:
     type: tile
     entity: sensor.portfolio_architect_plan_change
+    state_content: display_state_de
     name: Änderungen seit letzter Auswertung
     tap_action:
       action: more-info
@@ -127,6 +128,7 @@ cards:
 - type: tile
   entity: sensor.portfolio_architect_plan_budget
   name: Planbudget
+  state_content: display_state_de
   tap_action:
     action: more-info
   grid_options:
@@ -136,6 +138,7 @@ cards:
 - type: tile
   entity: sensor.portfolio_architect_plan_frequency
   name: Intervall
+  state_content: display_state_de
   tap_action:
     action: more-info
   grid_options:
@@ -145,6 +148,7 @@ cards:
 - type: tile
   entity: sensor.portfolio_architect_monthly_contribution
   name: Je Ausführung
+  state_content: display_state_de
   tap_action:
     action: more-info
   grid_options:
@@ -154,6 +158,7 @@ cards:
 - type: tile
   entity: sensor.portfolio_architect_recommended_total
   name: Zugeordnet
+  state_content: display_state_de
   tap_action:
     action: more-info
   grid_options:
@@ -164,6 +169,7 @@ cards:
 - type: tile
   entity: sensor.portfolio_architect_purchase_count
   name: Käufe
+  state_content: display_state_de
   tap_action:
     action: more-info
   grid_options:
@@ -197,6 +203,7 @@ cards:
 - type: tile
   entity: sensor.portfolio_architect_plan_actionability
   name: Umsetzbarkeit
+  state_content: display_state_de
   tap_action:
     action: more-info
   icon: mdi:calendar-check-outline
@@ -206,6 +213,7 @@ cards:
 - type: tile
   entity: sensor.portfolio_architect_last_successful_refresh
   name: Zuletzt ausgewertet
+  state_content: display_state_de
   tap_action:
     action: more-info
   icon: mdi:clock-check-outline

@@ -17,6 +17,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import DOMAIN, NAME, SOURCE_TYPE_REST_API, VERSION
 from .coordinator import PortfolioArchitectCoordinator
 from .model import PositionData
+from .presentation import display_binary_state_de
 
 FRESHNESS_TICK = timedelta(minutes=5)
 
@@ -435,6 +436,13 @@ class PortfolioSourceHealthy(
     def extra_state_attributes(self) -> dict[str, Any]:
         return {
             **_source_attributes(self.coordinator),
+            "unavailable_source_count": self.coordinator.unavailable_source_count,
+            "unavailable_source_ids": list(self.coordinator.unavailable_source_ids),
+            "unavailable_source_summary": self.coordinator.unavailable_source_summary,
+            "unavailable_source_summary_de": self.coordinator.unavailable_source_summary_de,
+            "display_state_de": display_binary_state_de(
+                "source_healthy", self.is_on
+            ),
             "last_error": (
                 None
                 if self.coordinator.last_update_success
@@ -780,6 +788,9 @@ class PortfolioDataFresh(
             "fresh_through": (
                 schedule.next_review_on.isoformat() if schedule else None
             ),
+            "display_state_de": display_binary_state_de(
+                "data_fresh", self.is_on
+            ),
             **_source_attributes(self.coordinator),
         }
 
@@ -864,6 +875,10 @@ def _source_attributes(coordinator: PortfolioArchitectCoordinator) -> dict[str, 
         "provider_ids": list(coordinator.provider_ids),
         "provider_summary": coordinator.provider_summary,
         "provider_summary_de": coordinator.provider_summary_de,
+        "unavailable_source_count": coordinator.unavailable_source_count,
+        "unavailable_source_ids": list(coordinator.unavailable_source_ids),
+        "unavailable_source_summary": coordinator.unavailable_source_summary,
+        "unavailable_source_summary_de": coordinator.unavailable_source_summary_de,
         "source_conflict_count": coordinator.source_conflict_count,
         "configuration_directory": coordinator.configuration_label,
         "source_last_changed": _isoformat(coordinator.source_last_changed),

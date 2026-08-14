@@ -1299,6 +1299,7 @@
           "health_unavailable": "Status nicht erreichbar",
           "reauthentication_required": "Neuanmeldung erforderlich",
           "integrity_failure": "Integritätsfehler",
+          "supplemental_source_unavailable": "Zusätzliche Quelle nicht verfügbar",
           "snapshot_unavailable": "Datenstand nicht verfügbar",
           "refresh_overdue": "Aktualisierung überfällig",
           "last_known_good": "Letzter gültiger Datenstand",
