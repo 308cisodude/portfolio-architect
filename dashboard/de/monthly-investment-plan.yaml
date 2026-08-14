@@ -156,22 +156,24 @@ cards:
     rows: auto
   icon: mdi:cash-fast
 - type: tile
-  entity: sensor.portfolio_architect_recommended_total
+  entity: sensor.portfolio_architect_plan_actionability
   name: Zugeordnet
-  state_content: display_state_de
+  state_content: recommended_total_display_de
   tap_action:
     action: more-info
+    entity: sensor.portfolio_architect_recommended_total
   grid_options:
     columns: 6
     rows: auto
   color: green
   icon: mdi:cash-check
 - type: tile
-  entity: sensor.portfolio_architect_purchase_count
+  entity: sensor.portfolio_architect_plan_actionability
   name: Käufe
-  state_content: display_state_de
+  state_content: purchase_count_display_de
   tap_action:
     action: more-info
+    entity: sensor.portfolio_architect_purchase_count
   grid_options:
     columns: 6
     rows: auto

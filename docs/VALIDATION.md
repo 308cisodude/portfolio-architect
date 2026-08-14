@@ -1,32 +1,32 @@
-# v1.26.2 validation
+# v1.26.3 validation
 
-Portfolio Architect v1.26.2 retains the complete v1.26.1 provider-App,
-publication/privacy, multi-Gateway, atomic-LKG and ISIN-first regression pipeline.
-The release adds presentation/diagnostic contracts that must prove:
+Portfolio Architect v1.26.3 retains the complete v1.26.2 presentation/source-outage,
+v1.26.1 ISIN-first, v1.26 atomic-LKG, provider-App, publication/privacy, and
+reproducible-release regression pipeline.
 
-- all integration and three provider App package versions align with 1.26.2;
+The release-specific contracts must prove:
+
+- integration and all three provider App package versions align with 1.26.3;
 - payload schema 8, REST portfolio schema 1 and Gateway health schema 6 remain
   unchanged;
-- machine-readable entity IDs and state contracts remain stable;
-- German reference-dashboard state values use explicit German presentation
-  attributes rather than depending on the global Home Assistant frontend language;
-- unavailable plan values render explicitly as `Nicht verfügbar` in the German
-  reference dashboard;
-- the English and German Source unavailable tiles render bounded source summaries;
-- one failed Trade Republic supplemental Gateway is identified as `Trade Republic
-  Gateway` / `Trade-Republic-Gateway` without exposing its endpoint or token;
-- DKB CSV failures expose only bounded instance labels and never configured paths;
-- several simultaneous supplemental REST Gateway failures can be collected in one
-  refresh rather than stopping after the first failure;
-- any supplemental failure still prevents partial aggregation and retains only a
-  matching complete Home Assistant LKG or fails closed;
-- `supplemental_source_unavailable` is a declared/translatable attention-reason
-  state so the dashboard no longer renders `None` for that outage class;
-- diagnostics expose only bounded unavailable-source IDs/count/summary and no
-  credentials, endpoints, file paths, account identifiers or source documents;
-- v1.26.1 ISIN-first identity/collision tests continue to pass unchanged;
-- the accepted Trade Republic statement-parser privacy/integrity contracts remain
+- existing machine-readable entity IDs, states and availability semantics remain
+  stable;
+- the German Allocated/Purchases dashboard values render through bounded attributes
+  of the always-available actionability entity, so `Nicht verfügbar` remains German
+  even while the original actionable sensors are unavailable;
+- the underlying recommended-total and purchase-count sensors continue to fail
+  closed when the source is non-actionable;
+- the policy reference dashboard does not render aggregate Checks/Opportunities
+  counters while their native entities remain implemented;
+- exception count/detail and last-decision/next-review tiles are adjacent and use
+  concise English/German lifecycle labels;
+- concrete optimisation opportunity tiles remain present;
+- conditional policy error/warning tiles remain available when findings require
+  attention;
+- v1.26.2 failed-source identification and translated attention reason/action remain
   unchanged;
+- v1.26.1 ISIN-first identity/collision tests continue to pass unchanged;
+- Trade Republic statement-parser privacy/integrity contracts remain unchanged;
 - Comdirect authentication/account/cash behavior remains unchanged;
 - the common REST API remains authenticated GET-only and no provider App gains
   trading/order/transfer/payment/transaction-history capability;
@@ -35,11 +35,10 @@ The release adds presentation/diagnostic contracts that must prove:
 - release archives remain reproducible and pass checksum, manifest, path-safety and
   payload-alignment verification.
 
-Live acceptance starts from the known-good v1.26.1 three-source/three-provider 7/7
-portfolio. After upgrade, that healthy state must remain unchanged. The updated
-German reference dashboard must show German presentation values even when the
-frontend language is English. Temporarily stopping Trade Republic must retain the
-complete 7/7 aggregate as non-actionable LKG, identify the missing source as the
-Trade Republic Gateway, and show a translated supplemental-source attention reason.
-Restarting Trade Republic must recover to healthy/live 7/7 without reconfiguration
-or statement re-import.
+Live acceptance starts from the established three-source/three-provider 7/7
+portfolio. After upgrade, the healthy state must remain unchanged. Temporarily
+stopping Trade Republic must still retain 7/7 as non-actionable LKG, identify the
+failed source, and show German outage diagnostics. In that degraded state the
+**Zugeordnet** and **Käufe** tiles must now render **Nicht verfügbar**, not the
+frontend-language `Unavailable`. After Trade Republic restarts, the dashboard must
+recover to healthy/live 7/7 without reconfiguration or statement re-import.

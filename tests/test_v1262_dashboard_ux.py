@@ -58,8 +58,6 @@ def test_german_reference_dashboard_uses_explicit_german_presentation_attributes
         "sensor.portfolio_architect_plan_budget",
         "sensor.portfolio_architect_plan_frequency",
         "sensor.portfolio_architect_monthly_contribution",
-        "sensor.portfolio_architect_recommended_total",
-        "sensor.portfolio_architect_purchase_count",
         "sensor.portfolio_architect_plan_actionability",
         "sensor.portfolio_architect_execution_policy",
         "binary_sensor.portfolio_architect_data_fresh",

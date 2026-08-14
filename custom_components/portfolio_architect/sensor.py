@@ -1706,6 +1706,14 @@ class PortfolioPlanActionabilitySensor(
             "actionability_reason": self.coordinator.plan_actionability_reason,
             "execution_state": data.monthly_plan.execution_state,
             "plan_ready": data.monthly_plan.ready,
+            "recommended_total_display_de": display_eur_de(
+                data.monthly_plan.recommended_total_eur,
+                available=self.coordinator.plan_actionable,
+            ),
+            "purchase_count_display_de": display_count_de(
+                data.monthly_plan.purchase_count,
+                available=self.coordinator.plan_actionable,
+            ),
             "evaluated_at": _isoformat(_runtime_timestamp(self.coordinator)),
             "scheduled_execution_on": (
                 schedule.planned_execution_on.isoformat() if schedule else None

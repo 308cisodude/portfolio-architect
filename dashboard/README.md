@@ -27,6 +27,19 @@ refresh-running, operator-attention, recovery-action, last-failure, and
 refresh-overdue indicators. Schedule cards remain hidden until a recurring
 execution schedule is configured in Portfolio Architect options.
 
+The policy-compliance section prioritizes actionable operator context rather than
+raw evaluation counters. Aggregate Checks and Opportunities entities remain native
+Home Assistant entities but are omitted from the primary reference layout. The
+dashboard pairs the accepted-exception count with its concrete exception, then the
+last decision with the next (or overdue) review. Concrete
+optimisation opportunity tiles remain below that lifecycle block.
+
+For German dashboards, actionable values that intentionally become unavailable
+during source degradation are rendered through bounded presentation attributes on
+the always-available actionability entity. Their more-info actions still target the
+original monetary/count entities, whose fail-closed availability semantics remain
+unchanged.
+
 The complete-portfolio Distribution card and per-instrument plan cards explicitly
 reference the current sample configuration. New holdings and plan instruments
 receive entities automatically but must be added to the static native dashboard

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.26.3
+
+- Version alignment for Portfolio Architect 1.26.3.
+- DKB remains an experimental manual-only fail-closed provider shell with no acquisition path; v1.26.3 changes only Home Assistant dashboard/presentation.
+
 ## 1.26.2
 
 - Version alignment for Portfolio Architect 1.26.2.

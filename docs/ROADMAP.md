@@ -68,8 +68,10 @@ outage/LKG/recovery behavior without silent provider dropout.
 
 ## v1.26.2 — dashboard and outage UX polish
 
-Current milestone: improve operator presentation without changing portfolio
-calculation, acquisition or wire contracts.
+Published and functionally accepted except for one remaining German Tile-card
+presentation edge case: Home Assistant substitutes its own frontend-language
+`Unavailable` label once an entity itself becomes unavailable, even if the entity
+still exposes an explicit German presentation attribute.
 
 - Make the German reference dashboard render explicit German state values
   independently of the global Home Assistant frontend language.
@@ -81,6 +83,25 @@ calculation, acquisition or wire contracts.
 - Replace the supplemental-outage `Attention reason: None` presentation with the
   existing bounded `supplemental_source_unavailable` reason and translations.
 - Keep payload schema 8, REST schema 1 and Gateway health schema 6 unchanged.
+
+## v1.26.3 — dashboard presentation and policy-layout follow-up
+
+Current milestone: close that remaining German unavailable-state presentation edge
+without weakening fail-closed entity availability, and simplify the policy section
+around operator-relevant exception lifecycle information.
+
+- Keep actionable recommendation/count entities unavailable when their source is
+  non-actionable.
+- Render German unavailable values through bounded attributes of an entity that
+  remains available during LKG operation.
+- Remove aggregate Checks/Opportunities counters from the primary dashboard while
+  retaining the native entities unchanged.
+- Group accepted-exception count/detail and last-decision/next-review tiles
+  coherently with precise English/German labels.
+- Preserve concrete optimisation opportunity tiles and conditional error/warning
+  indicators.
+- Keep payload schema 8, REST schema 1, health schema 6 and all provider/acquisition
+  contracts unchanged.
 
 ## v1.27.0 — Gateway HTTPS transport hardening
 

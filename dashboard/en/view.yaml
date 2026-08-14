@@ -422,35 +422,6 @@ sections:
     grid_options:
       columns: full
       rows: auto
-  - type: tile
-    entity: sensor.portfolio_architect_policy_checks_evaluated
-    name: Checks
-    tap_action:
-      action: more-info
-    grid_options:
-      columns: 6
-      rows: auto
-    icon: mdi:clipboard-text-search-outline
-  - type: tile
-    entity: sensor.portfolio_architect_accepted_exception_count
-    name: Exceptions
-    tap_action:
-      action: more-info
-    grid_options:
-      columns: 6
-      rows: auto
-    color: amber
-    icon: mdi:shield-half-full
-  - type: tile
-    entity: sensor.portfolio_architect_optimisation_opportunity_count
-    name: Opportunities
-    tap_action:
-      action: more-info
-    grid_options:
-      columns: 6
-      rows: auto
-    color: blue
-    icon: mdi:lightbulb-on-outline
   - type: conditional
     conditions:
     - condition: numeric_state
@@ -483,35 +454,30 @@ sections:
     grid_options:
       columns: 6
       rows: auto
-  - type: conditional
-    conditions:
-    - condition: state
-      entity: binary_sensor.portfolio_architect_exception_review_overdue
-      state: 'on'
-    card:
-      type: tile
-      entity: sensor.portfolio_architect_oldest_overdue_exception_review
-      name: Next review
-      tap_action:
-        action: more-info
-      color: red
-      icon: mdi:calendar-alert
+  - type: tile
+    entity: sensor.portfolio_architect_accepted_exception_count
+    name: Exceptions
+    tap_action:
+      action: more-info
     grid_options:
       columns: 6
       rows: auto
+    color: amber
+    icon: mdi:shield-half-full
   - type: conditional
     conditions:
     - condition: state
-      entity: binary_sensor.portfolio_architect_exception_review_overdue
-      state: 'off'
+      entity: sensor.portfolio_architect_robotics_accumulating_preferred_policy_exception
+      state: accepted_exception
     card:
       type: tile
-      entity: sensor.portfolio_architect_next_exception_review
-      name: Next review
+      entity: sensor.portfolio_architect_robotics_accumulating_preferred_policy_exception
+      name: Robotics exception
       tap_action:
         action: more-info
       color: amber
-      icon: mdi:calendar-clock
+      icon: mdi:shield-half-full
+      hide_state: true
     grid_options:
       columns: 6
       rows: auto
@@ -533,17 +499,32 @@ sections:
   - type: conditional
     conditions:
     - condition: state
-      entity: sensor.portfolio_architect_robotics_accumulating_preferred_policy_exception
-      state: accepted_exception
+      entity: binary_sensor.portfolio_architect_exception_review_overdue
+      state: 'on'
     card:
       type: tile
-      entity: sensor.portfolio_architect_robotics_accumulating_preferred_policy_exception
-      name: Robotics exception
+      entity: sensor.portfolio_architect_oldest_overdue_exception_review
+      name: Overdue review
+      tap_action:
+        action: more-info
+      color: red
+      icon: mdi:calendar-alert
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: binary_sensor.portfolio_architect_exception_review_overdue
+      state: 'off'
+    card:
+      type: tile
+      entity: sensor.portfolio_architect_next_exception_review
+      name: Next review
       tap_action:
         action: more-info
       color: amber
-      icon: mdi:shield-half-full
-      hide_state: true
+      icon: mdi:calendar-clock
     grid_options:
       columns: 6
       rows: auto
