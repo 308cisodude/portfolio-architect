@@ -228,3 +228,23 @@ integration contains an order, transfer, or payment operation.
 Portfolio Architect keeps recurring schedule context separate from present recommendation validity. `planned_execution` remains the stable entity identifier for the execution date associated with the latest evaluation, but the user-facing concept is **Scheduled execution**. The date may be in the past without proving that an order occurred or forcing the recommendation to expire.
 
 Current actionability is derived independently from source freshness/trust, REST/LKG/integrity health, the current execution state, and the relationship between today's date and the scheduled date. The native `plan_actionability` entity exposes only bounded states and metadata; it cannot execute orders and it does not infer transaction history.
+
+## v1.26.2 presentation and source-failure diagnostics
+
+The Home Assistant integration keeps native entity states machine-readable and
+stable. The bilingual reference dashboard may be displayed while Home Assistant's
+global frontend language is different, so v1.26.2 adds explicit presentation
+attributes for German dashboard state values rather than changing the underlying
+entity states.
+
+Configured-source failure identity is also separate from private transport
+configuration. The coordinator exposes bounded source-instance IDs and derived
+English/German summaries for unavailable sources. Gateway labels contain only the
+bounded provider ID; DKB CSV labels contain only a bounded configured instance
+number. Endpoint URLs, bearer tokens and file paths are not part of presentation
+metadata or diagnostics.
+
+Failure collection does not weaken atomic aggregation. Several additional Gateway
+failures may be collected so the operator can see all affected configured sources,
+but any such failure still prevents a partial live aggregate and retains only a
+matching complete Home Assistant LKG or fails closed.

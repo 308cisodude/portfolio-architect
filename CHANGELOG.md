@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.26.2
+
+- Completes the German reference-dashboard presentation layer so machine-readable entity states remain stable while German dashboard state values render explicitly in German, independent of the Home Assistant frontend language.
+- Adds privacy-safe unavailable-source metadata (`unavailable_source_count`, bounded source IDs and English/German summaries) so the Source unavailable tile identifies which configured source instances are blocking a live aggregate.
+- Collects multiple additional-Gateway availability failures in one refresh while preserving v1.26 atomic aggregation: any configured source failure retains the matching complete Home Assistant LKG rather than partially aggregating successful providers.
+- Adds safe DKB CSV source-instance failure labels without exposing configured file paths.
+- Fixes the Gateway attention-reason presentation for supplemental-source outages by declaring/translating `supplemental_source_unavailable` instead of rendering `None`.
+- Keeps payload schema 8, REST portfolio schema 1, Gateway health schema 6, machine-readable entity states/IDs, ISIN-first identity, provider acquisition, authorized-cash semantics and the read-only/no-trading boundary unchanged.
+
 ## 1.26.1
 
 - Fixes v1.26.0 live acceptance for Trade Republic holdings whose provider-neutral REST snapshot carries an ISIN but no WKN.

@@ -26,11 +26,11 @@ cards:
     type: tile
     entity: binary_sensor.portfolio_architect_source_healthy
     name: Quelle fehlt
+    state_content: unavailable_source_summary_de
     tap_action:
       action: more-info
     color: red
     icon: mdi:database-alert-outline
-    hide_state: true
   grid_options:
     columns: 6
     rows: auto
@@ -42,6 +42,7 @@ cards:
   card:
     type: tile
     entity: binary_sensor.portfolio_architect_data_fresh
+    state_content: display_state_de
     name: Snapshot-Aktualität
     tap_action:
       action: more-info
@@ -59,6 +60,7 @@ cards:
   card:
     type: tile
     entity: binary_sensor.portfolio_architect_data_fresh
+    state_content: display_state_de
     name: Snapshot-Aktualität
     tap_action:
       action: more-info
@@ -158,6 +160,7 @@ cards:
   card:
     type: tile
     entity: sensor.portfolio_architect_gateway_status
+    state_content: display_state_de
     name: Gateway-Status
     tap_action:
       action: more-info
@@ -176,6 +179,7 @@ cards:
   card:
     type: tile
     entity: sensor.portfolio_architect_gateway_last_refresh
+    state_content: display_state_de
     name: Live-Aktualisierung
     tap_action:
       action: more-info
@@ -191,6 +195,7 @@ cards:
   card:
     type: tile
     entity: sensor.portfolio_architect_gateway_operating_mode
+    state_content: display_state_de
     name: Betriebsmodus
     tap_action:
       action: more-info
@@ -225,7 +230,7 @@ cards:
     type: tile
     entity: sensor.portfolio_architect_gateway_next_refresh
     name: Abruf geplant
-    state_content: state
+    state_content: display_state_de
     time_format:
       type: datetime
       style: short
@@ -248,7 +253,7 @@ cards:
     type: tile
     entity: sensor.portfolio_architect_gateway_next_refresh
     name: Abruf fällig
-    state_content: state
+    state_content: display_state_de
     time_format:
       type: datetime
       style: short
@@ -271,7 +276,7 @@ cards:
     type: tile
     entity: sensor.portfolio_architect_gateway_next_refresh
     name: Abruf überfällig
-    state_content: state
+    state_content: display_state_de
     time_format:
       type: datetime
       style: short
@@ -293,6 +298,7 @@ cards:
   card:
     type: tile
     entity: sensor.portfolio_architect_gateway_refresh_schedule
+    state_content: display_state_de
     name: Abruf läuft
     tap_action:
       action: more-info
@@ -331,6 +337,7 @@ cards:
   card:
     type: tile
     entity: sensor.portfolio_architect_gateway_last_refresh_trigger
+    state_content: display_state_de
     name: Abrufauslöser
     tap_action:
       action: more-info
@@ -409,6 +416,7 @@ cards:
   card:
     type: tile
     entity: sensor.portfolio_architect_gateway_attention_reason
+    state_content: display_state_de
     name: Warnungsgrund
     tap_action:
       action: more-info
@@ -428,6 +436,7 @@ cards:
   card:
     type: tile
     entity: sensor.portfolio_architect_gateway_recommended_action
+    state_content: display_state_de
     name: Empfohlene Maßnahme
     tap_action:
       action: more-info
@@ -450,6 +459,7 @@ cards:
   card:
     type: tile
     entity: sensor.portfolio_architect_gateway_last_refresh_failure
+    state_content: display_state_de
     name: Letzter Fehler
     tap_action:
       action: more-info
@@ -548,6 +558,7 @@ cards:
   card:
     type: tile
     entity: sensor.portfolio_architect_gateway_snapshot_generated
+    state_content: display_state_de
     name: Snapshot erzeugt
     tap_action:
       action: more-info

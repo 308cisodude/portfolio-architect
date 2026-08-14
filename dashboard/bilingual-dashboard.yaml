@@ -1098,11 +1098,11 @@ views:
         type: tile
         entity: binary_sensor.portfolio_architect_source_healthy
         name: Source unavailable
+        state_content: unavailable_source_summary
         tap_action:
           action: more-info
         color: red
         icon: mdi:database-alert-outline
-        hide_state: true
       grid_options:
         columns: 6
         rows: auto
@@ -2697,6 +2697,7 @@ views:
       card:
         type: tile
         entity: sensor.portfolio_architect_plan_change
+        state_content: display_state_de
         name: Änderungen seit letzter Auswertung
         tap_action:
           action: more-info
@@ -2708,6 +2709,7 @@ views:
     - type: tile
       entity: sensor.portfolio_architect_plan_budget
       name: Planbudget
+      state_content: display_state_de
       tap_action:
         action: more-info
       grid_options:
@@ -2717,6 +2719,7 @@ views:
     - type: tile
       entity: sensor.portfolio_architect_plan_frequency
       name: Intervall
+      state_content: display_state_de
       tap_action:
         action: more-info
       grid_options:
@@ -2726,6 +2729,7 @@ views:
     - type: tile
       entity: sensor.portfolio_architect_monthly_contribution
       name: Je Ausführung
+      state_content: display_state_de
       tap_action:
         action: more-info
       grid_options:
@@ -2735,6 +2739,7 @@ views:
     - type: tile
       entity: sensor.portfolio_architect_recommended_total
       name: Zugeordnet
+      state_content: display_state_de
       tap_action:
         action: more-info
       grid_options:
@@ -2745,6 +2750,7 @@ views:
     - type: tile
       entity: sensor.portfolio_architect_purchase_count
       name: Käufe
+      state_content: display_state_de
       tap_action:
         action: more-info
       grid_options:
@@ -2778,6 +2784,7 @@ views:
     - type: tile
       entity: sensor.portfolio_architect_plan_actionability
       name: Umsetzbarkeit
+      state_content: display_state_de
       tap_action:
         action: more-info
       icon: mdi:calendar-check-outline
@@ -2787,6 +2794,7 @@ views:
     - type: tile
       entity: sensor.portfolio_architect_last_successful_refresh
       name: Zuletzt ausgewertet
+      state_content: display_state_de
       tap_action:
         action: more-info
       icon: mdi:clock-check-outline
@@ -2815,6 +2823,7 @@ views:
     - type: tile
       entity: sensor.portfolio_architect_execution_policy
       name: Ausführungsstrategie
+      state_content: display_state_de
       tap_action:
         action: more-info
       icon: mdi:tune-variant
@@ -3665,11 +3674,11 @@ views:
         type: tile
         entity: binary_sensor.portfolio_architect_source_healthy
         name: Quelle fehlt
+        state_content: unavailable_source_summary_de
         tap_action:
           action: more-info
         color: red
         icon: mdi:database-alert-outline
-        hide_state: true
       grid_options:
         columns: 6
         rows: auto
@@ -3681,6 +3690,7 @@ views:
       card:
         type: tile
         entity: binary_sensor.portfolio_architect_data_fresh
+        state_content: display_state_de
         name: Snapshot-Aktualität
         tap_action:
           action: more-info
@@ -3698,6 +3708,7 @@ views:
       card:
         type: tile
         entity: binary_sensor.portfolio_architect_data_fresh
+        state_content: display_state_de
         name: Snapshot-Aktualität
         tap_action:
           action: more-info
@@ -3767,7 +3778,7 @@ views:
         rows: auto
       icon: mdi:clock-check-outline
       state_content:
-      - state
+      - display_state_de
       - engine_version
     - type: tile
       entity: sensor.portfolio_architect_source_count
@@ -3823,6 +3834,7 @@ views:
       card:
         type: tile
         entity: sensor.portfolio_architect_gateway_status
+        state_content: display_state_de
         name: Gateway-Status
         tap_action:
           action: more-info
@@ -3839,6 +3851,7 @@ views:
       card:
         type: tile
         entity: sensor.portfolio_architect_gateway_status
+        state_content: display_state_de
         name: Gateway-Status
         tap_action:
           action: more-info
@@ -3858,6 +3871,7 @@ views:
       card:
         type: tile
         entity: sensor.portfolio_architect_gateway_last_refresh
+        state_content: display_state_de
         name: Live-Aktualisierung
         tap_action:
           action: more-info
@@ -3873,6 +3887,7 @@ views:
       card:
         type: tile
         entity: sensor.portfolio_architect_gateway_operating_mode
+        state_content: display_state_de
         name: Betriebsmodus
         tap_action:
           action: more-info
@@ -3889,6 +3904,7 @@ views:
       card:
         type: tile
         entity: sensor.portfolio_architect_gateway_operating_mode
+        state_content: display_state_de
         name: Betriebsmodus
         tap_action:
           action: more-info
@@ -3905,6 +3921,7 @@ views:
       card:
         type: tile
         entity: sensor.portfolio_architect_gateway_operating_mode
+        state_content: display_state_de
         name: Betriebsmodus
         tap_action:
           action: more-info
@@ -3940,7 +3957,7 @@ views:
         type: tile
         entity: sensor.portfolio_architect_gateway_next_refresh
         name: Abruf geplant
-        state_content: state
+        state_content: display_state_de
         time_format:
           type: datetime
           style: short
@@ -3963,7 +3980,7 @@ views:
         type: tile
         entity: sensor.portfolio_architect_gateway_next_refresh
         name: Abruf fällig
-        state_content: state
+        state_content: display_state_de
         time_format:
           type: datetime
           style: short
@@ -3986,7 +4003,7 @@ views:
         type: tile
         entity: sensor.portfolio_architect_gateway_next_refresh
         name: Abruf überfällig
-        state_content: state
+        state_content: display_state_de
         time_format:
           type: datetime
           style: short
@@ -4008,6 +4025,7 @@ views:
       card:
         type: tile
         entity: sensor.portfolio_architect_gateway_refresh_schedule
+        state_content: display_state_de
         name: Abruf läuft
         tap_action:
           action: more-info
@@ -4046,6 +4064,7 @@ views:
       card:
         type: tile
         entity: sensor.portfolio_architect_gateway_last_refresh_trigger
+        state_content: display_state_de
         name: Abrufauslöser
         tap_action:
           action: more-info
@@ -4124,6 +4143,7 @@ views:
       card:
         type: tile
         entity: sensor.portfolio_architect_gateway_attention_reason
+        state_content: display_state_de
         name: Warnungsgrund
         tap_action:
           action: more-info
@@ -4143,6 +4163,7 @@ views:
       card:
         type: tile
         entity: sensor.portfolio_architect_gateway_recommended_action
+        state_content: display_state_de
         name: Empfohlene Maßnahme
         tap_action:
           action: more-info
@@ -4165,6 +4186,7 @@ views:
       card:
         type: tile
         entity: sensor.portfolio_architect_gateway_last_refresh_failure
+        state_content: display_state_de
         name: Letzter Fehler
         tap_action:
           action: more-info
@@ -4263,6 +4285,7 @@ views:
       card:
         type: tile
         entity: sensor.portfolio_architect_gateway_snapshot_generated
+        state_content: display_state_de
         name: Snapshot erzeugt
         tap_action:
           action: more-info

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.26.2
+
+- Version alignment for Portfolio Architect 1.26.2.
+- No Comdirect acquisition, authentication, authorized-cash or REST contract change; v1.26.2 is Home Assistant presentation/diagnostic polish.
+
 ## 1.26.1
 
 - Version alignment for Portfolio Architect 1.26.1.

@@ -60,22 +60,36 @@ semantics and the read-only/no-trading boundary remain unchanged.
 
 ## v1.26.1 — ISIN-first identity hotfix
 
-Current milestone: complete v1.26 live acceptance by making ISIN the canonical
-instrument identity throughout target matching and cross-source aggregation.
+Completed and live-accepted: ISIN is the canonical instrument identity, WKN is an
+unambiguous fallback only when ISIN is unavailable, and contradictory identity
+evidence fails closed. Live acceptance established the first known-good
+three-source/three-provider 7/7 aggregate and proved atomic Trade Republic
+outage/LKG/recovery behavior without silent provider dropout.
 
-- ISIN is primary whenever available.
-- WKN is fallback identity only when ISIN is unavailable.
-- When both are present, WKN is consistency evidence and cannot override an ISIN.
-- Ambiguous or contradictory ISIN/WKN mappings fail closed.
-- The regression suite uses the real Trade Republic REST identity shape: ISIN-only
-  provider position, no synthetic WKN injection.
-- Successful live acceptance must establish 3 sources / 3 providers / 7 of 7,
-  followed by the planned Trade Republic outage/LKG/recovery proof.
+## v1.26.2 — dashboard and outage UX polish
 
-The next security-hardening milestone is HTTPS for Gateway-to-Portfolio-Architect
-transport on the private Home Assistant App network. Certificate provisioning,
-verification and upgrade-safe trust must be designed without disabling TLS
-verification or replacing the existing dedicated bearer authentication.
+Current milestone: improve operator presentation without changing portfolio
+calculation, acquisition or wire contracts.
+
+- Make the German reference dashboard render explicit German state values
+  independently of the global Home Assistant frontend language.
+- Preserve stable machine-readable entity states for automations/API consumers.
+- Identify the privacy-safe configured source instance or instances that currently
+  prevent a live aggregate.
+- Collect multiple supplemental Gateway failures for presentation while preserving
+  atomic all-configured-source aggregation/LKG semantics.
+- Replace the supplemental-outage `Attention reason: None` presentation with the
+  existing bounded `supplemental_source_unavailable` reason and translations.
+- Keep payload schema 8, REST schema 1 and Gateway health schema 6 unchanged.
+
+## v1.27.0 — Gateway HTTPS transport hardening
+
+Next security-hardening milestone: use authenticated HTTPS for
+Gateway-to-Portfolio-Architect transport on the private Home Assistant App network.
+Certificate provisioning, validation, trust/pinning and renewal must survive normal
+App upgrades without disabling TLS verification or replacing the existing dedicated
+bearer authentication. Each Gateway must retain its own private key/trust identity;
+mTLS may be evaluated separately rather than assumed.
 
 ## Later provider acquisition work
 

@@ -1299,6 +1299,7 @@
           "health_unavailable": "Health unavailable",
           "reauthentication_required": "Reauthentication required",
           "integrity_failure": "Integrity failure",
+          "supplemental_source_unavailable": "Supplemental source unavailable",
           "snapshot_unavailable": "Snapshot unavailable",
           "refresh_overdue": "Refresh overdue",
           "last_known_good": "Last known good",

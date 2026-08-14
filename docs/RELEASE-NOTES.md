@@ -1,116 +1,81 @@
-# Portfolio Architect 1.26.1
+# Portfolio Architect 1.26.2
 
-Version 1.26.1 is the identity-model hotfix for the v1.26 multi-Gateway milestone.
-Live acceptance of v1.26.0 proved that the Trade Republic Gateway could be added and
-read successfully, but an ISIN-only Trade Republic holding was not matched to its
-configured target because the calculation path still assumed WKN-keyed positions.
-This release makes ISIN the canonical instrument identity and uses WKN only as an
-unambiguous fallback when ISIN is unavailable.
+Version 1.26.2 is a presentation and diagnostics polish release on top of the
+live-accepted v1.26.1 multi-provider/ISIN-first baseline. It does not change
+portfolio calculation, provider acquisition, Gateway wire schemas, or the
+read-only security boundary.
 
+## German reference-dashboard presentation
 
-## ISIN-first instrument identity
+The German reference dashboard now consumes explicit German presentation
+attributes for state values that Home Assistant otherwise renders according to the
+global frontend language. Machine-readable entity states and options remain stable
+for automations and API consumers.
 
-Target matching and cross-source consolidation now follow one provider-neutral rule:
+The affected presentation includes plan frequency, actionability, execution policy,
+source/freshness state, Gateway status/operating mode, refresh schedule/trigger,
+attention reason/recommended action, unavailable monetary/count values, and
+relevant timestamps. The English reference dashboard continues to use the normal
+machine-readable/frontend presentation except where the source-unavailable tile
+uses the new bounded source summary.
 
-1. use ISIN when it is available;
-2. use WKN only when ISIN is unavailable; and
-3. when both are available, treat WKN as consistency evidence rather than an
-   alternate key that can override an ISIN mismatch.
+Copied/imported dashboards remain user-owned and are not overwritten by HACS. An
+existing copied dashboard must deliberately adopt the updated v1.26.2 reference
+YAML to receive these presentation changes.
 
-The integration fails closed when one WKN maps to multiple ISINs, one ISIN is
-reported with contradictory WKN values, or target/source evidence conflicts. The
-REST adapter also stops copying an ISIN-valued generic `identifier` into the WKN
-field. This allows the existing Trade Republic statement snapshot to satisfy the
-Robotics target without any provider-specific calculation branch or wire-schema
-change.
+## Source-specific outage visibility
 
-## Multiple Gateway REST sources
+When a configured source prevents a live aggregate, Portfolio Architect now exposes
+bounded privacy-safe metadata:
 
-An existing REST installation keeps its current Gateway as the primary source.
-Additional local Gateways can be added or removed under **Portfolio sources →
-Additional REST Gateways** without reconfiguring the primary source.
+- `unavailable_source_count`;
+- `unavailable_source_ids`;
+- `unavailable_source_summary`; and
+- `unavailable_source_summary_de`.
 
-Before an additional Gateway is saved, Portfolio Architect validates:
+The reference **Source unavailable / Quelle fehlt** tile renders the corresponding
+summary, for example `Trade Republic Gateway` / `Trade-Republic-Gateway`. DKB CSV
+sources use bounded instance labels such as `DKB CSV 2`; configured paths are never
+exposed. Gateway summaries contain provider identity only, never endpoint URLs or
+bearer tokens.
 
-- a bounded local-only HTTP(S) endpoint;
-- bearer authentication;
-- Gateway health schema 6 with a stable bounded `provider_id`;
-- a healthy/live snapshot;
-- REST snapshot position-count and fingerprint integrity metadata; and
-- consistency between the health document and the returned snapshot.
+Additional REST Gateway health failures are collected for all configured
+supplemental Gateways during a refresh so several simultaneous failed sources can
+be named. Atomic aggregation remains unchanged: if any configured source fails,
+Portfolio Architect does not calculate from the successful subset. A matching
+complete Home Assistant LKG is retained or the refresh fails closed.
 
-Additional Gateway bearer tokens remain only in the private Home Assistant config
-entry options. Diagnostics expose provider identity and bounded health state, never
-tokens.
+## Attention-reason correction
 
-## Atomic aggregation and graceful degradation
+The existing coordinator state `supplemental_source_unavailable` is now a declared
+and translated Gateway-attention enum option. Supplemental-source outages therefore
+show a meaningful reason instead of `None`, while the existing recommended action
+remains bounded (`check_connectivity`).
 
-All configured sources are normalized into the existing `PortfolioSourceSnapshot`
-model and merged by the established provider-neutral aggregation engine. A refresh
-is atomic: Portfolio Architect does not silently drop a configured provider and
-recalculate a smaller portfolio when one additional Gateway is unavailable,
-unauthorized, inconsistent, or attempts to move backwards in snapshot time.
+## Compatibility and security
 
-If a previously validated complete aggregate exists, such a failure retains that
-complete Home Assistant last-known-good calculation. Runtime health becomes
-degraded/last-known-good and new investment actionability is disabled until every
-configured REST Gateway is healthy again. If no matching complete last-known-good
-aggregate exists, the update fails closed.
+Payload schema 8, REST portfolio schema 1 and Gateway health schema 6 remain
+the current wire/data contracts; health schemas 1–5 remain supported. The historical experimental `v1.19.0-rc2`
+brokerage diagnostics/fee-probe work remains separate and is not promoted by this release.
 
-The configured source set participates in the private LKG configuration fingerprint,
-so adding or removing a Gateway cannot replay a cache that was built from a
-different provider set.
+- payload schema: 8 (unchanged)
+- REST portfolio schema: 1 (unchanged)
+- Gateway health schema: 6 (unchanged)
+- existing entity IDs / unique IDs: unchanged
+- machine-readable state values: unchanged, except the already-existing
+  `supplemental_source_unavailable` reason is now correctly declared by its entity
+- ISIN-first identity and WKN fallback semantics: unchanged from v1.26.1
+- Comdirect authorized-cash semantics: unchanged
+- Trade Republic statement import: unchanged
+- DKB Gateway remains an experimental manual-only fail-closed shell
+- No trading, order, transfer, payment, or transaction-history capability is added.
 
-## Distinct providers and provenance
+Unavailable-source metadata is derived only from bounded provider/source-instance
+identities. It excludes private Gateway endpoint URLs, bearer tokens, DKB CSV paths,
+account/depot/customer identifiers, and provider documents.
 
-Source instances and provider identities are now deliberately separate concepts.
-The aggregate summary retains `source_count` and adds bounded `provider_count` and
-`provider_ids` metadata. Two DKB CSV files therefore remain two sources but one
-provider.
+DKB live Gateway acquisition remains a later provider-specific milestone; v1.26.2
+does not promote the experimental DKB shell into a live acquisition source.
 
-Per-position source provenance is unchanged and continues to show which independent
-sources contributed to an aggregated holding. The reference dashboard's **Source
-provider** tile now renders a compact distinct-provider summary, for example:
-
-`Multi-source portfolio · 3 providers`
-
-Copied/imported reference dashboards remain user-owned and are not overwritten by
-HACS; this visual change must be deliberately applied to an existing copied
-dashboard.
-
-## Trade Republic runtime
-
-The accepted v1.25.0 Trade Republic statement importer is unchanged. Its App now
-uses `boot: auto` so an accepted snapshot can remain available to a configured
-Portfolio Architect REST consumer across Home Assistant restarts. Before its first
-accepted statement it still fails closed with no fabricated portfolio.
-
-The original Trade Republic PDF remains transient private input and is never
-persisted. The provider-specific parser and hash-locked `pypdf` dependency remain
-confined to the Trade Republic App.
-
-## Compatibility and safety
-
-- payload schema 8 (unchanged)
-- REST portfolio schema 1 (unchanged)
-- Gateway health schema 6 (unchanged; schemas 1–5 remain supported for a single primary Gateway)
-- Existing Home Assistant entity IDs / unique IDs: unchanged
-- Existing primary Comdirect endpoint/token and private Gateway state: unchanged
-- Comdirect cash authorization remains authoritative for the existing investment-cash path
-- DKB supplemental CSV behavior: unchanged
-- v1.20/v1.20.1 LKG semantics: retained and extended atomically across the configured REST source set
-- v1.21 actionability semantics: retained
-- v1.22 publication/privacy gates: retained
-- No trading, order, transfer, payment, or transaction-history capability
-
-## Historical boundaries
-
-Version 1.25.0 introduced the supported Trade Republic holdings-statement importer.
-Version 1.26.0 does not move PDF parsing into Portfolio Architect; it only teaches
-the Home Assistant integration to consume more than one already-normalized Gateway
-REST snapshot at the same time. DKB live Gateway acquisition remains a later
-provider-specific milestone.
-The historical `v1.19.0-rc2` brokerage-diagnostics/fee-probe branch remains separate
-and is not promoted by this release. Multi-Gateway aggregation consumes only the
-established holdings snapshot contract and does not reintroduce those experimental
-brokerage diagnostics.
+The release does not move PDF parsing into Portfolio Architect: Trade Republic
+statement parsing remains isolated in the Trade Republic Gateway App.

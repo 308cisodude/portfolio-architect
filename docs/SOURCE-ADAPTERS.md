@@ -140,3 +140,17 @@ two different WKN values may not claim the same ISIN, and one WKN may not map to
 multiple ISINs. Ambiguous or contradictory identity evidence aborts the aggregate
 rather than merging or matching a position heuristically. This rule is
 provider-neutral and applies equally to REST and CSV source combinations.
+
+## Unavailable-source presentation (v1.26.2)
+
+A source that prevents a live aggregate can expose only a bounded presentation
+identity. Additional Gateways use their health-schema-6 provider ID to derive labels
+such as `Trade Republic Gateway`; DKB CSV supplements use bounded instance labels
+such as `DKB CSV 2`. Private bearer tokens, endpoint URLs and filesystem paths are
+never source labels.
+
+Additional REST Gateway failures are collected across the configured supplemental
+Gateway set so multiple failed source identities can be shown together. This is
+only diagnostic collection: aggregation remains atomic, so the successful subset is
+not accepted as a live portfolio while any configured source is unavailable or
+invalid.

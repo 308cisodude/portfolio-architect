@@ -36,6 +36,12 @@ from .engine.importers import PROVIDER_COMDIRECT, PROVIDER_DKB, PROVIDER_GENERIC
 from .engine.rest import PROVIDER_LOCAL_REST_JSON
 from .execution_semantics import PLAN_ACTIONABILITY_STATES, derive_plan_actionability
 from .model import HoldingData, PolicyFindingData, PositionData
+from .presentation import (
+    display_count_de,
+    display_datetime_de,
+    display_eur_de,
+    display_state_de,
+)
 
 CURRENCY_EUR = "EUR"
 REFRESH_SCHEDULE_TICK = timedelta(minutes=1)
@@ -533,8 +539,19 @@ class PortfolioPlanChangeSensor(
     def extra_state_attributes(self) -> dict[str, Any]:
         base = _source_attributes(self.coordinator)
         if not self.available or self.coordinator.plan_delta is None:
-            return base
-        return {**self.coordinator.plan_delta.attributes, **base}
+            return {
+                "display_state_de": display_state_de(
+                    "plan_change", None, available=False
+                ),
+                **base,
+            }
+        return {
+            **self.coordinator.plan_delta.attributes,
+            "display_state_de": display_state_de(
+                "plan_change", self.coordinator.plan_delta.state
+            ),
+            **base,
+        }
 
 
 class _PortfolioMonthlyMoneySensor(
@@ -572,6 +589,15 @@ class _PortfolioMonthlyMoneySensor(
         if not self.available:
             return None
         return float(getattr(self.coordinator.data.monthly_plan, self.value_attribute))
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        return {
+            "display_state_de": display_eur_de(
+                self.native_value, available=self.available
+            ),
+            **_source_attributes(self.coordinator),
+        }
 
 
 class PortfolioPlanBudgetSensor(_PortfolioMonthlyMoneySensor):
@@ -615,7 +641,7 @@ class PortfolioAvailableInvestmentReserveSensor(_PortfolioMonthlyMoneySensor):
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        base = _source_attributes(self.coordinator)
+        base = super().extra_state_attributes
         if not self.available:
             return base
         plan = self.coordinator.data.monthly_plan
@@ -645,7 +671,7 @@ class PortfolioDeferredContributionSensor(_PortfolioMonthlyMoneySensor):
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        base = _source_attributes(self.coordinator)
+        base = super().extra_state_attributes
         if not self.available:
             return base
         deferred = [
@@ -734,6 +760,15 @@ class PortfolioPurchaseCountSensor(
     def native_value(self) -> int | None:
         return self.coordinator.data.monthly_plan.purchase_count if self.available else None
 
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        return {
+            "display_state_de": display_count_de(
+                self.native_value, available=self.available
+            ),
+            **_source_attributes(self.coordinator),
+        }
+
 
 class _PortfolioPlanEnumSensor(
     CoordinatorEntity[PortfolioArchitectCoordinator], SensorEntity
@@ -768,6 +803,15 @@ class _PortfolioPlanEnumSensor(
             return None
         return str(getattr(self.coordinator.data.monthly_plan, self.value_attribute))
 
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        return {
+            "display_state_de": display_state_de(
+                self.object_id, self.native_value, available=self.available
+            ),
+            **_source_attributes(self.coordinator),
+        }
+
 
 class PortfolioPlanFrequencySensor(_PortfolioPlanEnumSensor):
     """Configured recurring plan frequency."""
@@ -800,7 +844,7 @@ class PortfolioExecutionPolicySensor(_PortfolioPlanEnumSensor):
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        base = _source_attributes(self.coordinator)
+        base = super().extra_state_attributes
         if not self.available:
             return base
         plan = self.coordinator.data.monthly_plan
@@ -1668,6 +1712,9 @@ class PortfolioPlanActionabilitySensor(
             ),
             "schedule_relation": semantics.schedule_relation,
             "days_until_scheduled_execution": semantics.days_until_scheduled_execution,
+            "display_state_de": display_state_de(
+                "plan_actionability", semantics.state
+            ),
             **base,
         }
 
@@ -1791,6 +1838,7 @@ class PortfolioLastSuccessfulRefreshSensor(
                 data.monthly_plan.frequency if data is not None else None
             ),
             "freshness_mode": self.coordinator.freshness_mode,
+            "display_state_de": display_datetime_de(dt_util.as_local(self.native_value) if self.native_value else None),
         }
 
 
@@ -2024,6 +2072,9 @@ class PortfolioGatewayStatusSensor(
                 self.coordinator.rest_snapshot_integrity_verified
             ),
             "health_error": self.coordinator.gateway_health_error,
+            "display_state_de": display_state_de(
+                "gateway_status", self.native_value
+            ),
             **_source_attributes(self.coordinator),
         }
 
@@ -2079,6 +2130,9 @@ class PortfolioGatewayOperatingModeSensor(
             "snapshot_expires_in_seconds": (
                 self.coordinator.gateway_snapshot_expires_in_seconds
             ),
+            "display_state_de": display_state_de(
+                "gateway_operating_mode", self.native_value
+            ),
             **_source_attributes(self.coordinator),
         }
 
@@ -2116,6 +2170,13 @@ class PortfolioGatewayLastRefreshSensor(
         health = self.coordinator.gateway_health
         return health.last_refresh_success if self.available and health else None
 
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        return {
+            "display_state_de": display_datetime_de(dt_util.as_local(self.native_value) if self.native_value else None),
+            **_source_attributes(self.coordinator),
+        }
+
 
 class PortfolioGatewayNextRefreshSensor(
     CoordinatorEntity[PortfolioArchitectCoordinator], SensorEntity
@@ -2147,6 +2208,15 @@ class PortfolioGatewayNextRefreshSensor(
     @property
     def native_value(self) -> datetime | None:
         return self.coordinator.gateway_next_refresh_due_at if self.available else None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        return {
+            "display_state_de": display_datetime_de(
+                dt_util.as_local(self.native_value) if self.native_value else None
+            ),
+            **_source_attributes(self.coordinator),
+        }
 
 
 class _MinuteTickEntity:
@@ -2231,6 +2301,9 @@ class PortfolioGatewayRefreshScheduleSensor(
             ),
             "overdue_evidence_current": (
                 self.coordinator.gateway_refresh_overdue_evidence_current
+            ),
+            "display_state_de": display_state_de(
+                "gateway_refresh_schedule", self.native_value
             ),
             **_source_attributes(self.coordinator),
         }
@@ -2322,6 +2395,17 @@ class PortfolioGatewayLastRefreshTriggerSensor(
     def native_value(self) -> str | None:
         return self.coordinator.gateway_last_refresh_trigger if self.available else None
 
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        return {
+            "display_state_de": display_state_de(
+                "gateway_last_refresh_trigger",
+                self.native_value,
+                available=self.available,
+            ),
+            **_source_attributes(self.coordinator),
+        }
+
 
 class PortfolioGatewayAttentionReasonSensor(
     _MinuteTickEntity,
@@ -2338,6 +2422,7 @@ class PortfolioGatewayAttentionReasonSensor(
         "health_unavailable",
         "reauthentication_required",
         "integrity_failure",
+        "supplemental_source_unavailable",
         "snapshot_unavailable",
         "refresh_overdue",
         "last_known_good",
@@ -2382,6 +2467,9 @@ class PortfolioGatewayAttentionReasonSensor(
             ),
             "retry_after_seconds": health.retry_after_seconds if health else None,
             "refresh_overdue": self.coordinator.is_gateway_refresh_overdue(),
+            "display_state_de": display_state_de(
+                "gateway_attention_reason", self.native_value
+            ),
             **_source_attributes(self.coordinator),
         }
 
@@ -2419,6 +2507,15 @@ class PortfolioGatewayRecommendedActionSensor(
     @property
     def native_value(self) -> str:
         return self.coordinator.gateway_recommended_action
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        return {
+            "display_state_de": display_state_de(
+                "gateway_recommended_action", self.native_value
+            ),
+            **_source_attributes(self.coordinator),
+        }
 
 
 class PortfolioGatewayLastRefreshFailureSensor(
@@ -2463,6 +2560,7 @@ class PortfolioGatewayLastRefreshFailureSensor(
             "failure_class": self.coordinator.gateway_last_refresh_failure_class,
             "recommended_action": self.coordinator.gateway_recommended_action,
             "retry_after_seconds": health.retry_after_seconds if health else None,
+            "display_state_de": display_datetime_de(dt_util.as_local(self.native_value) if self.native_value else None),
             **_source_attributes(self.coordinator),
         }
 
@@ -2510,6 +2608,7 @@ class PortfolioGatewaySnapshotGeneratedSensor(
             "integrity_verified": (
                 self.coordinator.rest_snapshot_integrity_verified
             ),
+            "display_state_de": display_datetime_de(dt_util.as_local(self.native_value) if self.native_value else None),
             **_source_attributes(self.coordinator),
         }
 
@@ -2982,6 +3081,10 @@ def _source_attributes(coordinator: PortfolioArchitectCoordinator) -> dict[str, 
         "provider_ids": list(coordinator.provider_ids),
         "provider_summary": coordinator.provider_summary,
         "provider_summary_de": coordinator.provider_summary_de,
+        "unavailable_source_count": coordinator.unavailable_source_count,
+        "unavailable_source_ids": list(coordinator.unavailable_source_ids),
+        "unavailable_source_summary": coordinator.unavailable_source_summary,
+        "unavailable_source_summary_de": coordinator.unavailable_source_summary_de,
         "source_conflict_count": coordinator.source_conflict_count,
         "configuration_directory": coordinator.configuration_label,
         "source_last_changed": _isoformat(coordinator.source_last_changed),
