@@ -1,4 +1,4 @@
-"""Regression coverage for the v1.26.4 provider-shell startup hotfix."""
+"""Regression coverage for the v1.26.5 provider-shell startup hotfix."""
 from __future__ import annotations
 
 import os

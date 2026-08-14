@@ -1,61 +1,73 @@
-# Portfolio Architect 1.26.4
+# Portfolio Architect 1.26.5
 
-Version 1.26.4 is a narrow reference-dashboard formatting follow-up to v1.26.3.
-Live acceptance of v1.26.3 confirmed the multi-provider, degraded/LKG, German
-unavailable-state and policy-layout behavior, but exposed one remaining visual
-inconsistency: date-only Tile cards still rendered the native ISO `YYYY-MM-DD`
-state instead of using Home Assistant's locale-aware date presentation.
+Version 1.26.5 is a narrow Home Assistant presentation hotfix after v1.26.4 live
+acceptance. Version 1.26.4 correctly kept schedule/policy values as native
+`SensorDeviceClass.DATE` sensors, but the Home Assistant frontend does not apply a
+Tile `time_format` override to that sensor class. The visible Tiles therefore still
+showed raw ISO `YYYY-MM-DD` states.
 
-## Native date-tile formatting
+## Native date-domain presentation
 
-The reference dashboards now request Home Assistant's native Tile formatter for
-all date-only state tiles:
+The five established sensors remain unchanged and authoritative:
 
-- Scheduled execution / Geplante Ausführung;
-- Next plan review / Nächste Planprüfung;
-- Last decision / Letzte Entscheidung;
-- Next review / Nächste Prüfung; and
-- Overdue review / Überfällige Prüfung.
+- `sensor.portfolio_architect_planned_execution`
+- `sensor.portfolio_architect_next_plan_review`
+- `sensor.portfolio_architect_last_exception_decision`
+- `sensor.portfolio_architect_next_exception_review`
+- `sensor.portfolio_architect_oldest_overdue_exception_review`
 
-Each tile keeps `state_content: state` and uses the generic Home Assistant
-`time_format` map with `type: date` and `style: short`. No locale-specific date
-string, template, helper entity, or presentation attribute is introduced.
+Version 1.26.5 adds matching Home Assistant `date`-domain presentation entities:
 
-The underlying entities remain native `SensorDeviceClass.DATE` sensors with native
-`date` values. Their machine-readable state/availability contracts therefore stay
-unchanged for automations, templates, recorder history, and API consumers.
+- `date.portfolio_architect_planned_execution`
+- `date.portfolio_architect_next_plan_review`
+- `date.portfolio_architect_last_exception_decision`
+- `date.portfolio_architect_next_exception_review`
+- `date.portfolio_architect_oldest_overdue_exception_review`
 
-## Refresh timestamps remain generic
+Each counterpart mirrors the same Python `date` value. It does not format a string,
+convert through UTC/local time, or synthesize a timestamp. Home Assistant therefore
+handles visible localization through its normal `date`-domain state formatter.
 
-The existing refresh-schedule tiles retain their native `datetime` / `short`
-formatting. No explicit `HH:MM:SS` format and no seconds-specific presentation
-layer is added.
+Reference-dashboard Tiles use the new `date.*` entities only for display. Existing
+conditional logic, automations, templates, recorder/API consumers, and Portfolio
+Architect calculations can continue to use the unchanged authoritative sensors.
+
+## Read-only boundary
+
+Home Assistant's `date` domain normally supports `date.set_value`. Portfolio
+Architect's presentation counterparts are intentionally read-only and reject every
+write attempt. Each reference Tile routes `more-info` to the corresponding authoritative
+`sensor.*` entity instead of opening the presentation `date.*` entity. This preserves
+the established inspection UX without exposing the date domain's normal editable
+input control. No Portfolio Architect plan or policy value can be changed through
+these entities.
+
+## Removed v1.26.4 workaround
+
+The affected date-only Tiles no longer carry `state_content: state` plus
+`time_format: {type: date, style: short}`. That configuration was valid Tile YAML
+but did not enter Home Assistant's date formatter for a `sensor` domain entity.
+Refresh-schedule timestamp Tiles remain unchanged on their established native
+`datetime` / `short` formatting.
 
 ## Compatibility
 
-Portfolio payload schema 8, REST portfolio schema 1, and Gateway health schema 6
-remain unchanged; health schemas 1–5 remain supported for backward compatibility.
-
-- Portfolio payload schema: 8 (unchanged)
-- REST portfolio schema: 1 (unchanged)
-- Gateway health schema: 6 (unchanged; schemas 1-5 remain supported)
-- Existing Home Assistant entity IDs / unique IDs: unchanged
-- Existing machine-readable states and availability semantics: unchanged
-- v1.26.3 policy-layout and German unavailable-state behavior: unchanged
-- v1.26.2 unavailable-source diagnostics: unchanged
-- v1.26.1 ISIN-first identity and fail-closed collision behavior: unchanged
-- v1.26 configured-source atomic LKG behavior: unchanged
-- Comdirect authentication/account selection/authorized cash: unchanged
-- Trade Republic statement import and persisted snapshot: unchanged
+- payload schema 8: unchanged
+- REST portfolio schema 1: unchanged
+- Gateway health schema 6: unchanged; schemas 1–5 remain supported
+- all existing `sensor.*` and `binary_sensor.*` entity IDs / unique IDs: unchanged
+- five additive read-only `date.*` presentation entities
+- provider acquisition/authentication/private state: unchanged
+- Comdirect authorized-cash semantics: unchanged
+- Trade Republic statement import/persisted snapshot: unchanged
 - DKB Gateway: still experimental/manual-only/fail-closed, no acquisition path
-- No trading/order/transfer/payment/transaction-history capability
+- no trading/order/transfer/payment/transaction-history capability
+
+DKB live Gateway acquisition remains a later provider-specific milestone; v1.26.5 does not promote the experimental DKB shell into a live acquisition source.
+
+This release does not move PDF parsing into Portfolio Architect; Trade Republic statement parsing remains isolated in the Trade Republic Gateway App.
 
 No trading, order, transfer, payment, or transaction-history capability is added by this release.
-
-DKB live Gateway acquisition remains a later provider-specific milestone; v1.26.4
-does not promote the experimental DKB shell into a live acquisition source. The
-release does not move PDF parsing into Portfolio Architect: Trade Republic statement
-parsing remains isolated in the Trade Republic Gateway App.
 
 The historical experimental `v1.19.0-rc2` brokerage diagnostics/fee-probe work
 remains separate and is not promoted by this release.

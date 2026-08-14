@@ -109,14 +109,11 @@ cards:
     state_not: unavailable
   card:
     type: tile
-    entity: sensor.portfolio_architect_next_plan_review
+    entity: date.portfolio_architect_next_plan_review
     name: Next plan review
-    state_content: state
-    time_format:
-      type: date
-      style: short
     tap_action:
       action: more-info
+      entity: sensor.portfolio_architect_next_plan_review
     icon: mdi:calendar-refresh-outline
     color: blue
   grid_options:

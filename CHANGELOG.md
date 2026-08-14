@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.26.5
+
+- Corrects the v1.26.4 live-acceptance finding that Home Assistant Tile `time_format` does not locale-format `sensor` entities whose device class is `date`.
+- Keeps the five established `sensor.portfolio_architect_*` `SensorDeviceClass.DATE` entities unchanged as the authoritative machine-readable dates.
+- Adds five additive read-only Home Assistant `date.*` presentation counterparts that mirror the same Python `date` values so the frontend uses its native locale-aware date-domain formatter.
+- Points only the affected reference-dashboard tiles at the `date.*` counterparts; state/availability conditions and portfolio logic continue to use the authoritative sensors.
+- Rejects `date.set_value` for the presentation mirrors and routes each reference Tile's more-info action to its authoritative `sensor.*` counterpart, so the date domain's normal editable input UI is not exposed by the dashboard.
+- Removes the ineffective v1.26.4 date-only `state_content`/`time_format` workaround and introduces no fake timestamp, timezone conversion, locale-specific template, or hard-coded date string.
+- Preserves refresh-schedule timestamp formatting, payload schema 8, REST schema 1, Gateway health schema 6, all existing entity IDs, provider acquisition/cash/LKG behavior, and the read-only/no-trading boundary.
+
 ## 1.26.4
 
 - Makes all date-only reference-dashboard tiles use Home Assistant's native locale-aware Tile date rendering instead of showing raw ISO `YYYY-MM-DD` states.

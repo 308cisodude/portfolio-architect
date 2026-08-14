@@ -370,6 +370,23 @@
         }
       }
     },
+    "date": {
+      "planned_execution": {
+        "default": "mdi:calendar-arrow-right"
+      },
+      "next_plan_review": {
+        "default": "mdi:calendar-refresh-outline"
+      },
+      "last_exception_decision": {
+        "default": "mdi:calendar-check-outline"
+      },
+      "next_exception_review": {
+        "default": "mdi:calendar-clock-outline"
+      },
+      "oldest_overdue_exception_review": {
+        "default": "mdi:calendar-alert"
+      }
+    },
     "binary_sensor": {
       "target_architecture_complete": {
         "default": "mdi:alert-decagram",

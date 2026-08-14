@@ -186,14 +186,11 @@ cards:
     state_not: unavailable
   card:
     type: tile
-    entity: sensor.portfolio_architect_planned_execution
+    entity: date.portfolio_architect_planned_execution
     name: Scheduled execution
-    state_content: state
-    time_format:
-      type: date
-      style: short
     tap_action:
       action: more-info
+      entity: sensor.portfolio_architect_planned_execution
     icon: mdi:calendar-arrow-right
   grid_options:
     columns: 6

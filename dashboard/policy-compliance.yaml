@@ -100,14 +100,11 @@ cards:
     state_not: unavailable
   card:
     type: tile
-    entity: sensor.portfolio_architect_last_exception_decision
+    entity: date.portfolio_architect_last_exception_decision
     name: Last decision
-    state_content: state
-    time_format:
-      type: date
-      style: short
     tap_action:
       action: more-info
+      entity: sensor.portfolio_architect_last_exception_decision
     icon: mdi:calendar-check
   grid_options:
     columns: 6
@@ -119,14 +116,11 @@ cards:
     state: 'on'
   card:
     type: tile
-    entity: sensor.portfolio_architect_oldest_overdue_exception_review
+    entity: date.portfolio_architect_oldest_overdue_exception_review
     name: Overdue review
-    state_content: state
-    time_format:
-      type: date
-      style: short
     tap_action:
       action: more-info
+      entity: sensor.portfolio_architect_oldest_overdue_exception_review
     color: red
     icon: mdi:calendar-alert
   grid_options:
@@ -139,14 +133,11 @@ cards:
     state: 'off'
   card:
     type: tile
-    entity: sensor.portfolio_architect_next_exception_review
+    entity: date.portfolio_architect_next_exception_review
     name: Next review
-    state_content: state
-    time_format:
-      type: date
-      style: short
     tap_action:
       action: more-info
+      entity: sensor.portfolio_architect_next_exception_review
     color: amber
     icon: mdi:calendar-clock
   grid_options:
