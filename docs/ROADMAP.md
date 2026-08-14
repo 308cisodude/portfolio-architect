@@ -28,16 +28,17 @@ Completed: remove the accidental runtime import of the Comdirect-only configurat
 
 ## v1.25.0 — Trade Republic statement import
 
-Add local import support for supported Trade Republic statement documents inside the separate Trade Republic Gateway App and map validated holdings into the provider-neutral snapshot model.
+Completed: the separate Trade Republic App accepts the supported German text-PDF `DEPOTAUSZUG` statement family through its admin-only Ingress page, parses the document locally in memory, and publishes only a validated provider-neutral holdings snapshot.
 
-Privacy is a hard design constraint:
+Privacy and integrity remain hard gates:
 
-- real Trade Republic statements remain private input and are never committed;
-- public tests use wholly synthetic documents/fixtures only;
-- account-holder data, addresses, account/depot identifiers, tax identifiers and other attribution fields are excluded from public payloads, diagnostics, logs and release artifacts;
-- unknown or ambiguous document structures fail closed rather than guessing financial data.
+- real Trade Republic statements remain private input and are never committed or retained as App files;
+- public tests use wholly synthetic documents/fixtures only, generated as statement text/PDF data at test runtime;
+- account-holder data, addresses, account/depot identifiers, tax identifiers and other attribution fields are ignored by the importer and excluded from public payloads, diagnostics, logs and release artifacts;
+- only text-based, unencrypted statements with an unambiguous as-of/creation date, exactly one ISIN per position, and matching position-count/portfolio-total summary are accepted;
+- unsupported, scanned/image-only, ambiguous or internally inconsistent documents fail closed without replacing the last accepted snapshot.
 
-The exact supported statement families and import semantics will be fixed during the v1.25.0 design phase.
+The Trade Republic App remains an explicit manual-import provider. Portfolio Architect still supports one configured primary REST Gateway plus its established supplemental CSV model; simultaneous consumption of multiple provider REST Gateways remains a separate aggregation/configuration milestone.
 
 ## Later provider acquisition work
 

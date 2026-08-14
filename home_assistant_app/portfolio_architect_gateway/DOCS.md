@@ -1,34 +1,3 @@
-# Portfolio Architect Gateway — Comdirect v1.24.1
+# Portfolio Architect Gateway — Comdirect v1.25.0
 
-Version 1.24.1 preserves the provider-aware common Gateway runtime and existing
-Comdirect App identity/private state while fixing startup packaging for the separate
-DKB and Trade Republic shells. Gateway health schema 6 now
-reports `provider_id: comdirect`; REST portfolio schema 1 and all existing
-Comdirect cash/bootstrap behavior remain compatible.
-
-After completing or refreshing Comdirect authentication, open the App Web UI:
-
-1. select **Discover eligible EUR accounts**;
-2. review the bounded masked choices;
-3. select the dedicated investment/settlement account explicitly;
-4. review **Investment cash authorization**;
-5. keep **All eligible cash** or choose **Cap eligible cash** and enter the EUR cap;
-6. wait for the live portfolio refresh.
-
-The Gateway first requires both booked balance and available cash and uses the
-lower non-negative amount as **eligible cash**. It then applies the authorization
-policy. Portfolio Architect receives the authorized amount through the existing
-reserve field plus additive explanatory cash metadata.
-
-The default `all_available` policy requires no migration action and preserves the
-behavior of existing installations. A stale cap submitted while switching back to
-`all_available` is discarded server-side and never persisted. A capped policy with
-missing or malformed cap state still fails closed.
-
-The update preserves the existing App slug, App-private API credentials,
-OAuth/session state, Gateway bearer token, cached snapshot, selected account and
-cash policy. Never uninstall the App or remove its data for a normal update.
-
-The Gateway remains GET-only and contains no trading, transfer, payment, or
-transaction-history operation. DKB and Trade Republic provider Apps are separate packages; they are not emulated
-by this Comdirect App.
+Version 1.25.0 keeps the established Comdirect App behavior unchanged while aligning package versions with Portfolio Architect. The separate Trade Republic App gains statement import; no PDF parser or Trade Republic code is added here.

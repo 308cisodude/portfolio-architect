@@ -8,7 +8,7 @@ releases may continue to work but are not actively supported.
 
 ## Home Assistant
 
-The 1.23.x release line requires Home Assistant 2026.7.0 or newer. CI validates
+The 1.25.x release line requires Home Assistant 2026.7.0 or newer. CI validates
 project tests on Python 3.14, HACS metadata, and the deliberately pinned hassfest
 validator snapshot. The project targets the current and immediately previous
 monthly Home Assistant release.
@@ -20,14 +20,14 @@ snapshot.
 
 ## Gateway compatibility
 
-Portfolio Architect 1.24.1 accepts REST portfolio schema 1, including the optional
+Portfolio Architect 1.25.0 accepts REST portfolio schema 1, including the optional
 additive `investment_cash` authorization metadata, and Gateway health schemas 1
 through 6. Health schema 6 adds only bounded provider identity; schemas 1 through 5
 remain available unchanged. Gateway App 1.16.1 and later remain compatible with the
 legacy reserve contract; Gateway App 1.19.0 or newer is required to configure cash
 authorization policies, and 1.19.1 or newer contains the corrected
-capped-to-all-available Ingress transition. Gateway App 1.24.1 is version-aligned with the current stable integration.
-Comdirect remains the released live provider. Version 1.24.0 introduced experimental manual-only DKB and Trade Republic App shells; 1.24.1 fixes their startup packaging while they remain non-live portfolio sources.
+capped-to-all-available Ingress transition. Gateway App 1.25.0 is version-aligned with the current stable integration.
+Comdirect remains the released live provider. DKB remains an experimental manual-only non-live shell. Trade Republic 1.25.0 supports the documented local `DEPOTAUSZUG` statement-import family and serves accepted holdings through REST schema 1; simultaneous multi-REST aggregation remains outside this release.
 
 ## Security fixes
 

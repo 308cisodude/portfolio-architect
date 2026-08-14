@@ -63,6 +63,8 @@ Republic Apps without pretending those provider runtimes already exist. See
 
 Version 1.24.1 fixes the reduced DKB/TR shell packaging without expanding that boundary: the optional Comdirect `GatewayConfig` type import is evaluated only during static type checking, while runtime server code remains based on `ServerConfig`.
 
+Version 1.25.0 adds provider-specific document acquisition only inside the Trade Republic App. The PDF parser and import Ingress handler are not copied into Comdirect, DKB, or the standalone Gateway. A validated statement is converted to the existing `PortfolioSnapshot` model before the common authenticated REST server sees it; the uploaded PDF itself is processed in memory and discarded.
+
 ## Graceful degradation and actionability
 
 Version 1.20.0 separates **trusted informational continuity** from **authorization

@@ -1,4 +1,4 @@
-"""Regression coverage for the v1.24.1 provider-shell startup hotfix."""
+"""Regression coverage for the v1.25.0 provider-shell startup hotfix."""
 from __future__ import annotations
 
 import os
@@ -50,9 +50,10 @@ def test_server_comdirect_configuration_import_is_type_check_only() -> None:
 
 
 def test_shell_dockerfiles_import_real_startup_module_during_build() -> None:
-    for app in SHELLS:
-        dockerfile = (app / "Dockerfile").read_text(encoding="utf-8")
-        assert "import portfolio_architect_gateway.pending_app" in dockerfile
+    dkb = (SHELLS[0] / "Dockerfile").read_text(encoding="utf-8")
+    trade_republic = (SHELLS[1] / "Dockerfile").read_text(encoding="utf-8")
+    assert "import portfolio_architect_gateway.pending_app" in dkb
+    assert "import portfolio_architect_gateway.trade_republic_app" in trade_republic
 
 
 def test_provider_shell_smoke_env_matches_home_assistant_app_metadata() -> None:

@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.25.0
+
+- Adds local, admin-only import of the supported German Trade Republic `DEPOTAUSZUG` text-PDF statement family inside the separate Trade Republic Gateway App.
+- Parses uploaded PDFs in memory, persists only the validated provider-neutral holdings snapshot, and never stores the original statement document.
+- Fails closed on encrypted, image-only/scanned, malformed, unsupported, ambiguous, future-dated, count-mismatched, or total-mismatched statements.
+- Keeps account-holder, address, depot/account, tax, and other attribution fields out of the REST payload, diagnostics, logs, public fixtures, and release artifacts.
+- Pins the Trade Republic App's PDF parser dependency (`pypdf 6.15.0`) by exact wheel hash; Comdirect, DKB, and the standalone Gateway remain dependency-free from that provider-specific parser.
+- Preserves payload schema 8, REST portfolio schema 1, Gateway health schema 6, Comdirect cash/LKG/actionability behavior, provider App identities, and the no-trading/write boundary.
+
 ## 1.24.1
 
 - Fixes DKB and Trade Republic provider-shell startup after v1.24.0 live acceptance exposed a runtime import of the Comdirect-only `config.py` module from the reduced shell package.

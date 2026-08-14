@@ -194,6 +194,21 @@ def verify_gateway_app_archive_layouts(directory: Path, release_version: str) ->
                 raise SystemExit(
                     f"{archive_name} contains provider-specific Comdirect modules: {leaked}"
                 )
+            if provider_id == "trade_republic":
+                dependency = payload.get("requirements.txt")
+                if dependency is None:
+                    raise SystemExit(f"{archive_name} missing Trade Republic dependency lock")
+                required_lock = (PROJECT_ROOT / "home_assistant_app" / "portfolio_architect_gateway_trade_republic" / "requirements.txt").read_bytes()
+                if dependency != hashlib.sha256(required_lock).hexdigest():
+                    raise SystemExit(f"{archive_name} Trade Republic dependency lock mismatch")
+                for name in (
+                    "src/portfolio_architect_gateway/trade_republic_app.py",
+                    "src/portfolio_architect_gateway/trade_republic_statement.py",
+                ):
+                    if name not in payload:
+                        raise SystemExit(f"{archive_name} missing provider module: {name}")
+            elif "requirements.txt" in payload:
+                raise SystemExit(f"{archive_name} unexpectedly contains provider dependency lock")
 
 def version() -> str:
     return str(

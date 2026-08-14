@@ -1,9 +1,9 @@
-# Portfolio Architect Gateway — Trade Republic v1.24.1
+# Portfolio Architect Gateway — Trade Republic v1.25.0
 
-This is the separately installable Trade Republic provider App boundary introduced in Portfolio Architect 1.24.0 and fixed for startup in 1.24.1.
+Version 1.25.0 supports local import of the German text-PDF **DEPOTAUSZUG** statement family through this App's admin-only Ingress page.
 
-It is deliberately **not yet a live portfolio source**. Its purpose in this release is to establish the independent Supervisor identity, private storage, read-only authenticated Gateway server, bounded `provider_id: trade_republic`, and future in-place upgrade path.
+The upload is bounded to 5 MiB, parsed locally in memory, and the original PDF is discarded. Only the validated provider-neutral holdings snapshot is stored in `/data/gateway`. Encrypted, scanned/image-only, unsupported, ambiguous, future-dated or internally inconsistent documents are rejected without replacing the last accepted snapshot.
 
-The App is marked **experimental** and **manual-only** so installing it does not start a non-functional background service automatically. If started for acceptance testing, the Ingress page reports the provider package state and the REST health endpoint reports a degraded/unavailable provider with no portfolio snapshot.
+After a successful import the authenticated private REST endpoint can serve the normalized holdings and health schema 6 reports `provider_id: trade_republic`. The bearer token shown on the Ingress page is private; do not publish screenshots containing it.
 
-No credentials, bank documents or account identifiers are requested or persisted in this release. Do not configure Portfolio Architect to consume this endpoint yet.
+Portfolio Architect 1.25.0 still configures one primary REST Gateway plus supplemental CSV sources. Do not assume simultaneous Comdirect + Trade Republic REST aggregation from this release alone.

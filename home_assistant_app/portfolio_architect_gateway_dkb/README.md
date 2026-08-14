@@ -1,8 +1,5 @@
-# Portfolio Architect Gateway — DKB v1.24.1
+# Portfolio Architect Gateway — DKB v1.25.0
 
-Version 1.24.1 fixes startup of the separate, isolated Home Assistant App identity for DKB introduced in 1.24.0.
-The App starts only when explicitly requested and currently exposes a fail-closed provider shell; live acquisition is intentionally not implemented in this release.
+Version 1.25.0 keeps DKB as the isolated experimental fail-closed provider shell. No DKB live acquisition/import is implemented. The Trade Republic PDF parser and dependency are deliberately absent from this App.
 
-The package owns its own `/data/gateway` volume, API token, cached-snapshot path and provider health identity. It shares only the audited provider-neutral Gateway runtime contract with the other Portfolio Architect provider Apps.
-
-Do not configure Portfolio Architect to use this App as a portfolio source yet.
+The App uses its own `/data/gateway` private volume and must be upgraded in place to retain private state.

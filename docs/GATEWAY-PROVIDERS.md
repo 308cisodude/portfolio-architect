@@ -14,11 +14,11 @@ Version 1.24.0 further moves server configuration and secret-file handling into 
 | --- | --- | --- | --- |
 | Comdirect | Portfolio Architect Gateway — Comdirect | `portfolio_architect_gateway` | stable live provider |
 | DKB | Portfolio Architect Gateway — DKB | `portfolio_architect_gateway_dkb` | experimental provider shell |
-| Trade Republic | Portfolio Architect Gateway — Trade Republic | `portfolio_architect_gateway_trade_republic` | experimental provider shell |
+| Trade Republic | Portfolio Architect Gateway — Trade Republic | `portfolio_architect_gateway_trade_republic` | experimental manual statement-import provider |
 
 The Comdirect slug is retained permanently so existing credentials, OAuth/session state, selected account, cash policy, API token and cached snapshot remain in place. DKB and Trade Republic have distinct slugs, therefore Supervisor gives each an independent App identity and private `/data` volume.
 
-No DKB or Trade Republic acquisition runtime is shipped by v1.24.0. The DKB/TR packages are deliberately `manual_only` and experimental in v1.24.0. They can be installed and started for package/isolation acceptance, but `fetch_snapshot()` fails closed with a configuration error and `/api/v1/portfolio` has no snapshot to serve. Their admin-only Ingress page states explicitly that live acquisition is not yet implemented.
+No DKB or Trade Republic acquisition runtime is shipped by v1.24.0. Version 1.24.0 shipped DKB/TR as `manual_only` fail-closed shells. DKB remains in that state. Version 1.25.0 upgrades only the Trade Republic App with a provider-specific local statement importer: before the first accepted document it remains degraded/unavailable; after an accepted `DEPOTAUSZUG`, `fetch_snapshot()` returns the persisted provider-neutral snapshot and the common REST/health server can operate normally.
 
 Version 1.24.1 fixes the shell startup packaging discovered during v1.24.0 live acceptance. The common server no longer requires the Comdirect-only configuration module at runtime, and protected CI now starts both reduced shell containers before publication. No provider acquisition capability is added.
 
@@ -34,6 +34,8 @@ Credentials, sessions, selected accounts, imported source documents, caches and 
 
 The REST service remains bearer-authenticated and GET-only. No provider App may gain order, trade, transfer, payment or transaction-history write capabilities merely because its upstream provider offers them.
 
-## Next provider milestone
+## Trade Republic v1.25 import boundary
 
-Portfolio Architect v1.25.0 will implement supported Trade Republic statement-document import inside the already separate Trade Republic App. Real documents remain private input; public regression fixtures must be wholly synthetic. DKB live acquisition remains a later provider-specific design.
+The Trade Republic App accepts only the documented German text-PDF `DEPOTAUSZUG` family. The original PDF is never persisted; only the canonical holdings snapshot is stored under the App-private `/data/gateway` volume. `pypdf` is a Trade-Republic-App-only, hash-pinned build dependency and is not introduced into Comdirect, DKB, or the standalone Gateway.
+
+DKB live acquisition remains a later provider-specific design. Supporting simultaneous primary REST Gateways remains a separate Home Assistant aggregation/configuration milestone.

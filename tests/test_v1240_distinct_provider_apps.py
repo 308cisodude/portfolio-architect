@@ -1,4 +1,4 @@
-"""Regression contracts for v1.24.1 distinct provider Home Assistant Apps."""
+"""Regression contracts for v1.25.0 distinct provider Home Assistant Apps."""
 from __future__ import annotations
 
 import json
@@ -13,6 +13,7 @@ APPS={
  "trade_republic": ROOT/"home_assistant_app"/"portfolio_architect_gateway_trade_republic",
 }
 SHELL_FILES={"__init__.py","errors.py","models.py","provider.py","runtime_config.py","server.py","store.py","pending_app.py"}
+TR_PROVIDER_FILES={"trade_republic_app.py","trade_republic_statement.py"}
 
 def test_three_provider_apps_have_unique_stable_identities_and_isolated_storage():
     configs={k:yaml.safe_load((p/"config.yaml").read_text(encoding="utf-8")) for k,p in APPS.items()}
@@ -22,7 +23,7 @@ def test_three_provider_apps_have_unique_stable_identities_and_isolated_storage(
     assert configs["dkb"]["slug"]=="portfolio_architect_gateway_dkb"
     assert configs["trade_republic"]["slug"]=="portfolio_architect_gateway_trade_republic"
     assert len({c["slug"] for c in configs.values()})==3
-    assert all(c["version"]=="1.24.1" for c in configs.values())
+    assert all(c["version"]=="1.25.0" for c in configs.values())
     for key in ("dkb","trade_republic"):
         assert configs[key]["stage"]=="experimental"
         assert configs[key]["boot"]=="manual_only"
@@ -37,10 +38,11 @@ def test_three_provider_apps_have_unique_stable_identities_and_isolated_storage(
 def test_shell_apps_share_only_audited_provider_neutral_runtime_files():
     for key in ("dkb","trade_republic"):
         src=APPS[key]/"src"/"portfolio_architect_gateway"
-        assert {p.name for p in src.glob("*.py")}==SHELL_FILES
+        expected=SHELL_FILES | (TR_PROVIDER_FILES if key == "trade_republic" else set())
+        assert {p.name for p in src.glob("*.py")}==expected
         for name in SHELL_FILES:
             assert (src/name).read_bytes()==(MASTER/name).read_bytes()
-        text="\n".join((src/n).read_text(encoding="utf-8") for n in SHELL_FILES)
+        text="\n".join((src/n).read_text(encoding="utf-8") for n in expected)
         assert "ComdirectClient" not in text
         assert "api.comdirect.de" not in text
 
@@ -75,17 +77,18 @@ def test_release_builder_publishes_three_distinct_gateway_archives():
         assert f"portfolio-architect-{stem}-v{{version}}.zip" in build
         assert f"portfolio-architect-{stem}-v{{release_version}}.zip" in verify
 
-def test_provider_shells_do_not_claim_live_acquisition_or_tr_import():
-    for key in ("dkb","trade_republic"):
-        config=yaml.safe_load((APPS[key]/"config.yaml").read_text(encoding="utf-8"))
-        assert "not implemented" in config["description"]
+def test_provider_capability_boundaries_are_explicit():
+    dkb=yaml.safe_load((APPS["dkb"]/"config.yaml").read_text(encoding="utf-8"))
+    trade_republic=yaml.safe_load((APPS["trade_republic"]/"config.yaml").read_text(encoding="utf-8"))
+    assert "not implemented" in dkb["description"]
+    assert "statement" in trade_republic["description"].casefold()
     roadmap=(ROOT/"docs"/"ROADMAP.md").read_text(encoding="utf-8")
     assert "Trade Republic statement import" in roadmap
     assert "v1.25.0" in roadmap
 
-def test_current_release_version_is_1240():
+def test_current_release_version_is_1250():
     manifest=json.loads((ROOT/"custom_components"/"portfolio_architect"/"manifest.json").read_text())
-    assert manifest["version"]=="1.24.1"
+    assert manifest["version"]=="1.25.0"
 
 
 def test_protected_workflows_build_all_provider_app_images_before_publication():

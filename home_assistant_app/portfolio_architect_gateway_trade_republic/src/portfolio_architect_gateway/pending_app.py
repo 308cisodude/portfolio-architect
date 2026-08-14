@@ -102,13 +102,14 @@ class ProviderShellIngressServer(ThreadingHTTPServer):
         api_token: str,
         allowed_sources: frozenset[str],
         require_user_header: bool,
+        handler_class: type[BaseHTTPRequestHandler] | None = None,
     ) -> None:
         self.gateway_state = state
         self.provider_name = provider_name
         self.api_token = api_token
         self.allowed_sources = allowed_sources
         self.require_user_header = require_user_header
-        super().__init__(address, ProviderShellIngressHandler)
+        super().__init__(address, handler_class or ProviderShellIngressHandler)
 
 
 class ProviderShellIngressHandler(BaseHTTPRequestHandler):
@@ -201,7 +202,7 @@ class ProviderShellIngressHandler(BaseHTTPRequestHandler):
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("Referrer-Policy", "no-referrer")
         self.send_header("X-Frame-Options", "SAMEORIGIN")
-        self.send_header("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; frame-ancestors 'self'; base-uri 'none'")
+        self.send_header("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'self'; base-uri 'none'")
 
     def log_message(self, format: str, *args: Any) -> None:
         _LOGGER.info("Provider shell Ingress request completed")
