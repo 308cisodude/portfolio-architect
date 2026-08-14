@@ -142,8 +142,12 @@ def parse_rest_snapshot(
         value_eur = _parse_market_value(raw.get("market_value_eur"), index=index)
         quantity = _parse_optional_quantity(raw.get("quantity"), index=index)
 
+        # REST schema 1 deliberately calls this field ``identifier`` because a
+        # provider may only know an ISIN.  Do not mislabel that ISIN as a WKN in
+        # the canonical engine model; WKN is only fallback identity metadata.
+        wkn = "" if isin and identifier == isin else identifier
         positions[identifier] = Position(
-            wkn=identifier,
+            wkn=wkn,
             isin=isin,
             name=name,
             instrument_type=_INSTRUMENT_TYPE_MAP.get(

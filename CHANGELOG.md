@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.26.1
+
+- Fixes v1.26.0 live acceptance for Trade Republic holdings whose provider-neutral REST snapshot carries an ISIN but no WKN.
+- Makes ISIN the canonical instrument identity for target matching and cross-source aggregation; WKN is used only as a fallback when ISIN is unavailable.
+- Treats WKN as secondary consistency evidence when an ISIN is present and fails closed on contradictory or ambiguous ISIN/WKN mappings instead of guessing.
+- Stops the REST adapter from mislabelling an ISIN-valued provider identifier as a WKN.
+- Adds regression coverage using the real Trade Republic REST identity shape (`identifier == ISIN`, no WKN) and requires the synthetic three-provider portfolio to reach 7/7 target coverage.
+- Preserves v1.26.0 multi-Gateway configuration, provider counts/provenance, atomic LKG behavior, payload schema 8, REST schema 1, health schema 6, entity IDs and the read-only/no-trading boundary.
+
 ## 1.26.0
 
 - Adds simultaneous aggregation of multiple independent provider Gateway REST snapshots while preserving the existing primary REST configuration.

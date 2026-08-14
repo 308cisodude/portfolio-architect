@@ -5,6 +5,7 @@ from decimal import Decimal
 from pathlib import Path
 import sys
 
+import pytest
 import yaml
 
 ROOT = Path(__file__).parents[1]
@@ -132,31 +133,27 @@ def test_overlapping_isin_is_consolidated_once_with_exact_provenance() -> None:
     assert aggregation.sources[1].to_dict()["contribution_eur"] == "273.36"
 
 
-def test_cross_source_wkn_inconsistency_is_visible_not_silently_discarded() -> None:
+def test_cross_source_wkn_identity_collision_fails_closed() -> None:
     timestamp = datetime(2026, 7, 31, tzinfo=timezone.utc)
-    aggregation = aggregate_sources(
-        (
-            PortfolioSourceSnapshot(
-                "primary",
-                "local_rest_json",
-                "Primary",
-                timestamp,
-                {"A1XB5U": _position("A1XB5U", "IE00BJ0KDQ92", "100")},
-            ),
-            PortfolioSourceSnapshot(
-                "secondary",
-                PROVIDER_DKB,
-                "Secondary",
-                timestamp,
-                {"OTHER1": _position("OTHER1", "IE00BJ0KDQ92", "50")},
-            ),
+    with pytest.raises(ValueError, match="multiple WKN values"):
+        aggregate_sources(
+            (
+                PortfolioSourceSnapshot(
+                    "primary",
+                    "local_rest_json",
+                    "Primary",
+                    timestamp,
+                    {"A1XB5U": _position("A1XB5U", "IE00BJ0KDQ92", "100")},
+                ),
+                PortfolioSourceSnapshot(
+                    "secondary",
+                    PROVIDER_DKB,
+                    "Secondary",
+                    timestamp,
+                    {"OTHER1": _position("OTHER1", "IE00BJ0KDQ92", "50")},
+                ),
+            )
         )
-    )
-
-    assert aggregation.positions["A1XB5U"].value_eur == Decimal("150")
-    assert len(aggregation.conflicts) == 1
-    assert aggregation.conflicts[0].field == "wkn"
-    assert aggregation.conflicts[0].observed == ("A1XB5U", "OTHER1")
 
 
 def test_supplied_overlap_changes_the_next_350_euro_distribution() -> None:

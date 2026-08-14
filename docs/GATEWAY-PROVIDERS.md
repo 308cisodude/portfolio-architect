@@ -19,7 +19,7 @@ provider-neutral runtime code. `GatewayState` and `create_server()` consume
 
 ## Official App identities
 
-| Provider | Display name | App slug | v1.26 state |
+| Provider | Display name | App slug | v1.26.1 state |
 | --- | --- | --- | --- |
 | Comdirect | Portfolio Architect Gateway — Comdirect | `portfolio_architect_gateway` | stable live provider, auto-start |
 | DKB | Portfolio Architect Gateway — DKB | `portfolio_architect_gateway_dkb` | experimental manual-only fail-closed shell |
@@ -72,6 +72,11 @@ Version 1.26.0 allows the Home Assistant integration to consume several independ
 Gateway REST snapshots simultaneously. This does not connect the provider Apps to
 one another. Each App remains a self-contained producer; Portfolio Architect is the
 only aggregation point.
+
+Version 1.26.1 does not change the provider App REST contract. It corrects the Home
+Assistant-side identity model so an ISIN-only position (such as a Trade Republic
+statement holding) satisfies the matching configured target by ISIN. WKN is used
+only when ISIN is unavailable and may not override contradictory ISIN evidence.
 
 Additional Gateways require health schema 6 so their bounded provider identity can
 be verified before they join the aggregate. Provider IDs are provenance metadata,

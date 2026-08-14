@@ -66,8 +66,8 @@ def test_trade_republic_gateway_snapshot_completes_target_architecture() -> None
         "A1XB5U": _position("A1XB5U", "IE00BJ0KDQ92", "250", "MSCI World")
     }
     trade_republic = {
-        "A2ANH1": _position(
-            "A2ANH1",
+        "IE00BYWZ0333": _position(
+            "",
             "IE00BYWZ0333",
             "500",
             "Synthetic Automation & Robotics holding",
@@ -126,7 +126,7 @@ def test_provider_count_is_distinct_from_source_instance_count() -> None:
         ),
         PortfolioSourceSnapshot(
             "trade_republic", "trade_republic", "Trade Republic", NOW,
-            {"A2ANH1": _position("A2ANH1", "IE00BYWZ0333", "30", "Robotics")},
+            {"IE00BYWZ0333": _position("", "IE00BYWZ0333", "30", "Robotics")},
         ),
     )
     metadata = _aggregation_metadata(aggregate_sources(snapshots))

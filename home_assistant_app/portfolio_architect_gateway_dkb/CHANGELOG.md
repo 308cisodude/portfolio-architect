@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.26.1
+
+- Version alignment for Portfolio Architect 1.26.1.
+- DKB remains an experimental manual-only fail-closed provider shell with no acquisition path.
+
 ## 1.26.0
 
 - Version alignment for Portfolio Architect 1.26.0.
