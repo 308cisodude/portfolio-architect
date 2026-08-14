@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.26.4
+
+- Makes all date-only reference-dashboard tiles use Home Assistant's native locale-aware Tile date rendering instead of showing raw ISO `YYYY-MM-DD` states.
+- Applies the same generic `date` / `short` Tile formatting to Scheduled execution, Next plan review, Last decision, Next/overdue review in both English and German dashboard variants.
+- Keeps the underlying date entities as native `SensorDeviceClass.DATE` values and adds no locale-specific date attributes, templates, or hard-coded format strings.
+- Keeps refresh-schedule timestamps on the existing native `datetime` / `short` Tile rendering, intentionally without seconds.
+- Preserves v1.26.3 dashboard/policy polish, v1.26.2 source-outage diagnostics, v1.26.1 ISIN-first identity, v1.26 atomic multi-Gateway/LKG behavior, payload schema 8, REST schema 1, health schema 6, existing entity IDs, and the read-only/no-trading boundary.
+
 ## 1.26.3
 
 - Fixes the remaining German reference-dashboard unavailable-state edge case without changing the underlying actionable entity availability contract: the always-available actionability sensor now supplies bounded German presentation proxies for the Allocated and Purchases tiles.

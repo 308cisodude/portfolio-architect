@@ -262,3 +262,15 @@ metric entity.
 Policy evaluation counters remain native entities even when omitted from the
 primary reference dashboard. Dashboard layout is presentation policy, not a change
 to the policy engine or its machine-readable findings.
+## v1.26.4 native date presentation boundary
+
+Schedule and policy dates remain native Home Assistant `SensorDeviceClass.DATE`
+entities backed by Python `date` values. The reference dashboard does not duplicate
+those values into locale-specific attributes. Instead, date-only Tile cards request
+the frontend's native short-date rendering through generic `state_content: state`
+and `time_format` configuration.
+
+This keeps locale presentation in Home Assistant while preserving one stable
+machine-readable date state for automations, templates, recorder history and API
+consumers. Refresh timestamps remain distinct timestamp entities and retain their
+existing native `datetime` / `short` Tile presentation.

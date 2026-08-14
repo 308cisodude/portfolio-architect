@@ -196,6 +196,10 @@ cards:
     type: tile
     entity: sensor.portfolio_architect_planned_execution
     name: Geplante Ausführung
+    state_content: state
+    time_format:
+      type: date
+      style: short
     tap_action:
       action: more-info
     icon: mdi:calendar-arrow-right

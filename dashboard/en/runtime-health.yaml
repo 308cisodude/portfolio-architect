@@ -111,6 +111,10 @@ cards:
     type: tile
     entity: sensor.portfolio_architect_next_plan_review
     name: Next plan review
+    state_content: state
+    time_format:
+      type: date
+      style: short
     tap_action:
       action: more-info
     icon: mdi:calendar-refresh-outline
