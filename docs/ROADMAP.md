@@ -1,45 +1,64 @@
 # Portfolio Architect roadmap
 
-This roadmap records intended sequencing rather than a compatibility promise. Each milestone remains subject to design, security review, tests, and live acceptance.
+This roadmap records intended sequencing rather than a compatibility promise. Each
+milestone remains subject to design, security review, tests, and live acceptance.
 
 ## v1.22.0 — publication and privacy hardening
 
-Completed: source/history/artifact privacy gates and immutable secret scanning are release invariants.
+Completed: source/history/artifact privacy gates and immutable secret scanning are
+release invariants.
 
 ## v1.23.0 — provider-aware Gateway foundation
 
-Completed: the hardened Gateway server consumes a provider-neutral runtime contract and health schema 6 carries bounded provider identity. The existing Comdirect App retained its historical slug/private state.
+Completed: the hardened Gateway server consumes a provider-neutral runtime contract
+and health schema 6 carries bounded provider identity. The existing Comdirect App
+retained its historical slug/private state.
 
-## v1.24.0 — distinct provider Gateway Apps
+## v1.24.0 / v1.24.1 — distinct provider Gateway Apps
 
-Completed with live-acceptance follow-up in v1.24.1.
+Completed: three separately installable provider App identities with isolated
+private storage: **Portfolio Architect Gateway — Comdirect**, **Portfolio Architect
+Gateway — DKB**, and **Portfolio Architect Gateway — Trade Republic**. Version
+v1.24.1 corrected reduced-shell startup and added protected running-container smoke
+tests.
 
-- Publish three separate Supervisor App identities in this order: **Portfolio Architect Gateway — Comdirect**, **Portfolio Architect Gateway — DKB**, and **Portfolio Architect Gateway — Trade Republic**.
-- Keep Comdirect stable and updateable in place under `portfolio_architect_gateway`.
-- Give DKB and Trade Republic independent slugs and `/data/gateway` private volumes.
-- Reuse byte-identical audited provider-neutral server/model/storage/runtime modules in each provider build context while keeping provider-specific code out of the DKB/TR shells.
-- Ship DKB/TR as experimental, manual-only, fail-closed provider shells. They establish installable identities and future in-place upgrade paths but deliberately do not claim live acquisition yet.
-- Publish separate release ZIPs for all three provider Apps.
-- Preserve payload schema 8, REST portfolio schema 1, Gateway health schema 6, existing Home Assistant entity IDs, Comdirect cash/LKG behavior, and the v1.22 privacy gate.
-
-## v1.24.1 — provider-shell startup hotfix
-
-Completed: remove the accidental runtime import of the Comdirect-only configuration module from the reduced DKB/TR package, and require isolated-package import plus running-container smoke tests in protected CI.
+Comdirect remains the stable live provider. DKB remains an experimental fail-closed
+shell until a separate supported acquisition design is implemented.
 
 ## v1.25.0 — Trade Republic statement import
 
-Completed: the separate Trade Republic App accepts the supported German text-PDF `DEPOTAUSZUG` statement family through its admin-only Ingress page, parses the document locally in memory, and publishes only a validated provider-neutral holdings snapshot.
+Completed and live-accepted: the separate Trade Republic App accepts the supported
+German text-PDF `DEPOTAUSZUG` holdings-statement family through its admin-only
+Ingress page, parses the document locally in memory, and publishes only a validated
+provider-neutral holdings snapshot through REST schema 1.
 
-Privacy and integrity remain hard gates:
+real Trade Republic statements remain private input; public tests use wholly synthetic documents/fixtures only, generated as runtime PDF data; unsupported/ambiguous documents fail closed.
 
-- real Trade Republic statements remain private input and are never committed or retained as App files;
-- public tests use wholly synthetic documents/fixtures only, generated as statement text/PDF data at test runtime;
-- account-holder data, addresses, account/depot identifiers, tax identifiers and other attribution fields are ignored by the importer and excluded from public payloads, diagnostics, logs and release artifacts;
-- only text-based, unencrypted statements with an unambiguous as-of/creation date, exactly one ISIN per position, and matching position-count/portfolio-total summary are accepted;
-- unsupported, scanned/image-only, ambiguous or internally inconsistent documents fail closed without replacing the last accepted snapshot.
+## v1.26.0 — multiple Gateway REST aggregation
 
-The Trade Republic App remains an explicit manual-import provider. Portfolio Architect still supports one configured primary REST Gateway plus its established supplemental CSV model; simultaneous consumption of multiple provider REST Gateways remains a separate aggregation/configuration milestone.
+Current milestone: allow one Portfolio Architect instance to consume several
+independent provider Gateway REST snapshots simultaneously without teaching the
+portfolio engine any provider-specific acquisition format.
+
+The milestone requires:
+
+- preserving the existing primary REST configuration and adding/removing additional
+  local Gateways through config-entry options;
+- health-schema-6 provider identity and live snapshot validation before an
+  additional Gateway is accepted;
+- atomic aggregation with no silent provider dropout;
+- source-set-aware Home Assistant LKG retention during an additional-Gateway outage;
+- distinct `provider_count` / `provider_ids` metadata alongside source-instance
+  count and existing per-position provenance;
+- the reference dashboard showing a distinct-provider summary; and
+- Trade Republic auto-start once it can be a persistent REST contributor.
+
+Payload schema 8, REST schema 1, Gateway health schema 6, entity IDs, authorized-cash
+semantics and the read-only/no-trading boundary remain unchanged.
 
 ## Later provider acquisition work
 
-The DKB App requires its own supported acquisition/import design before it becomes a live source. Portfolio Architect currently supports one primary REST source plus its established supplemental-source model; simultaneous primary REST Gateways remain a separate Home Assistant aggregation/configuration milestone.
+The DKB App still requires its own supported acquisition/import design before it can
+replace or complement the existing DKB CSV source. Provider-specific acquisition
+must remain inside the corresponding Gateway App; Portfolio Architect should
+continue to consume only canonical provider-neutral snapshots.

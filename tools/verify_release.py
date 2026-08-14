@@ -147,21 +147,24 @@ def verify_gateway_app_archive_layouts(directory: Path, release_version: str) ->
             "portfolio_architect_gateway",
             "stable",
             None,
+            "auto",
         ),
         "portfolio-architect-gateway-dkb-app-v%s.zip" % release_version: (
             "portfolio_architect_gateway_dkb",
             "portfolio_architect_gateway_dkb",
             "experimental",
             "dkb",
+            "manual_only",
         ),
         "portfolio-architect-gateway-trade-republic-app-v%s.zip" % release_version: (
             "portfolio_architect_gateway_trade_republic",
             "portfolio_architect_gateway_trade_republic",
             "experimental",
             "trade_republic",
+            "auto",
         ),
     }
-    for archive_name, (root, slug, stage, provider_id) in specs.items():
+    for archive_name, (root, slug, stage, provider_id, expected_boot) in specs.items():
         path = directory / archive_name
         prefix = f"{root}/"
         payload = archive_payload(path, prefix=prefix)
@@ -177,9 +180,9 @@ def verify_gateway_app_archive_layouts(directory: Path, release_version: str) ->
             raise SystemExit(f"{archive_name} slug mismatch: {config.get('slug')}")
         if config.get("stage") != stage:
             raise SystemExit(f"{archive_name} stage mismatch: {config.get('stage')}")
+        if config.get("boot", "auto") != expected_boot:
+            raise SystemExit(f"{archive_name} boot policy mismatch")
         if provider_id is not None:
-            if config.get("boot") != "manual_only":
-                raise SystemExit(f"{archive_name} provider shell must be manual_only")
             if config.get("environment", {}).get("PA_PROVIDER_ID") != provider_id:
                 raise SystemExit(f"{archive_name} provider identity mismatch")
             forbidden = {

@@ -1,4 +1,4 @@
-# Portfolio Architect Gateway runtime v1.25.0
+# Portfolio Architect Gateway runtime v1.26.0
 
 The Gateway is a dedicated, dependency-free Python service that converts one
 provider-specific portfolio source into provider-neutral Portfolio Architect REST
@@ -47,7 +47,7 @@ available unchanged for older Portfolio Architect versions.
 
 The provider contract and official future App identities are documented in
 `docs/GATEWAY-PROVIDERS.md`. No DKB or Trade Republic acquisition runtime is
-included in v1.25.0. Version 1.25.0 fixes only the reduced shell startup packaging.
+included in v1.26.0. Version 1.26.0 fixes only the reduced shell startup packaging.
 
 ## Authorized investment cash
 

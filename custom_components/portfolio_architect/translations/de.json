@@ -2219,13 +2219,11 @@
         }
       },
       "sources": {
-        "title": "Ergänzende Portfolioquellen",
-        "description": "Füge der Primärquelle DKB-Depotexporte hinzu, je relativer CSV-Pfad eine Zeile. Positionen werden anhand der ISIN konsolidiert; Depotnummern werden ignoriert.",
-        "data": {
-          "supplemental_dkb_csv_paths": "Pfade zu DKB-CSV-Dateien"
-        },
-        "data_description": {
-          "supplemental_dkb_csv_paths": "Relativ zu /config. Pro DKB-Depot sollte ein aktueller Export verwendet werden. Sind mehrere datierte Exporte desselben Depots konfiguriert, wird nur der neueste berücksichtigt. Bis zu 8 Pfade werden unterstützt."
+        "title": "Portfolioquellen",
+        "description": "Ergänzende Portfolioquellen verwalten. Jede Quelle wird vor der Aggregation normalisiert; providerspezifische Erfassung bleibt außerhalb von Portfolio Architect.",
+        "menu_options": {
+          "dkb_sources": "DKB-CSV-Quellen",
+          "rest_gateways": "Zusätzliche REST-Gateways"
         }
       },
       "execution": {
@@ -2273,6 +2271,43 @@
           "manual_venue_fee_bps": "100 Basispunkte entsprechen 1 %. Gib 0,25 für 0,0025 % ein.",
           "manual_settlement_fee_eur": "Zusätzliches festes Abwicklungsentgelt der gewählten Ausführungsart."
         }
+      },
+      "dkb_sources": {
+        "title": "DKB-CSV-Quellen",
+        "description": "Füge der Primärquelle DKB-Depotexporte hinzu, je relativer CSV-Pfad eine Zeile. Positionen werden anhand der ISIN konsolidiert; Depotnummern werden ignoriert.",
+        "data": {
+          "supplemental_dkb_csv_paths": "Pfade zu DKB-CSV-Dateien"
+        },
+        "data_description": {
+          "supplemental_dkb_csv_paths": "Relativ zu /config. Pro DKB-Depot sollte ein aktueller Export verwendet werden. Sind mehrere datierte Exporte desselben Depots konfiguriert, wird nur der neueste berücksichtigt. Bis zu 8 Pfade werden unterstützt."
+        }
+      },
+      "rest_gateways": {
+        "title": "Zusätzliche REST-Gateways",
+        "description": "Unabhängige lokale Portfolio-Architect-Gateways hinzufügen oder entfernen. Jedes Gateway bleibt separat authentifiziert und providerisoliert.",
+        "menu_options": {
+          "add_rest_gateway": "REST-Gateway hinzufügen",
+          "remove_rest_gateway": "REST-Gateway entfernen"
+        }
+      },
+      "add_rest_gateway": {
+        "title": "REST-Gateway hinzufügen",
+        "description": "Ein zusätzliches schreibgeschütztes lokales Gateway verbinden. Vor dem Speichern muss dessen Health-Dokument eine stabile Provider-ID und einen validierten Snapshot bereitstellen.",
+        "data": {
+          "rest_endpoint_url": "URL des lokalen Gateways",
+          "rest_api_token": "Bearer-Token des Gateways"
+        },
+        "data_description": {
+          "rest_endpoint_url": "HTTP- oder HTTPS-Portfolio-Endpunkt auf einer Loopback-, Link-Local- oder privaten Adresse.",
+          "rest_api_token": "Dediziertes Bearer-Token mit minimalen Rechten für dieses Gateway. Es wird ausschließlich in den Optionen des Home-Assistant-Konfigurationseintrags gespeichert."
+        }
+      },
+      "remove_rest_gateway": {
+        "title": "REST-Gateway entfernen",
+        "description": "Ein zusätzliches Gateway nicht mehr einlesen. Gateway-App und private Daten werden dadurch nicht verändert.",
+        "data": {
+          "provider_id": "Provider"
+        }
       }
     },
     "error": {
@@ -2282,13 +2317,18 @@
       "invalid_schedule": "Der wiederkehrende Ausführungsplan ist unvollständig oder ungültig.",
       "targets_not_100": "Die Zielgewichte müssen exakt 100% ergeben oder ausdrücklich normalisiert werden.",
       "invalid_supplemental_source": "Mindestens eine ergänzende DKB-CSV fehlt, ist unsicher oder kein unterstützter DKB-Depotexport.",
-      "too_many_sources": "Es werden höchstens 8 ergänzende DKB-CSV-Quellen unterstützt.",
-      "invalid_execution_config": "Die Einstellungen zu den Ausführungskosten sind widersprüchlich oder außerhalb des unterstützten Bereichs."
+      "too_many_sources": "Insgesamt werden höchstens 8 ergänzende Portfolioquellen unterstützt.",
+      "invalid_execution_config": "Die Einstellungen zu den Ausführungskosten sind widersprüchlich oder außerhalb des unterstützten Bereichs.",
+      "invalid_auth": "Das lokale Gateway hat sein Bearer-Token abgelehnt.",
+      "invalid_rest_gateway": "Das zusätzliche Gateway ist nicht verfügbar, dupliziert einen bestehenden Provider/Endpunkt oder stellt keinen gültigen Live-Snapshot mit Health-Schema 6 bereit.",
+      "too_many_rest_gateways": "Es werden höchstens 4 zusätzliche REST-Gateways unterstützt."
     },
     "abort": {
       "plan_source_unavailable": "Die lokalen Portfoliodateien konnten für den Planeditor nicht gelesen werden.",
       "invalid_plan": "Der konfigurierte Plan hat die Validierung nicht bestanden und wurde nicht gespeichert.",
-      "plan_already_uses_yaml": "Der Anlageplan verwendet bereits portfolio.yaml."
+      "plan_already_uses_yaml": "Der Anlageplan verwendet bereits portfolio.yaml.",
+      "no_rest_gateways": "Es sind keine zusätzlichen REST-Gateways konfiguriert.",
+      "rest_gateways_require_rest_primary": "Zusätzliche REST-Gateways erfordern ein REST-Gateway als primäre Portfolio-Architect-Quelle."
     }
   },
   "selector": {

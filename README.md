@@ -1,9 +1,9 @@
-# Portfolio Architect v1.25.0
+# Portfolio Architect v1.26.0
 
 Portfolio Architect is a Home Assistant-native portfolio overview, policy-check,
 and deterministic investment-planning system. It supports provider-specific CSV
 imports, multi-source consolidation, cost-aware recommendations, and separate
-provider-isolated read-only Gateway Apps, with Comdirect as the currently released live provider.
+provider-isolated read-only Gateway Apps, including simultaneous aggregation of multiple local Gateway REST snapshots.
 
 Portfolio Architect is advisory software. It exposes no trading, order,
 transfer, payment, or account-transaction capability.
@@ -15,7 +15,7 @@ transfer, payment, or account-transaction capability.
 - Deterministic allocation, policy, and cost-aware investment recommendations.
 - Private two-evaluation Plan Delta & Decision Trace with bounded reason codes and recorder-safe attributes.
 - Live Comdirect data through the credential-isolated **Portfolio Architect Gateway — Comdirect** App.
-- Comdirect, DKB, and generic mapped CSV sources with multi-source consolidation.
+- Provider-neutral consolidation across Comdirect/Trade Republic Gateway REST snapshots plus established DKB and generic CSV sources.
 - Provider-owned authorized investment cash with conservative eligibility and optional Gateway caps.
 - Bounded graceful degradation: trusted LKG holdings stay informationally available while stale bank cash and new investment actions fail closed.
 - Evidence-based Gateway refresh diagnostics and locally time-derived snapshot freshness.
@@ -33,7 +33,7 @@ transfer, payment, or account-transaction capability.
 
 ## Provider Gateway Apps
 
-Version 1.25.0 retains the separate Comdirect, DKB and Trade Republic Home Assistant App identities. Comdirect remains the stable live provider; DKB remains an experimental fail-closed shell. The Trade Republic App now supports local admin-only import of the explicitly supported German `DEPOTAUSZUG` text-PDF statement family and serves the validated holdings through the existing read-only REST snapshot contract.
+Version 1.26.0 retains the separate Comdirect, DKB and Trade Republic Home Assistant App identities. Comdirect remains the stable live provider; DKB remains an experimental fail-closed shell. Trade Republic retains the v1.25 local admin-only `DEPOTAUSZUG` importer and serves its validated holdings through the same read-only REST snapshot contract. Portfolio Architect can now consume several independently authenticated Gateway REST snapshots simultaneously while preserving provider provenance and atomic LKG behavior.
 
 ## Installation channels
 
@@ -64,7 +64,7 @@ See `docs/PUBLICATION-SETUP.md` and `docs/PUBLISHING.md`.
 
 - Home Assistant 2026.7.0 or newer
 - Python 3.14 for source validation and Gateway builds
-- Gateway App 1.16.1 or newer for the established live Comdirect protocol; Gateway App 1.19.0 or newer for configurable cash authorization; 1.19.1 or newer includes the corrected capped-to-all-available transition; 1.20.1 or newer includes the LKG entity-propagation fix; 1.21.0 adds execution/actionability semantics; 1.22.0 adds publication/privacy hardening; 1.24.1 includes the distinct-provider shell startup hotfix; 1.25.0 adds private local Trade Republic `DEPOTAUSZUG` statement import without changing REST schema 1 or health schema 6
+- Gateway App 1.16.1 or newer for the established live Comdirect protocol; Gateway App 1.19.0 or newer for configurable cash authorization; 1.19.1 or newer includes the corrected capped-to-all-available transition; 1.20.1 or newer includes the LKG entity-propagation fix; 1.21.0 adds execution/actionability semantics; 1.22.0 adds publication/privacy hardening; 1.24.1 includes the distinct-provider shell startup hotfix; 1.25.0 adds private local Trade Republic `DEPOTAUSZUG` statement import; 1.26.0 adds simultaneous provider Gateway aggregation without changing REST schema 1 or health schema 6
 
 The current stable Portfolio Architect release and the immediately preceding
 stable release receive security and correctness fixes while a documented upgrade
@@ -124,7 +124,7 @@ and built release contents before publication.
 - `docs/QUALITY.md`
 - `docs/DECISION-TRACE.md`
 - `AI_POLICY.md`
-- `docs/UPGRADE-1.25.0.md`
+- `docs/UPGRADE-1.26.0.md`
 - `docs/UPGRADE-1.24.1.md`
 - `docs/UPGRADE-1.24.0.md`
 - `docs/UPGRADE-1.22.0.md`

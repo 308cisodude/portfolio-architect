@@ -101,3 +101,27 @@ REST sources may omit `investment_cash` entirely.
 
 Numeric JSON values, partial objects, inconsistent policies, invalid decimals,
 naive timestamps, and implausibly future timestamps are rejected.
+
+## Additional Gateway REST sources (v1.26)
+
+For an installation whose primary source is already a local Gateway REST endpoint,
+Portfolio Architect can persist a bounded set of additional independent Gateway
+connections in the Home Assistant config-entry options. Each connection contains a
+local-only endpoint, a private bearer token, and the bounded provider ID proven by
+Gateway health schema 6.
+
+The provider App owns acquisition. Portfolio Architect does not know whether a
+Gateway snapshot came from a broker API, a local PDF import, or another future
+provider mechanism. Before saving an additional Gateway, the integration validates
+bearer authentication, provider identity, live snapshot availability and matching
+snapshot integrity evidence.
+
+At refresh time every configured Gateway is read before aggregation. The resulting
+canonical positions are merged by the same ISIN-first aggregation engine used for
+CSV supplements. A configured Gateway cannot silently disappear from a live
+calculation: failure retains a matching previously validated complete aggregate as
+non-actionable Home Assistant LKG or fails closed when no such aggregate exists.
+
+Source instances and provider identities are separate. `source_count` counts every
+independent source instance; `provider_count` and `provider_ids` represent the
+distinct bounded providers contributing to the accepted aggregate.
