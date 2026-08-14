@@ -8,6 +8,7 @@ from decimal import Decimal
 import re
 from typing import Iterable
 
+from .identity import normalized_isin, normalized_wkn
 from .models import Position
 
 PROVIDER_MULTI_SOURCE = "multi_source"
@@ -50,7 +51,7 @@ class PortfolioSourceSummary:
 
 @dataclass(frozen=True, slots=True)
 class AggregationConflict:
-    """One bounded identity inconsistency that did not alter the canonical key."""
+    """One bounded non-identity metadata inconsistency in an aggregated position."""
 
     identity: str
     field: str
@@ -69,8 +70,40 @@ class AggregationResult:
     newest_generated_at: datetime
 
 
+def _wkn_to_isin_map(
+    sources: tuple[PortfolioSourceSnapshot, ...],
+) -> dict[str, str]:
+    """Return unambiguous WKN -> ISIN evidence for fallback-only positions."""
+    mapping: dict[str, str] = {}
+    for source in sources:
+        for position in source.positions.values():
+            isin = normalized_isin(position.isin)
+            wkn = normalized_wkn(position.wkn, isin=position.isin)
+            if not isin or not wkn:
+                continue
+            previous = mapping.get(wkn)
+            if previous is not None and previous != isin:
+                raise ValueError(
+                    f"Ambiguous instrument identity: WKN {wkn} maps to multiple ISINs"
+                )
+            mapping[wkn] = isin
+    return mapping
+
+
+def _resolved_identity(position: Position, wkn_to_isin: dict[str, str]) -> tuple[str, str]:
+    """Resolve one position to ISIN primary identity or WKN fallback."""
+    isin = normalized_isin(position.isin)
+    if isin:
+        return ("isin", isin)
+    wkn = normalized_wkn(position.wkn, isin=position.isin)
+    if not wkn:
+        raise ValueError("Portfolio position has neither ISIN nor WKN identity")
+    mapped_isin = wkn_to_isin.get(wkn)
+    return ("isin", mapped_isin) if mapped_isin is not None else ("wkn", wkn)
+
+
 def aggregate_sources(sources: Iterable[PortfolioSourceSnapshot]) -> AggregationResult:
-    """Aggregate by ISIN, retaining exact source contributions and conflicts."""
+    """Aggregate by ISIN first and use WKN only as an unambiguous fallback."""
     ordered = tuple(sources)
     if not ordered:
         raise ValueError("At least one portfolio source is required")
@@ -84,27 +117,65 @@ def aggregate_sources(sources: Iterable[PortfolioSourceSnapshot]) -> Aggregation
             raise ValueError("Portfolio source timestamps must include a timezone")
         seen_source_ids.add(source.source_id)
 
+    # ISIN is the canonical identity. A WKN-only observation may join an ISIN
+    # group only when another source proves one unique WKN -> ISIN mapping.
+    wkn_to_isin = _wkn_to_isin_map(ordered)
     groups: dict[tuple[str, str], list[tuple[PortfolioSourceSnapshot, Position]]] = {}
     for source in ordered:
         for position in source.positions.values():
-            identity = ("isin", position.isin) if position.isin else ("wkn", position.wkn)
+            identity = _resolved_identity(position, wkn_to_isin)
             groups.setdefault(identity, []).append((source, position))
 
     result: dict[str, Position] = {}
     conflicts: list[AggregationConflict] = []
-    used_wkns: set[str] = set()
+    used_output_keys: set[str] = set()
     for identity, members in groups.items():
         primary_source, primary = members[0]
-        wkns = tuple(dict.fromkeys(item.wkn for _, item in members))
-        types = tuple(dict.fromkeys(item.instrument_type for _, item in members))
+        del primary_source
+        isins = tuple(
+            dict.fromkeys(
+                token
+                for _, item in members
+                if (token := normalized_isin(item.isin))
+            )
+        )
+        if identity[0] == "isin":
+            if any(isin != identity[1] for isin in isins):
+                raise ValueError(
+                    f"Instrument identity collision for ISIN {identity[1]}"
+                )
+            canonical_isin = identity[1]
+        else:
+            if isins:
+                raise ValueError(
+                    f"Instrument identity collision for WKN {identity[1]}"
+                )
+            canonical_isin = ""
+
+        wkns = tuple(
+            dict.fromkeys(
+                token
+                for _, item in members
+                if (token := normalized_wkn(item.wkn, isin=item.isin))
+            )
+        )
         if len(wkns) > 1:
-            conflicts.append(AggregationConflict(identity=identity[1], field="wkn", observed=wkns))
+            # WKN is secondary consistency evidence. It may not contradict an
+            # already-established ISIN identity.
+            raise ValueError(
+                f"Instrument identity collision for {identity[0].upper()} {identity[1]}: "
+                "multiple WKN values"
+            )
+        canonical_wkn = wkns[0] if wkns else ""
+
+        types = tuple(dict.fromkeys(item.instrument_type for _, item in members))
         if len(types) > 1:
-            conflicts.append(AggregationConflict(identity=identity[1], field="instrument_type", observed=types))
-        canonical_wkn = primary.wkn
-        if canonical_wkn in used_wkns:
-            raise ValueError(f"Cross-source aggregation produced duplicate WKN {canonical_wkn}")
-        used_wkns.add(canonical_wkn)
+            conflicts.append(
+                AggregationConflict(
+                    identity=identity[1], field="instrument_type", observed=types
+                )
+            )
+
         contribution_by_source: dict[str, Decimal] = {}
         for source, position in members:
             contribution_by_source[source.source_id] = (
@@ -119,9 +190,17 @@ def aggregate_sources(sources: Iterable[PortfolioSourceSnapshot]) -> Aggregation
             if all(item is not None for item in quantities)
             else None
         )
-        result[canonical_wkn] = Position(
+
+        # Retain the historical WKN dictionary key when a WKN exists so existing
+        # internal callers remain stable. ISIN-only positions are keyed by ISIN.
+        # Identity matching never relies on this implementation key.
+        output_key = canonical_wkn or canonical_isin
+        if not output_key or output_key in used_output_keys:
+            raise ValueError("Cross-source aggregation produced duplicate instrument identity")
+        used_output_keys.add(output_key)
+        result[output_key] = Position(
             wkn=canonical_wkn,
-            isin=primary.isin,
+            isin=canonical_isin,
             name=primary.name,
             instrument_type=primary.instrument_type if len(types) == 1 else "other",
             source_type=primary.source_type,

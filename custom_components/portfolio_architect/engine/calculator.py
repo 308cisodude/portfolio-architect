@@ -16,6 +16,12 @@ from typing import Any
 
 from . import __version__
 from .coverage import calculate_target_coverage
+from .identity import (
+    build_position_identity_index,
+    match_position_for_target,
+    normalized_isin,
+    normalized_wkn,
+)
 from .io import load_yaml, read_positions
 from .importers import CsvSourceConfig
 from .models import Holding, Position
@@ -466,24 +472,43 @@ def _outside_scope_id(identifier: str, used: set[str]) -> str:
 
 
 def _build_holdings(positions, plan_document, recommendations):
-    targets = {fund["wkn"]: fund for fund in target_funds(plan_document)}
+    funds = target_funds(plan_document)
+    identity_index = build_position_identity_index(positions.values())
+    targets_by_position: dict[int, dict[str, Any]] = {}
+    for fund in funds:
+        matched = match_position_for_target(fund, identity_index)
+        if matched is None:
+            continue
+        marker = id(matched)
+        if marker in targets_by_position:
+            raise ValueError("One portfolio position matches multiple configured targets")
+        targets_by_position[marker] = fund
     recommendation_by_wkn = {item.wkn: item for item in recommendations}
     total = sum(position.value_eur for position in positions.values())
     if total <= 0:
         raise ValueError("Whole portfolio value must be positive")
 
     holdings: list[Holding] = []
-    used_position_ids = {str(item["id"]) for item in targets.values()}
-    for wkn in sorted(positions):
-        position = positions[wkn]
-        target = targets.get(wkn)
-        recommendation = recommendation_by_wkn.get(wkn)
+    used_position_ids = {str(item["id"]) for item in funds}
+    for source_key in sorted(positions):
+        position = positions[source_key]
+        target = targets_by_position.get(id(position))
+        recommendation = (
+            recommendation_by_wkn.get(target["wkn"]) if target is not None else None
+        )
         in_plan = target is not None
+        position_isin = normalized_isin(position.isin)
+        position_wkn = normalized_wkn(position.wkn, isin=position.isin)
+        outside_identity = position_isin or position_wkn or str(source_key)
         holdings.append(
             Holding(
-                position_id=target["id"] if target else _outside_scope_id(wkn, used_position_ids),
-                wkn=position.wkn,
-                isin=position.isin,
+                position_id=(
+                    target["id"]
+                    if target
+                    else _outside_scope_id(outside_identity, used_position_ids)
+                ),
+                wkn=target["wkn"] if target else position_wkn,
+                isin=target["isin"] if target else position_isin,
                 name=target["name"] if target else position.name,
                 instrument_type=position.instrument_type,
                 source_type=position.source_type,

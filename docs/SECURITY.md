@@ -434,3 +434,18 @@ Before an additional Gateway can join the aggregate, Portfolio Architect require
 Configured REST providers form one atomic trust set. If any additional Gateway becomes unavailable, rejects authentication, changes identity, regresses in snapshot time, or fails integrity validation, Portfolio Architect does not silently omit it. A matching complete Home Assistant last-known-good aggregate is retained as degraded/non-actionable data; without such a cache the refresh fails closed. The configured additional provider/endpoint identities participate in the private LKG fingerprint, so a source-set change cannot replay a cache built from another aggregate.
 
 Distinct provider count and provider IDs are bounded non-secret presentation/provenance metadata. Bearer tokens never participate in that public metadata. The REST surfaces remain authenticated and GET-only, and multi-Gateway aggregation introduces no trading, order, transfer, payment, or transaction-history write path.
+
+## v1.26.1 instrument-identity integrity boundary
+
+Instrument identity is now fail-closed and ISIN-first. When a normalized position
+contains an ISIN, that ISIN is the canonical identity; WKN is only secondary
+consistency evidence. WKN fallback is permitted only when the source position has
+no ISIN. Portfolio Architect rejects contradictory target/source ISIN-WKN pairs,
+a WKN associated with multiple ISINs, and multiple WKN values associated with one
+ISIN instead of selecting whichever identifier happens to match first.
+
+REST schema 1 remains unchanged. Its provider-neutral `identifier` field is not
+assumed to be a WKN: when a provider uses its ISIN as the identifier, the REST
+adapter retains the ISIN and leaves WKN unavailable. This prevents a provider's
+identifier format from weakening target-matching integrity and adds no new broker
+or network privilege.

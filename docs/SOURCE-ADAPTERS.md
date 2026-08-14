@@ -125,3 +125,18 @@ non-actionable Home Assistant LKG or fails closed when no such aggregate exists.
 Source instances and provider identities are separate. `source_count` counts every
 independent source instance; `provider_count` and `provider_ids` represent the
 distinct bounded providers contributing to the accepted aggregate.
+
+## ISIN-first instrument identity (v1.26.1)
+
+Portfolio Architect treats ISIN as the canonical instrument identity whenever it is
+available. WKN remains supported as secondary German-market metadata and as a
+fallback only when one side of an otherwise valid match has no ISIN. The internal
+REST-schema-1 `identifier` field is not assumed to be a WKN; an ISIN-only provider
+such as the supported Trade Republic statement importer therefore remains an
+ISIN-only source after parsing.
+
+Identity evidence is fail-closed. A WKN must never override a contradictory ISIN,
+two different WKN values may not claim the same ISIN, and one WKN may not map to
+multiple ISINs. Ambiguous or contradictory identity evidence aborts the aggregate
+rather than merging or matching a position heuristically. This rule is
+provider-neutral and applies equally to REST and CSV source combinations.

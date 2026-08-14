@@ -7,7 +7,11 @@ from typing import Any
 
 @dataclass(frozen=True, slots=True)
 class Position:
-    """One validated security row imported from the depot CSV."""
+    """One normalized security position.
+
+    ISIN is the canonical identity when available. ``wkn`` is secondary German
+    identity metadata and may be empty for providers that do not supply a WKN.
+    """
 
     wkn: str
     isin: str

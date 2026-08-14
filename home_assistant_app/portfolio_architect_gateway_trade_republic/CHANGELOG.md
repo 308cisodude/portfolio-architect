@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.26.1
+
+- Version alignment for Portfolio Architect 1.26.1.
+- Statement import, persisted snapshot and REST schema are unchanged; Portfolio Architect now matches the existing ISIN-only snapshot correctly downstream.
+
 ## 1.26.0
 
 - Version alignment for Portfolio Architect 1.26.0.

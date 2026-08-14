@@ -68,6 +68,14 @@ Version 1.25.0 adds provider-specific document acquisition only inside the Trade
 
 Version 1.26.0 extends only the Home Assistant-side aggregation boundary: an existing primary REST Gateway can be joined by additional independently authenticated Gateway REST snapshots. Every additional Gateway must prove health-schema-6 provider identity and snapshot integrity before it participates. The aggregate remains atomic; a configured provider failure reuses the previous complete matching LKG rather than silently dropping that provider. Source-instance count remains separate from distinct-provider count, while existing per-position provenance is preserved.
 
+Version 1.26.1 makes instrument identity explicitly ISIN-first across normalized
+target matching and multi-source aggregation. A WKN is fallback identity only when
+ISIN is unavailable; when both values exist, WKN is secondary consistency evidence.
+Contradictory ISIN/WKN pairs, a WKN mapping to multiple ISINs, or multiple WKNs for
+one ISIN fail closed rather than being merged heuristically. REST schema 1 remains
+unchanged: a provider may use an ISIN as its generic `identifier` without that value
+being mislabelled as a WKN inside the calculation engine.
+
 ## Graceful degradation and actionability
 
 Version 1.20.0 separates **trusted informational continuity** from **authorization

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.26.1
+
+- Version alignment for Portfolio Architect 1.26.1.
+- No Comdirect acquisition, authentication, authorized-cash or REST contract change; the ISIN-first hotfix is Home Assistant-side.
+
 ## 1.26.0
 
 - Version alignment for Portfolio Architect 1.26.0.

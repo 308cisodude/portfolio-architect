@@ -8,7 +8,7 @@
   },
   "dataLicense": "CC0-1.0",
   "documentNamespace": "urn:uuid:f1a94d1e-7e83-5c04-9116-d830afae6d0c",
-  "name": "Portfolio Architect v1.26.0 SBOM",
+  "name": "Portfolio Architect v1.26.1 SBOM",
   "packages": [
     {
       "SPDXID": "SPDXRef-Package-Integration",
@@ -19,7 +19,7 @@
       "licenseDeclared": "MIT",
       "name": "Portfolio Architect Home Assistant integration",
       "supplier": "Organization: Portfolio Architect contributors",
-      "versionInfo": "1.26.0"
+      "versionInfo": "1.26.1"
     },
     {
       "SPDXID": "SPDXRef-Package-Gateway",
@@ -30,7 +30,7 @@
       "licenseDeclared": "MIT",
       "name": "Portfolio Architect Gateway — Comdirect App",
       "supplier": "Organization: Portfolio Architect contributors",
-      "versionInfo": "1.26.0"
+      "versionInfo": "1.26.1"
     },
     {
       "SPDXID": "SPDXRef-Package-PythonBase",
@@ -58,7 +58,7 @@
       "licenseDeclared": "MIT",
       "name": "Portfolio Architect Gateway — DKB App",
       "supplier": "Organization: Portfolio Architect contributors",
-      "versionInfo": "1.26.0"
+      "versionInfo": "1.26.1"
     },
     {
       "SPDXID": "SPDXRef-Package-Gateway-TradeRepublic",
@@ -68,7 +68,7 @@
       "licenseDeclared": "MIT",
       "name": "Portfolio Architect Gateway — Trade Republic App",
       "supplier": "Organization: Portfolio Architect contributors",
-      "versionInfo": "1.26.0"
+      "versionInfo": "1.26.1"
     },
     {
       "SPDXID": "SPDXRef-Package-pypdf",

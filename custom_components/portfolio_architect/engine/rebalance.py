@@ -17,6 +17,7 @@ from .execution import (
     maximum_savings_plan_order_for_cash,
     savings_plan_fee_pct,
 )
+from .identity import build_position_identity_index, match_position_for_target
 from .models import Position, Recommendation
 
 D = Decimal
@@ -189,6 +190,11 @@ def allocate_buys(
     minimum = D(str(rules.get("minimum_trade", 20)))
     step = D(str(rules.get("rounding_step", 10)))
     execution_config = ExecutionConfig.from_mapping(execution)
+    identity_index = build_position_identity_index(positions.values())
+    matched_positions = {
+        fund["wkn"]: match_position_for_target(fund, identity_index)
+        for fund in funds
+    }
 
     for field, value in (
         ("monthly_contribution", monthly),
@@ -203,7 +209,7 @@ def allocate_buys(
 
     values: dict[str, Decimal] = {}
     for fund in funds:
-        imported = positions.get(fund["wkn"])
+        imported = matched_positions[fund["wkn"]]
         value = imported.value_eur if imported is not None else D("0")
         if not value.is_finite() or value < 0:
             raise ValueError(f"Position value for {fund['wkn']} must be non-negative")
@@ -449,8 +455,16 @@ def allocate_buys(
             recommendation_reason=reasons[fund["wkn"]],
             additional_reserve_required_eur=additional[fund["wkn"]],
             deferred=deferred[fund["wkn"]],
-            source_ids=(positions[fund["wkn"]].source_ids if fund["wkn"] in positions else ()),
-            source_values_eur=(positions[fund["wkn"]].source_values_eur if fund["wkn"] in positions else ()),
+            source_ids=(
+                matched_positions[fund["wkn"]].source_ids
+                if matched_positions[fund["wkn"]] is not None
+                else ()
+            ),
+            source_values_eur=(
+                matched_positions[fund["wkn"]].source_values_eur
+                if matched_positions[fund["wkn"]] is not None
+                else ()
+            ),
         )
         for fund in funds
     ]

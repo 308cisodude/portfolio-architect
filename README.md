@@ -1,4 +1,4 @@
-# Portfolio Architect v1.26.0
+# Portfolio Architect v1.26.1
 
 Portfolio Architect is a Home Assistant-native portfolio overview, policy-check,
 and deterministic investment-planning system. It supports provider-specific CSV
@@ -33,7 +33,7 @@ transfer, payment, or account-transaction capability.
 
 ## Provider Gateway Apps
 
-Version 1.26.0 retains the separate Comdirect, DKB and Trade Republic Home Assistant App identities. Comdirect remains the stable live provider; DKB remains an experimental fail-closed shell. Trade Republic retains the v1.25 local admin-only `DEPOTAUSZUG` importer and serves its validated holdings through the same read-only REST snapshot contract. Portfolio Architect can now consume several independently authenticated Gateway REST snapshots simultaneously while preserving provider provenance and atomic LKG behavior.
+Version 1.26.1 retains the separate Comdirect, DKB and Trade Republic Home Assistant App identities and the v1.26 multi-Gateway aggregation model. It fixes ISIN-only provider snapshots by making ISIN the canonical instrument identity and using WKN only as a fail-closed fallback when ISIN is unavailable.
 
 ## Installation channels
 
@@ -64,7 +64,7 @@ See `docs/PUBLICATION-SETUP.md` and `docs/PUBLISHING.md`.
 
 - Home Assistant 2026.7.0 or newer
 - Python 3.14 for source validation and Gateway builds
-- Gateway App 1.16.1 or newer for the established live Comdirect protocol; Gateway App 1.19.0 or newer for configurable cash authorization; 1.19.1 or newer includes the corrected capped-to-all-available transition; 1.20.1 or newer includes the LKG entity-propagation fix; 1.21.0 adds execution/actionability semantics; 1.22.0 adds publication/privacy hardening; 1.24.1 includes the distinct-provider shell startup hotfix; 1.25.0 adds private local Trade Republic `DEPOTAUSZUG` statement import; 1.26.0 adds simultaneous provider Gateway aggregation without changing REST schema 1 or health schema 6
+- Gateway App 1.16.1 or newer for the established live Comdirect protocol; Gateway App 1.19.0 or newer for configurable cash authorization; 1.19.1 or newer includes the corrected capped-to-all-available transition; 1.20.1 or newer includes the LKG entity-propagation fix; 1.21.0 adds execution/actionability semantics; 1.22.0 adds publication/privacy hardening; 1.24.1 includes the distinct-provider shell startup hotfix; 1.25.0 adds private local Trade Republic `DEPOTAUSZUG` statement import; 1.26.0 adds simultaneous provider Gateway aggregation; 1.26.1 makes instrument identity ISIN-first without changing REST schema 1 or health schema 6
 
 The current stable Portfolio Architect release and the immediately preceding
 stable release receive security and correctness fixes while a documented upgrade
@@ -124,6 +124,7 @@ and built release contents before publication.
 - `docs/QUALITY.md`
 - `docs/DECISION-TRACE.md`
 - `AI_POLICY.md`
+- `docs/UPGRADE-1.26.1.md`
 - `docs/UPGRADE-1.26.0.md`
 - `docs/UPGRADE-1.24.1.md`
 - `docs/UPGRADE-1.24.0.md`

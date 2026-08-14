@@ -1,11 +1,28 @@
-# Portfolio Architect 1.26.0
+# Portfolio Architect 1.26.1
 
-Version 1.26.0 adds simultaneous aggregation of multiple independent Portfolio
-Architect Gateway REST sources. Provider-specific acquisition remains isolated in
-each Gateway App: Comdirect can continue to acquire holdings from the broker API,
-Trade Republic can continue to acquire holdings from a private `DEPOTAUSZUG` PDF,
-and Portfolio Architect consumes only their common provider-neutral REST snapshot
-contract.
+Version 1.26.1 is the identity-model hotfix for the v1.26 multi-Gateway milestone.
+Live acceptance of v1.26.0 proved that the Trade Republic Gateway could be added and
+read successfully, but an ISIN-only Trade Republic holding was not matched to its
+configured target because the calculation path still assumed WKN-keyed positions.
+This release makes ISIN the canonical instrument identity and uses WKN only as an
+unambiguous fallback when ISIN is unavailable.
+
+
+## ISIN-first instrument identity
+
+Target matching and cross-source consolidation now follow one provider-neutral rule:
+
+1. use ISIN when it is available;
+2. use WKN only when ISIN is unavailable; and
+3. when both are available, treat WKN as consistency evidence rather than an
+   alternate key that can override an ISIN mismatch.
+
+The integration fails closed when one WKN maps to multiple ISINs, one ISIN is
+reported with contradictory WKN values, or target/source evidence conflicts. The
+REST adapter also stops copying an ISIN-valued generic `identifier` into the WKN
+field. This allows the existing Trade Republic statement snapshot to satisfy the
+Robotics target without any provider-specific calculation branch or wire-schema
+change.
 
 ## Multiple Gateway REST sources
 

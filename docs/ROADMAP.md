@@ -36,9 +36,11 @@ real Trade Republic statements remain private input; public tests use wholly syn
 
 ## v1.26.0 — multiple Gateway REST aggregation
 
-Current milestone: allow one Portfolio Architect instance to consume several
-independent provider Gateway REST snapshots simultaneously without teaching the
-portfolio engine any provider-specific acquisition format.
+Published, but not accepted as the known-good multi-provider baseline: the release
+successfully added/validated the Trade Republic Gateway and exposed three portfolio
+sources in live operation, while live acceptance revealed that the calculation path
+still assumed target holdings were keyed by WKN. An ISIN-only Trade Republic
+Robotics holding therefore remained outside the configured target architecture.
 
 The milestone requires:
 
@@ -55,6 +57,25 @@ The milestone requires:
 
 Payload schema 8, REST schema 1, Gateway health schema 6, entity IDs, authorized-cash
 semantics and the read-only/no-trading boundary remain unchanged.
+
+## v1.26.1 — ISIN-first identity hotfix
+
+Current milestone: complete v1.26 live acceptance by making ISIN the canonical
+instrument identity throughout target matching and cross-source aggregation.
+
+- ISIN is primary whenever available.
+- WKN is fallback identity only when ISIN is unavailable.
+- When both are present, WKN is consistency evidence and cannot override an ISIN.
+- Ambiguous or contradictory ISIN/WKN mappings fail closed.
+- The regression suite uses the real Trade Republic REST identity shape: ISIN-only
+  provider position, no synthetic WKN injection.
+- Successful live acceptance must establish 3 sources / 3 providers / 7 of 7,
+  followed by the planned Trade Republic outage/LKG/recovery proof.
+
+The next security-hardening milestone is HTTPS for Gateway-to-Portfolio-Architect
+transport on the private Home Assistant App network. Certificate provisioning,
+verification and upgrade-safe trust must be designed without disabling TLS
+verification or replacing the existing dedicated bearer authentication.
 
 ## Later provider acquisition work
 
