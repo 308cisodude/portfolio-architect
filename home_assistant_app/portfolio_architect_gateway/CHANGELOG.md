@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.26.6
+
+- Version alignment for Portfolio Architect 1.26.6.
+- No Comdirect acquisition, OAuth/session, refresh-cadence, account-selection, authorized-cash or REST contract change; the hotfix is Home Assistant-side source diagnostics only.
+
 ## 1.26.5
 
 - Version alignment for Portfolio Architect 1.26.5.

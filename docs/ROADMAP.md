@@ -100,23 +100,28 @@ The underlying DATE sensor contract remained correct and unchanged.
 
 ## v1.26.5 — native date-domain presentation
 
-Current milestone: close the v1.26.4 live-acceptance finding through Home
-Assistant's actual `date` entity domain while preserving the established sensor
-contract.
+Published and live-accepted. The five authoritative DATE sensors remain unchanged,
+while additive read-only native `date.*` counterparts now give Home Assistant the
+correct semantic domain for locale-aware date presentation. Live acceptance also
+exposed one unrelated source-diagnostics edge case: during Comdirect
+reauthentication, a reachable Gateway serving its own trusted cached snapshot could
+leave **Source unavailable** without a bounded source ID.
 
-- Keep all five schedule/policy `sensor.portfolio_architect_*` DATE entities
-  unchanged and authoritative.
-- Add additive `date.portfolio_architect_*` counterparts that mirror the same Python
-  `date` values solely for locale-aware frontend rendering.
-- Keep dashboard state/availability conditions and all portfolio logic on the
-  original sensor entities.
-- Reject all writes to the presentation dates and route Tile more-info actions to
-  the authoritative sensors to avoid an editable-date affordance.
-- Remove the ineffective date-only Tile `time_format` override; add no hard-coded
-  date string, locale template, timezone conversion, or fake timestamp.
-- Leave refresh-schedule timestamp rendering unchanged.
-- Keep payload schema 8, REST schema 1, health schema 6 and all provider/acquisition
-  contracts unchanged.
+## v1.26.6 — non-live REST Gateway source diagnostics
+
+Current milestone: close that diagnostic edge case without changing authentication,
+provider acquisition, cache trust, portfolio calculation or wire schemas.
+
+- Name the primary REST Gateway whenever its observed operating mode is not `live`,
+  even if the Gateway itself still serves its trusted cached snapshot and Home
+  Assistant LKG is not active.
+- Apply the same bounded non-live-health rule to additional REST Gateways.
+- Preserve supplemental transport/authentication/integrity and DKB CSV error
+  collection, with duplicate-safe source IDs.
+- Keep all public source labels derived only from bounded provider/source identity.
+- Make no Comdirect OAuth/session, PhotoTAN, refresh-cadence or shutdown change.
+- Keep payload schema 8, REST schema 1, health schema 6, v1.26.5 date presentation,
+  and the read-only/no-trading boundary unchanged.
 
 ## v1.27.0 — Gateway HTTPS transport hardening
 
