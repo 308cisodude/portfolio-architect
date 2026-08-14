@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.26.3
+
+- Fixes the remaining German reference-dashboard unavailable-state edge case without changing the underlying actionable entity availability contract: the always-available actionability sensor now supplies bounded German presentation proxies for the Allocated and Purchases tiles.
+- Removes the low-value aggregate **Checks** and **Opportunities** counters from the primary policy dashboard while retaining their native entities for diagnostics, automations, and API consumers.
+- Reorders the policy section around the accepted-exception lifecycle: Exceptions → Robotics exception, then Last decision → Next/overdue review, followed by the concrete optimisation opportunity tiles.
+- Uses precise English/German exception lifecycle labels and keeps conditional policy error/warning tiles available when findings require attention.
+- Preserves v1.26.2 source-outage diagnostics, v1.26.1 ISIN-first identity, v1.26 atomic multi-Gateway/LKG behavior, payload schema 8, REST schema 1, health schema 6, existing entity IDs, and the read-only/no-trading boundary.
+
 ## 1.26.2
 
 - Completes the German reference-dashboard presentation layer so machine-readable entity states remain stable while German dashboard state values render explicitly in German, independent of the Home Assistant frontend language.

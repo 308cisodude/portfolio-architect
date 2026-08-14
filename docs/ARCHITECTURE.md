@@ -248,3 +248,17 @@ Failure collection does not weaken atomic aggregation. Several additional Gatewa
 failures may be collected so the operator can see all affected configured sources,
 but any such failure still prevents a partial live aggregate and retains only a
 matching complete Home Assistant LKG or fails closed.
+
+## v1.26.3 dashboard presentation proxy boundary
+
+Actionable recommendation entities keep their fail-closed Home Assistant
+availability semantics. The reference dashboard must not make those entities
+artificially available merely to force locale-specific text. Instead, the
+always-available plan-actionability entity may expose bounded dashboard-only
+presentation attributes derived from the same coordinator state. German tiles use
+those attributes only for display and direct their more-info action to the original
+metric entity.
+
+Policy evaluation counters remain native entities even when omitted from the
+primary reference dashboard. Dashboard layout is presentation policy, not a change
+to the policy engine or its machine-readable findings.

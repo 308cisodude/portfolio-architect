@@ -61,7 +61,9 @@ def test_policy_is_native_tile_only():
     for locale in LOCALES:
         source=(DASHBOARD/locale/'policy-compliance.yaml').read_text()
         assert 'mandatory_controls_compliant' in source
-        assert 'policy_checks_evaluated' in source
+        assert 'policy_checks_evaluated' not in source
+        assert 'optimisation_opportunity_count' not in source
+        assert 'accepted_exception_count' in source
         assert 'type: conditional' in source
         assert 'type: tile' in source
         assert 'type: entities' not in source

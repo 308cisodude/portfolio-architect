@@ -463,3 +463,12 @@ for operator presentation, but successful providers are never partially aggregat
 when another configured source fails. The complete configured source set remains an
 atomic trust boundary and the source-set-aware Home Assistant LKG fingerprint is
 unchanged.
+
+## v1.26.3 presentation proxy boundary
+
+The German unavailable-state workaround does not relax source trust or actionable
+entity availability. `recommended_total` and `purchase_count` remain unavailable
+when the active source is non-actionable. Their German dashboard text is mirrored
+through bounded attributes on the existing actionability sensor; no credentials,
+provider endpoints, account identifiers, raw broker data, or new write capability
+are introduced.

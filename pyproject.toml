@@ -1,6 +1,6 @@
 [project]
 name = "portfolio-architect"
-version = "1.26.2"
+version = "1.26.3"
 description = "Home Assistant-native portfolio policy and investment planning"
 requires-python = ">=3.14"
 license = { text = "MIT" }

@@ -19,7 +19,7 @@ provider-neutral runtime code. `GatewayState` and `create_server()` consume
 
 ## Official App identities
 
-| Provider | Display name | App slug | v1.26.2 state |
+| Provider | Display name | App slug | v1.26.3 state |
 | --- | --- | --- | --- |
 | Comdirect | Portfolio Architect Gateway — Comdirect | `portfolio_architect_gateway` | stable live provider, auto-start |
 | DKB | Portfolio Architect Gateway — DKB | `portfolio_architect_gateway_dkb` | experimental manual-only fail-closed shell |
@@ -89,9 +89,9 @@ integration retains a matching previously validated complete aggregate as
 non-actionable Home Assistant LKG instead of silently recalculating without that
 provider.
 
-Version 1.26.2 leaves that provider/Gateway contract unchanged. It adds only
-privacy-safe source-failure presentation metadata in the Home Assistant integration
-and explicit German dashboard presentation values.
+Version 1.26.3 leaves that provider/Gateway contract unchanged. It only refines
+Home Assistant dashboard presentation and policy layout; provider acquisition,
+private state, REST schema 1 and health schema 6 are unchanged.
 
 ## Trade Republic v1.25 import boundary
 
