@@ -124,6 +124,43 @@ def test_gateway_requires_bearer_and_supports_etag(tmp_path: Path) -> None:
         thread.join(timeout=5)
 
 
+
+def test_if_none_match_takes_precedence_over_if_modified_since(tmp_path: Path) -> None:
+    """A stale/non-matching ETag must force 200 even if the date validator matches."""
+    server, thread = _start(tmp_path)
+    try:
+        connection = http.client.HTTPConnection(
+            "127.0.0.1", server.server_address[1], timeout=5
+        )
+        auth = {"Authorization": f"Bearer {'g' * 64}"}
+        connection.request("GET", "/api/v1/portfolio", headers=auth)
+        response = connection.getresponse()
+        original_body = response.read()
+        current_etag = response.getheader("ETag")
+        last_modified = response.getheader("Last-Modified")
+        assert response.status == 200
+        assert current_etag
+        assert last_modified
+
+        connection.request(
+            "GET",
+            "/api/v1/portfolio",
+            headers={
+                **auth,
+                "If-None-Match": '"sha256-definitely-not-current"',
+                "If-Modified-Since": last_modified,
+            },
+        )
+        response = connection.getresponse()
+        body = response.read()
+        assert response.status == 200
+        assert response.getheader("ETag") == current_etag
+        assert body == original_body
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=5)
+
 def test_gateway_rejects_every_write_method(tmp_path: Path) -> None:
     server, thread = _start(tmp_path)
     try:

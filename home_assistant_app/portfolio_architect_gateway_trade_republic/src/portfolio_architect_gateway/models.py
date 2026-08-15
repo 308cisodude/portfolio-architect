@@ -293,11 +293,19 @@ def parse_snapshot_bytes(data: bytes) -> PortfolioSnapshot:
             amount = Decimal(market_value)
         except InvalidOperation as err:
             raise ProtocolError("Cached snapshot market value is invalid") from err
+        quantity = None
+        if "quantity" in item:
+            quantity = _cached_decimal(
+                item.get("quantity"),
+                signed=False,
+                field="position quantity",
+            )
         positions.append(
             Position(
                 identifier=_required_string(item, "identifier"),
                 name=_required_string(item, "name"),
                 market_value_eur=amount,
+                quantity=quantity,
                 isin=_optional_string(item, "isin"),
                 instrument_type=_optional_string(item, "instrument_type") or "Other",
             )

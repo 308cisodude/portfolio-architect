@@ -109,19 +109,17 @@ leave **Source unavailable** without a bounded source ID.
 
 ## v1.26.6 — non-live REST Gateway source diagnostics
 
-Current milestone: close that diagnostic edge case without changing authentication,
-provider acquisition, cache trust, portfolio calculation or wire schemas.
+Published and live-accepted. Reachable non-live REST Gateways are now identified through bounded source metadata even while the Gateway itself serves trusted cached data. The overnight acceptance test that proved this fix also exposed a separate cold-restart snapshot-identity defect in the common Gateway runtime.
 
-- Name the primary REST Gateway whenever its observed operating mode is not `live`,
-  even if the Gateway itself still serves its trusted cached snapshot and Home
-  Assistant LKG is not active.
-- Apply the same bounded non-live-health rule to additional REST Gateways.
-- Preserve supplemental transport/authentication/integrity and DKB CSV error
-  collection, with duplicate-safe source IDs.
-- Keep all public source labels derived only from bounded provider/source identity.
-- Make no Comdirect OAuth/session, PhotoTAN, refresh-cadence or shutdown change.
-- Keep payload schema 8, REST schema 1, health schema 6, v1.26.5 date presentation,
-  and the read-only/no-trading boundary unchanged.
+## v1.26.7 — cold-restart snapshot identity hotfix
+
+Current milestone: make an unchanged persisted Gateway snapshot retain exactly the same body/fingerprint across restart and correct HTTP conditional-validator precedence.
+
+- Preserve optional position quantity through cached-snapshot reload.
+- Prove save/load of quantity-bearing snapshots is byte-for-byte stable.
+- Give `If-None-Match` precedence over `If-Modified-Since`; a non-matching ETag must return `200`.
+- Keep fail-closed Portfolio Architect integrity checks unchanged.
+- Make no OAuth/session, provider-acquisition, calculation, dashboard/date, REST-schema or health-schema change.
 
 ## v1.27.0 — Gateway HTTPS transport hardening
 

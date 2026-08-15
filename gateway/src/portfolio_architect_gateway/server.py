@@ -517,16 +517,20 @@ class GatewayRequestHandler(BaseHTTPRequestHandler):
         if view is None:
             self._send_error(HTTPStatus.SERVICE_UNAVAILABLE, retry_after=60)
             return
-        if self.headers.get("If-None-Match") == view.etag:
-            self.send_response(HTTPStatus.NOT_MODIFIED)
-            self.send_header("ETag", view.etag)
-            self.send_header("Last-Modified", view.last_modified)
-            self._snapshot_integrity_headers(view)
-            self._security_headers()
-            self.send_header("Content-Length", "0")
-            self.end_headers()
-            return
-        if _not_modified_since(self.headers.get("If-Modified-Since"), view.generated_at):
+        if_none_match = self.headers.get("If-None-Match")
+        if if_none_match is not None:
+            if if_none_match == view.etag:
+                self.send_response(HTTPStatus.NOT_MODIFIED)
+                self.send_header("ETag", view.etag)
+                self.send_header("Last-Modified", view.last_modified)
+                self._snapshot_integrity_headers(view)
+                self._security_headers()
+                self.send_header("Content-Length", "0")
+                self.end_headers()
+                return
+        elif _not_modified_since(
+            self.headers.get("If-Modified-Since"), view.generated_at
+        ):
             self.send_response(HTTPStatus.NOT_MODIFIED)
             self.send_header("ETag", view.etag)
             self.send_header("Last-Modified", view.last_modified)

@@ -310,3 +310,10 @@ unavailable-source metadata. Transport/authentication/integrity errors and DKB C
 source failures retain their existing collection paths. This affects diagnostics
 only: configured-source atomicity, accepted snapshot calculation, actionability,
 provider acquisition and both REST/health wire schemas are unchanged.
+
+
+## v1.26.7 cold-restart snapshot identity invariant
+
+REST schema-1 snapshot identity is content-derived: the body, SHA-256 and ETag must remain stable when an unchanged persisted snapshot is reloaded after a Gateway restart. Optional position `quantity` is therefore parsed and restored alongside the other canonical position fields rather than being dropped during cache reload.
+
+HTTP conditional evaluation follows validator precedence: when `If-None-Match` is present it is authoritative. A matching ETag may return `304`; a non-matching ETag proceeds to `200` and `If-Modified-Since` is not consulted. Date validation is used only when no ETag validator is supplied. This prevents a timestamp-stable but content-changed representation from being described as not modified.

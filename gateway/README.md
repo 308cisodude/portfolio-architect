@@ -1,4 +1,4 @@
-# Portfolio Architect Gateway runtime v1.26.6
+# Portfolio Architect Gateway runtime v1.26.7
 
 The Gateway is a dedicated, dependency-free Python service that converts one
 provider-specific portfolio source into provider-neutral Portfolio Architect REST
@@ -48,7 +48,7 @@ available unchanged for older Portfolio Architect versions.
 The provider contract and official future App identities are documented in
 `docs/GATEWAY-PROVIDERS.md`. The common runtime remains provider-neutral in v1.26.6;
 provider-specific acquisition continues to live only in the corresponding App package.
-The ISIN-first v1.26.1 hotfix is implemented in Portfolio Architect's Home Assistant calculation layer and does not change Gateway REST schema 1 or health schema 6. Version 1.26.6 changes only Home Assistant-side unavailable-source diagnostics; the Gateway runtime, authentication, acquisition and wire contracts are unchanged.
+The ISIN-first v1.26.1 hotfix is implemented in Portfolio Architect's Home Assistant calculation layer and does not change Gateway REST schema 1 or health schema 6. Version 1.26.7 preserves quantity-bearing cached snapshots byte-for-byte across restart and gives ETag validation precedence over date validation. Authentication, provider acquisition and REST/health schemas are unchanged.
 
 ## Authorized investment cash
 

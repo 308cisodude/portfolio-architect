@@ -19,7 +19,7 @@ provider-neutral runtime code. `GatewayState` and `create_server()` consume
 
 ## Official App identities
 
-| Provider | Display name | App slug | v1.26.6 state |
+| Provider | Display name | App slug | v1.26.7 state |
 | --- | --- | --- | --- |
 | Comdirect | Portfolio Architect Gateway — Comdirect | `portfolio_architect_gateway` | stable live provider, auto-start |
 | DKB | Portfolio Architect Gateway — DKB | `portfolio_architect_gateway_dkb` | experimental manual-only fail-closed shell |
@@ -89,9 +89,7 @@ integration retains a matching previously validated complete aggregate as
 non-actionable Home Assistant LKG instead of silently recalculating without that
 provider.
 
-Version 1.26.6 leaves that provider/Gateway contract unchanged. It only corrects
-Home Assistant unavailable-source diagnostics so a REST Gateway observed in a non-live
-health mode is named even when that Gateway itself still serves a trusted cached
+Version 1.26.7 leaves the provider/Gateway contract unchanged. It fixes only the common cached-snapshot and HTTP conditional-request layer: quantity-bearing snapshots reload byte-for-byte and ETag validation cannot be overridden by a date validator. v1.26.6 already corrected unavailable-source diagnostics so a REST Gateway observed in a non-live health mode is named even when that Gateway itself still serves a trusted cached
 snapshot. Provider acquisition, authentication/private state, REST schema 1 and health
 schema 6 are unchanged.
 

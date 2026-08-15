@@ -1,9 +1,7 @@
-# Portfolio Architect Gateway — Trade Republic v1.26.6
+# Portfolio Architect Gateway — Trade Republic v1.26.7
 
-Version 1.26.6 retains the supported local import of the German text-PDF **DEPOTAUSZUG** statement family unchanged while aligning the App package with Portfolio Architect's Home Assistant-side unavailable-source diagnostics hotfix.
+Version 1.26.7 retains the supported local import of the German text-PDF **DEPOTAUSZUG** statement family and fixes only the common Gateway cached-snapshot/HTTP conditional-request layer. Optional position quantity now survives cached-snapshot reload byte-for-byte, and ETag validation takes precedence over `If-Modified-Since`.
 
-The upload is bounded to 5 MiB, parsed locally in memory, and the original PDF is discarded. Only the validated provider-neutral holdings snapshot is stored in `/data/gateway`. Encrypted, scanned/image-only, unsupported, ambiguous, future-dated or internally inconsistent documents are rejected without replacing the last accepted snapshot.
+The upload remains bounded to 5 MiB, parsed locally in memory, and the original PDF is discarded. Only the validated provider-neutral holdings snapshot is stored in `/data/gateway`. REST schema 1, health schema 6, provider identity, startup behavior and statement-parser validation are unchanged.
 
-After a successful import the authenticated private REST endpoint serves the normalized holdings through REST schema 1 and health schema 6 reports `provider_id: trade_republic`. The bearer token shown on the Ingress page is private; do not publish screenshots containing it.
-
-The App starts automatically so Portfolio Architect can keep this Gateway configured as an additional REST source. Acquisition remains the explicit local statement import. The v1.26.1 ISIN-first downstream identity behavior remains unchanged; v1.26.6 adds no statement-parser, authentication, acquisition or REST-contract change.
+The App uses its own `/data/gateway` private volume and must be upgraded in place to retain private state.

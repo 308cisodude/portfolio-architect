@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.26.7
+
+- Fixes the cold-Gateway-restart integrity edge case discovered during v1.26.6 live acceptance: cached snapshots now preserve optional position `quantity` when reloaded.
+- Makes save/load of quantity-bearing REST schema-1 snapshots byte-for-byte stable, preserving SHA-256 and ETag across normal Gateway restarts.
+- Corrects HTTP conditional-request precedence so a present non-matching `If-None-Match` is never overridden by `If-Modified-Since`; changed content returns `200`, not `304`.
+- Keeps fail-closed snapshot-integrity validation unchanged; it correctly detected the previous inconsistency instead of accepting altered evidence.
+- Makes no Comdirect OAuth/session, PhotoTAN, refresh-cadence, provider-acquisition, portfolio-calculation, date-presentation, entity-identity, or wire-schema change.
+- Preserves payload schema 8, REST schema 1, Gateway health schema 6, v1.26.6 unavailable-source diagnostics, atomic LKG behavior, and the read-only/no-trading boundary.
+
 ## 1.26.6
 
 - Fixes the v1.26.5 live-acceptance edge case where a reachable primary Comdirect Gateway in `reauthentication_required` / Gateway-local LKG operation could make **Source unavailable** render `None`.
