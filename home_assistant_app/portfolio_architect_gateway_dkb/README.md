@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway — DKB v1.27.0
+# Portfolio Architect Gateway — DKB v1.27.1
 
-Version 1.27.0 adds the common persistent private-PKI HTTPS server and Supervisor
+Version 1.27.1 adds the common persistent private-PKI HTTPS server and Supervisor
 public-trust discovery boundary while retaining the bearer-authenticated GET-only
 Gateway runtime. Private CA/server keys stay under this App's isolated
 `/data/gateway/tls` state.

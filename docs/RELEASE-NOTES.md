@@ -1,6 +1,10 @@
-# Portfolio Architect 1.27.0
+# Portfolio Architect 1.27.1
 
-Version 1.27.0 is the Gateway transport-security milestone. Official provider
+Version 1.27.1 is the publishable Gateway transport-security milestone. Its
+production TLS, provider-acquisition and portfolio behavior are unchanged from the
+v1.27.0 tag; only release/version metadata is advanced to 1.27.1: the patch corrects immutable-release CI so the tag-triggered provider-shell
+Docker smoke test has the same authenticated Supervisor context as protected PR
+validation. Official provider
 Gateway Apps now serve their private Portfolio Architect REST API over verified
 HTTPS while retaining the existing dedicated bearer token as an independent
 application-layer authentication control.
@@ -10,6 +14,21 @@ payload schema 8, REST portfolio schema 1, Gateway health schema 6, entity IDs,
 provider acquisition, portfolio calculation, authorized-cash semantics, source
 atomicity, LKG behavior, date presentation, and the read-only/no-trading boundary
 remain unchanged.
+
+
+## Immutable-publication workflow correction
+
+The v1.27.0 tag reached the immutable-release workflow with the completed HTTPS
+implementation, but publication stopped because `release.yml` still used the old
+standalone v1.26 provider-shell smoke test. The production v1.27 Gateway correctly
+refused to bootstrap hostname-bound TLS without `SUPERVISOR_TOKEN` and Supervisor
+`/addons/self/info`.
+
+Version 1.27.1 changes no production TLS or Gateway runtime logic for this
+incident; release/version metadata is aligned to 1.27.1. The release workflow now uses the same bounded mock Supervisor, ephemeral
+Supervisor token, `supervisor` network alias and hostname-verified private-CA TLS
+handshake as protected PR validation. A regression contract requires the two smoke
+step bodies to remain identical.
 
 ## Per-Gateway private PKI
 
@@ -55,7 +74,7 @@ API restrictions remain unchanged.
 
 ## Fail-closed automatic migration
 
-Existing v1.26.x REST sources are not rewritten merely because v1.27.0 is installed.
+Existing v1.26.x REST sources are not rewritten merely because v1.27.1 is installed.
 The Home Assistant integration must be updated first; it temporarily keeps legacy
 HTTP entries loadable while their matching Gateway Apps are upgraded.
 
@@ -91,5 +110,5 @@ can add them to the portfolio.
 - The historical experimental `v1.19.0-rc2` brokerage diagnostics/fee-probe work
   remains separate and is not promoted by this release.
 
-The required upgrade sequence is documented in `docs/UPGRADE-1.27.0.md`. No
+The required upgrade sequence is documented in `docs/UPGRADE-1.27.1.md`. No
 reference-dashboard YAML migration is required.

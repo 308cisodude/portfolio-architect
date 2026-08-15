@@ -1,4 +1,4 @@
-"""Regression contracts for v1.27.0 verified Gateway HTTPS transport."""
+"""Regression contracts for v1.27.1 verified Gateway HTTPS transport."""
 
 from __future__ import annotations
 
@@ -90,12 +90,22 @@ def test_official_apps_enable_discovery_and_https_runtime_dependency() -> None:
         assert "tls_cert_file=tls.cert_file" in entrypoint
         assert "tls_key_file=tls.key_file" in entrypoint
 
-    validate = (ROOT / ".github" / "workflows" / "validate.yml").read_text(encoding="utf-8")
-    assert "--network-alias supervisor" in validate
-    assert '--env "SUPERVISOR_TOKEN=${supervisor_token}"' in validate
-    assert 'if self.path != "/addons/self/info"' in validate
-    assert 'if self.path != "/discovery"' in validate
-    assert 'ssl.create_default_context(cafile="/data/gateway/tls/ca-cert.pem")' in validate
+    workflows = {}
+    for workflow_name in ("validate.yml", "release.yml"):
+        workflow = (ROOT / ".github" / "workflows" / workflow_name).read_text(encoding="utf-8")
+        workflows[workflow_name] = workflow
+        assert "--network-alias supervisor" in workflow
+        assert '--env "SUPERVISOR_TOKEN=${supervisor_token}"' in workflow
+        assert 'if self.path != "/addons/self/info"' in workflow
+        assert 'if self.path != "/discovery"' in workflow
+        assert 'ssl.create_default_context(cafile="/data/gateway/tls/ca-cert.pem")' in workflow
+
+    def smoke_body(workflow: str) -> str:
+        start = workflow.index("      - name: Smoke-test provider shell containers\n")
+        end = workflow.index("      - name: Scan source, history, and release artifacts for secrets\n", start)
+        return workflow[start:end]
+
+    assert smoke_body(workflows["validate.yml"]) == smoke_body(workflows["release.yml"])
 
 
 def test_private_pki_survives_leaf_renewal_without_changing_trust_anchor(tmp_path: Path) -> None:
@@ -276,7 +286,7 @@ def test_gateway_server_retains_tls_minimum_and_wire_schemas_are_unchanged() -> 
     health = (GATEWAY / "server.py").read_text(encoding="utf-8")
     assert "health_schema_version" in health
     release = (ROOT / "docs" / "RELEASE-NOTES.md").read_text(encoding="utf-8")
-    # These release-note strings are updated to 1.27.0 later in release preparation.
+    # These release-note strings are updated to 1.27.1 later in release preparation.
     assert "REST portfolio schema 1" in release
     assert "Gateway health schema 6" in release
     assert "payload schema 8" in release.lower()
