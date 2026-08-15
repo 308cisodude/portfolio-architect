@@ -19,7 +19,7 @@ provider-neutral runtime code. `GatewayState` and `create_server()` consume
 
 ## Official App identities
 
-| Provider | Display name | App slug | v1.27.1 state |
+| Provider | Display name | App slug | v1.27.2 state |
 | --- | --- | --- | --- |
 | Comdirect | Portfolio Architect Gateway — Comdirect | `portfolio_architect_gateway` | stable live provider, auto-start |
 | DKB | Portfolio Architect Gateway — DKB | `portfolio_architect_gateway_dkb` | experimental manual-only fail-closed shell |
@@ -93,13 +93,14 @@ Version 1.26.7 leaves the provider/Gateway contract unchanged. It fixes only the
 snapshot. Provider acquisition, authentication/private state, REST schema 1 and health
 schema 6 are unchanged.
 
-Version 1.27.1 hardens the shared internal transport. Every official App serves the
+The v1.27 line hardens the shared internal transport. Every official App serves the
 common REST/health API over verified HTTPS with a per-installation private CA while
 retaining bearer authentication. The App publishes only public CA trust and bounded
-provider/endpoint identity through Supervisor discovery. Portfolio Architect migrates
-a matching legacy HTTP source only after the HTTPS health endpoint validates with the
-existing bearer token. Private keys stay inside each App; trust changes fail closed.
-Provider acquisition, REST schema 1 and health schema 6 remain unchanged.
+provider/endpoint identity through Supervisor discovery. Version 1.27.2 corrects the
+Home Assistant config-flow eligibility needed for an existing entry to consume that
+discovery and migrate from legacy HTTP; Gateway runtime behavior is otherwise
+unchanged from v1.27.1. Private keys stay inside each App and trust changes fail
+closed. Provider acquisition, REST schema 1 and health schema 6 remain unchanged.
 
 ## Trade Republic v1.25 import boundary
 

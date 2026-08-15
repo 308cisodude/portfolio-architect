@@ -29,8 +29,10 @@ def test_validate_and_release_use_identical_supervisor_aware_provider_smoke() ->
 
 
 def test_v1271_is_release_engineering_only() -> None:
-    notes = (ROOT / "docs" / "RELEASE-NOTES.md").read_text(encoding="utf-8")
-    assert "changes no production TLS or Gateway runtime logic" in notes
-    assert "payload schema 8" in notes.lower()
-    assert "REST portfolio schema 1" in notes
-    assert "Gateway health schema 6" in notes
+    changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+    section = changelog.split("## 1.27.1", 1)[1].split("## 1.27.0", 1)[0]
+    assert "without changing production integration or Gateway runtime behavior" in section
+    assert "immutable-release" in section
+    assert "payload schema 8" in section.lower()
+    assert "REST portfolio schema 1" in section
+    assert "Gateway health schema 6" in section

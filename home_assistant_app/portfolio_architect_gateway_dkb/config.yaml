@@ -1,5 +1,5 @@
 name: Portfolio Architect Gateway — DKB
-version: 1.27.1
+version: 1.27.2
 slug: portfolio_architect_gateway_dkb
 description: Isolated provider Gateway package for Portfolio Architect; live DKB acquisition is not implemented in this release.
 url: https://developers.home-assistant.io/docs/apps/

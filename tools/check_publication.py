@@ -163,7 +163,20 @@ def validate(root: Path, strict: bool) -> None:
     require(manifest.get("domain") == "portfolio_architect", "Unexpected integration domain")
     require(SEMVER_RE.fullmatch(str(manifest.get("version", ""))) is not None, "Invalid version")
     require(manifest.get("config_flow") is True, "Config flow must remain enabled")
-    require(manifest.get("single_config_entry") is True, "Single-entry contract missing")
+    require(
+        "single_config_entry" not in manifest,
+        "Manifest single_config_entry would block Supervisor migration discovery",
+    )
+    config_flow = (root / "custom_components/portfolio_architect/config_flow.py").read_text(
+        encoding="utf-8"
+    )
+    require(
+        "if self.hass.config_entries.async_entries(DOMAIN):" in config_flow
+        and 'return self.async_abort(reason="already_configured")' in config_flow
+        and "await self.async_set_unique_id(INSTANCE_UNIQUE_ID)" in config_flow
+        and "self._abort_if_unique_id_configured()" in config_flow,
+        "Application-level single-entry contract missing",
+    )
 
     require(hacs.get("name") == "Portfolio Architect", "Unexpected HACS name")
     require(hacs.get("zip_release") is True, "HACS must consume a release ZIP")

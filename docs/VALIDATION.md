@@ -1,14 +1,15 @@
-# v1.27.1 validation
+# v1.27.2 validation
 
-Portfolio Architect v1.27.1 retains the complete v1.26.7 cold-restart integrity,
+Portfolio Architect v1.27.2 retains the complete v1.26.7 cold-restart integrity,
 v1.26.6 unavailable-source, v1.26 multi-provider atomic-LKG, provider-App,
-publication/privacy and reproducible-release regression pipeline while adding
-verified Gateway HTTPS transport contracts.
+publication/privacy and reproducible-release regression pipeline while retaining
+verified Gateway HTTPS transport contracts and adding the v1.27.2 config-flow
+eligibility regression.
 
 The release-specific contracts must prove:
 
 - integration and all three official provider App package versions align with
-  1.27.1;
+  1.27.2;
 - payload schema 8, REST portfolio schema 1 and Gateway health schema 6 remain
   unchanged;
 - each official App serves the common Gateway API with a TLS certificate/key and
@@ -32,6 +33,14 @@ The release-specific contracts must prove:
 - local/private address validation and request-scoped DNS pinning remain active for
   HTTPS and preserve the original hostname for Host/SNI/certificate verification;
 - no `ssl=False`, `verify=False`, redirect, proxy or cookie bypass is introduced;
+- the integration manifest does not use the framework-level `single_config_entry`
+  gate that would suppress Supervisor `hassio` discovery for an existing entry;
+- manual `async_step_user` setup explicitly refuses any second Portfolio Architect
+  entry before source configuration while retaining the stable unique-ID guard;
+- an existing one-entry installation remains eligible for `async_step_hassio` and
+  reaches the verified primary/supplemental HTTPS migration paths;
+- duplicate-provider discovery is not offered as new portfolio scope, including a
+  DKB App when DKB CSV input is already configured;
 - config-entry schema version 9 tolerates legacy HTTP only for in-place migration
   and reauthentication, while new/reconfigured REST sources require HTTPS;
 - an existing legacy source is rewritten only after its discovered HTTPS health
@@ -53,9 +62,12 @@ The release-specific contracts must prove:
 - release archives remain reproducible and pass checksum, manifest, path-safety and
   payload-alignment verification.
 
-Live acceptance starts from the healthy, live-accepted v1.26.7 three-source /
-three-provider installation. Update the Home Assistant integration first, restart
-Home Assistant, then update configured Gateway Apps one at a time. Each source must
-recover through verified HTTPS without manual CA copying, bearer-token replacement,
-provider reconfiguration or a plaintext fallback. A normal Gateway restart must
-preserve the same CA fingerprint.
+Live acceptance starts from the preserved v1.27.1 failure state when available:
+Gateway Apps are already HTTPS-capable and Supervisor discovery has been published,
+but Portfolio Architect still stores the matching legacy HTTP source and serves its
+verified Home Assistant LKG. Update only the integration to v1.27.2, restart Home
+Assistant, and require the existing entry to migrate automatically to verified HTTPS
+without deleting/recreating the entry, manually copying CA material, replacing the
+bearer token or enabling plaintext fallback. Then align Gateway App versions and
+verify the CA fingerprints remain stable across normal App and Home Assistant
+restarts.

@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.27.2
+
+- Fixes live v1.27.1 acceptance where Home Assistant never initialized the Supervisor `hassio` discovery flow for an already-configured Portfolio Architect entry because the manifest-level `single_config_entry` guard suppressed every new config flow before `async_step_hassio` could run.
+- Removes the coarse manifest guard and enforces the one-entry architecture explicitly in the manual `async_step_user` path, retaining the stable unique ID as defense in depth.
+- Keeps Supervisor discovery available for verified HTTP-to-HTTPS migration of the existing entry while refusing mismatched provider/network identity, changed CA trust, and automatic plaintext fallback.
+- Suppresses duplicate supplemental-provider discovery prompts when that provider is already represented, including DKB CSV.
+- Preserves payload schema 8, REST portfolio schema 1, Gateway health schema 6, bearer authentication, provider acquisition, portfolio calculations, entity contracts, LKG behavior, and dashboard/date behavior.
+
 ## 1.27.1
 
 - Publishes the v1.27 verified-HTTPS milestone without changing production integration or Gateway runtime behavior from v1.27.0.

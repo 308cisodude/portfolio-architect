@@ -1,10 +1,11 @@
-# Portfolio Architect Gateway runtime v1.27.1
+# Portfolio Architect Gateway runtime v1.27.2
 
-Version 1.27.1 keeps the standalone/provider-neutral Gateway contracts and adds the
-Supervisor-App private-PKI HTTPS helper used by official provider Apps. Official
-Apps persist their CA/leaf state, serve the common REST API over TLS, and distribute
-only public CA trust through Supervisor discovery. REST schema 1, health schema 6
-and bearer authentication remain unchanged.
+Version 1.27.2 keeps the standalone/provider-neutral Gateway and v1.27 private-PKI
+HTTPS contracts unchanged. The hotfix is Home Assistant config-flow-side: it allows
+an existing Portfolio Architect entry to consume Supervisor discovery for verified
+HTTPS migration. Official Apps still persist their CA/leaf state, serve the common
+REST API over TLS, and distribute only public CA trust through Supervisor discovery.
+REST schema 1, health schema 6 and bearer authentication remain unchanged.
 
 The Gateway is a dedicated, Python-library-dependency-free service that converts one
 provider-specific portfolio source into provider-neutral Portfolio Architect REST
@@ -52,9 +53,9 @@ non-secret and carries no account/depot identity. Health schemas 1 through 5 rem
 available unchanged for older Portfolio Architect versions.
 
 The provider contract and official future App identities are documented in
-`docs/GATEWAY-PROVIDERS.md`. The common runtime remains provider-neutral in v1.27.1;
+`docs/GATEWAY-PROVIDERS.md`. The common runtime remains provider-neutral in v1.27.2;
 provider-specific acquisition continues to live only in the corresponding App package.
-The ISIN-first v1.26.1 hotfix is implemented in Portfolio Architect's Home Assistant calculation layer and does not change Gateway REST schema 1 or health schema 6. Version 1.27.1 adds the private-PKI HTTPS helper for official Apps while preserving the v1.26.7 quantity-bearing cached-snapshot and ETag-precedence guarantees. Authentication, provider acquisition and REST/health schemas are unchanged.
+The ISIN-first v1.26.1 hotfix is implemented in Portfolio Architect's Home Assistant calculation layer and does not change Gateway REST schema 1 or health schema 6. Version 1.27.2 adds the private-PKI HTTPS helper for official Apps while preserving the v1.26.7 quantity-bearing cached-snapshot and ETag-precedence guarantees. Authentication, provider acquisition and REST/health schemas are unchanged.
 
 ## Authorized investment cash
 
