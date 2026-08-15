@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.27.1
+
+- Release-engineering-only follow-up to v1.27.0; Trade Republic Gateway HTTPS/runtime behavior is unchanged.
+- Aligns immutable-release Docker smoke validation with the Supervisor-aware protected PR validation path.
+
 ## 1.27.0
 
 - Serves the accepted Trade Republic snapshot over the common verified-HTTPS/private-CA Gateway boundary and publishes only public trust through Supervisor discovery.

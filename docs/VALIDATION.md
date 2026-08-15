@@ -1,6 +1,6 @@
-# v1.27.0 validation
+# v1.27.1 validation
 
-Portfolio Architect v1.27.0 retains the complete v1.26.7 cold-restart integrity,
+Portfolio Architect v1.27.1 retains the complete v1.26.7 cold-restart integrity,
 v1.26.6 unavailable-source, v1.26 multi-provider atomic-LKG, provider-App,
 publication/privacy and reproducible-release regression pipeline while adding
 verified Gateway HTTPS transport contracts.
@@ -8,7 +8,7 @@ verified Gateway HTTPS transport contracts.
 The release-specific contracts must prove:
 
 - integration and all three official provider App package versions align with
-  1.27.0;
+  1.27.1;
 - payload schema 8, REST portfolio schema 1 and Gateway health schema 6 remain
   unchanged;
 - each official App serves the common Gateway API with a TLS certificate/key and

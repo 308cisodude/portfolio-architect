@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.27.1
+
+- Release-engineering-only follow-up to v1.27.0; DKB provider-shell HTTPS/runtime behavior is unchanged.
+- Aligns immutable-release Docker smoke validation with the Supervisor-aware protected PR validation path.
+
 ## 1.27.0
 
 - Inherits the common persistent private-PKI HTTPS server and Supervisor public-trust discovery boundary.

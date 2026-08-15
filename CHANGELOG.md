@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.27.1
+
+- Publishes the v1.27 verified-HTTPS milestone without changing production integration or Gateway runtime behavior from v1.27.0.
+- Makes the immutable-release provider-shell Docker smoke test use the same bounded mock Supervisor, ephemeral Supervisor token and Supervisor network alias as the protected PR validation workflow.
+- Verifies a real hostname-checked TLS handshake against the generated private CA during both validation and immutable publication instead of using the legacy standalone TCP-only smoke test.
+- Adds a regression contract requiring the provider-shell smoke-test bodies in `validate.yml` and `release.yml` to remain identical so the two publication gates cannot drift again.
+- Keeps payload schema 8, REST portfolio schema 1, Gateway health schema 6, provider acquisition, portfolio calculations, entity contracts, LKG behavior, trust migration and the read-only/no-trading boundary unchanged.
+
 ## 1.27.0
 
 - Replaces plaintext HTTP on official Gateway App REST endpoints with certificate-verified HTTPS while retaining the dedicated bearer token as a separate authentication layer.

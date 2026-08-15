@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.27.1
+
+- Release-engineering-only follow-up to v1.27.0; production Comdirect Gateway HTTPS/runtime behavior is unchanged.
+- Aligns immutable-release Docker smoke validation with the Supervisor-aware protected PR validation path.
+
 ## 1.27.0
 
 - Serves the private Comdirect Gateway REST/health API over verified HTTPS using a persistent App-private CA and Supervisor-hostname certificate.

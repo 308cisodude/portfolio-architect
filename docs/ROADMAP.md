@@ -148,3 +148,21 @@ The DKB App still requires its own supported acquisition/import design before it
 replace or complement the existing DKB CSV source. Provider-specific acquisition
 must remain inside the corresponding Gateway App; Portfolio Architect should
 continue to consume only canonical provider-neutral snapshots.
+
+## v1.27.1 — immutable-publication workflow parity hotfix
+
+Current publication milestone: publish the completed v1.27 HTTPS transport hardening
+without changing production integration or Gateway runtime behavior.
+
+- Keep the v1.27.0 private-PKI HTTPS, Supervisor discovery, bearer authentication,
+  hostname verification, trust migration and fail-closed behavior unchanged.
+- Make the tag-triggered immutable-release provider-shell smoke test use the same
+  bounded mock Supervisor and ephemeral Supervisor token as protected PR validation.
+- Exercise an actual hostname-checked TLS handshake against the generated private CA
+  in both workflow paths.
+- Require the provider-shell smoke-test bodies in `validate.yml` and `release.yml` to
+  remain identical so future transport prerequisites cannot drift between merge and
+  publication gates.
+- Preserve payload schema 8, REST schema 1, health schema 6, provider acquisition,
+  portfolio calculations, entity contracts, LKG semantics and the read-only/no-trading
+  boundary.

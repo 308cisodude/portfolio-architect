@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway runtime v1.27.0
+# Portfolio Architect Gateway runtime v1.27.1
 
-Version 1.27.0 keeps the standalone/provider-neutral Gateway contracts and adds the
+Version 1.27.1 keeps the standalone/provider-neutral Gateway contracts and adds the
 Supervisor-App private-PKI HTTPS helper used by official provider Apps. Official
 Apps persist their CA/leaf state, serve the common REST API over TLS, and distribute
 only public CA trust through Supervisor discovery. REST schema 1, health schema 6
@@ -52,9 +52,9 @@ non-secret and carries no account/depot identity. Health schemas 1 through 5 rem
 available unchanged for older Portfolio Architect versions.
 
 The provider contract and official future App identities are documented in
-`docs/GATEWAY-PROVIDERS.md`. The common runtime remains provider-neutral in v1.27.0;
+`docs/GATEWAY-PROVIDERS.md`. The common runtime remains provider-neutral in v1.27.1;
 provider-specific acquisition continues to live only in the corresponding App package.
-The ISIN-first v1.26.1 hotfix is implemented in Portfolio Architect's Home Assistant calculation layer and does not change Gateway REST schema 1 or health schema 6. Version 1.27.0 adds the private-PKI HTTPS helper for official Apps while preserving the v1.26.7 quantity-bearing cached-snapshot and ETag-precedence guarantees. Authentication, provider acquisition and REST/health schemas are unchanged.
+The ISIN-first v1.26.1 hotfix is implemented in Portfolio Architect's Home Assistant calculation layer and does not change Gateway REST schema 1 or health schema 6. Version 1.27.1 adds the private-PKI HTTPS helper for official Apps while preserving the v1.26.7 quantity-bearing cached-snapshot and ETag-precedence guarantees. Authentication, provider acquisition and REST/health schemas are unchanged.
 
 ## Authorized investment cash
 
