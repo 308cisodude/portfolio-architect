@@ -217,7 +217,7 @@ entities.
 The request-scoped session is a deliberate exception to shared-session reuse: its
 custom resolver is the security control that binds validation and connection. A
 literal private address remains operationally simple, but it is no longer needed
-as a workaround for a validation/connection DNS race. From v1.27.1, official Supervisor Gateway Apps require verified HTTPS even on the private App network; legacy HTTP remains only as a bounded in-place migration state.
+as a workaround for a validation/connection DNS race. From v1.27.2, official Supervisor Gateway Apps require verified HTTPS even on the private App network; legacy HTTP remains only as a bounded in-place migration state.
 ## v1.5 gateway controls
 
 The separate Comdirect gateway adds a second explicit trust boundary:
@@ -515,7 +515,7 @@ The hotfix changes no trust decision or failure policy. Portfolio Architect cont
 
 No credential, account identifier, endpoint, provider-private response, trading capability, OAuth/session behavior or wire-schema field is added. The fix reduces false integrity alarms without weakening fingerprint validation.
 
-## v1.27.1 private-PKI HTTPS trust boundary
+## v1.27.2 private-PKI HTTPS trust boundary
 
 Official provider Gateway Apps no longer depend on plaintext HTTP for the internal
 Portfolio Architect REST boundary. Each App owns a per-installation ECDSA P-256
@@ -546,3 +546,12 @@ fallback. A different discovered CA fingerprint for an already-secured source is
 trust-change event and automatic replacement is refused. New supplemental providers
 require explicit user confirmation and the existing health/snapshot/provider-collision
 checks before portfolio scope changes.
+
+The v1.27.2 config-flow fix does not weaken the single-entry security boundary. The
+manifest-level `single_config_entry` switch is removed only because Home Assistant
+applies it before source-specific discovery handling and therefore blocked the
+trusted `hassio` migration flow itself. Portfolio Architect explicitly refuses manual
+setup when any domain entry already exists and retains its stable unique-ID guard.
+Supervisor discovery remains constrained by exact source/provider/network identity,
+private-CA verification and bearer authentication before any stored transport trust
+changes.

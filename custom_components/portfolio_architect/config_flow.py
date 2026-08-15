@@ -258,8 +258,10 @@ class PortfolioArchitectConfigFlow(ConfigFlow, domain=DOMAIN):
                     source = SupplementalRestSourceConfig.from_mapping(raw)
                 except PortfolioRestError:
                     continue
-                if source.provider_id != discovery.provider_id or not discovery.matches_legacy_endpoint(source.endpoint_url):
+                if source.provider_id != discovery.provider_id:
                     continue
+                if not discovery.matches_legacy_endpoint(source.endpoint_url):
+                    return self.async_abort(reason="tls_discovery_not_applicable")
                 if urlsplit(source.endpoint_url).scheme == "https":
                     if source.rest_config.tls_ca_sha256 == discovery.ca_sha256:
                         return self.async_abort(reason="tls_already_configured")
@@ -271,7 +273,16 @@ class PortfolioArchitectConfigFlow(ConfigFlow, domain=DOMAIN):
         # A newly installed supplemental provider has no legacy HTTP source to
         # migrate. Discovery supplies only network identity and public CA trust;
         # adding a provider still requires explicit user consent and the existing
-        # App-private bearer token. Comdirect remains primary-only here.
+        # App-private bearer token. Do not offer an App discovery as a second DKB
+        # source when the existing portfolio already uses DKB CSV input. Comdirect
+        # remains primary-only here.
+        raw_dkb_sources = entry.options.get(CONF_SUPPLEMENTAL_DKB_CSV_PATHS, [])
+        if (
+            discovery.provider_id == PROVIDER_DKB
+            and isinstance(raw_dkb_sources, list)
+            and raw_dkb_sources
+        ):
+            return self.async_abort(reason="tls_discovery_not_applicable")
         if (
             entry.data.get(CONF_SOURCE_TYPE) == SOURCE_TYPE_REST_API
             and discovery.provider_id != _GATEWAY_PROVIDER_COMDIRECT
@@ -515,6 +526,12 @@ class PortfolioArchitectConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
+        # Do not use manifest single_config_entry here: Supervisor discovery must be
+        # allowed to start a hassio flow so it can migrate the one existing entry
+        # from legacy HTTP to verified HTTPS. Manual setup remains strictly
+        # single-instance, including legacy entries that may not have a unique ID.
+        if self.hass.config_entries.async_entries(DOMAIN):
+            return self.async_abort(reason="already_configured")
         await self.async_set_unique_id(INSTANCE_UNIQUE_ID)
         self._abort_if_unique_id_configured()
         self._reconfigure_mode = False

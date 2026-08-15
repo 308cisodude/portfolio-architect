@@ -318,7 +318,7 @@ REST schema-1 snapshot identity is content-derived: the body, SHA-256 and ETag m
 
 HTTP conditional evaluation follows validator precedence: when `If-None-Match` is present it is authoritative. A matching ETag may return `304`; a non-matching ETag proceeds to `200` and `If-Modified-Since` is not consulted. Date validation is used only when no ETag validator is supplied. This prevents a timestamp-stable but content-changed representation from being described as not modified.
 
-## v1.27.1 verified Gateway transport architecture
+## v1.27.2 verified Gateway transport architecture
 
 The provider boundary now has two independent authentication layers: TLS authenticates
 the internal Gateway service identity and protects transport confidentiality/integrity,
@@ -351,3 +351,13 @@ discovery, Portfolio Architect proves the new HTTPS health endpoint with the exi
 bearer token and expected provider identity before atomically persisting `https://`
 and the CA. A secured source is never automatically downgraded, and discovery with a
 different CA fingerprint never silently replaces existing trust.
+
+Version 1.27.2 makes the Home Assistant config-flow boundary precise. The integration
+does not use manifest-level `single_config_entry`, because that framework shortcut
+prevents trusted Supervisor `hassio` discovery from being initialized when the one
+intended entry already exists. Manual `async_step_user` setup instead checks for any
+existing Portfolio Architect entry and aborts, while the stable unique ID remains a
+second duplicate guard. `async_step_hassio` still requires zero entries for initial
+Comdirect setup or exactly one entry for migration/supplemental handling; it never
+uses discovery as permission to create an arbitrary second Portfolio Architect
+instance.

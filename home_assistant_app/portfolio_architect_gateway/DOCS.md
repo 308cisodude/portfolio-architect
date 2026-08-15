@@ -1,7 +1,8 @@
-# Portfolio Architect Gateway — Comdirect v1.27.1
+# Portfolio Architect Gateway — Comdirect v1.27.2
 
-Version 1.27.1 serves the private Portfolio Architect REST/health API over
-certificate-verified HTTPS. The App creates a persistent per-installation private
+Version 1.27.2 is package alignment for the Home Assistant-side discovery-flow
+hotfix; the Comdirect App continues to serve the private Portfolio Architect
+REST/health API over certificate-verified HTTPS exactly as in v1.27.1. The App creates a persistent per-installation private
 CA and Supervisor-hostname server certificate under `/data/gateway/tls`, keeps all
 private keys App-local, and publishes only its public CA/fingerprint plus bounded
 endpoint identity through Supervisor discovery. The existing bearer token remains
@@ -9,7 +10,7 @@ required.
 
 Comdirect acquisition, OAuth/session, PhotoTAN, account selection, authorized cash,
 REST schema 1 and health schema 6 are unchanged. Upgrade the Portfolio Architect
-Home Assistant integration to 1.27.1 before updating this App so its legacy HTTP
+Home Assistant integration to 1.27.2 before updating this App so its legacy HTTP
 source can migrate only after verified HTTPS validates successfully.
 
 The App uses its own `/data/gateway` private volume and must be upgraded in place to

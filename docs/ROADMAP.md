@@ -166,3 +166,16 @@ without changing production integration or Gateway runtime behavior.
 - Preserve payload schema 8, REST schema 1, health schema 6, provider acquisition,
   portfolio calculations, entity contracts, LKG semantics and the read-only/no-trading
   boundary.
+
+
+## v1.27.2 — Supervisor discovery migration eligibility hotfix
+
+Current hotfix: allow Home Assistant Supervisor discovery flows to reach Portfolio
+Architect even when the one intended config entry already exists, so a legacy HTTP
+Gateway source can be migrated to verified HTTPS. The manifest-level
+`single_config_entry` shortcut is removed because Home Assistant suppresses *all* new
+config flows when an entry exists, including the trusted `hassio` discovery flow.
+Portfolio Architect keeps the one-entry invariant explicitly in `async_step_user`,
+with the stable unique ID retained as defense in depth. Existing verified-HTTPS
+trust validation, bearer authentication, provider identity checks, no-plaintext
+fallback, schemas, portfolio calculations and LKG behavior remain unchanged.

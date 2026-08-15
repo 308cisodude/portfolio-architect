@@ -50,16 +50,18 @@ def test_custom_integration_uses_runtime_translations() -> None:
     assert (COMPONENT / "translations" / "de.json").is_file()
 
 
-def test_manifest_classifies_service_and_blocks_duplicate_entries() -> None:
+def test_service_manifest_allows_hassio_flow_but_manual_setup_blocks_duplicates() -> None:
     import json
 
     manifest = json.loads((COMPONENT / "manifest.json").read_text())
     flow = (COMPONENT / "config_flow.py").read_text(encoding="utf-8")
     const = (COMPONENT / "const.py").read_text(encoding="utf-8")
     assert manifest["integration_type"] == "service"
-    assert manifest["single_config_entry"] is True
+    assert "single_config_entry" not in manifest
     assert 'INSTANCE_UNIQUE_ID: Final = "portfolio_architect"' in const
     assert "await self.async_set_unique_id(INSTANCE_UNIQUE_ID)" in flow
+    assert "if self.hass.config_entries.async_entries(DOMAIN):" in flow
+    assert 'return self.async_abort(reason="already_configured")' in flow
     assert "self._abort_if_unique_id_configured()" in flow
     assert "local:{cleaned[CONF_CSV_PATH]}" not in flow
 

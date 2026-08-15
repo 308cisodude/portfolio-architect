@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.27.2
+
+- Version alignment for the Portfolio Architect v1.27.2 Home Assistant discovery-flow migration fix.
+- Comdirect Gateway TLS, Supervisor discovery publication, OAuth/session, PhotoTAN, account selection, authorized cash, REST schema 1 and health schema 6 behavior are unchanged from v1.27.1.
+
 ## 1.27.1
 
 - Release-engineering-only follow-up to v1.27.0; production Comdirect Gateway HTTPS/runtime behavior is unchanged.

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.27.2
+
+- Version alignment for the Portfolio Architect v1.27.2 Home Assistant discovery-flow migration fix.
+- The DKB App remains the same experimental manual-only fail-closed HTTPS provider shell; no live DKB acquisition capability is added.
+
 ## 1.27.1
 
 - Release-engineering-only follow-up to v1.27.0; DKB provider-shell HTTPS/runtime behavior is unchanged.
