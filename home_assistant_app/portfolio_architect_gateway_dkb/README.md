@@ -1,10 +1,6 @@
-# Portfolio Architect Gateway — DKB v1.27.2
+# Portfolio Architect Gateway — DKB v1.27.3
 
-Version 1.27.2 is package alignment for the Home Assistant-side discovery-flow
-hotfix. The DKB App retains the v1.27.1 persistent private-PKI HTTPS server and
-Supervisor public-trust discovery boundary with the bearer-authenticated GET-only
-Gateway runtime. Private CA/server keys stay under this App's isolated
-`/data/gateway/tls` state.
+Version 1.27.3 aligns the DKB App package with Portfolio Architect's DKB discovery-identity hotfix. The App still publishes Gateway provider ID `dkb`; the Home Assistant integration now correctly distinguishes that identity from the established DKB CSV source ID `dkb_csv` and suppresses duplicate discovery scope.
 
 DKB remains an experimental manual-only fail-closed provider shell with no live DKB
 acquisition/import path. REST schema 1 and Gateway health schema 6 remain unchanged.

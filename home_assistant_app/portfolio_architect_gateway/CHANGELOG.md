@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.27.3
+
+- Version alignment for Portfolio Architect v1.27.3; Comdirect Gateway production TLS/acquisition behavior is unchanged.
+- The Home Assistant-side hotfix only distinguishes DKB Gateway `dkb` from DKB CSV `dkb_csv` during duplicate-scope suppression.
+
 ## 1.27.2
 
 - Version alignment for the Portfolio Architect v1.27.2 Home Assistant discovery-flow migration fix.

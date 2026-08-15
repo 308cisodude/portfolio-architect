@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.27.3
+
+- Version alignment for Portfolio Architect v1.27.3.
+- The DKB App continues to publish provider ID `dkb`; Portfolio Architect now correctly treats configured DKB CSV (`dkb_csv`) as already-represented scope and suppresses the stray discovery Add card.
+- The App remains experimental, manual-only and fail-closed with no live DKB acquisition.
+
 ## 1.27.2
 
 - Version alignment for the Portfolio Architect v1.27.2 Home Assistant discovery-flow migration fix.

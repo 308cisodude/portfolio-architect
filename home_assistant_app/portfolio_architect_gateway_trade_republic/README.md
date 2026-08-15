@@ -1,11 +1,8 @@
-# Portfolio Architect Gateway — Trade Republic v1.27.2
+# Portfolio Architect Gateway — Trade Republic v1.27.3
 
-The Trade Republic App remains an isolated statement-import provider. Use the
-admin-only Ingress page to import a current supported German text-PDF `DEPOTAUSZUG`;
-the PDF is processed in memory and discarded, while only the validated
-provider-neutral holdings snapshot and private bearer token persist.
+Version 1.27.3 is package alignment for the Portfolio Architect DKB discovery-identity hotfix; Trade Republic statement import, persisted snapshot behavior, TLS trust and bearer authentication are unchanged from v1.27.2.
 
-Version 1.27.2 is package alignment for the Home Assistant-side discovery-flow
+Version 1.27.3 is package alignment for the Home Assistant-side discovery-flow
 hotfix and continues to serve that snapshot over the same certificate-verified
 HTTPS Gateway boundary as v1.27.1. A persistent App-private CA/server certificate protects the
 private REST transport and only public trust plus bounded endpoint identity is
