@@ -90,6 +90,13 @@ def test_official_apps_enable_discovery_and_https_runtime_dependency() -> None:
         assert "tls_cert_file=tls.cert_file" in entrypoint
         assert "tls_key_file=tls.key_file" in entrypoint
 
+    validate = (ROOT / ".github" / "workflows" / "validate.yml").read_text(encoding="utf-8")
+    assert "--network-alias supervisor" in validate
+    assert '--env "SUPERVISOR_TOKEN=${supervisor_token}"' in validate
+    assert 'if self.path != "/addons/self/info"' in validate
+    assert 'if self.path != "/discovery"' in validate
+    assert 'ssl.create_default_context(cafile="/data/gateway/tls/ca-cert.pem")' in validate
+
 
 def test_private_pki_survives_leaf_renewal_without_changing_trust_anchor(tmp_path: Path) -> None:
     tls, directory, ca_pem = _generate_tls(tmp_path)
