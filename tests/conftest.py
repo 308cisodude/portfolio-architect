@@ -32,6 +32,15 @@ def _install_aiohttp_stub_if_missing() -> None:
     class ClientError(Exception):
         pass
 
+    class ClientConnectorCertificateError(ClientError):
+        pass
+
+    class ClientConnectorSSLError(ClientError):
+        pass
+
+    class ClientSSLError(ClientError):
+        pass
+
     class ClientResponse:
         pass
 
@@ -59,6 +68,9 @@ def _install_aiohttp_stub_if_missing() -> None:
     abc.AbstractResolver = AbstractResolver
     abc.ResolveResult = ResolveResult
     aiohttp.ClientError = ClientError
+    aiohttp.ClientConnectorCertificateError = ClientConnectorCertificateError
+    aiohttp.ClientConnectorSSLError = ClientConnectorSSLError
+    aiohttp.ClientSSLError = ClientSSLError
     aiohttp.ClientResponse = ClientResponse
     aiohttp.ClientSession = ClientSession
     aiohttp.ClientTimeout = ClientTimeout
