@@ -508,3 +508,10 @@ refresh cadence, provider acquisition, Gateway write capabilities, or atomic sou
 trust. A Gateway-local cached snapshot remains degraded/non-actionable evidence; the
 hotfix only ensures that the provider responsible for that non-live state is named
 consistently.
+
+
+## v1.26.7 cached-snapshot integrity boundary
+
+The hotfix changes no trust decision or failure policy. Portfolio Architect continues to reject inconsistent snapshot fingerprint/count/timestamp/health evidence fail-closed. The Gateway now preserves all existing schema-1 content, including optional quantity, when loading its private cached snapshot and follows correct ETag-before-date conditional semantics.
+
+No credential, account identifier, endpoint, provider-private response, trading capability, OAuth/session behavior or wire-schema field is added. The fix reduces false integrity alarms without weakening fingerprint validation.

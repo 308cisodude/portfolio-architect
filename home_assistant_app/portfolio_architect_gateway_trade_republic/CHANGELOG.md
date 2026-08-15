@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.26.7
+
+- Version alignment for Portfolio Architect 1.26.7.
+- Inherits the common Gateway cached-snapshot quantity round-trip and HTTP validator-precedence fix.
+- Statement import, persisted snapshot contract, startup behavior and REST/health schemas remain unchanged.
+
 ## 1.26.6
 
 - Version alignment for Portfolio Architect 1.26.6.

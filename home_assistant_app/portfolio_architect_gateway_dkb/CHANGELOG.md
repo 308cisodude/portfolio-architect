@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.26.7
+
+- Version alignment for Portfolio Architect 1.26.7.
+- Inherits the common Gateway cached-snapshot round-trip and HTTP validator-precedence fix.
+- DKB remains an experimental manual-only fail-closed provider shell with no acquisition path.
+
 ## 1.26.6
 
 - Version alignment for Portfolio Architect 1.26.6.

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.26.7
+
+- Version alignment for Portfolio Architect 1.26.7.
+- Preserves optional position quantity when cached REST snapshots are reloaded and corrects ETag/date validator precedence across cold restarts.
+- No Comdirect acquisition, OAuth/session, PhotoTAN, refresh-cadence, account-selection, authorized-cash or REST/health schema change.
+
 ## 1.26.6
 
 - Version alignment for Portfolio Architect 1.26.6.
