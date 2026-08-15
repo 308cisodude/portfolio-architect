@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.27.0
+
+- Replaces plaintext HTTP on official Gateway App REST endpoints with certificate-verified HTTPS while retaining the dedicated bearer token as a separate authentication layer.
+- Gives every official provider App a persistent per-installation ECDSA private CA and hostname-valid server certificate under App-private `/data/gateway/tls`.
+- Publishes only bounded provider/endpoint identity plus the public CA certificate/fingerprint through Home Assistant Supervisor discovery; private keys and bearer tokens never enter discovery.
+- Migrates matching legacy HTTP sources only after the discovered HTTPS health endpoint validates with the existing bearer token and expected provider identity; once secured, no automatic plaintext fallback is permitted.
+- Refuses automatic replacement of an already-secured source when the discovered CA fingerprint changes.
+- Allows newly discovered Comdirect setup and explicitly confirmed new supplemental provider addition without exposing private CA files or weakening existing provider/source collision checks.
+- Preserves local-only DNS validation/pinning, payload schema 8, REST schema 1, Gateway health schema 6, provider acquisition, portfolio calculations, atomic LKG behavior, entity IDs, and the read-only/no-trading boundary.
+
 ## 1.26.7
 
 - Fixes the cold-Gateway-restart integrity edge case discovered during v1.26.6 live acceptance: cached snapshots now preserve optional position `quantity` when reloaded.

@@ -317,3 +317,37 @@ provider acquisition and both REST/health wire schemas are unchanged.
 REST schema-1 snapshot identity is content-derived: the body, SHA-256 and ETag must remain stable when an unchanged persisted snapshot is reloaded after a Gateway restart. Optional position `quantity` is therefore parsed and restored alongside the other canonical position fields rather than being dropped during cache reload.
 
 HTTP conditional evaluation follows validator precedence: when `If-None-Match` is present it is authoritative. A matching ETag may return `304`; a non-matching ETag proceeds to `200` and `If-Modified-Since` is not consulted. Date validation is used only when no ETag validator is supplied. This prevents a timestamp-stable but content-changed representation from being described as not modified.
+
+## v1.27.0 verified Gateway transport architecture
+
+The provider boundary now has two independent authentication layers: TLS authenticates
+the internal Gateway service identity and protects transport confidentiality/integrity,
+while the existing bearer token continues to authorize the fixed GET-only Portfolio
+Architect API. The bearer token is never used as a substitute for certificate
+verification and is never distributed through Supervisor discovery.
+
+Each official Supervisor App owns one persistent private CA under
+`/data/gateway/tls`. A server leaf certificate is issued for the Supervisor-assigned
+internal App hostname. Normal leaf renewal reuses the same CA; corrupt/incomplete CA
+state fails closed instead of generating a new trust root. This separates routine
+certificate lifecycle from trust-anchor lifecycle.
+
+The public trust path is Home Assistant Supervisor discovery. Once the HTTPS listener
+is running, the App publishes only a bounded provider ID, internal hostname/port/fixed
+path, public CA certificate and CA SHA-256 fingerprint. Portfolio Architect validates
+that record and creates a hostname-checking TLS client context. Supervisor-discovered
+private CA trust is explicit: the private CA is loaded without adding the operating
+system public root store.
+
+The established SSRF/DNS-race controls remain layered underneath TLS. The endpoint
+hostname is resolved and constrained to local/private addresses; the validated answer
+set is pinned into the request-scoped connector; the original hostname remains in the
+URL so the HTTP Host header, TLS SNI and certificate-name verification refer to the
+same identity. Redirects, ambient proxies and cookies remain disabled.
+
+Existing v1.26.x HTTP entries are a bounded migration state only. The v1.27 Home
+Assistant integration is installed first. When a matching upgraded App publishes
+discovery, Portfolio Architect proves the new HTTPS health endpoint with the existing
+bearer token and expected provider identity before atomically persisting `https://`
+and the CA. A secured source is never automatically downgraded, and discovery with a
+different CA fingerprint never silently replaces existing trust.

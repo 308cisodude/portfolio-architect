@@ -6,6 +6,11 @@ import logging
 import os
 from pathlib import Path
 
+from portfolio_architect_gateway.supervisor_tls import (
+    prepare_supervisor_tls,
+    start_supervisor_tls_discovery_publisher,
+)
+
 # Import the complete runtime while the interpreter still has its initial
 # privileges. Home Assistant Supervisor keeps /data/options.json root-owned,
 # so the immutable, non-secret options must also be loaded before setuid().
@@ -33,6 +38,13 @@ def main() -> int:
         os.chown(child, APP_UID, APP_GID)
         if child.is_file():
             os.chmod(child, 0o600)
+        elif child.is_dir() and child.name == "tls":
+            os.chmod(child, 0o700)
+            for tls_child in child.iterdir():
+                if tls_child.is_symlink() or not tls_child.is_file():
+                    raise RuntimeError("Invalid entry in gateway TLS directory")
+                os.chown(tls_child, APP_UID, APP_GID)
+                os.chmod(tls_child, 0o600)
 
     os.setgroups([])
     os.setgid(APP_GID)
@@ -45,7 +57,16 @@ def main() -> int:
         level=logging.INFO,
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
-    serve_app(options=options)
+    tls = prepare_supervisor_tls(DATA, "comdirect")
+    serve_app(
+        options=options,
+        tls_cert_file=tls.cert_file,
+        tls_key_file=tls.key_file,
+        gateway_endpoint_url=f"https://{tls.hostname}:8787/api/v1/portfolio",
+        ready_callback=lambda _controller: start_supervisor_tls_discovery_publisher(
+            tls, "comdirect"
+        ),
+    )
     return 0
 
 

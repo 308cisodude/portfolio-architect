@@ -75,14 +75,14 @@ async def async_migrate_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
 ) -> bool:
-    """Migrate a Portfolio Architect config entry to schema version 8."""
+    """Migrate a Portfolio Architect config entry to schema version 9."""
     _LOGGER.debug(
         "Migrating Portfolio Architect config entry from version %s.%s",
         entry.version,
         entry.minor_version,
     )
 
-    if entry.version > 8:
+    if entry.version > 9:
         _LOGGER.error(
             "Cannot migrate Portfolio Architect config entry from future version %s",
             entry.version,
@@ -217,6 +217,13 @@ async def async_migrate_entry(
         # single-source entries require no transformation.
         hass.config_entries.async_update_entry(entry, version=8)
         _LOGGER.info("Migrated Portfolio Architect to the multi-source schema")
+
+    if entry.version < 9:
+        # v1.27 adds optional private-CA trust to REST source storage. Existing
+        # HTTP entries intentionally remain loadable only as a temporary migration
+        # state until the corresponding Gateway publishes verified TLS discovery.
+        hass.config_entries.async_update_entry(entry, version=9)
+        _LOGGER.info("Migrated Portfolio Architect to the verified-HTTPS transport schema")
 
     if migrated_entities:
         _LOGGER.info(

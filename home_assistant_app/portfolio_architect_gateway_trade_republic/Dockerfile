@@ -1,11 +1,12 @@
 FROM python:3.14.6-alpine3.24@sha256:26730869004e2b9c4b9ad09cab8625e81d256d1ce97e72df5520e806b1709f92
 
-ARG BUILD_VERSION=1.26.7
+ARG BUILD_VERSION=1.27.0
 ARG BUILD_ARCH
 ARG APP_UID=65532
 ARG APP_GID=65532
 
-RUN addgroup -S -g "${APP_GID}" portfolio \
+RUN apk add --no-cache openssl=3.5.7-r0 \
+    && addgroup -S -g "${APP_GID}" portfolio \
     && adduser -S -D -H -u "${APP_UID}" -G portfolio portfolio
 
 WORKDIR /app

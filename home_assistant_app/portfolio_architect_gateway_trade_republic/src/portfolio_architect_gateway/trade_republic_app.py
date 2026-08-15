@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 from email import policy
 from email.parser import BytesHeaderParser
 from html import escape
@@ -244,12 +246,20 @@ def serve_trade_republic_app(
     ingress_address: tuple[str, int] = (INGRESS_BIND, INGRESS_PORT),
     allowed_ingress_sources: frozenset[str] = frozenset({"172.30.32.2"}),
     require_user_header: bool = True,
+    ready_callback: Callable[[], None] | None = None,
+    tls_cert_file: Path | None = None,
+    tls_key_file: Path | None = None,
 ) -> None:
     """Run the isolated Trade Republic statement provider App."""
     data_directory.mkdir(mode=0o700, parents=True, exist_ok=True)
     if options is None:
         options = PendingAppOptions.load()
-    server_config = build_server_config(options, data_directory)
+    server_config = build_server_config(
+        options,
+        data_directory,
+        tls_cert_file=tls_cert_file,
+        tls_key_file=tls_key_file,
+    )
     api_token = ensure_api_token(server_config.api_token_file)
     provider = TradeRepublicStatementProvider(server_config.snapshot_file)
     state = GatewayState(server_config, provider)
@@ -273,6 +283,8 @@ def serve_trade_republic_app(
     )
     gateway_thread.start()
     _LOGGER.info("Trade Republic statement Gateway initialized")
+    if ready_callback:
+        ready_callback()
     try:
         ingress_server.serve_forever(poll_interval=0.5)
     except KeyboardInterrupt:

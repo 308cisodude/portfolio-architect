@@ -217,8 +217,7 @@ entities.
 The request-scoped session is a deliberate exception to shared-session reuse: its
 custom resolver is the security control that binds validation and connection. A
 literal private address remains operationally simple, but it is no longer needed
-as a workaround for a validation/connection DNS race. HTTPS remains recommended
-whenever the local token crosses a network segment.
+as a workaround for a validation/connection DNS race. From v1.27.0, official Supervisor Gateway Apps require verified HTTPS even on the private App network; legacy HTTP remains only as a bounded in-place migration state.
 ## v1.5 gateway controls
 
 The separate Comdirect gateway adds a second explicit trust boundary:
@@ -515,3 +514,35 @@ consistently.
 The hotfix changes no trust decision or failure policy. Portfolio Architect continues to reject inconsistent snapshot fingerprint/count/timestamp/health evidence fail-closed. The Gateway now preserves all existing schema-1 content, including optional quantity, when loading its private cached snapshot and follows correct ETag-before-date conditional semantics.
 
 No credential, account identifier, endpoint, provider-private response, trading capability, OAuth/session behavior or wire-schema field is added. The fix reduces false integrity alarms without weakening fingerprint validation.
+
+## v1.27.0 private-PKI HTTPS trust boundary
+
+Official provider Gateway Apps no longer depend on plaintext HTTP for the internal
+Portfolio Architect REST boundary. Each App owns a per-installation ECDSA P-256
+private CA and hostname-valid server leaf under App-private `/data/gateway/tls`. CA
+and server private keys remain inside that provider App, are mode-0600 files, and are
+covered by the App's normal private-state backup. A damaged/incomplete existing CA is
+not silently replaced.
+
+Only public trust material crosses the boundary. After HTTPS is serving, the App uses
+its Supervisor token to publish a bounded discovery record containing the provider ID,
+Supervisor internal hostname, fixed port/path, public CA certificate and CA SHA-256.
+The Gateway bearer token, private keys, provider credentials, account identifiers and
+portfolio values are excluded. The Apps keep `hassio_api: false`; v1.27 uses only the
+Supervisor self-info/discovery endpoints available to Apps for this control plane.
+
+Portfolio Architect validates the discovery record and CA fingerprint, then creates a
+TLS client context with certificate verification, hostname checking and minimum TLS
+1.2. Supervisor-discovered private CA trust is CA-specific and does not add the system
+public root store. The established local-address allowlist and request-scoped DNS
+pinning remain mandatory, preserving the original hostname for Host, SNI and
+certificate-name verification. Redirects, proxy inheritance and cookies remain
+disabled.
+
+Migration is fail-closed. A legacy HTTP source is replaced only after the discovered
+HTTPS health endpoint validates with the existing bearer token and expected provider
+identity. Once HTTPS is stored, transport failure cannot trigger an automatic HTTP
+fallback. A different discovered CA fingerprint for an already-secured source is a
+trust-change event and automatic replacement is refused. New supplemental providers
+require explicit user confirmation and the existing health/snapshot/provider-collision
+checks before portfolio scope changes.

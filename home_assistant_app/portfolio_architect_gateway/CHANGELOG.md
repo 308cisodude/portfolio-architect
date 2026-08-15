@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.27.0
+
+- Serves the private Comdirect Gateway REST/health API over verified HTTPS using a persistent App-private CA and Supervisor-hostname certificate.
+- Publishes only public CA trust and bounded Comdirect endpoint identity through Supervisor discovery while retaining bearer authentication.
+- Keeps Comdirect OAuth/session, PhotoTAN, account selection, authorized cash, REST schema 1 and health schema 6 unchanged.
+
 ## 1.26.7
 
 - Version alignment for Portfolio Architect 1.26.7.

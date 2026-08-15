@@ -33,7 +33,7 @@ MAX_FORM_BYTES: Final = 16 * 1024
 MAX_HEADER_BYTES: Final = 32 * 1024
 MAX_CHUNK_LINE_BYTES: Final = 128
 LOCAL_ENDPOINT: Final = (
-    "http://local-portfolio-architect-gateway:8787/api/v1/portfolio"
+    "https://local-portfolio-architect-gateway:8787/api/v1/portfolio"
 )
 
 
@@ -123,7 +123,13 @@ def _bool(value: Any, name: str) -> bool:
 
 
 
-def build_app_config(options: AppOptions, data_directory: Path = APP_DATA_DIRECTORY) -> GatewayConfig:
+def build_app_config(
+    options: AppOptions,
+    data_directory: Path = APP_DATA_DIRECTORY,
+    *,
+    tls_cert_file: Path | None = None,
+    tls_key_file: Path | None = None,
+) -> GatewayConfig:
     """Construct the fixed, private-network runtime configuration for HAOS."""
     return GatewayConfig(
         server=ServerConfig(
@@ -132,8 +138,8 @@ def build_app_config(options: AppOptions, data_directory: Path = APP_DATA_DIRECT
             api_token_file=data_directory / "gateway-api-token",
             snapshot_file=data_directory / "portfolio.json",
             max_cached_snapshot_age_seconds=options.max_cached_snapshot_age_seconds,
-            tls_cert_file=None,
-            tls_key_file=None,
+            tls_cert_file=tls_cert_file,
+            tls_key_file=tls_key_file,
             health_endpoint_enabled=options.health_endpoint_enabled,
         ),
         comdirect=ComdirectConfig(
@@ -180,11 +186,13 @@ class AppController:
         client: ComdirectClient,
         state: GatewayState,
         api_token: str,
+        endpoint_url: str = LOCAL_ENDPOINT,
     ) -> None:
         self.config = config
         self.client = client
         self.gateway_state = state
         self.api_token = api_token
+        self.endpoint_url = endpoint_url
         self.csrf_token = secrets.token_urlsafe(32)
         self._lock = threading.RLock()
         self._bootstrap = BootstrapView("idle", "Ready for setup.", None, None)
@@ -232,7 +240,7 @@ class AppController:
                 self.config.comdirect.client_id_file.is_file()
                 and self.config.comdirect.client_secret_file.is_file()
             ),
-            "endpoint": LOCAL_ENDPOINT,
+            "endpoint": self.endpoint_url,
         }
 
     def discover_investment_accounts(self) -> None:
@@ -710,7 +718,7 @@ class IngressRequestHandler(BaseHTTPRequestHandler):
         )
         token = escape(controller.api_token)
         csrf = escape(controller.csrf_token)
-        endpoint = escape(LOCAL_ENDPOINT)
+        endpoint = escape(controller.endpoint_url)
         message = escape(str(bootstrap["message"]))
         state = escape(str(bootstrap["state"]))
         snapshot_integrity = (
@@ -784,7 +792,7 @@ class IngressRequestHandler(BaseHTTPRequestHandler):
 </style></head><body><main>
 <h1>Portfolio Architect Gateway</h1>
 <section><h2>Runtime status</h2><p>Gateway: <strong id="gateway-status" class="{status_class}">{escape(str(gateway['status']))}</strong></p><p>Operating mode: <strong id="operating-mode" class="{status_class}">{operating_mode}</strong></p><p>Refresh state: <strong id="refresh-state">{escape(refresh_state)}</strong></p><p>Last refresh trigger: <strong id="refresh-trigger">{escape(str(refresh_trigger))}</strong></p><p>Last refresh duration: <strong id="refresh-duration">{escape(refresh_duration_text)}</strong></p><p>Next scheduled refresh: <strong id="next-refresh">{escape(str(next_refresh))}</strong></p><p>Snapshot age: <strong id="snapshot-age">{escape(snapshot_age_text)}</strong></p><p>Consecutive refresh failures: <strong id="refresh-failures">{escape(str(refresh_failures if refresh_failures is not None else 'unavailable'))}</strong></p><p>Last failure class: <strong id="failure-class">{escape(str(failure_class))}</strong></p><p>Last failure at: <strong id="failure-at">{escape(str(last_failure))}</strong></p><p>Recommended action: <strong id="recommended-action">{escape(str(recommended_action))}</strong></p><p>Retry after: <strong id="retry-after">{escape(retry_after_text)}</strong></p><p>Snapshot integrity: <strong id="snapshot-integrity" class="{status_class}">{snapshot_integrity}</strong></p><p>Snapshot positions: <strong id="snapshot-count">{escape(str(snapshot_count if snapshot_count is not None else 'unavailable'))}</strong></p><p>Snapshot fingerprint: <code id="snapshot-fingerprint">{escape(snapshot_fingerprint)}</code></p><p>Bootstrap: <strong id="bootstrap-state">{state}</strong></p><p id="bootstrap-message">{message}</p><p class="small">The CSV fallback remains untouched after switching Portfolio Architect to live REST data.</p></section>
-<section><h2>Home Assistant connection</h2><label>Endpoint</label><code>{endpoint}</code><label>Bearer token</label><code>{token}</code><p class="small">Copy both values into Portfolio Architect only after the first successful refresh.</p></section>
+<section><h2>Home Assistant connection</h2><label>Endpoint</label><code>{endpoint}</code><label>Bearer token</label><code>{token}</code><p class="small">Portfolio Architect v1.27 discovers the verified HTTPS endpoint and public CA through Supervisor; the dedicated bearer token remains the separate authentication factor.</p></section>
 <section><h2>Live portfolio refresh</h2><form method="post" action="refresh" autocomplete="off">
 <input type="hidden" name="csrf" value="{csrf}">
 <button type="submit">Refresh portfolio now</button></form>
@@ -942,6 +950,9 @@ def serve_app(
     allowed_ingress_sources: frozenset[str] = frozenset({"172.30.32.2"}),
     require_user_header: bool = True,
     ready_callback: Callable[[AppController], None] | None = None,
+    tls_cert_file: Path | None = None,
+    tls_key_file: Path | None = None,
+    gateway_endpoint_url: str = LOCAL_ENDPOINT,
 ) -> None:
     """Run the private REST API, refresh loop, and HA Ingress setup UI.
 
@@ -953,11 +964,18 @@ def serve_app(
     data_directory.mkdir(mode=0o700, parents=True, exist_ok=True)
     if options is None:
         options = AppOptions.load(options_path)
-    config = build_app_config(options, data_directory)
+    config = build_app_config(
+        options,
+        data_directory,
+        tls_cert_file=tls_cert_file,
+        tls_key_file=tls_key_file,
+    )
     api_token = ensure_api_token(config.server.api_token_file)
     client = ComdirectClient(config.comdirect)
     state = GatewayState(config.server, client)
-    controller = AppController(config, client, state, api_token)
+    controller = AppController(
+        config, client, state, api_token, endpoint_url=gateway_endpoint_url
+    )
 
     stop_event = threading.Event()
     gateway_server = create_server(config.server, state)

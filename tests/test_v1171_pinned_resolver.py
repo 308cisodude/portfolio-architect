@@ -35,6 +35,15 @@ def _aiohttp_stub() -> tuple[types.ModuleType, types.ModuleType]:
     class ClientError(Exception):
         pass
 
+    class ClientConnectorCertificateError(ClientError):
+        pass
+
+    class ClientConnectorSSLError(ClientError):
+        pass
+
+    class ClientSSLError(ClientError):
+        pass
+
     class ClientResponse:
         pass
 
@@ -62,6 +71,9 @@ def _aiohttp_stub() -> tuple[types.ModuleType, types.ModuleType]:
     abc.AbstractResolver = AbstractResolver
     abc.ResolveResult = ResolveResult
     aiohttp.ClientError = ClientError
+    aiohttp.ClientConnectorCertificateError = ClientConnectorCertificateError
+    aiohttp.ClientConnectorSSLError = ClientConnectorSSLError
+    aiohttp.ClientSSLError = ClientSSLError
     aiohttp.ClientResponse = ClientResponse
     aiohttp.ClientSession = ClientSession
     aiohttp.ClientTimeout = ClientTimeout

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 from dataclasses import dataclass
 from html import escape
 from http import HTTPStatus
@@ -76,15 +78,21 @@ class PendingProvider:
         raise ConfigurationError("Provider acquisition is not implemented in this release")
 
 
-def build_server_config(options: PendingAppOptions, data_directory: Path) -> ServerConfig:
+def build_server_config(
+    options: PendingAppOptions,
+    data_directory: Path,
+    *,
+    tls_cert_file: Path | None = None,
+    tls_key_file: Path | None = None,
+) -> ServerConfig:
     return ServerConfig(
         bind="0.0.0.0",
         port=GATEWAY_PORT,
         api_token_file=data_directory / "gateway-api-token",
         snapshot_file=data_directory / "portfolio.json",
         max_cached_snapshot_age_seconds=options.max_cached_snapshot_age_seconds,
-        tls_cert_file=None,
-        tls_key_file=None,
+        tls_cert_file=tls_cert_file,
+        tls_key_file=tls_key_file,
         health_endpoint_enabled=options.health_endpoint_enabled,
     )
 
@@ -217,12 +225,20 @@ def serve_pending_app(
     ingress_address: tuple[str, int] = (INGRESS_BIND, INGRESS_PORT),
     allowed_ingress_sources: frozenset[str] = frozenset({"172.30.32.2"}),
     require_user_header: bool = True,
+    ready_callback: Callable[[], None] | None = None,
+    tls_cert_file: Path | None = None,
+    tls_key_file: Path | None = None,
 ) -> None:
     """Run one isolated provider shell with authenticated health and no portfolio data."""
     data_directory.mkdir(mode=0o700, parents=True, exist_ok=True)
     if options is None:
         options = PendingAppOptions.load()
-    server_config = build_server_config(options, data_directory)
+    server_config = build_server_config(
+        options,
+        data_directory,
+        tls_cert_file=tls_cert_file,
+        tls_key_file=tls_key_file,
+    )
     api_token = ensure_api_token(server_config.api_token_file)
     provider = PendingProvider(provider_id)
     state = GatewayState(server_config, provider)
@@ -245,6 +261,8 @@ def serve_pending_app(
     )
     gateway_thread.start()
     _LOGGER.info("Provider shell initialized for %s", provider.provider_id)
+    if ready_callback:
+        ready_callback()
     try:
         ingress_server.serve_forever(poll_interval=0.5)
     except KeyboardInterrupt:
