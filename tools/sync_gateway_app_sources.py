@@ -8,7 +8,7 @@ MASTER=ROOT/"gateway"/"src"/"portfolio_architect_gateway"
 COMDIRECT=ROOT/"home_assistant_app"/"portfolio_architect_gateway"/"src"/"portfolio_architect_gateway"
 DKB=ROOT/"home_assistant_app"/"portfolio_architect_gateway_dkb"/"src"/"portfolio_architect_gateway"
 TRADE_REPUBLIC=ROOT/"home_assistant_app"/"portfolio_architect_gateway_trade_republic"/"src"/"portfolio_architect_gateway"
-SHELL_FILES={"__init__.py","errors.py","models.py","provider.py","runtime_config.py","server.py","store.py","pending_app.py"}
+SHELL_FILES={"__init__.py","errors.py","models.py","provider.py","runtime_config.py","server.py","store.py","pending_app.py","supervisor_tls.py"}
 TR_PROVIDER_FILES={"trade_republic_app.py","trade_republic_statement.py"}
 
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.27.0
+
+- Inherits the common persistent private-PKI HTTPS server and Supervisor public-trust discovery boundary.
+- Retains bearer authentication and the provider-neutral GET-only REST/health runtime.
+- DKB remains experimental, manual-only and fail-closed with no live acquisition path.
+
 ## 1.26.7
 
 - Version alignment for Portfolio Architect 1.26.7.

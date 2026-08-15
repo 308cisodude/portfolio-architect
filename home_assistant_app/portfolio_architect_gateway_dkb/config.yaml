@@ -1,5 +1,5 @@
 name: Portfolio Architect Gateway — DKB
-version: 1.26.7
+version: 1.27.0
 slug: portfolio_architect_gateway_dkb
 description: Isolated provider Gateway package for Portfolio Architect; live DKB acquisition is not implemented in this release.
 url: https://developers.home-assistant.io/docs/apps/
@@ -21,13 +21,15 @@ hassio_api: false
 homeassistant_api: false
 auth_api: false
 docker_api: false
+discovery:
+- portfolio_architect
 apparmor: true
 tmpfs: true
 backup: cold
 ports:
   8787/tcp: null
 ports_description:
-  8787/tcp: Private Portfolio Architect REST endpoint; leave host mapping disabled
+  8787/tcp: Verified-HTTPS Portfolio Architect REST endpoint; leave host mapping disabled
 watchdog: tcp://[HOST]:[PORT:8787]
 stage: experimental
 environment:

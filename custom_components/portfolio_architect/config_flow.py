@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from decimal import Decimal, ROUND_FLOOR
+from urllib.parse import urlsplit
 from typing import Any
 
 import voluptuous as vol
@@ -14,6 +15,7 @@ from homeassistant.config_entries import (
     OptionsFlowWithReload,
 )
 from homeassistant.core import callback
+from homeassistant.helpers.service_info.hassio import HassioServiceInfo
 from homeassistant.helpers.selector import (
     BooleanSelector,
     BooleanSelectorConfig,
@@ -43,6 +45,7 @@ from .const import (
     CONF_CSV_PATH,
     CONF_REST_API_TOKEN,
     CONF_REST_ENDPOINT_URL,
+    CONF_REST_TLS_CA_CERTIFICATE,
     CONF_FRESHNESS_HOURS,
     CONF_PLAN_BUDGET_AMOUNT,
     CONF_PLAN_BUDGET_BASIS,
@@ -110,6 +113,7 @@ from .const import (
 )
 from .engine import calculate_portfolio_payload, calculate_portfolio_payload_from_positions
 CONF_MANUAL_VENUE_FEE_BPS = "manual_venue_fee_bps"
+_GATEWAY_PROVIDER_COMDIRECT = "comdirect"
 
 
 from .engine.execution import ExecutionConfig
@@ -139,8 +143,10 @@ from .plan_editor import (
     load_plan_editor_context_from_positions,
 )
 from .rest_client import (
+    GatewayTlsDiscovery,
     PortfolioRestAuthenticationError,
     PortfolioRestError,
+    PortfolioRestTlsError,
     RestSourceConfig,
     SupplementalRestSourceConfig,
     async_fetch_gateway_health,
@@ -195,16 +201,316 @@ _SUPPORTED_SOURCE_PROVIDERS = (
 class PortfolioArchitectConfigFlow(ConfigFlow, domain=DOMAIN):
     """Configure one explicit local CSV or local REST source adapter."""
 
-    VERSION = 8
+    VERSION = 9
     _source_draft: dict[str, Any]
     _existing_source_data: dict[str, Any]
     _generic_headers: tuple[str, ...]
     _reconfigure_mode: bool = False
+    _hassio_discovery: GatewayTlsDiscovery | None = None
 
     @staticmethod
     @callback
     def async_get_options_flow(config_entry: ConfigEntry) -> PortfolioArchitectOptionsFlow:
         return PortfolioArchitectOptionsFlow()
+
+    async def async_step_hassio(
+        self, discovery_info: HassioServiceInfo
+    ) -> ConfigFlowResult:
+        """Migrate one known Gateway to verified HTTPS using Supervisor trust discovery."""
+        try:
+            discovery = GatewayTlsDiscovery.from_mapping(dict(discovery_info.config))
+        except PortfolioRestError:
+            return self.async_abort(reason="invalid_tls_discovery")
+
+        entries = self.hass.config_entries.async_entries(DOMAIN)
+        if not entries:
+            if discovery.provider_id != _GATEWAY_PROVIDER_COMDIRECT:
+                return self.async_abort(reason="tls_discovery_not_primary")
+            self._hassio_discovery = discovery
+            await self.async_set_unique_id(INSTANCE_UNIQUE_ID)
+            return await self.async_step_hassio_confirm()
+        if len(entries) != 1:
+            return self.async_abort(reason="tls_discovery_not_applicable")
+
+        entry = entries[0]
+        if entry.data.get(CONF_SOURCE_TYPE) == SOURCE_TYPE_REST_API:
+            endpoint = entry.data.get(CONF_REST_ENDPOINT_URL)
+            if isinstance(endpoint, str) and discovery.matches_legacy_endpoint(endpoint):
+                if urlsplit(endpoint).scheme == "https":
+                    try:
+                        stored = RestSourceConfig.from_mapping(dict(entry.data))
+                    except PortfolioRestError:
+                        return self.async_abort(reason="tls_discovery_not_applicable")
+                    if stored.tls_ca_sha256 == discovery.ca_sha256:
+                        return self.async_abort(reason="tls_already_configured")
+                    # HTTPS is already a secured trust boundary. Discovery may
+                    # migrate legacy HTTP, but must never silently replace an
+                    # existing private CA or system-PKI trust decision.
+                    return self.async_abort(reason="tls_trust_changed")
+                return await self._async_migrate_primary_tls(entry, discovery)
+
+        raw_sources = entry.options.get(CONF_SUPPLEMENTAL_REST_SOURCES, [])
+        if isinstance(raw_sources, list):
+            for index, raw in enumerate(raw_sources):
+                if not isinstance(raw, dict):
+                    continue
+                try:
+                    source = SupplementalRestSourceConfig.from_mapping(raw)
+                except PortfolioRestError:
+                    continue
+                if source.provider_id != discovery.provider_id or not discovery.matches_legacy_endpoint(source.endpoint_url):
+                    continue
+                if urlsplit(source.endpoint_url).scheme == "https":
+                    if source.rest_config.tls_ca_sha256 == discovery.ca_sha256:
+                        return self.async_abort(reason="tls_already_configured")
+                    return self.async_abort(reason="tls_trust_changed")
+                return await self._async_migrate_supplemental_tls(
+                    entry, discovery, index, raw_sources
+                )
+
+        # A newly installed supplemental provider has no legacy HTTP source to
+        # migrate. Discovery supplies only network identity and public CA trust;
+        # adding a provider still requires explicit user consent and the existing
+        # App-private bearer token. Comdirect remains primary-only here.
+        if (
+            entry.data.get(CONF_SOURCE_TYPE) == SOURCE_TYPE_REST_API
+            and discovery.provider_id != _GATEWAY_PROVIDER_COMDIRECT
+        ):
+            self._hassio_discovery = discovery
+            return await self.async_step_hassio_add_supplemental_confirm()
+
+        return self.async_abort(reason="tls_discovery_not_applicable")
+
+    async def async_step_hassio_confirm(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Create a new primary Comdirect REST entry from verified Supervisor discovery."""
+        discovery = self._hassio_discovery
+        if discovery is None or discovery.provider_id != _GATEWAY_PROVIDER_COMDIRECT:
+            return self.async_abort(reason="invalid_tls_discovery")
+        errors: dict[str, str] = {}
+        suggested = {
+            CONF_CONFIG_DIRECTORY: DEFAULT_CONFIG_DIRECTORY,
+            CONF_REST_API_TOKEN: "",
+        }
+        if user_input is not None:
+            suggested.update(user_input)
+            candidate = {
+                CONF_SOURCE_TYPE: SOURCE_TYPE_REST_API,
+                CONF_SOURCE_PROVIDER: PROVIDER_LOCAL_REST_JSON,
+                CONF_CONFIG_DIRECTORY: user_input[CONF_CONFIG_DIRECTORY],
+                CONF_REST_ENDPOINT_URL: discovery.endpoint_url,
+                CONF_REST_API_TOKEN: user_input[CONF_REST_API_TOKEN],
+                CONF_REST_TLS_CA_CERTIFICATE: discovery.ca_certificate,
+            }
+            try:
+                cleaned = await self._async_validate_rest_source_data(candidate)
+                health = await async_fetch_gateway_health(
+                    self.hass, RestSourceConfig.from_mapping(cleaned)
+                )
+                if health.health_schema_version < 6 or health.provider_id != discovery.provider_id:
+                    raise PortfolioRestTlsError("Discovered Gateway provider identity did not validate")
+            except PortfolioRestAuthenticationError:
+                errors["base"] = "invalid_auth"
+            except PortfolioSourcePathError:
+                errors["base"] = "invalid_path"
+            except (OSError, ValueError, PortfolioRestError, PortfolioArchitectDataError):
+                errors["base"] = "invalid_rest_source"
+            else:
+                return self.async_create_entry(title=NAME, data=cleaned)
+        return self.async_show_form(
+            step_id="hassio_confirm",
+            data_schema=self.add_suggested_values_to_schema(
+                _hassio_rest_source_schema(), suggested
+            ),
+            errors=errors,
+            description_placeholders={"gateway": discovery.hostname},
+        )
+
+    async def async_step_hassio_add_supplemental_confirm(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Explicitly add one newly discovered verified-HTTPS supplemental Gateway."""
+        discovery = self._hassio_discovery
+        if discovery is None or discovery.provider_id == _GATEWAY_PROVIDER_COMDIRECT:
+            return self.async_abort(reason="invalid_tls_discovery")
+        entries = self.hass.config_entries.async_entries(DOMAIN)
+        if len(entries) != 1:
+            return self.async_abort(reason="tls_discovery_not_applicable")
+        entry = entries[0]
+        if entry.data.get(CONF_SOURCE_TYPE) != SOURCE_TYPE_REST_API:
+            return self.async_abort(reason="rest_gateways_require_rest_primary")
+
+        errors: dict[str, str] = {}
+        suggested = {CONF_REST_API_TOKEN: ""}
+        if user_input is not None:
+            suggested.update(user_input)
+            options = dict(entry.options)
+            raw_sources = options.get(CONF_SUPPLEMENTAL_REST_SOURCES, [])
+            stored = raw_sources if isinstance(raw_sources, list) else []
+            raw_dkb_sources = options.get(CONF_SUPPLEMENTAL_DKB_CSV_PATHS, [])
+            dkb_count = len(raw_dkb_sources) if isinstance(raw_dkb_sources, list) else 0
+            if len(stored) >= MAX_SUPPLEMENTAL_REST_SOURCES:
+                errors["base"] = "too_many_rest_gateways"
+            elif len(stored) + dkb_count >= MAX_SUPPLEMENTAL_SOURCES:
+                errors["base"] = "too_many_sources"
+            else:
+                try:
+                    candidate = RestSourceConfig.from_mapping(
+                        {
+                            CONF_REST_ENDPOINT_URL: discovery.endpoint_url,
+                            CONF_REST_API_TOKEN: user_input[CONF_REST_API_TOKEN],
+                            CONF_REST_TLS_CA_CERTIFICATE: discovery.ca_certificate,
+                        }
+                    )
+                    existing = tuple(
+                        SupplementalRestSourceConfig.from_mapping(item)
+                        for item in stored
+                        if isinstance(item, dict)
+                    )
+                    if any(item.provider_id == discovery.provider_id for item in existing):
+                        raise ValueError("duplicate provider")
+                    if any(item.endpoint_url == candidate.endpoint_url for item in existing):
+                        raise ValueError("duplicate endpoint")
+                    if discovery.provider_id == PROVIDER_DKB and dkb_count:
+                        raise ValueError("provider already configured through DKB CSV")
+
+                    primary = RestSourceConfig.from_mapping(dict(entry.data))
+                    primary_health = await async_fetch_gateway_health(self.hass, primary)
+                    if (
+                        primary_health.health_schema_version < 6
+                        or primary_health.provider_id is None
+                        or primary_health.status != "ok"
+                        or primary_health.reauthentication_required
+                        or not primary_health.snapshot_available
+                    ):
+                        raise PortfolioRestError(
+                            "Primary Gateway is not ready for multi-Gateway configuration"
+                        )
+                    if primary_health.provider_id == discovery.provider_id:
+                        raise ValueError("duplicate provider")
+
+                    health = await async_fetch_gateway_health(self.hass, candidate)
+                    if (
+                        health.health_schema_version < 6
+                        or health.provider_id != discovery.provider_id
+                        or health.status != "ok"
+                        or health.reauthentication_required
+                        or not health.snapshot_available
+                    ):
+                        raise PortfolioRestError("Discovered Gateway is not ready for live use")
+                    result = await async_fetch_rest_snapshot(self.hass, candidate)
+                    snapshot = result.snapshot
+                    if snapshot is None or result.snapshot_sha256 is None or result.position_count is None:
+                        raise PortfolioRestError("Discovered Gateway returned no verified live snapshot")
+                    if (
+                        result.position_count != len(snapshot.positions)
+                        or health.snapshot_generated_at is None
+                        or health.snapshot_generated_at != snapshot.generated_at
+                        or health.snapshot_position_count != len(snapshot.positions)
+                        or health.snapshot_sha256 != result.snapshot_sha256
+                    ):
+                        raise PortfolioRestError(
+                            "Discovered Gateway health does not match its live snapshot"
+                        )
+                except PortfolioRestAuthenticationError:
+                    errors["base"] = "invalid_auth"
+                except (OSError, ValueError, PortfolioRestError):
+                    errors["base"] = "invalid_rest_gateway"
+                else:
+                    configured = SupplementalRestSourceConfig(
+                        provider_id=discovery.provider_id,
+                        endpoint_url=candidate.endpoint_url,
+                        api_token=candidate.api_token,
+                        tls_ca_certificate=discovery.ca_certificate,
+                    )
+                    options[CONF_SUPPLEMENTAL_REST_SOURCES] = [
+                        *stored, configured.as_storage_dict()
+                    ]
+                    self.hass.config_entries.async_update_entry(entry, options=options)
+                    await self.hass.config_entries.async_reload(entry.entry_id)
+                    return self.async_abort(reason="tls_supplemental_added")
+
+        return self.async_show_form(
+            step_id="hassio_add_supplemental_confirm",
+            data_schema=self.add_suggested_values_to_schema(
+                vol.Schema({vol.Required(CONF_REST_API_TOKEN): str}), suggested
+            ),
+            errors=errors,
+            description_placeholders={
+                "provider": discovery.provider_id.replace("_", " ").title(),
+                "gateway": discovery.hostname,
+            },
+        )
+
+    async def _async_migrate_primary_tls(
+        self, entry: ConfigEntry, discovery: GatewayTlsDiscovery
+    ) -> ConfigFlowResult:
+        token = entry.data.get(CONF_REST_API_TOKEN)
+        candidate = RestSourceConfig.from_mapping(
+            {
+                CONF_REST_ENDPOINT_URL: discovery.endpoint_url,
+                CONF_REST_API_TOKEN: token,
+                CONF_REST_TLS_CA_CERTIFICATE: discovery.ca_certificate,
+            }
+        )
+        try:
+            health = await async_fetch_gateway_health(self.hass, candidate)
+        except PortfolioRestError:
+            return self.async_abort(reason="tls_validation_failed")
+        if (
+            health.health_schema_version < 6
+            or health.provider_id != discovery.provider_id
+            or not health.snapshot_available
+        ):
+            return self.async_abort(reason="tls_validation_failed")
+        data = dict(entry.data)
+        data[CONF_REST_ENDPOINT_URL] = discovery.endpoint_url
+        data[CONF_REST_TLS_CA_CERTIFICATE] = discovery.ca_certificate
+        self.hass.config_entries.async_update_entry(entry, data=data)
+        await self.hass.config_entries.async_reload(entry.entry_id)
+        return self.async_abort(reason="tls_migrated")
+
+    async def _async_migrate_supplemental_tls(
+        self,
+        entry: ConfigEntry,
+        discovery: GatewayTlsDiscovery,
+        index: int,
+        raw_sources: list[Any],
+    ) -> ConfigFlowResult:
+        raw = raw_sources[index]
+        assert isinstance(raw, dict)
+        token = raw.get(CONF_REST_API_TOKEN)
+        candidate = RestSourceConfig.from_mapping(
+            {
+                CONF_REST_ENDPOINT_URL: discovery.endpoint_url,
+                CONF_REST_API_TOKEN: token,
+                CONF_REST_TLS_CA_CERTIFICATE: discovery.ca_certificate,
+            }
+        )
+        try:
+            health = await async_fetch_gateway_health(self.hass, candidate)
+        except PortfolioRestError:
+            return self.async_abort(reason="tls_validation_failed")
+        if (
+            health.health_schema_version < 6
+            or health.provider_id != discovery.provider_id
+            or not health.snapshot_available
+        ):
+            return self.async_abort(reason="tls_validation_failed")
+        configured = SupplementalRestSourceConfig(
+            provider_id=discovery.provider_id,
+            endpoint_url=discovery.endpoint_url,
+            api_token=candidate.api_token,
+            tls_ca_certificate=discovery.ca_certificate,
+        )
+        updated_sources = list(raw_sources)
+        updated_sources[index] = configured.as_storage_dict()
+        options = dict(entry.options)
+        options[CONF_SUPPLEMENTAL_REST_SOURCES] = updated_sources
+        self.hass.config_entries.async_update_entry(entry, options=options)
+        await self.hass.config_entries.async_reload(entry.entry_id)
+        return self.async_abort(reason="tls_migrated")
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -249,7 +555,9 @@ class PortfolioArchitectConfigFlow(ConfigFlow, domain=DOMAIN):
             candidate = dict(entry.data)
             candidate[CONF_REST_API_TOKEN] = user_input[CONF_REST_API_TOKEN]
             try:
-                cleaned = await self._async_validate_rest_source_data(candidate)
+                cleaned = await self._async_validate_rest_source_data(
+                    candidate, require_https=False
+                )
             except PortfolioRestAuthenticationError:
                 errors["base"] = "invalid_auth"
             except PortfolioSourcePathError:
@@ -505,10 +813,11 @@ class PortfolioArchitectConfigFlow(ConfigFlow, domain=DOMAIN):
                 cleaned.pop(key, None)
         cleaned.pop(CONF_REST_ENDPOINT_URL, None)
         cleaned.pop(CONF_REST_API_TOKEN, None)
+        cleaned.pop(CONF_REST_TLS_CA_CERTIFICATE, None)
         return cleaned
 
     async def _async_validate_rest_source_data(
-        self, data: dict[str, Any]
+        self, data: dict[str, Any], *, require_https: bool = True
     ) -> dict[str, Any]:
         configuration = resolve_configuration_directory(
             self.hass,
@@ -516,6 +825,8 @@ class PortfolioArchitectConfigFlow(ConfigFlow, domain=DOMAIN):
             require_exists=True,
         )
         rest_config = RestSourceConfig.from_mapping(data)
+        if require_https and urlsplit(rest_config.endpoint_url).scheme != "https":
+            raise PortfolioRestTlsError("New and reconfigured REST sources must use verified HTTPS")
         result = await async_fetch_rest_snapshot(self.hass, rest_config)
         health = await async_fetch_gateway_health(self.hass, rest_config)
         if health.status != "ok" or health.reauthentication_required:
@@ -532,13 +843,16 @@ class PortfolioArchitectConfigFlow(ConfigFlow, domain=DOMAIN):
             rest_config.endpoint_url,
         )
         _validate_calculated_payload(payload)
-        return {
+        cleaned = {
             CONF_SOURCE_TYPE: SOURCE_TYPE_REST_API,
             CONF_SOURCE_PROVIDER: PROVIDER_LOCAL_REST_JSON,
             CONF_CONFIG_DIRECTORY: configuration.config_relative,
             CONF_REST_ENDPOINT_URL: rest_config.endpoint_url,
             CONF_REST_API_TOKEN: rest_config.api_token,
         }
+        if rest_config.tls_ca_certificate is not None:
+            cleaned[CONF_REST_TLS_CA_CERTIFICATE] = rest_config.tls_ca_certificate
+        return cleaned
 
     def _finish_source(self, cleaned: dict[str, Any]) -> ConfigFlowResult:
         if self._reconfigure_mode:
@@ -672,6 +986,8 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
             else:
                 try:
                     candidate_transport = RestSourceConfig.from_mapping(user_input)
+                    if urlsplit(candidate_transport.endpoint_url).scheme != "https":
+                        raise PortfolioRestTlsError("Additional Gateways must use verified HTTPS")
                     existing = tuple(
                         SupplementalRestSourceConfig.from_mapping(item)
                         for item in stored
@@ -744,6 +1060,7 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
                         provider_id=health.provider_id,
                         endpoint_url=candidate_transport.endpoint_url,
                         api_token=candidate_transport.api_token,
+                        tls_ca_certificate=candidate_transport.tls_ca_certificate,
                     )
                     options[CONF_SUPPLEMENTAL_REST_SOURCES] = [
                         *stored,
@@ -1347,6 +1664,24 @@ def _csv_source_schema() -> vol.Schema:
             vol.Required(CONF_CSV_PATH): TextSelector(
                 TextSelectorConfig(multiline=False)
             )
+        }
+    )
+
+
+
+def _hassio_rest_source_schema() -> vol.Schema:
+    return vol.Schema(
+        {
+            vol.Required(CONF_CONFIG_DIRECTORY): TextSelector(
+                TextSelectorConfig(multiline=False)
+            ),
+            vol.Required(CONF_REST_API_TOKEN): TextSelector(
+                TextSelectorConfig(
+                    type=TextSelectorType.PASSWORD,
+                    autocomplete="current-password",
+                    multiline=False,
+                )
+            ),
         }
     )
 

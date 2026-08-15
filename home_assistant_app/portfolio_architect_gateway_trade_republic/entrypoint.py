@@ -6,6 +6,11 @@ import logging
 import os
 from pathlib import Path
 
+from portfolio_architect_gateway.supervisor_tls import (
+    prepare_supervisor_tls,
+    start_supervisor_tls_discovery_publisher,
+)
+
 from portfolio_architect_gateway.pending_app import PendingAppOptions
 from portfolio_architect_gateway.trade_republic_app import serve_trade_republic_app
 from portfolio_architect_gateway.provider import normalise_provider_id
@@ -30,13 +35,27 @@ def main() -> int:
         os.chown(child, APP_UID, APP_GID)
         if child.is_file():
             os.chmod(child, 0o600)
+        elif child.is_dir() and child.name == "tls":
+            os.chmod(child, 0o700)
+            for tls_child in child.iterdir():
+                if tls_child.is_symlink() or not tls_child.is_file():
+                    raise RuntimeError("Invalid entry in gateway TLS directory")
+                os.chown(tls_child, APP_UID, APP_GID)
+                os.chmod(tls_child, 0o600)
     os.setgroups([])
     os.setgid(APP_GID)
     os.setuid(APP_UID)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     if provider_id != "trade_republic":
         raise RuntimeError("Trade Republic App provider identity is invalid")
-    serve_trade_republic_app(provider_name=provider_name, options=options)
+    tls = prepare_supervisor_tls(DATA, provider_id)
+    serve_trade_republic_app(
+        provider_name=provider_name,
+        options=options,
+        tls_cert_file=tls.cert_file,
+        tls_key_file=tls.key_file,
+        ready_callback=lambda: start_supervisor_tls_discovery_publisher(tls, provider_id),
+    )
     return 0
 
 

@@ -56,6 +56,82 @@ jobs:
       - name: Smoke-test provider shell containers
         shell: bash
         run: |
+          network="portfolio-architect-provider-smoke"
+          supervisor_name="portfolio-architect-supervisor-smoke"
+          supervisor_token="$(python -c 'import secrets; print(secrets.token_urlsafe(32))')"
+          mock_supervisor="${RUNNER_TEMP}/portfolio_architect_mock_supervisor.py"
+
+          cleanup() {
+            docker rm -f "${supervisor_name}" >/dev/null 2>&1 || true
+            docker rm -f \
+              portfolio-architect-portfolio_architect_gateway_dkb-smoke \
+              portfolio-architect-portfolio_architect_gateway_trade_republic-smoke \
+              >/dev/null 2>&1 || true
+            docker network rm "${network}" >/dev/null 2>&1 || true
+            rm -f "${mock_supervisor}"
+          }
+          trap cleanup EXIT
+
+          cat >"${mock_supervisor}" <<'PYMOCKSUPERVISOR'
+          import json
+          import os
+          from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+          TOKEN = os.environ["PA_VALIDATION_SUPERVISOR_TOKEN"]
+          HOSTNAME = "portfolio-architect-gateway-validation"
+
+          class Handler(BaseHTTPRequestHandler):
+              def _authorized(self):
+                  return self.headers.get("Authorization") == f"Bearer {TOKEN}"
+
+              def _reply(self, status, data):
+                  body = json.dumps({"result": "ok", "data": data}, separators=(",", ":")).encode()
+                  self.send_response(status)
+                  self.send_header("Content-Type", "application/json")
+                  self.send_header("Content-Length", str(len(body)))
+                  self.end_headers()
+                  self.wfile.write(body)
+
+              def do_GET(self):
+                  if not self._authorized():
+                      self.send_error(401)
+                      return
+                  if self.path != "/addons/self/info":
+                      self.send_error(404)
+                      return
+                  self._reply(200, {"hostname": HOSTNAME})
+
+              def do_POST(self):
+                  if not self._authorized():
+                      self.send_error(401)
+                      return
+                  if self.path != "/discovery":
+                      self.send_error(404)
+                      return
+                  length = int(self.headers.get("Content-Length", "0"))
+                  document = json.loads(self.rfile.read(length))
+                  if document.get("service") != "portfolio_architect":
+                      self.send_error(400)
+                      return
+                  self._reply(200, {"uuid": "0123456789abcdef0123456789abcdef"})
+
+              def log_message(self, _format, *_args):
+                  return
+
+          ThreadingHTTPServer(("0.0.0.0", 80), Handler).serve_forever()
+          PYMOCKSUPERVISOR
+
+          docker network create "${network}" >/dev/null
+          docker run --detach --name "${supervisor_name}" \
+            --network "${network}" \
+            --network-alias supervisor \
+            --env "PA_VALIDATION_SUPERVISOR_TOKEN=${supervisor_token}" \
+            --volume "${mock_supervisor}:/mock_supervisor.py:ro" \
+            --entrypoint /usr/local/bin/python3.14 \
+            portfolio-architect-portfolio_architect_gateway_dkb:validation \
+            /mock_supervisor.py >/dev/null
+          sleep 1
+
           for app in \
             portfolio_architect_gateway_dkb \
             portfolio_architect_gateway_trade_republic
@@ -67,17 +143,18 @@ jobs:
             )
             test "${#provider_env[@]}" -eq 2
             docker run --detach --name "${name}" \
+              --network "${network}" \
+              --env "SUPERVISOR_TOKEN=${supervisor_token}" \
               --env "PA_PROVIDER_ID=${provider_env[0]}" \
               --env "PA_PROVIDER_NAME=${provider_env[1]}" \
               "${image}" >/dev/null
             sleep 2
             if ! test "$(docker inspect --format '{{.State.Running}}' "${name}")" = "true"; then
               docker logs "${name}" >&2 || true
-              docker rm -f "${name}" >/dev/null 2>&1 || true
               exit 1
             fi
             docker exec "${name}" /usr/local/bin/python3.14 -c \
-              'import socket; [socket.create_connection(("127.0.0.1", port), 2).close() for port in (8099, 8787)]'
+              'import pathlib, socket, ssl; socket.create_connection(("127.0.0.1", 8099), 2).close(); hostname=pathlib.Path("/data/gateway/tls/hostname").read_text(encoding="ascii").strip(); context=ssl.create_default_context(cafile="/data/gateway/tls/ca-cert.pem"); raw=socket.create_connection(("127.0.0.1", 8787), 2); tls=context.wrap_socket(raw, server_hostname=hostname); tls.close()'
             docker rm -f "${name}" >/dev/null
           done
       - name: Scan source, history, and release artifacts for secrets

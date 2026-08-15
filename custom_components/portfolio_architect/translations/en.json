@@ -44,7 +44,7 @@
           "rest_api_token": "Gateway bearer token"
         },
         "data_description": {
-          "rest_endpoint_url": "HTTP or HTTPS URL without credentials, query, or fragment. The host must resolve exclusively to loopback, link-local, or private addresses.",
+          "rest_endpoint_url": "Verified HTTPS URL without credentials, query, or fragment. The host must resolve exclusively to loopback, link-local, or private addresses. Existing pre-v1.27 HTTP entries are migrated through Supervisor trust discovery.",
           "rest_api_token": "Dedicated low-privilege token used only between Home Assistant and the local gateway. Minimum length: 16 characters."
         }
       },
@@ -87,6 +87,28 @@
           "csv_column_identifier": "Use WKN, ISIN, ticker, or another stable identifier. Values must be unique.",
           "csv_column_currency": "Optional. When mapped, every imported row must explicitly contain EUR or €."
         }
+      },
+      "hassio_confirm": {
+        "title": "Connect discovered Portfolio Architect Gateway securely",
+        "description": "Home Assistant Supervisor provided verified private-CA trust for {gateway}. Enter the existing Gateway bearer token and Portfolio Architect configuration directory; the HTTPS endpoint is validated before setup completes.",
+        "data": {
+          "config_directory": "Portfolio configuration directory",
+          "rest_api_token": "Gateway bearer token"
+        },
+        "data_description": {
+          "config_directory": "Relative to /config. It must contain the Portfolio Architect policy/configuration files.",
+          "rest_api_token": "Dedicated bearer token for this Gateway. TLS trust is supplied separately through Supervisor discovery."
+        }
+      },
+      "hassio_add_supplemental_confirm": {
+        "title": "Add discovered Portfolio Architect Gateway securely",
+        "description": "Home Assistant Supervisor discovered {provider} at {gateway} and supplied its private CA. Enter that Gateway’s existing bearer token to validate and add it as an additional portfolio source.",
+        "data": {
+          "rest_api_token": "Gateway bearer token"
+        },
+        "data_description": {
+          "rest_api_token": "Dedicated bearer token for this Gateway. The HTTPS endpoint and private CA are supplied through Supervisor discovery."
+        }
       }
     },
     "error": {
@@ -102,7 +124,15 @@
       "already_configured": "Portfolio Architect is already configured. Use Reconfigure on the existing integration entry to change its source.",
       "reconfigure_successful": "Portfolio source updated successfully.",
       "reauth_successful": "Local gateway token updated successfully.",
-      "reauth_not_supported": "Reauthentication is only available for the local REST gateway adapter."
+      "reauth_not_supported": "Reauthentication is only available for the local REST gateway adapter.",
+      "invalid_tls_discovery": "Gateway TLS discovery data was invalid and was rejected.",
+      "tls_discovery_not_primary": "This discovered Gateway cannot create the primary Portfolio Architect entry.",
+      "tls_discovery_not_applicable": "The discovered Gateway does not match a configured Portfolio Architect REST source.",
+      "tls_trust_changed": "The Gateway presented a different private CA for an already-secured source. Automatic trust replacement is refused.",
+      "tls_already_configured": "This Gateway already uses the discovered verified HTTPS trust.",
+      "tls_validation_failed": "The discovered HTTPS endpoint could not be validated with the supplied private CA and existing bearer token.",
+      "tls_migrated": "The matching Gateway source was migrated to verified HTTPS successfully.",
+      "tls_supplemental_added": "The discovered Gateway was validated and added as a verified-HTTPS supplemental source."
     }
   },
   "entity": {
@@ -2316,7 +2346,7 @@
           "rest_api_token": "Gateway bearer token"
         },
         "data_description": {
-          "rest_endpoint_url": "HTTP or HTTPS portfolio endpoint on a loopback, link-local, or private address.",
+          "rest_endpoint_url": "Verified HTTPS portfolio endpoint on a loopback, link-local, or private address.",
           "rest_api_token": "Dedicated low-privilege bearer token for this Gateway. It is stored only in the Home Assistant config entry options."
         }
       },

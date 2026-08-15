@@ -65,32 +65,34 @@ Portfolio configuration folder:  portfolio-architect
 ```
 
 For a generic CSV, the flow asks for encoding, delimiter, header row, number
-format, and column mapping. For REST, it asks for the local endpoint and a
-dedicated bearer token. Market values must already be in EUR in every adapter.
-Banking credentials remain in the Gateway.
+format, and column mapping. Official v1.27 Gateway Apps are discovered through Home
+Assistant Supervisor: discovery supplies the verified-HTTPS internal endpoint and
+public private-CA trust, while the user supplies the dedicated Gateway bearer token.
+Market values must already be in EUR in every adapter. Banking credentials and TLS
+private keys remain inside the Gateway App.
 
-The local App endpoint is:
-
-```text
-http://local-portfolio-architect-gateway:8787/api/v1/portfolio
-```
+For a local-development installation the Comdirect endpoint is typically
+`https://local-portfolio-architect-gateway:8787/api/v1/portfolio`; repository-installed
+Apps receive a Supervisor-generated repository prefix, so discovery rather than a
+hard-coded hostname is authoritative.
 
 The flow calculates and validates the complete source before creating or
 reconfiguring the single service config entry. No YAML integration configuration
-or command-line sensor is required.
+or command-line sensor is required. New/reconfigured REST sources require verified
+HTTPS.
 
-### Additional provider Gateways (v1.26)
+### Additional provider Gateways (v1.27)
 
-When the primary source is REST, open **Settings → Devices & services → Portfolio
-Architect → Configure → Portfolio sources → Additional REST Gateways** to add or
-remove other provider Gateway snapshots without replacing the primary source. Each
-additional Gateway requires its internal Home Assistant App-network portfolio
-endpoint on port 8787 and its dedicated bearer token. Portfolio Architect validates
-health schema 6 provider identity and snapshot integrity before saving it.
+A newly discovered supplemental Gateway is never added silently. Supervisor supplies
+its HTTPS endpoint/public CA; Portfolio Architect asks for explicit confirmation and
+the Gateway's dedicated bearer token, then validates health-schema-6 provider
+identity, the live snapshot and integrity metadata before changing portfolio scope.
 
-Keep these endpoints on the private App network; no host/LAN port mapping is
-required. Additional bearer tokens are private config-entry options and are never
-included in diagnostics or portfolio payloads.
+Existing v1.26 HTTP supplemental Gateways migrate in place when their v1.27 App is
+updated, but only after verified HTTPS succeeds with the existing token. Keep all
+Gateway endpoints on the private App network; no host/LAN port mapping is required.
+Additional bearer tokens and private CA trust are config-entry data/options and are
+never included as secret material in diagnostics or portfolio payloads.
 
 ## Native plan configuration
 
@@ -110,4 +112,4 @@ grep -n '^VERSION' /config/custom_components/portfolio_architect/const.py
 grep -n '^__version__' /config/custom_components/portfolio_architect/engine/__init__.py
 ```
 
-All three markers must report `1.26.7`.
+All three markers must report `1.27.0`.

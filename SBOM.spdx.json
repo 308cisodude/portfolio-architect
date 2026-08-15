@@ -1,14 +1,14 @@
 {
   "SPDXID": "SPDXRef-DOCUMENT",
   "creationInfo": {
-    "created": "2026-08-14T00:00:00Z",
+    "created": "2026-08-15T00:00:00Z",
     "creators": [
       "Tool: Portfolio Architect release tooling"
     ]
   },
   "dataLicense": "CC0-1.0",
-  "documentNamespace": "urn:uuid:21fcddb3-c258-542e-8cf6-938c219b181e",
-  "name": "Portfolio Architect v1.26.7 SBOM",
+  "documentNamespace": "urn:uuid:74ae54ca-c26a-5a58-98b7-f93e2bfb222e",
+  "name": "Portfolio Architect v1.27.0 SBOM",
   "packages": [
     {
       "SPDXID": "SPDXRef-Package-Integration",
@@ -19,7 +19,7 @@
       "licenseDeclared": "MIT",
       "name": "Portfolio Architect Home Assistant integration",
       "supplier": "Organization: Portfolio Architect contributors",
-      "versionInfo": "1.26.7"
+      "versionInfo": "1.27.0"
     },
     {
       "SPDXID": "SPDXRef-Package-Gateway",
@@ -30,7 +30,7 @@
       "licenseDeclared": "MIT",
       "name": "Portfolio Architect Gateway — Comdirect App",
       "supplier": "Organization: Portfolio Architect contributors",
-      "versionInfo": "1.26.7"
+      "versionInfo": "1.27.0"
     },
     {
       "SPDXID": "SPDXRef-Package-PythonBase",
@@ -58,7 +58,7 @@
       "licenseDeclared": "MIT",
       "name": "Portfolio Architect Gateway — DKB App",
       "supplier": "Organization: Portfolio Architect contributors",
-      "versionInfo": "1.26.7"
+      "versionInfo": "1.27.0"
     },
     {
       "SPDXID": "SPDXRef-Package-Gateway-TradeRepublic",
@@ -68,7 +68,7 @@
       "licenseDeclared": "MIT",
       "name": "Portfolio Architect Gateway — Trade Republic App",
       "supplier": "Organization: Portfolio Architect contributors",
-      "versionInfo": "1.26.7"
+      "versionInfo": "1.27.0"
     },
     {
       "SPDXID": "SPDXRef-Package-pypdf",
@@ -87,6 +87,24 @@
       "name": "pypdf",
       "supplier": "Organization: pypdf maintainers",
       "versionInfo": "6.15.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-OpenSSL",
+      "copyrightText": "Copyright OpenSSL Project Authors",
+      "downloadLocation": "https://pkgs.alpinelinux.org/package/v3.24/main/x86_64/openssl",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:apk/alpine/openssl@3.5.7-r0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "Apache-2.0",
+      "licenseDeclared": "Apache-2.0",
+      "name": "OpenSSL runtime CLI",
+      "supplier": "Organization: OpenSSL Project",
+      "versionInfo": "3.5.7-r0"
     }
   ],
   "relationships": [
@@ -127,6 +145,21 @@
     },
     {
       "relatedSpdxElement": "SPDXRef-Package-pypdf",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-Gateway-TradeRepublic"
+    },
+    {
+      "relatedSpdxElement": "SPDXRef-Package-OpenSSL",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-Gateway"
+    },
+    {
+      "relatedSpdxElement": "SPDXRef-Package-OpenSSL",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-Gateway-DKB"
+    },
+    {
+      "relatedSpdxElement": "SPDXRef-Package-OpenSSL",
       "relationshipType": "DEPENDS_ON",
       "spdxElementId": "SPDXRef-Package-Gateway-TradeRepublic"
     }

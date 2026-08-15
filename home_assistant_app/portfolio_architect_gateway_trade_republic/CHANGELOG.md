@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.27.0
+
+- Serves the accepted Trade Republic snapshot over the common verified-HTTPS/private-CA Gateway boundary and publishes only public trust through Supervisor discovery.
+- Retains bearer authentication, statement-import validation, persisted snapshot behavior, REST schema 1 and health schema 6.
+- The original statement PDF remains transient private input and no trading/write capability is added.
+
 ## 1.26.7
 
 - Version alignment for Portfolio Architect 1.26.7.

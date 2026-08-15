@@ -1,7 +1,15 @@
-# Portfolio Architect Gateway — Trade Republic v1.26.7
+# Portfolio Architect Gateway — Trade Republic v1.27.0
 
-The Trade Republic App remains an isolated statement-import provider. Use the admin-only Ingress page to import a current supported German text-PDF `DEPOTAUSZUG`; the PDF is processed in memory and discarded, while only the normalized holdings snapshot and private bearer token persist.
+The Trade Republic App remains an isolated statement-import provider. Use the
+admin-only Ingress page to import a current supported German text-PDF `DEPOTAUSZUG`;
+the PDF is processed in memory and discarded, while only the validated
+provider-neutral holdings snapshot and private bearer token persist.
 
-Version 1.26.7 changes only the common Gateway cached-snapshot/HTTP validator layer: optional quantity survives reload and ETag validation has correct precedence. Statement parsing, provider acquisition model, REST schema 1 and health schema 6 are unchanged.
+Version 1.27.0 serves that snapshot over the common certificate-verified HTTPS
+Gateway boundary. A persistent App-private CA/server certificate protects the
+private REST transport and only public trust plus bounded endpoint identity is
+published through Supervisor discovery. The bearer token remains required.
 
-The App uses its own `/data/gateway` private volume and must be upgraded in place to retain private state.
+Statement parsing, persisted snapshot semantics, REST schema 1 and health schema 6
+are unchanged. The App uses its own `/data/gateway` private volume and must be
+upgraded in place to retain private state, including its TLS trust identity.

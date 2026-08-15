@@ -1,4 +1,4 @@
-# Portfolio Architect v1.26.7
+# Portfolio Architect v1.27.0
 
 Portfolio Architect is a Home Assistant-native portfolio overview, policy-check,
 and deterministic investment-planning system. It supports provider-specific CSV
@@ -28,12 +28,19 @@ transfer, payment, or account-transaction capability.
   tracked tree, complete Git patch history, and built release artifacts.
 - Immutable GitHub Action and validator-image dependencies, plus a hash-locked
   Python validation toolchain, enforced by local and release checks.
+- Verified-HTTPS Gateway transport with per-App private CA trust distributed through
+  Home Assistant Supervisor discovery, layered with the existing bearer token.
 - DNS-pinned local REST transport that binds the validated private address set to
-  the authenticated connection while preserving Host/SNI identity.
+  the authenticated connection while preserving Host/SNI/certificate identity.
 
 ## Provider Gateway Apps
 
-Version 1.26.7 fixes a cold-restart integrity edge case in the common Gateway runtime: persisted quantity-bearing snapshots now round-trip byte-for-byte, and HTTP `If-None-Match` takes precedence over `If-Modified-Since` so a changed ETag can never be reported as `304 Not Modified`. No provider acquisition, OAuth/session, portfolio-calculation, date-presentation, or wire-schema change.
+Version 1.27.0 makes the official provider Gateway REST boundary HTTPS-only and
+certificate-verified. Each App persists a private CA/server certificate, publishes
+only its public CA and bounded internal identity through Supervisor discovery, and
+keeps the existing bearer token as a separate authentication layer. Existing HTTP
+sources migrate only after the discovered HTTPS endpoint validates successfully;
+there is no automatic plaintext fallback after migration.
 
 ## Installation channels
 
@@ -64,7 +71,7 @@ See `docs/PUBLICATION-SETUP.md` and `docs/PUBLISHING.md`.
 
 - Home Assistant 2026.7.0 or newer
 - Python 3.14 for source validation and Gateway builds
-- Gateway App 1.16.1 or newer for the established live Comdirect protocol; Gateway App 1.19.0 or newer for configurable cash authorization; 1.19.1 or newer includes the corrected capped-to-all-available transition; 1.20.1 or newer includes the LKG entity-propagation fix; 1.21.0 adds execution/actionability semantics; 1.22.0 adds publication/privacy hardening; 1.24.1 includes the distinct-provider shell startup hotfix; 1.25.0 adds private local Trade Republic `DEPOTAUSZUG` statement import; 1.26.0 adds simultaneous provider Gateway aggregation; 1.26.1 makes instrument identity ISIN-first without changing REST schema 1 or health schema 6; 1.26.2 adds localized dashboard presentation and privacy-safe unavailable-source diagnostics; 1.26.3 closes the remaining German unavailable-state dashboard edge case and polishes policy-compliance layout without changing machine-readable entity states; 1.26.4 attempts native Tile short-date rendering without changing entity states; 1.26.5 moves only dashboard date presentation to additive read-only native `date.*` counterparts after live acceptance showed the v1.26.4 Tile formatter is ineffective for `sensor` DATE states; 1.26.6 fixes non-live REST Gateway source identification without changing acquisition or authentication behavior; 1.26.7 preserves persisted quantities and corrects conditional-request precedence so Gateway cold restarts cannot create a false snapshot-fingerprint change
+- Gateway App 1.16.1 or newer for the established live Comdirect protocol; Gateway App 1.19.0 or newer for configurable cash authorization; 1.19.1 or newer includes the corrected capped-to-all-available transition; 1.20.1 or newer includes the LKG entity-propagation fix; 1.21.0 adds execution/actionability semantics; 1.22.0 adds publication/privacy hardening; 1.24.1 includes the distinct-provider shell startup hotfix; 1.25.0 adds private local Trade Republic `DEPOTAUSZUG` statement import; 1.26.0 adds simultaneous provider Gateway aggregation; 1.26.1 makes instrument identity ISIN-first without changing REST schema 1 or health schema 6; 1.26.2 adds localized dashboard presentation and privacy-safe unavailable-source diagnostics; 1.26.3 closes the remaining German unavailable-state dashboard edge case and polishes policy-compliance layout without changing machine-readable entity states; 1.26.4 attempts native Tile short-date rendering without changing entity states; 1.26.5 moves only dashboard date presentation to additive read-only native `date.*` counterparts after live acceptance showed the v1.26.4 Tile formatter is ineffective for `sensor` DATE states; 1.26.6 fixes non-live REST Gateway source identification without changing acquisition or authentication behavior; 1.26.7 preserves persisted quantities and corrects conditional-request precedence so Gateway cold restarts cannot create a false snapshot-fingerprint change; 1.27.0 adds per-Gateway private-PKI verified HTTPS with Supervisor trust discovery and fail-closed in-place migration
 
 The current stable Portfolio Architect release and the immediately preceding
 stable release receive security and correctness fixes while a documented upgrade
@@ -78,7 +85,7 @@ The selected investment account identifier, IBAN, account holder, transaction
 history, OAuth material, qSession cookie, and bank credentials are not included
 in the public portfolio snapshot or diagnostics.
 
-Never expose the Gateway REST port to an untrusted network.
+Official v1.27.0 Gateway Apps use verified HTTPS on the private Home Assistant App network and retain bearer authentication. Never expose the Gateway REST port to an untrusted network.
 
 ## AI-assisted development
 
@@ -124,6 +131,7 @@ and built release contents before publication.
 - `docs/QUALITY.md`
 - `docs/DECISION-TRACE.md`
 - `AI_POLICY.md`
+- `docs/UPGRADE-1.27.0.md`
 - `docs/UPGRADE-1.26.7.md`
 - `docs/UPGRADE-1.26.6.md`
 - `docs/UPGRADE-1.26.5.md`

@@ -12,11 +12,15 @@ import ipaddress
 import json
 import re
 import socket
+import ssl
 from typing import Any, Final
 from urllib.parse import SplitResult, urlsplit, urlunsplit
 
 from aiohttp import (
+    ClientConnectorCertificateError,
+    ClientConnectorSSLError,
     ClientError,
+    ClientSSLError,
     ClientResponse,
     ClientSession,
     ClientTimeout,
@@ -34,6 +38,7 @@ MAX_REST_HEALTH_RESPONSE_BYTES: Final = 16 * 1024
 REST_REQUEST_TIMEOUT_SECONDS: Final = 15
 MIN_REST_TOKEN_LENGTH: Final = 16
 MAX_REST_TOKEN_LENGTH: Final = 512
+MAX_REST_CA_CERTIFICATE_BYTES: Final = 16 * 1024
 MAX_RETRY_AFTER_SECONDS: Final = 3600
 HEALTH_V2_MEDIA_TYPE: Final = "application/vnd.portfolio-architect.health+json;version=2"
 HEALTH_V3_MEDIA_TYPE: Final = "application/vnd.portfolio-architect.health+json;version=3"
@@ -42,6 +47,8 @@ HEALTH_V5_MEDIA_TYPE: Final = "application/vnd.portfolio-architect.health+json;v
 HEALTH_V6_MEDIA_TYPE: Final = "application/vnd.portfolio-architect.health+json;version=6"
 SNAPSHOT_SHA256_HEADER: Final = "X-Portfolio-Snapshot-SHA256"
 SNAPSHOT_POSITION_COUNT_HEADER: Final = "X-Portfolio-Position-Count"
+TLS_DISCOVERY_SCHEMA_VERSION: Final = 1
+TLS_DISCOVERY_GATEWAY_PATH: Final = "/api/v1/portfolio"
 
 _TOKEN_RE = re.compile(r"^[\x21-\x7e]+$")
 _ALLOWED_IPV4_NETWORKS = tuple(
@@ -55,6 +62,10 @@ _ALLOWED_IPV6_NETWORKS = tuple(
 
 class PortfolioRestError(ValueError):
     """Base error for a REST source."""
+
+
+class PortfolioRestTlsError(PortfolioRestError):
+    """Raised when verified HTTPS transport cannot be established."""
 
 
 class PortfolioRestAuthenticationError(PortfolioRestError):
@@ -75,6 +86,7 @@ class RestSourceConfig:
 
     endpoint_url: str
     api_token: str
+    tls_ca_certificate: str | None = None
 
     @classmethod
     def from_mapping(cls, raw: dict[str, Any]) -> RestSourceConfig:
@@ -82,6 +94,9 @@ class RestSourceConfig:
         return cls(
             endpoint_url=normalise_rest_endpoint(raw.get("rest_endpoint_url")),
             api_token=normalise_rest_token(raw.get("rest_api_token")),
+            tls_ca_certificate=normalise_rest_ca_certificate(
+                raw.get("rest_tls_ca_certificate")
+            ),
         )
 
     def as_public_dict(self) -> dict[str, Any]:
@@ -90,12 +105,26 @@ class RestSourceConfig:
             "source_provider": "local_rest_json",
             "endpoint": self.endpoint_url,
             "authentication": "bearer",
+            "transport_security": self.transport_security,
+            "custom_ca_configured": self.tls_ca_certificate is not None,
+            "tls_ca_sha256": self.tls_ca_sha256,
             "token_configured": True,
             "response_limit_bytes": MAX_REST_RESPONSE_BYTES,
             "request_timeout_seconds": REST_REQUEST_TIMEOUT_SECONDS,
             "snapshot_integrity": "sha256_etag_position_count",
             "requested_health_schema_version": 6,
         }
+
+
+    @property
+    def transport_security(self) -> str:
+        return "verified_https" if urlsplit(self.endpoint_url).scheme == "https" else "legacy_http"
+
+    @property
+    def tls_ca_sha256(self) -> str | None:
+        if self.tls_ca_certificate is None:
+            return None
+        return _certificate_sha256(self.tls_ca_certificate)
 
 
 @dataclass(frozen=True, slots=True)
@@ -105,6 +134,7 @@ class SupplementalRestSourceConfig:
     provider_id: str
     endpoint_url: str
     api_token: str
+    tls_ca_certificate: str | None = None
 
     @classmethod
     def from_mapping(cls, raw: dict[str, Any]) -> "SupplementalRestSourceConfig":
@@ -119,6 +149,7 @@ class SupplementalRestSourceConfig:
             provider_id=provider_id,
             endpoint_url=transport.endpoint_url,
             api_token=transport.api_token,
+            tls_ca_certificate=transport.tls_ca_certificate,
         )
 
     @property
@@ -126,14 +157,18 @@ class SupplementalRestSourceConfig:
         return RestSourceConfig(
             endpoint_url=self.endpoint_url,
             api_token=self.api_token,
+            tls_ca_certificate=self.tls_ca_certificate,
         )
 
     def as_storage_dict(self) -> dict[str, str]:
-        return {
+        result = {
             "provider_id": self.provider_id,
             "rest_endpoint_url": self.endpoint_url,
             "rest_api_token": self.api_token,
         }
+        if self.tls_ca_certificate is not None:
+            result["rest_tls_ca_certificate"] = self.tls_ca_certificate
+        return result
 
     def as_public_dict(self) -> dict[str, Any]:
         return {
@@ -141,7 +176,81 @@ class SupplementalRestSourceConfig:
             "endpoint": self.endpoint_url,
             "authentication": "bearer",
             "token_configured": True,
+            "transport_security": self.rest_config.transport_security,
+            "custom_ca_configured": self.tls_ca_certificate is not None,
+            "tls_ca_sha256": self.rest_config.tls_ca_sha256,
         }
+
+
+@dataclass(frozen=True, slots=True)
+class GatewayTlsDiscovery:
+    """Strict Supervisor-distributed HTTPS trust description for one Gateway."""
+
+    provider_id: str
+    hostname: str
+    port: int
+    path: str
+    ca_certificate: str
+    ca_sha256: str
+
+    @classmethod
+    def from_mapping(cls, raw: dict[str, Any]) -> "GatewayTlsDiscovery":
+        if raw.get("transport_schema_version") != TLS_DISCOVERY_SCHEMA_VERSION:
+            raise PortfolioRestTlsError("Gateway TLS discovery schema is unsupported")
+        provider_id = raw.get("provider_id")
+        if not isinstance(provider_id, str) or re.fullmatch(r"[a-z][a-z0-9_]{1,31}", provider_id) is None:
+            raise PortfolioRestTlsError("Gateway TLS discovery provider ID is invalid")
+        hostname = raw.get("host")
+        if not isinstance(hostname, str):
+            raise PortfolioRestTlsError("Gateway TLS discovery hostname is invalid")
+        hostname = hostname.strip().lower().rstrip(".")
+        if (
+            len(hostname) > 253
+            or re.fullmatch(
+                r"(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)(?:\.(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?))*",
+                hostname,
+            )
+            is None
+        ):
+            raise PortfolioRestTlsError("Gateway TLS discovery hostname is invalid")
+        port = raw.get("port")
+        if isinstance(port, bool) or not isinstance(port, int) or not 1 <= port <= 65535:
+            raise PortfolioRestTlsError("Gateway TLS discovery port is invalid")
+        path = raw.get("path")
+        if path != TLS_DISCOVERY_GATEWAY_PATH:
+            raise PortfolioRestTlsError("Gateway TLS discovery path is invalid")
+        ca_certificate = normalise_rest_ca_certificate(raw.get("ca_certificate"))
+        if ca_certificate is None:
+            raise PortfolioRestTlsError("Gateway TLS discovery CA certificate is missing")
+        ca_sha256 = raw.get("ca_sha256")
+        actual_sha256 = _certificate_sha256(ca_certificate)
+        if not isinstance(ca_sha256, str) or not secrets_compare_digest_hex(ca_sha256, actual_sha256):
+            raise PortfolioRestTlsError("Gateway TLS discovery CA fingerprint is invalid")
+        return cls(provider_id, hostname, port, path, ca_certificate, actual_sha256)
+
+    @property
+    def endpoint_url(self) -> str:
+        return normalise_rest_endpoint(f"https://{self.hostname}:{self.port}{self.path}")
+
+    def matches_legacy_endpoint(self, endpoint_url: str) -> bool:
+        """Return true only when discovery changes scheme/trust, not network identity."""
+        existing = urlsplit(normalise_rest_endpoint(endpoint_url))
+        candidate = urlsplit(self.endpoint_url)
+        existing_port = existing.port or (443 if existing.scheme == "https" else 80)
+        return (
+            _canonical_hostname(existing.hostname or "") == self.hostname
+            and existing_port == self.port
+            and (existing.path or "/") == self.path
+        )
+
+
+def secrets_compare_digest_hex(left: str, right: str) -> bool:
+    """Compare one bounded lowercase SHA-256 hex value without timing-sensitive equality."""
+    import hmac
+
+    if re.fullmatch(r"[0-9a-f]{64}", left) is None:
+        return False
+    return hmac.compare_digest(left, right)
 
 
 @dataclass(frozen=True, slots=True)
@@ -328,6 +437,57 @@ def normalise_rest_token(value: Any) -> str:
     return token
 
 
+def normalise_rest_ca_certificate(value: Any) -> str | None:
+    """Validate one public CA certificate without accepting private-key material."""
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        raise PortfolioRestError("REST TLS CA certificate must be PEM text")
+    if not value or len(value.encode("utf-8")) > MAX_REST_CA_CERTIFICATE_BYTES:
+        raise PortfolioRestError("REST TLS CA certificate is empty or too large")
+    cleaned = value.strip() + "\n"
+    if "PRIVATE KEY" in cleaned or cleaned.count("-----BEGIN CERTIFICATE-----") != 1:
+        raise PortfolioRestError("REST TLS CA certificate must contain exactly one certificate")
+    try:
+        ssl.PEM_cert_to_DER_cert(cleaned)
+        context = ssl.create_default_context(cadata=cleaned)
+        context.minimum_version = ssl.TLSVersion.TLSv1_2
+        context.check_hostname = True
+        context.verify_mode = ssl.CERT_REQUIRED
+    except (ValueError, ssl.SSLError) as err:
+        raise PortfolioRestError("REST TLS CA certificate is invalid") from err
+    return cleaned
+
+
+def _certificate_sha256(pem: str) -> str:
+    try:
+        der = ssl.PEM_cert_to_DER_cert(pem)
+    except ValueError as err:
+        raise PortfolioRestError("REST TLS CA certificate is invalid") from err
+    return hashlib.sha256(der).hexdigest()
+
+
+def _rest_ssl_context(config: RestSourceConfig) -> ssl.SSLContext | None:
+    if urlsplit(config.endpoint_url).scheme != "https":
+        if config.tls_ca_certificate is not None:
+            raise PortfolioRestError("A REST TLS CA certificate cannot be used with HTTP")
+        return None
+    try:
+        if config.tls_ca_certificate is None:
+            context = ssl.create_default_context()
+        else:
+            # Supervisor-discovered Gateway trust is deliberately private-CA-only.
+            # Do not combine it with the operating-system public trust store.
+            context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+            context.load_verify_locations(cadata=config.tls_ca_certificate)
+        context.minimum_version = ssl.TLSVersion.TLSv1_2
+        context.check_hostname = True
+        context.verify_mode = ssl.CERT_REQUIRED
+    except (ValueError, ssl.SSLError) as err:
+        raise PortfolioRestTlsError("Verified HTTPS trust configuration is invalid") from err
+    return context
+
+
 async def async_validate_local_rest_endpoint(
     hass: HomeAssistant,
     endpoint_url: str,
@@ -365,6 +525,7 @@ async def async_fetch_gateway_health(
     """Fetch and validate the bounded authenticated gateway health document."""
     health_url = gateway_health_url(config.endpoint_url)
     resolved_endpoint = await async_validate_local_rest_endpoint(hass, health_url)
+    ssl_context = await hass.async_add_executor_job(_rest_ssl_context, config)
     headers = {
         "Accept": ", ".join(
             (
@@ -385,10 +546,13 @@ async def async_fetch_gateway_health(
                 headers=headers,
                 allow_redirects=False,
                 timeout=ClientTimeout(total=REST_REQUEST_TIMEOUT_SECONDS),
+                ssl=ssl_context,
             ) as response:
                 return await _async_process_health_response(response)
     except PortfolioRestError:
         raise
+    except (ClientConnectorCertificateError, ClientConnectorSSLError, ClientSSLError, ssl.SSLError) as err:
+        raise PortfolioRestTlsError("Local gateway HTTPS certificate verification failed") from err
     except (ClientError, asyncio.TimeoutError) as err:
         raise PortfolioRestError("Local gateway health endpoint could not be reached") from err
 
@@ -813,6 +977,7 @@ async def async_fetch_rest_snapshot(
     resolved_endpoint = await async_validate_local_rest_endpoint(
         hass, config.endpoint_url
     )
+    ssl_context = await hass.async_add_executor_job(_rest_ssl_context, config)
     headers = {
         "Accept": "application/json",
         "Authorization": f"Bearer {config.api_token}",
@@ -829,10 +994,13 @@ async def async_fetch_rest_snapshot(
                 headers=headers,
                 allow_redirects=False,
                 timeout=ClientTimeout(total=REST_REQUEST_TIMEOUT_SECONDS),
+                ssl=ssl_context,
             ) as response:
                 return await _async_process_response(response, now=now)
     except PortfolioRestError:
         raise
+    except (ClientConnectorCertificateError, ClientConnectorSSLError, ClientSSLError, ssl.SSLError) as err:
+        raise PortfolioRestTlsError("Local gateway HTTPS certificate verification failed") from err
     except (ClientError, asyncio.TimeoutError) as err:
         raise PortfolioRestError("Local REST source could not be reached") from err
 

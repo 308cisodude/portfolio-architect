@@ -113,22 +113,34 @@ Published and live-accepted. Reachable non-live REST Gateways are now identified
 
 ## v1.26.7 — cold-restart snapshot identity hotfix
 
-Current milestone: make an unchanged persisted Gateway snapshot retain exactly the same body/fingerprint across restart and correct HTTP conditional-validator precedence.
-
-- Preserve optional position quantity through cached-snapshot reload.
-- Prove save/load of quantity-bearing snapshots is byte-for-byte stable.
-- Give `If-None-Match` precedence over `If-Modified-Since`; a non-matching ETag must return `200`.
-- Keep fail-closed Portfolio Architect integrity checks unchanged.
-- Make no OAuth/session, provider-acquisition, calculation, dashboard/date, REST-schema or health-schema change.
+Completed and live-accepted. Persisted quantity-bearing Gateway snapshots now retain
+byte-identical content/fingerprint across restart, and `If-None-Match` correctly
+takes precedence over `If-Modified-Since`. The v1.26 multi-provider/resilience line
+is complete.
 
 ## v1.27.0 — Gateway HTTPS transport hardening
 
-Next security-hardening milestone: use authenticated HTTPS for
-Gateway-to-Portfolio-Architect transport on the private Home Assistant App network.
-Certificate provisioning, validation, trust/pinning and renewal must survive normal
-App upgrades without disabling TLS verification or replacing the existing dedicated
-bearer authentication. Each Gateway must retain its own private key/trust identity;
-mTLS may be evaluated separately rather than assumed.
+Current milestone: replace plaintext HTTP on the private Home Assistant App network
+with certificate-verified HTTPS without weakening the existing bearer-authenticated,
+local-only, DNS-pinned Gateway boundary.
+
+- Give each official provider App a persistent per-installation private CA and
+  hostname-valid server certificate.
+- Keep CA/server private keys inside App-private `/data/gateway/tls` state.
+- Publish only public CA trust plus bounded provider/endpoint identity through
+  Home Assistant Supervisor discovery.
+- Update Portfolio Architect first, then migrate each configured Gateway only after
+  the discovered HTTPS health endpoint validates with its existing bearer token.
+- Refuse silent CA replacement and never downgrade an already migrated source to
+  plaintext HTTP.
+- Require explicit user confirmation before a newly discovered supplemental provider
+  is added to an existing portfolio.
+- Preserve local-address validation, DNS pinning, Host/SNI/certificate identity,
+  payload schema 8, REST schema 1, health schema 6, provider isolation, atomic LKG
+  behavior and the read-only/no-trading boundary.
+
+mTLS remains a separate future design question; v1.27.0 deliberately retains the
+dedicated bearer token as the application-layer authentication factor.
 
 ## Later provider acquisition work
 
