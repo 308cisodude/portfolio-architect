@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.27.3
+
+- Version alignment for Portfolio Architect v1.27.3; Trade Republic Gateway TLS and statement-import behavior are unchanged.
+- The Home Assistant-side hotfix only corrects DKB Gateway-vs-CSV discovery identity suppression.
+
 ## 1.27.2
 
 - Version alignment for the Portfolio Architect v1.27.2 Home Assistant discovery-flow migration fix.

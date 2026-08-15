@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.27.3
+
+- Fixes the residual DKB Supervisor-discovery Add card seen after successful v1.27.2 HTTPS migration when DKB CSV already represents portfolio scope.
+- Separates Gateway provider identity (`dkb`) from CSV importer identity (`dkb_csv`) instead of comparing unlike provider namespaces.
+- Applies the same DKB CSV collision rule to Supervisor discovery, discovered supplemental confirmation, and manual REST Gateway addition.
+- Adds an executable regression using the real DKB Gateway provider ID so the previous source-string-only coverage cannot miss this mismatch again.
+- Keeps verified HTTPS/private CA trust, bearer authentication, single-entry enforcement, provider acquisition, schemas, portfolio calculations, LKG behavior, entities and dashboard behavior unchanged.
+
 ## 1.27.2
 
 - Fixes live v1.27.1 acceptance where Home Assistant never initialized the Supervisor `hassio` discovery flow for an already-configured Portfolio Architect entry because the manifest-level `single_config_entry` guard suppressed every new config flow before `async_step_hassio` could run.

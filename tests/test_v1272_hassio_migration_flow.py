@@ -1,4 +1,4 @@
-"""Regression contracts for v1.27.2 Supervisor HTTPS migration flow eligibility."""
+"""Regression contracts for v1.27.3 Supervisor HTTPS migration flow eligibility."""
 
 from __future__ import annotations
 
@@ -44,7 +44,7 @@ def test_discovery_does_not_offer_duplicate_provider_scope() -> None:
     hassio_step = _step(source, "async_step_hassio", "async_step_hassio_confirm")
     assert "if source.provider_id != discovery.provider_id:" in hassio_step
     assert "if not discovery.matches_legacy_endpoint(source.endpoint_url):" in hassio_step
-    assert "discovery.provider_id == PROVIDER_DKB" in hassio_step
+    assert "gateway_provider_conflicts_with_dkb_csv(" in hassio_step
     assert "raw_dkb_sources" in hassio_step
 
 

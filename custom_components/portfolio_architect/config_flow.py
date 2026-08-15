@@ -112,8 +112,11 @@ from .const import (
     SOURCE_TYPE_REST_API,
 )
 from .engine import calculate_portfolio_payload, calculate_portfolio_payload_from_positions
+from .gateway_provider_ids import (
+    GATEWAY_PROVIDER_COMDIRECT,
+    gateway_provider_conflicts_with_dkb_csv,
+)
 CONF_MANUAL_VENUE_FEE_BPS = "manual_venue_fee_bps"
-_GATEWAY_PROVIDER_COMDIRECT = "comdirect"
 
 
 from .engine.execution import ExecutionConfig
@@ -224,7 +227,7 @@ class PortfolioArchitectConfigFlow(ConfigFlow, domain=DOMAIN):
 
         entries = self.hass.config_entries.async_entries(DOMAIN)
         if not entries:
-            if discovery.provider_id != _GATEWAY_PROVIDER_COMDIRECT:
+            if discovery.provider_id != GATEWAY_PROVIDER_COMDIRECT:
                 return self.async_abort(reason="tls_discovery_not_primary")
             self._hassio_discovery = discovery
             await self.async_set_unique_id(INSTANCE_UNIQUE_ID)
@@ -277,15 +280,13 @@ class PortfolioArchitectConfigFlow(ConfigFlow, domain=DOMAIN):
         # source when the existing portfolio already uses DKB CSV input. Comdirect
         # remains primary-only here.
         raw_dkb_sources = entry.options.get(CONF_SUPPLEMENTAL_DKB_CSV_PATHS, [])
-        if (
-            discovery.provider_id == PROVIDER_DKB
-            and isinstance(raw_dkb_sources, list)
-            and raw_dkb_sources
+        if gateway_provider_conflicts_with_dkb_csv(
+            discovery.provider_id, raw_dkb_sources
         ):
             return self.async_abort(reason="tls_discovery_not_applicable")
         if (
             entry.data.get(CONF_SOURCE_TYPE) == SOURCE_TYPE_REST_API
-            and discovery.provider_id != _GATEWAY_PROVIDER_COMDIRECT
+            and discovery.provider_id != GATEWAY_PROVIDER_COMDIRECT
         ):
             self._hassio_discovery = discovery
             return await self.async_step_hassio_add_supplemental_confirm()
@@ -297,7 +298,7 @@ class PortfolioArchitectConfigFlow(ConfigFlow, domain=DOMAIN):
     ) -> ConfigFlowResult:
         """Create a new primary Comdirect REST entry from verified Supervisor discovery."""
         discovery = self._hassio_discovery
-        if discovery is None or discovery.provider_id != _GATEWAY_PROVIDER_COMDIRECT:
+        if discovery is None or discovery.provider_id != GATEWAY_PROVIDER_COMDIRECT:
             return self.async_abort(reason="invalid_tls_discovery")
         errors: dict[str, str] = {}
         suggested = {
@@ -343,7 +344,7 @@ class PortfolioArchitectConfigFlow(ConfigFlow, domain=DOMAIN):
     ) -> ConfigFlowResult:
         """Explicitly add one newly discovered verified-HTTPS supplemental Gateway."""
         discovery = self._hassio_discovery
-        if discovery is None or discovery.provider_id == _GATEWAY_PROVIDER_COMDIRECT:
+        if discovery is None or discovery.provider_id == GATEWAY_PROVIDER_COMDIRECT:
             return self.async_abort(reason="invalid_tls_discovery")
         entries = self.hass.config_entries.async_entries(DOMAIN)
         if len(entries) != 1:
@@ -383,7 +384,9 @@ class PortfolioArchitectConfigFlow(ConfigFlow, domain=DOMAIN):
                         raise ValueError("duplicate provider")
                     if any(item.endpoint_url == candidate.endpoint_url for item in existing):
                         raise ValueError("duplicate endpoint")
-                    if discovery.provider_id == PROVIDER_DKB and dkb_count:
+                    if gateway_provider_conflicts_with_dkb_csv(
+                        discovery.provider_id, raw_dkb_sources
+                    ):
                         raise ValueError("provider already configured through DKB CSV")
 
                     primary = RestSourceConfig.from_mapping(dict(entry.data))
@@ -1030,7 +1033,9 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
                         raise PortfolioRestError("Additional Gateway is not ready for live use")
                     if any(item.provider_id == health.provider_id for item in existing):
                         raise ValueError("duplicate provider")
-                    if health.provider_id == PROVIDER_DKB and dkb_count:
+                    if gateway_provider_conflicts_with_dkb_csv(
+                        health.provider_id, raw_dkb_sources
+                    ):
                         raise ValueError("provider already configured through DKB CSV")
                     if self.config_entry.data.get(CONF_SOURCE_TYPE) == SOURCE_TYPE_REST_API:
                         primary = RestSourceConfig.from_mapping(dict(self.config_entry.data))

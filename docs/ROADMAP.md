@@ -179,3 +179,13 @@ Portfolio Architect keeps the one-entry invariant explicitly in `async_step_user
 with the stable unique ID retained as defense in depth. Existing verified-HTTPS
 trust validation, bearer authentication, provider identity checks, no-plaintext
 fallback, schemas, portfolio calculations and LKG behavior remain unchanged.
+
+
+## v1.27.3 — DKB discovery identity hotfix
+
+Current narrow follow-up: live v1.27.2 acceptance proved Comdirect and Trade Republic
+verified-HTTPS migration, but exposed one pending DKB discovery card because the DKB
+Gateway provider ID `dkb` was compared with the DKB CSV source ID `dkb_csv`. Keep
+Gateway and importer provider namespaces explicit, suppress duplicate DKB scope across
+all setup paths, and preserve the live-proven v1.27.2 TLS/migration architecture
+unchanged.
