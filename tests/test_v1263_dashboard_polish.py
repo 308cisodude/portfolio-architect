@@ -112,7 +112,7 @@ def test_actionability_sensor_owns_german_plan_value_proxy_attributes() -> None:
     assert "self.coordinator.plan_actionable" in purchases
 
 
-def test_policy_summary_removes_non_actionable_aggregate_counters_only_from_dashboard() -> None:
+def test_policy_summary_keeps_aggregate_counters_out_of_primary_tiles() -> None:
     sensor = (COMPONENT / "sensor.py").read_text(encoding="utf-8")
     assert "class PortfolioPolicyChecksSensor" in sensor
     assert "class PortfolioOptimisationOpportunityCountSensor" in sensor
@@ -121,6 +121,8 @@ def test_policy_summary_removes_non_actionable_aggregate_counters_only_from_dash
         cards = _policy_cards(_view(language))
         entities = [_inner_entity(card) for card in cards]
         assert CHECKS not in entities
+        # v1.29 may surface the opportunity count only as a compact heading badge;
+        # it must not become a competing primary tile.
         assert OPPORTUNITIES not in entities
         assert EXCEPTIONS in entities
         assert ROBOTICS_EXCEPTION in entities

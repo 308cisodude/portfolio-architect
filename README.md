@@ -1,4 +1,4 @@
-# Portfolio Architect v1.28.2
+# Portfolio Architect v1.29.0
 
 Portfolio Architect is a Home Assistant-native portfolio overview, policy-check,
 and deterministic investment-planning system. It supports provider-specific CSV
@@ -35,12 +35,12 @@ transfer, payment, or account-transaction capability.
 
 ## Provider Gateway Apps
 
-Version 1.28.2 is release/dependency-automation maintenance. GitHub Actions version
-updates are grouped by Dependabot into one reviewed pull request per update cycle,
-while every workflow action remains pinned to an immutable full commit SHA. The
-v1.28.0 DKB FinTS capability-probe boundary, Comdirect's live-proven v1.27.4 OAuth
-maintenance, Trade Republic statement import, provider acquisition, schemas,
-calculations and Gateway runtime behavior are unchanged.
+Version 1.29.0 is a native dashboard-presentation milestone. The policy-compliance
+section now separates the governed accepted-exception lifecycle from non-critical
+optimisation opportunities with a conditional Home Assistant subtitle and a compact
+badge showing the existing opportunity count. The established compliance, exception
+and opportunity tiles remain unchanged. Provider acquisition, schemas, calculations,
+Gateway runtime, private-PKI HTTPS and the v1.28 DKB FinTS gate are unchanged.
 
 ## Installation channels
 
@@ -71,7 +71,7 @@ See `docs/PUBLICATION-SETUP.md` and `docs/PUBLISHING.md`.
 
 - Home Assistant 2026.7.0 or newer
 - Python 3.14 for source validation and Gateway builds
-- Gateway App 1.16.1 or newer for the established live Comdirect protocol; Gateway App 1.19.0 or newer for configurable cash authorization; 1.19.1 or newer includes the corrected capped-to-all-available transition; 1.20.1 or newer includes the LKG entity-propagation fix; 1.21.0 adds execution/actionability semantics; 1.22.0 adds publication/privacy hardening; 1.24.1 includes the distinct-provider shell startup hotfix; 1.25.0 adds private local Trade Republic `DEPOTAUSZUG` statement import; 1.26.0 adds simultaneous provider Gateway aggregation; 1.26.1 makes instrument identity ISIN-first without changing REST schema 1 or health schema 6; 1.26.2 adds localized dashboard presentation and privacy-safe unavailable-source diagnostics; 1.26.3 closes the remaining German unavailable-state dashboard edge case and polishes policy-compliance layout without changing machine-readable entity states; 1.26.4 attempts native Tile short-date rendering without changing entity states; 1.26.5 moves only dashboard date presentation to additive read-only native `date.*` counterparts after live acceptance showed the v1.26.4 Tile formatter is ineffective for `sensor` DATE states; 1.26.6 fixes non-live REST Gateway source identification without changing acquisition or authentication behavior; 1.26.7 preserves persisted quantities and corrects conditional-request precedence so Gateway cold restarts cannot create a false snapshot-fingerprint change; 1.27.0/1.27.1 introduce per-Gateway private-PKI verified HTTPS; 1.27.2 fixes existing-entry Supervisor discovery eligibility; 1.27.3 fixes DKB Gateway-vs-CSV discovery identity suppression; 1.27.4 decouples Comdirect OAuth session maintenance from portfolio polling while retaining fail-closed migration; 1.28.0 adds only a registration-gated anonymous DKB FinTS capability probe and keeps live DKB acquisition disabled; 1.28.1 refreshes immutable GitHub Actions to Node.js 24-capable major versions without changing runtime behavior; 1.28.2 groups GitHub Actions Dependabot version updates without changing runtime behavior
+- Gateway App 1.16.1 or newer for the established live Comdirect protocol; Gateway App 1.19.0 or newer for configurable cash authorization; 1.19.1 or newer includes the corrected capped-to-all-available transition; 1.20.1 or newer includes the LKG entity-propagation fix; 1.21.0 adds execution/actionability semantics; 1.22.0 adds publication/privacy hardening; 1.24.1 includes the distinct-provider shell startup hotfix; 1.25.0 adds private local Trade Republic `DEPOTAUSZUG` statement import; 1.26.0 adds simultaneous provider Gateway aggregation; 1.26.1 makes instrument identity ISIN-first without changing REST schema 1 or health schema 6; 1.26.2 adds localized dashboard presentation and privacy-safe unavailable-source diagnostics; 1.26.3 closes the remaining German unavailable-state dashboard edge case and polishes policy-compliance layout without changing machine-readable entity states; 1.26.4 attempts native Tile short-date rendering without changing entity states; 1.26.5 moves only dashboard date presentation to additive read-only native `date.*` counterparts after live acceptance showed the v1.26.4 Tile formatter is ineffective for `sensor` DATE states; 1.26.6 fixes non-live REST Gateway source identification without changing acquisition or authentication behavior; 1.26.7 preserves persisted quantities and corrects conditional-request precedence so Gateway cold restarts cannot create a false snapshot-fingerprint change; 1.27.0/1.27.1 introduce per-Gateway private-PKI verified HTTPS; 1.27.2 fixes existing-entry Supervisor discovery eligibility; 1.27.3 fixes DKB Gateway-vs-CSV discovery identity suppression; 1.27.4 decouples Comdirect OAuth session maintenance from portfolio polling while retaining fail-closed migration; 1.28.0 adds only a registration-gated anonymous DKB FinTS capability probe and keeps live DKB acquisition disabled; 1.28.1 refreshes immutable GitHub Actions to Node.js 24-capable major versions without changing runtime behavior; 1.28.2 groups GitHub Actions Dependabot version updates without changing runtime behavior; 1.29.0 adds native policy-dashboard hierarchy without changing entity or runtime contracts
 
 The current stable Portfolio Architect release and the immediately preceding
 stable release receive security and correctness fixes while a documented upgrade
@@ -85,7 +85,7 @@ The selected investment account identifier, IBAN, account holder, transaction
 history, OAuth material, qSession cookie, and bank credentials are not included
 in the public portfolio snapshot or diagnostics.
 
-Official v1.28.2 Gateway Apps use verified HTTPS on the private Home Assistant App network and retain bearer authentication. Never expose the Gateway REST port to an untrusted network.
+Official v1.29.0 Gateway Apps use verified HTTPS on the private Home Assistant App network and retain bearer authentication. Never expose the Gateway REST port to an untrusted network.
 
 ## AI-assisted development
 
@@ -133,6 +133,7 @@ and built release contents before publication.
 - `docs/QUALITY.md`
 - `docs/DECISION-TRACE.md`
 - `AI_POLICY.md`
+- `docs/UPGRADE-1.29.0.md`
 - `docs/UPGRADE-1.28.2.md`
 - `docs/UPGRADE-1.28.1.md`
 - `docs/UPGRADE-1.28.0.md`

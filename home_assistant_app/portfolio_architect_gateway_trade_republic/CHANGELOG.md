@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.29.0
+
+- Package/version alignment for the v1.29.0 native policy-dashboard presentation release; Trade Republic statement import, private-PKI HTTPS, schemas and read-only behavior are unchanged.
+
 ## 1.28.2
 
 - Version alignment for Portfolio Architect v1.28.2 Dependabot workflow maintenance.

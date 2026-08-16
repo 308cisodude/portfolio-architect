@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.29.0
+
+- Adds a native conditional **Optimisation opportunities / Optimierungsmöglichkeiten** subtitle to the policy-compliance dashboard, separating governed accepted exceptions from non-critical optimisation findings.
+- Shows the existing optimisation-opportunity count as a compact native Home Assistant heading badge; the subtitle is hidden when the count is zero.
+- Keeps the green mandatory-control banner, accepted-exception lifecycle tiles, four blue fee-opportunity tiles, entity IDs, machine states and policy semantics unchanged.
+- Changes reference-dashboard presentation only apart from normal version/package metadata; provider acquisition, Gateway runtime, private-PKI HTTPS, schemas, calculations, LKG and the v1.28 DKB FinTS gate are unchanged.
+
 ## 1.28.2
 
 - Groups all GitHub Actions Dependabot **version updates** into one reviewed pull request per update cycle instead of separate action-by-action PRs.

@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway — Comdirect v1.28.2
+# Portfolio Architect Gateway — Comdirect v1.29.0
 
-Version 1.28.2 is package alignment for Dependabot workflow maintenance.
+Version 1.29.0 is package alignment for the native policy-dashboard presentation release.
 Comdirect runtime behavior is unchanged from the live-accepted v1.27.4 fix:
 provider-specific OAuth/session maintenance runs independently of the 15-minute
 portfolio acquisition cadence and performs no portfolio acquisition itself.

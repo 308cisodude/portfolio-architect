@@ -28,11 +28,14 @@ refresh-overdue indicators. Schedule cards remain hidden until a recurring
 execution schedule is configured in Portfolio Architect options.
 
 The policy-compliance section prioritizes actionable operator context rather than
-raw evaluation counters. Aggregate Checks and Opportunities entities remain native
-Home Assistant entities but are omitted from the primary reference layout. The
-dashboard pairs the accepted-exception count with its concrete exception, then the
-last decision with the next (or overdue) review. Concrete
-optimisation opportunity tiles remain below that lifecycle block.
+raw evaluation counters. The aggregate Checks entity remains native Home Assistant
+state but is omitted from the primary reference layout. The existing optimisation-
+opportunity count appears only as a compact heading badge, not as a competing tile.
+The dashboard pairs the accepted-exception count with its concrete exception, then the
+last decision with the next (or overdue) review. A native conditional subtitle separates
+that governed exception lifecycle from non-critical optimisation opportunities and shows
+the existing opportunity count as a compact heading badge. The subtitle is hidden when
+there are no opportunities. Concrete opportunity tiles remain full-width below it.
 
 For German dashboards, actionable values that intentionally become unavailable
 during source degradation are rendered through bounded presentation attributes on

@@ -1,63 +1,69 @@
-# Portfolio Architect 1.28.2
+# Portfolio Architect 1.29.0
 
-Version 1.28.2 is a narrow release/dependency-automation maintenance update prepared
-from the exact published and live-accepted v1.28.1 source baseline. It changes how
-Dependabot proposes GitHub Actions **version updates**; it does not change any
-production Portfolio Architect or provider Gateway behavior.
+Version 1.29.0 is a presentation-only milestone prepared from the exact published and
+live-accepted v1.28.2 baseline. It refines the native Home Assistant policy-compliance
+reference dashboard without changing Portfolio Architect calculations, entities,
+provider acquisition, Gateway runtime or wire contracts.
 
-## Dependabot GitHub Actions grouping
+## Policy-compliance visual hierarchy
 
-The existing `.github/dependabot.yml` `github-actions` entry remains weekly with an
-`open-pull-requests-limit` of five. It now contains one explicit version-update group:
+The accepted-exception lifecycle is already a governed state rather than a policy
+failure: the dashboard shows the accepted exception count, the concrete Robotics
+exception, the decision date and the next/overdue review date as one coherent block.
+The four savings-plan fee findings below it are different: they are non-critical
+optimisation opportunities.
 
-```yaml
-groups:
-  github-actions-version-updates:
-    applies-to: version-updates
-    patterns:
-      - "*"
-```
+Version 1.29.0 makes that distinction visible by inserting one native conditional
+Heading card between those two groups:
 
-This causes related GitHub Actions version updates discovered in the same Dependabot
-cycle to be proposed together for one review and one protected validation path instead
-of generating a separate version-update pull request for each action.
+- English: **Optimisation opportunities**
+- German: **Optimierungsmöglichkeiten**
+- style: native Home Assistant `subtitle`
+- icon: `mdi:lightbulb-on-outline`
+- visibility: only while `sensor.portfolio_architect_optimisation_opportunity_count`
+  is greater than zero
+- badge: the existing optimisation-opportunity count, shown as a compact native entity
+  badge with normal more-info interaction
 
-No `security-updates` group is added by this release. Security-update handling is not
-made dependent on waiting for a broader version-update batch.
+The subtitle disappears completely when there are no optimisation opportunities.
 
-## Supply-chain invariants
+## Preserved dashboard contracts
 
-The v1.28.1 action-runtime hardening remains unchanged:
+The existing green mandatory-controls banner is unchanged. The accepted-exception
+count, Robotics exception, last decision and next/overdue review tiles are unchanged.
+The four concrete fee-opportunity tiles remain blue, full-width and individually
+inspectable through Home Assistant more-info.
 
-- `actions/checkout` remains pinned to official v7.0.1 commit
-  `3d3c42e5aac5ba805825da76410c181273ba90b1`;
-- `actions/setup-python` remains pinned to official v7.0.0 commit
-  `5fda3b95a4ea91299a34e894583c3862153e4b97`;
-- all GitHub Actions remain pinned to immutable 40-character commit SHAs;
-- validator container images remain digest pinned;
-- Python CI dependencies remain hash locked; and
-- the insecure Node-runtime compatibility escape remains forbidden.
+No custom card, JavaScript, CSS/card-mod or Markdown card is added. The reference
+layout continues to use native Home Assistant dashboard primitives only.
 
-## Preserved compatibility contracts
+The optimisation-opportunity count remains an existing native entity; v1.29.0 does
+not create a new entity or change its value semantics. It is surfaced only as the
+small heading badge and does not become another primary tile.
+
+## Runtime and security invariants
 
 - payload schema 8: unchanged
 - REST portfolio schema 1: unchanged
 - Gateway health schema 6: unchanged; schemas 1–5 remain supported
-- No trading, order, transfer, payment, or transaction-history capability is added.
-- The historical `v1.19.0-rc2` experimental brokerage probe is not promoted by this release.
+- entity IDs, unique IDs and machine-readable states: unchanged
+- policy evaluation and accepted-exception semantics: unchanged
+- portfolio calculations and execution recommendations: unchanged
+- source atomicity and LKG behavior: unchanged
+- v1.27 private-PKI verified HTTPS and bearer authentication: unchanged
+- Comdirect v1.27.4 OAuth/session maintenance: unchanged
+- Trade Republic statement import: unchanged
+- v1.28 DKB FinTS registration/capability-probe gate: unchanged
+- No trading, order, transfer, payment, or transaction-history capability is added
+- the historical `v1.19.0-rc2` experimental brokerage probe is not promoted by this release
 
-## Runtime behavior unchanged
+DKB live Gateway acquisition remains a later authenticated milestone. Trade Republic statement import remains provider-isolated; this release does not move PDF parsing into Portfolio Architect.
 
-Portfolio Architect integration runtime, provider acquisition and Gateway Apps are unchanged.
-Private-PKI verified HTTPS, bearer authentication, DNS pinning, calculations, source
-atomicity, LKG, entities and dashboards are unchanged.
+## Dashboard update
 
-DKB live Gateway acquisition remains a later authenticated milestone. The v1.28.0
-DKB FinTS boundary is unchanged: the App remains experimental, manual-only and
-non-live; `registration_required` remains the expected state until Portfolio Architect
-receives its own FinTS product registration number, and any later positive `HIWPDS`
-result remains research evidence only.
+The reference dashboard is static user-owned Home Assistant configuration after it is
+imported. HACS does not overwrite an existing dashboard. Therefore users who want the
+v1.29.0 presentation polish must deliberately apply the updated reference YAML or
+merge the documented policy-section change into their existing dashboard.
 
-Trade Republic remains provider-isolated and this release does not move PDF parsing into Portfolio Architect.
-
-No dashboard YAML migration is required. See `docs/UPGRADE-1.28.2.md`.
+See `docs/UPGRADE-1.29.0.md`.

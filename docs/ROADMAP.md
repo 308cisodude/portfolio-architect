@@ -249,3 +249,19 @@ legitimate FinTS product identity.
 - Keep security updates outside that version-update group; this milestone does not configure a security-update batch.
 - Preserve immutable full-SHA action pinning and the v1.28.1 Node.js 24-capable action versions until a reviewed dependency update changes them.
 - Preserve the v1.28.0 DKB FinTS registration/capability-probe gate and all production runtime behavior unchanged.
+
+## v1.29.0 — policy-dashboard visual hierarchy
+
+- Keep the accepted-exception count, concrete exception and decision/review lifecycle
+  tiles unchanged.
+- Insert a native conditional subtitle between the exception lifecycle and optimisation
+  opportunity tiles so governance exceptions and non-critical improvements no longer
+  share the same visual hierarchy.
+- Surface the existing optimisation-opportunity count only as a compact native heading
+  badge; keep it out of the primary tile grid and hide the subtitle entirely at zero.
+- Preserve the four concrete blue opportunity tiles, their more-info interactions, all
+  entity IDs/machine states, policy calculations and fail-closed availability semantics.
+- Use only native Home Assistant cards; add no custom card, CSS/card-mod or Markdown
+  dependency.
+- Preserve provider acquisition, private-PKI HTTPS, schemas, Comdirect session
+  maintenance, Trade Republic import and the v1.28 DKB FinTS gate unchanged.
