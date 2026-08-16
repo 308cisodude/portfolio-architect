@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.27.4
+
+- Version alignment for Portfolio Architect v1.27.4; DKB Gateway behavior remains experimental/manual-only/fail-closed with no live acquisition.
+- No DKB authentication, transport, schema, or runtime behavior change.
+
 ## 1.27.3
 
 - Version alignment for Portfolio Architect v1.27.3.

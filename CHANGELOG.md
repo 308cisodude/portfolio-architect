@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.27.4
+
+- Decouples Comdirect OAuth session maintenance from the independently configured portfolio refresh cadence, eliminating the timing-dependent refresh-token expiry race reproduced during live acceptance.
+- Adds a provider-specific five-minute Comdirect session-maintenance loop that performs no portfolio acquisition and refreshes OAuth state only when needed.
+- Latches a conclusively rejected refresh session until interactive bootstrap succeeds, avoiding repeated submission of the same rejected refresh token every scheduled cycle.
+- Logs only a bounded non-secret reauthentication reason when Comdirect rejects a refresh session.
+- Documents independent security-focused AI second-opinion review as an additional defense-in-depth practice in `AI_POLICY.md`.
+- Keeps verified HTTPS/private CA trust, bearer authentication, portfolio polling, request-timeout behavior, schemas, calculations, LKG behavior, entities, dashboards, Trade Republic behavior, and DKB behavior unchanged.
+
 ## 1.27.3
 
 - Fixes the residual DKB Supervisor-discovery Add card seen after successful v1.27.2 HTTPS migration when DKB CSV already represents portfolio scope.

@@ -6,6 +6,7 @@ import argparse
 import logging
 from pathlib import Path
 import sys
+import threading
 
 from . import __version__
 from .app import serve_app
@@ -84,7 +85,19 @@ def main(argv: list[str] | None = None) -> int:
             print("Portfolio snapshot refreshed successfully.")
             return 0
         if args.command == "serve":
-            serve(config, client)
+            maintenance_stop = threading.Event()
+            maintenance_thread = threading.Thread(
+                target=client.run_session_maintenance_loop,
+                args=(maintenance_stop,),
+                name="comdirect-session-maintenance",
+                daemon=True,
+            )
+            maintenance_thread.start()
+            try:
+                serve(config, client)
+            finally:
+                maintenance_stop.set()
+                maintenance_thread.join(timeout=5)
             return 0
         parser.error("unsupported command")
     except GatewayError as err:

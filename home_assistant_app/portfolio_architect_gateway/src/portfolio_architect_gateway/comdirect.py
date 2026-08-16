@@ -11,7 +11,7 @@ from pathlib import Path
 import re
 import time
 import threading
-from typing import Any, Callable, Protocol
+from typing import Any, Callable, Final, Protocol
 
 from .cash_policy import (
     InvestmentCashPolicy,
@@ -33,6 +33,7 @@ from .transport import ComdirectTransport, HttpResponse, decode_json_response
 _LOGGER = logging.getLogger(__name__)
 _WKN_RE = re.compile(r"^[A-Z0-9]{6}$")
 _ISIN_RE = re.compile(r"^[A-Z]{2}[A-Z0-9]{9}[0-9]$")
+SESSION_MAINTENANCE_INTERVAL_SECONDS: Final = 300
 
 
 class TransportProtocol(Protocol):
@@ -141,6 +142,7 @@ class ComdirectClient:
         )
         self._clock = clock
         self._operation_lock = threading.RLock()
+        self._reauthentication_required = False
         self._state = self._load_state()
         if self._state:
             self._transport.restore_qsession(self._state.qsession)
@@ -283,6 +285,7 @@ class ComdirectClient:
                 qsession=qsession,
             )
             self._state = state
+            self._reauthentication_required = False
             save_json_state(self._config.session_file, state.as_dict())
             return state
 
@@ -291,7 +294,59 @@ class ComdirectClient:
         with self._operation_lock:
             return self._ensure_access_token_locked()
 
+    def maintain_session(self) -> bool:
+        """Refresh short-lived OAuth state when needed, without fetching portfolio data.
+
+        Returns ``True`` only when an OAuth refresh was performed. A missing initial
+        session is left idle so the maintenance thread does not create bootstrap noise.
+        """
+        with self._operation_lock:
+            if self._state is None:
+                return False
+            if self._state.usable(now=int(self._clock())):
+                return False
+            self._ensure_access_token_locked()
+            return True
+
+    def run_session_maintenance_loop(
+        self,
+        stop_event: threading.Event,
+        *,
+        interval_seconds: int = SESSION_MAINTENANCE_INTERVAL_SECONDS,
+    ) -> None:
+        """Keep Comdirect OAuth renewal independent of portfolio polling cadence."""
+        if not 60 <= interval_seconds <= 900:
+            raise ValueError("Comdirect session-maintenance interval is invalid")
+        reauthentication_reported = False
+        while not stop_event.wait(interval_seconds):
+            try:
+                refreshed = self.maintain_session()
+            except ReauthenticationRequired:
+                if not reauthentication_reported:
+                    _LOGGER.warning(
+                        "Comdirect session maintenance requires reauthentication"
+                    )
+                reauthentication_reported = True
+            except RemoteApiError as err:
+                _LOGGER.warning(
+                    "Comdirect session maintenance remote API failure: status=%s operation=%s",
+                    err.status,
+                    err.operation or "unknown",
+                )
+            except (AuthenticationError, ConfigurationError, ProtocolError) as err:
+                _LOGGER.warning(
+                    "Comdirect session maintenance failed: %s", type(err).__name__
+                )
+            else:
+                reauthentication_reported = False
+                if refreshed:
+                    _LOGGER.info("Comdirect OAuth session refreshed by maintenance loop")
+
     def _ensure_access_token_locked(self) -> str:
+        if self._reauthentication_required:
+            raise ReauthenticationRequired(
+                "Interactive Comdirect bootstrap is required"
+            )
         if self._state and self._state.usable(now=int(self._clock())):
             return self._state.access_token
         if not self._state or not self._state.refresh_token:
@@ -326,6 +381,11 @@ class ComdirectClient:
                 401,
                 403,
             }:
+                reason = err.error_code or f"http_{err.status}"
+                self._reauthentication_required = True
+                _LOGGER.warning(
+                    "Comdirect refresh session rejected: reason=%s", reason
+                )
                 raise ReauthenticationRequired(
                     "Comdirect rejected the persisted refresh session; rerun the interactive bootstrap"
                 ) from err
@@ -342,6 +402,7 @@ class ComdirectClient:
             qsession=qsession,
         )
         self._state = state
+        self._reauthentication_required = False
         save_json_state(self._config.session_file, state.as_dict())
         return state.access_token
 

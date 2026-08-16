@@ -189,3 +189,14 @@ Gateway provider ID `dkb` was compared with the DKB CSV source ID `dkb_csv`. Kee
 Gateway and importer provider namespaces explicit, suppress duplicate DKB scope across
 all setup paths, and preserve the live-proven v1.27.2 TLS/migration architecture
 unchanged.
+
+## v1.27.4 — Comdirect OAuth cadence hotfix
+
+Current narrow follow-up: live testing proved a timing-dependent Comdirect OAuth
+renewal race when PhotoTAN bootstrap occurs shortly before a fixed 15-minute
+portfolio refresh. A still-usable access token can let that refresh skip OAuth
+renewal, leaving the refresh session to age past its short provider window before
+the following portfolio cycle. Keep provider-specific authentication lifecycle
+inside the Comdirect Gateway, add an independent maintenance cadence with no
+portfolio acquisition, and preserve all v1.27 HTTPS/wire/provider-neutral
+contracts unchanged.

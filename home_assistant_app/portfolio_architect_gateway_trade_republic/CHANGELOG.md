@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.27.4
+
+- Version alignment for Portfolio Architect v1.27.4; Trade Republic statement import, persisted snapshot behavior, TLS trust, and bearer authentication are unchanged.
+
 ## 1.27.3
 
 - Version alignment for Portfolio Architect v1.27.3; Trade Republic Gateway TLS and statement-import behavior are unchanged.

@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.27.4
+
+- Adds a Comdirect-specific five-minute OAuth session-maintenance loop independent of portfolio snapshot polling.
+- Keeps token renewal credential-isolated and performs no holdings, balance, instrument, transaction, order, payment, or transfer request in the maintenance path.
+- Latches conclusive refresh-session rejection until PhotoTAN bootstrap succeeds and logs only a bounded non-secret rejection reason.
+- Keeps verified HTTPS/private CA trust, bearer authentication, portfolio acquisition, cash authorization, REST schema 1 and health schema 6 unchanged.
+
 ## 1.27.3
 
 - Version alignment for Portfolio Architect v1.27.3; Comdirect Gateway production TLS/acquisition behavior is unchanged.
