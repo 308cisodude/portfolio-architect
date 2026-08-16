@@ -1,59 +1,69 @@
-# Portfolio Architect 1.28.0
+# Portfolio Architect 1.28.1
 
-Version 1.28.0 opens the DKB acquisition track with a deliberately constrained
-**FinTS capability-probe milestone**. It does not claim or enable live DKB holdings.
+Version 1.28.1 is a narrow release-engineering maintenance update prepared from the
+exact published v1.28.0 source baseline. It refreshes Portfolio Architect's
+JavaScript-based GitHub Actions from Node.js-20-era major versions to current
+Node.js-24-capable major versions while retaining immutable full-SHA pinning.
 
-## Registration-gated anonymous DKB FinTS probe
+## GitHub Actions refresh
 
-The experimental manual-only DKB Gateway can now perform one fixed-endpoint,
-anonymous FinTS 3.0 BPD capability probe after the project has configured its own
-FinTS product registration number.
+All four workflow uses of `actions/checkout` now use the official v7.0.1 commit:
 
-The probe sends only dialog-initialization segments and reduces the response to
-bounded capability metadata. The raw FinTS response is discarded. The principal
-research signal is whether bank parameters advertise `HIWPDS`, the parameter segment
-associated with the read-only securities-holdings transaction family.
+`3d3c42e5aac5ba805825da76410c181273ba90b1`
 
-The product registration number is App-private state. Version 1.28.0 requests no DKB
-login name, PIN or TAN, performs no authenticated UPD request and publishes no DKB
-portfolio snapshot.
+The two validation/publication uses of `actions/setup-python` now use the official
+v7.0.0 commit:
 
-## Security decomposition
+`5fda3b95a4ea91299a34e894583c3862153e4b97`
 
-This release deliberately separates three questions that must not be conflated:
+The existing workflow inputs remain unchanged. `validate.yml` and `release.yml`
+continue to use Ubuntu 24.04, Python 3.14.6, the hash-locked pip dependency set and
+the same deterministic release pipeline. HACS and hassfest continue to use their
+separately digest-pinned validator containers.
 
-1. **Can Portfolio Architect identify itself as a legitimately registered FinTS
-   product?** v1.28.0 requires that gate first.
-2. **Does DKB's bank-level BPD advertise a suitable read-only securities capability?**
-   v1.28.0 can answer only this question.
-3. **Does an authenticated user's UPD actually permit that capability, and can DKB-App
-   decoupled authentication be implemented safely?** This remains a later gate.
+The checkout refresh deliberately covers `hacs.yml` and `hassfest.yml` as well as
+`validate.yml` and `release.yml`, so no Portfolio Architect workflow retains the old
+checkout v4.4.0 Node.js 20 action runtime.
 
-A positive BPD result therefore never turns the DKB Gateway into a live source.
+## Supply-chain invariants
 
-The probe uses a fixed verified-HTTPS DKB endpoint, bounded request/response handling,
-FinTS-aware segment splitting, no ambient proxy/redirect surface, and no external
-FinTS runtime dependency. No trading/order/transfer/payment/debit/transaction-history
-operation is added.
+The major-version refresh does not weaken the v1.22 publication model:
 
-## Provider isolation and compatibility
+- every GitHub Action remains pinned to a 40-character immutable commit SHA;
+- no mutable `@v7`, branch or `@main` action reference is introduced;
+- validator container images remain digest pinned;
+- Python validation dependencies remain hash locked;
+- the temporary `ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION` compatibility escape is
+  forbidden by regression coverage; and
+- protected GitHub validation remains authoritative for the real hosted-runner and
+  Docker execution path.
 
-- Portfolio payload schema 8: unchanged.
-- REST portfolio schema 1: unchanged.
-- Gateway health schema 6: unchanged; schemas 1–5 remain supported where previously supported.
-- v1.27 private-PKI, hostname-verified HTTPS, bearer authentication, DNS pinning,
-  trust migration and no-plaintext-fallback behavior: unchanged.
-- Comdirect v1.27.4 provider-specific OAuth/session maintenance: unchanged.
-- Comdirect account selection, authorized cash and provider acquisition: unchanged.
-- Trade Republic local statement import: unchanged; this release does not move PDF parsing into Portfolio Architect.
-- DKB Gateway identity remains `dkb`; DKB CSV remains `dkb_csv`.
-- DKB remains experimental/manual-only and is not added as an active portfolio
-  source by this release.
-- DKB live Gateway acquisition remains a later provider-specific milestone after product registration and authenticated user-capability validation.
-- Portfolio calculation, multi-source atomicity, LKG behavior, entity identities and
-  dashboard behavior: unchanged.
+## Preserved compatibility contracts
+
+- payload schema 8: unchanged
+- REST portfolio schema 1: unchanged
+- Gateway health schema 6: unchanged; schemas 1–5 remain supported
 - No trading, order, transfer, payment, or transaction-history capability is added.
-- The historical experimental `v1.19.0-rc2` brokerage diagnostics/fee-probe work remains separate and is not promoted by this release.
+- The historical `v1.19.0-rc2` experimental brokerage probe is not promoted by this release.
 
-See `docs/UPGRADE-1.28.0.md` for the registration and capability-probe acceptance
-path. No dashboard YAML migration is required.
+## Runtime behavior unchanged
+
+Portfolio Architect integration runtime, provider acquisition and Gateway Apps are unchanged.
+The preserved wire contracts are **REST portfolio schema 1**, **Gateway health schema 6**
+and **payload schema 8**. Private-PKI verified HTTPS, bearer authentication, DNS
+pinning, calculations, source atomicity, LKG, entities and dashboards are unchanged.
+
+The historical experimental brokerage probe from `v1.19.0-rc2` remains excluded from
+the stable source and release artifacts.
+
+DKB live Gateway acquisition remains a later authenticated milestone.
+
+Trade Republic remains provider-isolated and this release does not move PDF parsing into Portfolio Architect.
+
+The v1.28.0 DKB FinTS boundary is also unchanged: DKB remains experimental,
+manual-only and non-live; the anonymous BPD probe still requires Portfolio
+Architect's own FinTS product registration number and a positive `HIWPDS` result
+would remain research evidence only. No DKB login, PIN/TAN, holdings, order,
+transfer, payment or transaction-history operation is added.
+
+No dashboard YAML migration is required. See `docs/UPGRADE-1.28.1.md`.

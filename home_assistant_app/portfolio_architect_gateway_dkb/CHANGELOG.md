@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.28.1
+
+- Version alignment for Portfolio Architect v1.28.1 GitHub Actions runtime maintenance.
+- The v1.28.0 registration-gated anonymous FinTS capability probe is unchanged; DKB remains experimental, manual-only and non-live.
+
 ## 1.28.0
 
 - Adds a registration-gated anonymous DKB FinTS 3.0 BPD capability probe against the fixed documented DKB endpoint.

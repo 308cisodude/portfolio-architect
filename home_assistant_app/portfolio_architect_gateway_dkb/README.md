@@ -1,7 +1,8 @@
-# Portfolio Architect Gateway — DKB v1.28.0
+# Portfolio Architect Gateway — DKB v1.28.1
 
-Version 1.28.0 begins the DKB live-acquisition research path without prematurely
-turning the DKB App into a portfolio source. The App remains **experimental** and
+Version 1.28.1 leaves the v1.28.0 DKB research boundary unchanged while aligning
+the package with GitHub Actions runtime maintenance. The DKB App still does not
+become a portfolio source. The App remains **experimental** and
 **manual-only** and adds only a registration-gated anonymous FinTS 3.0 bank-parameter
 (BPD) capability probe.
 
@@ -19,7 +20,7 @@ before running the probe. Do not reuse a FinTS library/kernel registration numbe
 those identifiers are for internal testing rather than the user-facing application.
 
 The product registration number is stored only in the App-private data directory
-with mode `0600`. No DKB login name, PIN or TAN is requested or stored in v1.28.0.
+with mode `0600`. No DKB login name, PIN or TAN is requested or stored in v1.28.1.
 
 ## Deliberate limits
 
@@ -29,7 +30,7 @@ does not prove that an authenticated user's UPD advertises the same capability.
 Authenticated user-capability validation and DKB-App decoupled authentication are a
 later gate.
 
-The v1.28.0 DKB App sends no holdings request and contains no order, transfer,
+The v1.28.1 DKB App sends no holdings request and contains no order, transfer,
 payment, debit, transaction-history or other write-capable FinTS operation. Its
 provider REST source remains fail-closed and cannot publish a DKB portfolio snapshot.
 

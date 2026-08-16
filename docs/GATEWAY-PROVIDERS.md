@@ -19,7 +19,7 @@ provider-neutral runtime code. `GatewayState` and `create_server()` consume
 
 ## Official App identities
 
-| Provider | Display name | App slug | v1.28.0 state |
+| Provider | Display name | App slug | v1.28.1 state |
 | --- | --- | --- | --- |
 | Comdirect | Portfolio Architect Gateway — Comdirect | `portfolio_architect_gateway` | stable live provider, auto-start |
 | DKB | Portfolio Architect Gateway — DKB | `portfolio_architect_gateway_dkb` | experimental manual-only anonymous FinTS capability probe; no live portfolio acquisition |
@@ -38,7 +38,7 @@ importer: before the first accepted `DEPOTAUSZUG` it remains degraded/unavailabl
 after acceptance, `fetch_snapshot()` returns the persisted provider-neutral
 snapshot and the common REST/health server operates normally. Version 1.26.0 changes
 its boot policy to automatic because Portfolio Architect can now keep it configured
-as an ongoing REST contributor. DKB remains manual-only. Version 1.28.0 adds only
+as an ongoing REST contributor. DKB remains manual-only. Version 1.28.0 added only
 a registration-gated anonymous FinTS BPD capability probe; its provider REST snapshot
 remains fail-closed and no live DKB acquisition path exists yet.
 
