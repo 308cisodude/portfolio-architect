@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.28.0
+
+- Adds a registration-gated anonymous DKB FinTS 3.0 BPD capability probe against the fixed documented DKB endpoint.
+- Stores only the project's own validated FinTS product registration number and sanitized BPD capability metadata in App-private state.
+- Detects `HIWPDS` only as bank-level research evidence; authenticated user-capability validation remains required before any future holdings implementation.
+- Requests no DKB login name, PIN or TAN and sends no holdings, order, transfer, payment, debit or transaction-history business transaction.
+- Remains experimental, manual-only and fail-closed as a Portfolio Architect source.
+- Preserves provider identity `dkb`, private-PKI verified HTTPS, bearer authentication and the existing `dkb` versus `dkb_csv` collision boundary.
+
 ## 1.27.4
 
 - Version alignment for Portfolio Architect v1.27.4; DKB Gateway behavior remains experimental/manual-only/fail-closed with no live acquisition.

@@ -1,4 +1,4 @@
-"""Regression coverage for the v1.27.4 provider-shell startup hotfix."""
+"""Regression coverage for the v1.28.0 provider-shell startup hotfix."""
 from __future__ import annotations
 
 import os
@@ -22,14 +22,17 @@ def test_shell_runtime_imports_without_comdirect_config_module(tmp_path: Path) -
 
         env = os.environ.copy()
         env["PYTHONPATH"] = str(source)
+        import_statement = (
+            "import portfolio_architect_gateway.dkb_app; "
+            "import portfolio_architect_gateway.server"
+            if app.name == "portfolio_architect_gateway_dkb"
+            else "import portfolio_architect_gateway.trade_republic_app; import portfolio_architect_gateway.server"
+        )
         result = subprocess.run(
             [
                 sys.executable,
                 "-c",
-                (
-                    "import portfolio_architect_gateway.pending_app; "
-                    "import portfolio_architect_gateway.server"
-                ),
+                import_statement,
             ],
             cwd=tmp_path,
             env=env,
@@ -52,7 +55,7 @@ def test_server_comdirect_configuration_import_is_type_check_only() -> None:
 def test_shell_dockerfiles_import_real_startup_module_during_build() -> None:
     dkb = (SHELLS[0] / "Dockerfile").read_text(encoding="utf-8")
     trade_republic = (SHELLS[1] / "Dockerfile").read_text(encoding="utf-8")
-    assert "import portfolio_architect_gateway.pending_app" in dkb
+    assert "import portfolio_architect_gateway.dkb_app" in dkb
     assert "import portfolio_architect_gateway.trade_republic_app" in trade_republic
 
 

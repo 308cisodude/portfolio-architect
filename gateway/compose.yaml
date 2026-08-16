@@ -2,7 +2,7 @@ x-gateway-common: &gateway-common
   build:
     context: .
     dockerfile: Dockerfile
-  image: portfolio-architect-gateway:1.27.4
+  image: portfolio-architect-gateway:1.28.0
   init: true
   read_only: true
   user: "65532:65532"

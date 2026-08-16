@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.28.0
+
+- Begins the DKB live-acquisition track with a registration-gated anonymous FinTS 3.0 BPD capability probe inside the isolated DKB Gateway App.
+- Requires Portfolio Architect's own bounded FinTS product registration number and explicitly rejects reusing a library/kernel registration as the production application identity.
+- Uses DKB's fixed verified-HTTPS FinTS endpoint and persists only sanitized capability metadata; raw FinTS responses are discarded.
+- Treats `HIWPDS` advertisement only as bank-level research evidence; authenticated user-capability/UPD validation remains a later gate before any holdings implementation.
+- Keeps DKB experimental/manual-only and non-live: no DKB username, PIN, TAN, holdings request, order, transfer, payment, debit, transaction history or portfolio snapshot is added.
+- Preserves `dkb` versus `dkb_csv` provider identity/collision rules, Comdirect v1.27.4 session maintenance, Trade Republic statement import, verified HTTPS/private CA trust, bearer authentication, schemas, calculations, LKG behavior, entities and dashboards.
+
 ## 1.27.4
 
 - Decouples Comdirect OAuth session maintenance from the independently configured portfolio refresh cadence, eliminating the timing-dependent refresh-token expiry race reproduced during live acceptance.

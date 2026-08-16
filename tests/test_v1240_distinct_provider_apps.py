@@ -1,4 +1,4 @@
-"""Regression contracts for v1.27.4 distinct provider Home Assistant Apps."""
+"""Regression contracts for v1.28.0 distinct provider Home Assistant Apps."""
 from __future__ import annotations
 
 import json
@@ -13,6 +13,7 @@ APPS={
  "trade_republic": ROOT/"home_assistant_app"/"portfolio_architect_gateway_trade_republic",
 }
 SHELL_FILES={"__init__.py","errors.py","models.py","provider.py","runtime_config.py","server.py","store.py","pending_app.py","supervisor_tls.py"}
+DKB_PROVIDER_FILES={"dkb_app.py","dkb_fints.py"}
 TR_PROVIDER_FILES={"trade_republic_app.py","trade_republic_statement.py"}
 
 def test_three_provider_apps_have_unique_stable_identities_and_isolated_storage():
@@ -23,7 +24,7 @@ def test_three_provider_apps_have_unique_stable_identities_and_isolated_storage(
     assert configs["dkb"]["slug"]=="portfolio_architect_gateway_dkb"
     assert configs["trade_republic"]["slug"]=="portfolio_architect_gateway_trade_republic"
     assert len({c["slug"] for c in configs.values()})==3
-    assert all(c["version"]=="1.27.4" for c in configs.values())
+    assert all(c["version"]=="1.28.0" for c in configs.values())
     for key in ("dkb","trade_republic"):
         assert configs[key]["stage"]=="experimental"
         assert configs[key]["host_network"] is False
@@ -39,7 +40,7 @@ def test_three_provider_apps_have_unique_stable_identities_and_isolated_storage(
 def test_shell_apps_share_only_audited_provider_neutral_runtime_files():
     for key in ("dkb","trade_republic"):
         src=APPS[key]/"src"/"portfolio_architect_gateway"
-        expected=SHELL_FILES | (TR_PROVIDER_FILES if key == "trade_republic" else set())
+        expected=SHELL_FILES | (TR_PROVIDER_FILES if key == "trade_republic" else DKB_PROVIDER_FILES)
         assert {p.name for p in src.glob("*.py")}==expected
         for name in SHELL_FILES:
             assert (src/name).read_bytes()==(MASTER/name).read_bytes()
@@ -81,16 +82,17 @@ def test_release_builder_publishes_three_distinct_gateway_archives():
 def test_provider_capability_boundaries_are_explicit():
     dkb=yaml.safe_load((APPS["dkb"]/"config.yaml").read_text(encoding="utf-8"))
     trade_republic=yaml.safe_load((APPS["trade_republic"]/"config.yaml").read_text(encoding="utf-8"))
-    assert "not implemented" in dkb["description"]
+    assert "capability probe" in dkb["description"].casefold()
     assert "statement" in trade_republic["description"].casefold()
     roadmap=(ROOT/"docs"/"ROADMAP.md").read_text(encoding="utf-8")
     assert "Trade Republic statement import" in roadmap
     assert "multiple Gateway REST aggregation" in roadmap
-    assert "v1.27.4" in roadmap
+    assert "v1.28.0" in roadmap
+    assert "HIWPDS" in roadmap
 
-def test_current_release_version_is_1260():
+def test_current_release_version_is_1280():
     manifest=json.loads((ROOT/"custom_components"/"portfolio_architect"/"manifest.json").read_text())
-    assert manifest["version"]=="1.27.4"
+    assert manifest["version"]=="1.28.0"
 
 
 def test_protected_workflows_build_all_provider_app_images_before_publication():

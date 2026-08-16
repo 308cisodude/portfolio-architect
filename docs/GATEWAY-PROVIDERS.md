@@ -19,10 +19,10 @@ provider-neutral runtime code. `GatewayState` and `create_server()` consume
 
 ## Official App identities
 
-| Provider | Display name | App slug | v1.27.4 state |
+| Provider | Display name | App slug | v1.28.0 state |
 | --- | --- | --- | --- |
 | Comdirect | Portfolio Architect Gateway — Comdirect | `portfolio_architect_gateway` | stable live provider, auto-start |
-| DKB | Portfolio Architect Gateway — DKB | `portfolio_architect_gateway_dkb` | experimental manual-only fail-closed shell |
+| DKB | Portfolio Architect Gateway — DKB | `portfolio_architect_gateway_dkb` | experimental manual-only anonymous FinTS capability probe; no live portfolio acquisition |
 | Trade Republic | Portfolio Architect Gateway — Trade Republic | `portfolio_architect_gateway_trade_republic` | experimental statement-import provider, auto-start |
 
 The Comdirect slug is retained permanently so existing credentials, OAuth/session
@@ -38,8 +38,9 @@ importer: before the first accepted `DEPOTAUSZUG` it remains degraded/unavailabl
 after acceptance, `fetch_snapshot()` returns the persisted provider-neutral
 snapshot and the common REST/health server operates normally. Version 1.26.0 changes
 its boot policy to automatic because Portfolio Architect can now keep it configured
-as an ongoing REST contributor. DKB remains manual-only and has no live acquisition
-path.
+as an ongoing REST contributor. DKB remains manual-only. Version 1.28.0 adds only
+a registration-gated anonymous FinTS BPD capability probe; its provider REST snapshot
+remains fail-closed and no live DKB acquisition path exists yet.
 
 ## Shared source and packaging rule
 
@@ -109,6 +110,26 @@ performs no provider-neutral portfolio acquisition. The common `PortfolioProvide
 contract remains free of OAuth/session assumptions. Private keys stay inside each App
 and trust changes fail closed. REST schema 1 and health schema 6 remain unchanged.
 
+## DKB v1.28 FinTS capability-probe boundary
+
+Version 1.28.0 begins DKB acquisition research without adding DKB holdings to the
+portfolio. The DKB App accepts only Portfolio Architect's own bounded FinTS product
+registration number and can issue an anonymous FinTS 3.0 BPD dialog initialization
+to DKB's fixed documented endpoint. It does not request a DKB login name, PIN or TAN.
+
+The BPD response is reduced immediately to bounded capability metadata. The raw FinTS
+response is not persisted or exposed. `HIWPDS` presence is treated only as bank-level
+evidence that a securities-holdings transaction family is advertised; it does not
+prove that an authenticated user's UPD permits the operation. A later release must
+validate authenticated user capabilities and DKB-App decoupled authentication before
+any holdings request can be considered.
+
+The DKB App adds no external FinTS runtime library and no order, transfer, payment,
+debit or transaction-history operation. The common `PortfolioProvider` contract
+remains unchanged and provider-neutral. Existing DKB CSV identity `dkb_csv` stays
+distinct from Gateway identity `dkb`, so the established collision/discovery rules
+continue to prevent silent duplicate scope.
+
 ## Trade Republic v1.25 import boundary
 
 The Trade Republic App accepts only the documented German text-PDF `DEPOTAUSZUG`
@@ -117,6 +138,7 @@ is stored under the App-private `/data/gateway` volume. `pypdf` is a
 Trade-Republic-App-only, hash-pinned build dependency and is not introduced into
 Comdirect, DKB, the standalone Gateway, or the Home Assistant integration.
 
-DKB live acquisition remains a later provider-specific design. The established DKB
-CSV supplement can coexist with independent Comdirect and Trade Republic Gateway
-REST snapshots in the v1.26 aggregate.
+DKB live holdings remain a later provider-specific gate after the v1.28 anonymous
+BPD probe and authenticated user-capability validation. The established DKB CSV
+supplement can coexist with independent Comdirect and Trade Republic Gateway REST
+snapshots in the aggregate while the DKB Gateway itself remains non-live.
