@@ -1,4 +1,4 @@
-"""Prepare isolated provider-shell state, drop privileges, and start."""
+"""Prepare isolated DKB capability-probe state, drop privileges, and start."""
 
 from __future__ import annotations
 
@@ -11,7 +11,8 @@ from portfolio_architect_gateway.supervisor_tls import (
     start_supervisor_tls_discovery_publisher,
 )
 
-from portfolio_architect_gateway.pending_app import PendingAppOptions, serve_pending_app
+from portfolio_architect_gateway.pending_app import PendingAppOptions
+from portfolio_architect_gateway.dkb_app import serve_dkb_probe_app
 from portfolio_architect_gateway.provider import normalise_provider_id
 
 APP_UID = 65532
@@ -46,7 +47,7 @@ def main() -> int:
     os.setuid(APP_UID)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     tls = prepare_supervisor_tls(DATA, provider_id)
-    serve_pending_app(
+    serve_dkb_probe_app(
         provider_id=provider_id,
         provider_name=provider_name,
         options=options,

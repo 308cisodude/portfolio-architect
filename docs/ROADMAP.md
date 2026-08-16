@@ -200,3 +200,35 @@ the following portfolio cycle. Keep provider-specific authentication lifecycle
 inside the Comdirect Gateway, add an independent maintenance cadence with no
 portfolio acquisition, and preserve all v1.27 HTTPS/wire/provider-neutral
 contracts unchanged.
+
+## v1.28.0 — DKB FinTS registration and capability-probe milestone
+
+Current provider-research milestone: begin the DKB acquisition path without assuming
+that DKB exposes depot holdings through FinTS for this user relationship and without
+introducing authenticated bank credentials before Portfolio Architect has its own
+legitimate FinTS product identity.
+
+- Require Portfolio Architect's own FinTS product registration number before any DKB
+  probe can run; do not reuse a library/kernel registration in production.
+- Keep the DKB App experimental and `manual_only` with provider identity `dkb`.
+- Add only an anonymous FinTS 3.0 BPD dialog initialization against DKB's fixed
+  documented endpoint `https://fints.dkb.de/fints` and bank code `12030000`.
+- Send no holdings, balance, transaction, order, transfer, payment or debit business
+  transaction in this milestone.
+- Reduce the raw BPD response to bounded capability metadata and discard the raw bank
+  response immediately.
+- Treat `HIWPDS` advertisement only as bank-level evidence to continue research, not
+  as authority to fetch holdings.
+- Keep DKB login/PIN/TAN and DKB-App decoupled authentication out of v1.28.0.
+- Before any later holdings implementation, require an authenticated user-capability
+  / UPD gate proving that the user relationship advertises a suitable read-only
+  securities capability.
+- If that authenticated capability is absent, keep the Gateway fail-closed and
+  consider a local DKB securities-document import rather than private web/mobile
+  interface scraping.
+- Preserve the established provider namespace distinction: Gateway identity `dkb`
+  remains separate from CSV importer identity `dkb_csv`, with collision suppression
+  preventing silent double counting.
+- Preserve payload schema 8, REST schema 1, health schema 6, v1.27 verified HTTPS,
+  Comdirect v1.27.4 session maintenance, Trade Republic statement import and the
+  no-trading/write-capability boundary.

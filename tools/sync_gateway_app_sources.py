@@ -9,6 +9,7 @@ COMDIRECT=ROOT/"home_assistant_app"/"portfolio_architect_gateway"/"src"/"portfol
 DKB=ROOT/"home_assistant_app"/"portfolio_architect_gateway_dkb"/"src"/"portfolio_architect_gateway"
 TRADE_REPUBLIC=ROOT/"home_assistant_app"/"portfolio_architect_gateway_trade_republic"/"src"/"portfolio_architect_gateway"
 SHELL_FILES={"__init__.py","errors.py","models.py","provider.py","runtime_config.py","server.py","store.py","pending_app.py","supervisor_tls.py"}
+DKB_PROVIDER_FILES={"dkb_app.py","dkb_fints.py"}
 TR_PROVIDER_FILES={"trade_republic_app.py","trade_republic_statement.py"}
 
 
@@ -26,7 +27,7 @@ def main():
     COMDIRECT.mkdir(parents=True,exist_ok=True)
     for p in MASTER.glob("*.py"):
         shutil.copy2(p,COMDIRECT/p.name)
-    _sync_shell(DKB, provider_files=set())
+    _sync_shell(DKB, provider_files=DKB_PROVIDER_FILES)
     _sync_shell(TRADE_REPUBLIC, provider_files=TR_PROVIDER_FILES)
 
 

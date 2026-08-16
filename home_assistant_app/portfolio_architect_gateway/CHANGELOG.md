@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.28.0
+
+- Version alignment for Portfolio Architect v1.28.0.
+- Comdirect runtime behavior is unchanged from the live-accepted v1.27.4 provider-specific OAuth/session-maintenance fix.
+- No Comdirect acquisition, authentication, timeout, cash, TLS, schema or runtime contract changes.
+
 ## 1.27.4
 
 - Adds a Comdirect-specific five-minute OAuth session-maintenance loop independent of portfolio snapshot polling.
