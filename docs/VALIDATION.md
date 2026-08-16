@@ -1,33 +1,42 @@
-# v1.28.2 validation
+# v1.29.0 validation
 
-Portfolio Architect v1.28.2 is a release/dependency-automation-only maintenance
-release based on the published and live-accepted v1.28.1 runtime. Validation must
-prove that Dependabot groups GitHub Actions version updates without weakening the
-existing immutable-dependency or production-runtime contracts.
+Portfolio Architect v1.29.0 is a native reference-dashboard presentation release
+based on the published and live-accepted v1.28.2 runtime. Validation must prove the
+new visual hierarchy without widening any entity, policy, provider, network or
+publication contract.
 
 Release-specific validation must prove:
 
 - integration, engine, common Gateway and all three App package versions are
-  `1.28.2`;
-- `.github/dependabot.yml` still configures exactly one `github-actions` ecosystem at
-  directory `/` on the weekly schedule with `open-pull-requests-limit: 5`;
-- one `github-actions-version-updates` group uses `applies-to: version-updates` and
-  `patterns: ["*"]`, without configuring a security-update group;
-- all four `actions/checkout` uses remain pinned to
-  `3d3c42e5aac5ba805825da76410c181273ba90b1` (`v7.0.1`);
-- the two `actions/setup-python` uses remain pinned to
-  `5fda3b95a4ea91299a34e894583c3862153e4b97` (`v7.0.0`);
-- every GitHub Action reference remains a full 40-character immutable SHA and the
-  `ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION` compatibility escape remains absent;
-- existing pinned runner, Python 3.14.6, hash-locked dependencies, validator-image
-  digests, source/history/artifact privacy gates and release workflow ordering remain
-  unchanged;
+  `1.29.0`;
+- English and German policy-compliance references contain exactly one conditional
+  native Heading card labelled `Optimisation opportunities` / `Optimierungsmöglichkeiten`;
+- the Heading uses `heading_style: subtitle`, `mdi:lightbulb-on-outline`, full-width
+  layout and is visible only while
+  `sensor.portfolio_architect_optimisation_opportunity_count > 0`;
+- the Heading badge references that existing count entity, shows the state without a
+  duplicate icon and opens normal Home Assistant more-info;
+- the subtitle is ordered after the accepted-exception decision/review lifecycle and
+  before all four concrete savings-plan fee-opportunity tiles;
+- the four concrete opportunity tiles remain blue, full-width and individually
+  inspectable;
+- standalone English/German policy fragments, full localized views and the bilingual
+  dashboard encode the same hierarchy;
+- the policy presentation adds no custom card, `card_mod`, JavaScript or Markdown
+  card surface;
+- entity IDs, unique IDs, policy calculations, machine states and availability
+  semantics remain unchanged;
 - payload schema 8, REST portfolio schema 1 and Gateway health schema 6 remain
   unchanged;
-- Comdirect OAuth/session maintenance, Trade Republic statement import, DKB v1.28.0
-  registration/capability-probe gate, calculations, LKG, entities and dashboards
-  remain unchanged; and
+- v1.27 private-PKI verified HTTPS, bearer authentication, DNS pinning, Supervisor
+  trust discovery and no-plaintext-fallback behavior remain unchanged;
+- Comdirect OAuth/session maintenance, Trade Republic statement import and v1.28 DKB
+  registration/capability-probe behavior remain unchanged;
+- v1.28.1 immutable GitHub Actions pins and v1.28.2 Dependabot grouping remain
+  unchanged; and
 - no trading, order, transfer, payment or transaction-history capability is added.
 
-The protected GitHub `Validate release` workflow remains authoritative for actual
-hosted-runner action execution and provider-App Docker/TLS smoke validation.
+The protected GitHub `Validate release` workflow remains authoritative for provider-App
+Docker/TLS smoke validation. Live acceptance must additionally verify the updated
+reference dashboard in Home Assistant because dashboard rendering is a frontend
+behavior that source tests cannot fully prove.

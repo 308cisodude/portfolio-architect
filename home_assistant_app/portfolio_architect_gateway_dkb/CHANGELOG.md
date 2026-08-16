@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.29.0
+
+- Package/version alignment for the v1.29.0 native policy-dashboard presentation release; the v1.28 DKB FinTS registration/capability-probe gate remains experimental, manual-only and non-live.
+
 ## 1.28.2
 
 - Version alignment for Portfolio Architect v1.28.2 Dependabot workflow maintenance.

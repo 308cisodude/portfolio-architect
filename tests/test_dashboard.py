@@ -57,15 +57,16 @@ def test_target_and_runtime_cards_are_compact_native_cards():
         assert 'markdown' not in target.casefold()+runtime.casefold()
 
 
-def test_policy_is_native_tile_only():
+def test_policy_is_native_cards_only():
     for locale in LOCALES:
         source=(DASHBOARD/locale/'policy-compliance.yaml').read_text()
         assert 'mandatory_controls_compliant' in source
         assert 'policy_checks_evaluated' not in source
-        assert 'optimisation_opportunity_count' not in source
+        assert source.count('optimisation_opportunity_count') == 2
         assert 'accepted_exception_count' in source
         assert 'type: conditional' in source
         assert 'type: tile' in source
+        assert 'type: heading' in source
         assert 'type: entities' not in source
         assert 'entity-filter' not in source
         assert 'markdown' not in source.casefold()

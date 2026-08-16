@@ -145,6 +145,26 @@ cards:
     rows: auto
 - type: conditional
   conditions:
+  - condition: numeric_state
+    entity: sensor.portfolio_architect_optimisation_opportunity_count
+    above: 0
+  card:
+    type: heading
+    heading: Optimisation opportunities
+    heading_style: subtitle
+    icon: mdi:lightbulb-on-outline
+    badges:
+    - type: entity
+      entity: sensor.portfolio_architect_optimisation_opportunity_count
+      show_icon: false
+      show_state: true
+      tap_action:
+        action: more-info
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
   - condition: state
     entity: sensor.portfolio_architect_world_free_savings_plan_preferred_policy_finding
     state: opportunity
