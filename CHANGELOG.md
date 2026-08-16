@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.28.2
+
+- Groups all GitHub Actions Dependabot **version updates** into one reviewed pull request per update cycle instead of separate action-by-action PRs.
+- Keeps the existing weekly GitHub Actions schedule, five-PR cap, immutable full-SHA workflow pins and Node.js 24-capable action versions unchanged.
+- Does not add a Dependabot security-update group; security-update handling is not coupled to the version-update batch.
+- Changes release/dependency automation only; Portfolio Architect integration, provider Gateway runtime, schemas, calculations, DKB FinTS gate, entities and dashboards are unchanged.
+
 ## 1.28.1
 
 - Refreshes every `actions/checkout` workflow invocation from immutable v4.4.0 to immutable v7.0.1 and the validation/release `actions/setup-python` invocation from immutable v5.6.0 to immutable v7.0.0.
