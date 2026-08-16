@@ -991,6 +991,12 @@ def serve_app(
         name="portfolio-refresh",
         daemon=True,
     )
+    session_maintenance_thread = threading.Thread(
+        target=client.run_session_maintenance_loop,
+        args=(stop_event,),
+        name="comdirect-session-maintenance",
+        daemon=True,
+    )
     gateway_thread = threading.Thread(
         target=gateway_server.serve_forever,
         kwargs={"poll_interval": 0.5},
@@ -998,6 +1004,7 @@ def serve_app(
         daemon=True,
     )
     refresh_thread.start()
+    session_maintenance_thread.start()
     gateway_thread.start()
     _LOGGER.info("Private gateway API listening on internal port %d", GATEWAY_PORT)
     _LOGGER.info("Home Assistant Ingress setup UI listening on port %d", ingress_address[1])
@@ -1015,3 +1022,4 @@ def serve_app(
         gateway_server.server_close()
         gateway_thread.join(timeout=5)
         refresh_thread.join(timeout=5)
+        session_maintenance_thread.join(timeout=5)

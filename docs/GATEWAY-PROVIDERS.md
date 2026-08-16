@@ -19,7 +19,7 @@ provider-neutral runtime code. `GatewayState` and `create_server()` consume
 
 ## Official App identities
 
-| Provider | Display name | App slug | v1.27.3 state |
+| Provider | Display name | App slug | v1.27.4 state |
 | --- | --- | --- | --- |
 | Comdirect | Portfolio Architect Gateway — Comdirect | `portfolio_architect_gateway` | stable live provider, auto-start |
 | DKB | Portfolio Architect Gateway — DKB | `portfolio_architect_gateway_dkb` | experimental manual-only fail-closed shell |
@@ -102,8 +102,12 @@ discovery and migrate from legacy HTTP; Gateway runtime behavior is otherwise
 unchanged from v1.27.1. Version 1.27.3 additionally keeps Gateway provider identity
 separate from CSV importer identity: DKB Gateway is `dkb`, DKB CSV is `dkb_csv`,
 and configured DKB CSV scope suppresses the DKB Gateway supplemental discovery
-prompt. Private keys stay inside each App and trust changes fail closed. Provider
-acquisition, REST schema 1 and health schema 6 remain unchanged.
+prompt. Version 1.27.4 keeps those transport/discovery contracts unchanged and adds
+only Comdirect-provider session maintenance: a five-minute OAuth maintenance cadence
+runs inside the Comdirect package independently of portfolio snapshot polling and
+performs no provider-neutral portfolio acquisition. The common `PortfolioProvider`
+contract remains free of OAuth/session assumptions. Private keys stay inside each App
+and trust changes fail closed. REST schema 1 and health schema 6 remain unchanged.
 
 ## Trade Republic v1.25 import boundary
 

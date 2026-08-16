@@ -23,6 +23,21 @@ This policy does not claim that every AI-assisted line is manually reviewed line
 by line. Contributors must describe material AI assistance honestly and remain
 responsible for the changes they submit.
 
+## Independent AI second-opinion review
+
+Material release candidates may additionally be reviewed by a separate AI system
+that was not the primary implementation assistant. This second-opinion review is
+deliberately security-focused: it prioritizes trust boundaries, authentication,
+network exposure, parsing and storage safety, downgrade resistance, secret handling,
+release-artifact integrity, and regressions of previously identified findings.
+
+The secondary reviewer is expected to inspect the prepared source/release artifacts
+and to state the scope and limitations of its review, including anything it could
+not execute or verify directly. This is defense-in-depth review evidence, not an
+independent security certification or a substitute for tests, protected workflows,
+live acceptance, or maintainer judgment. The secondary AI has no merge, tagging,
+publication, or deployment authority.
+
 ## Validation expectations
 
 AI-assisted changes are subject to the same project controls as other changes,
