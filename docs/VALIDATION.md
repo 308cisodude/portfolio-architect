@@ -1,44 +1,33 @@
-# v1.28.1 validation
+# v1.28.2 validation
 
-Portfolio Architect v1.28.1 is a release-engineering-only maintenance release based
-on the published v1.28.0 runtime. Validation must prove both that the GitHub Actions
-runtime refresh is complete and that production behavior remains unchanged.
+Portfolio Architect v1.28.2 is a release/dependency-automation-only maintenance
+release based on the published and live-accepted v1.28.1 runtime. Validation must
+prove that Dependabot groups GitHub Actions version updates without weakening the
+existing immutable-dependency or production-runtime contracts.
 
-## Required source invariants
+Release-specific validation must prove:
 
 - integration, engine, common Gateway and all three App package versions are
-  `1.28.1`;
-- every `actions/checkout` use in `.github/workflows` is pinned to
+  `1.28.2`;
+- `.github/dependabot.yml` still configures exactly one `github-actions` ecosystem at
+  directory `/` on the weekly schedule with `open-pull-requests-limit: 5`;
+- one `github-actions-version-updates` group uses `applies-to: version-updates` and
+  `patterns: ["*"]`, without configuring a security-update group;
+- all four `actions/checkout` uses remain pinned to
   `3d3c42e5aac5ba805825da76410c181273ba90b1` (`v7.0.1`);
-- every `actions/setup-python` use is pinned to
+- the two `actions/setup-python` uses remain pinned to
   `5fda3b95a4ea91299a34e894583c3862153e4b97` (`v7.0.0`);
-- action references remain full 40-character SHAs rather than mutable major tags;
-- `ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION` is absent;
-- validator containers and Python dependency locks remain unchanged; and
-- validate/release provider-shell smoke-test parity remains intact.
+- every GitHub Action reference remains a full 40-character immutable SHA and the
+  `ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION` compatibility escape remains absent;
+- existing pinned runner, Python 3.14.6, hash-locked dependencies, validator-image
+  digests, source/history/artifact privacy gates and release workflow ordering remain
+  unchanged;
+- payload schema 8, REST portfolio schema 1 and Gateway health schema 6 remain
+  unchanged;
+- Comdirect OAuth/session maintenance, Trade Republic statement import, DKB v1.28.0
+  registration/capability-probe gate, calculations, LKG, entities and dashboards
+  remain unchanged; and
+- no trading, order, transfer, payment or transaction-history capability is added.
 
-## Preserved production contracts
-
-- payload schema 8;
-- REST portfolio schema 1;
-- Gateway health schema 6;
-- private-PKI hostname-verified HTTPS plus bearer authentication;
-- Supervisor trust discovery and fail-closed migration;
-- request-scoped DNS pinning and local-source validation;
-- Comdirect acquisition, PhotoTAN and v1.27.4 session maintenance;
-- Trade Republic local statement import;
-- v1.28.0 DKB registration-gated anonymous BPD probe with no live holdings;
-- portfolio calculations, source atomicity, LKG, entities and dashboard behavior;
-- no trading, order, transfer, payment or transaction-history capability.
-
-## Publication acceptance
-
-Local preparation validates source structure, compilation, JSON/YAML parsing,
-publication/privacy gates, regression tests, deterministic release construction and
-artifact integrity. Docker is unavailable in the preparation environment, so the
-protected GitHub `Validate release` workflow remains authoritative for the actual
-GitHub-hosted Node.js 24 action execution, three provider-App Docker builds and
-provider-shell TLS smoke tests.
-
-After publication, no special live migration is required beyond ordinary in-place
-version alignment. No dashboard YAML migration is required.
+The protected GitHub `Validate release` workflow remains authoritative for actual
+hosted-runner action execution and provider-App Docker/TLS smoke validation.

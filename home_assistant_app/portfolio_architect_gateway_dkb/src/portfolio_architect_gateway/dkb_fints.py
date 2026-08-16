@@ -123,7 +123,7 @@ def probe_dkb_bpd(product_id: str, *, timeout_seconds: int = DEFAULT_TIMEOUT_SEC
             headers={
                 "Content-Type": "text/plain",
                 "Content-Length": str(len(encoded)),
-                "User-Agent": "PortfolioArchitect-DKB/1.28.1",
+                "User-Agent": "PortfolioArchitect-DKB/1.28.2",
                 "Connection": "close",
             },
         )

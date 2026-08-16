@@ -241,3 +241,11 @@ legitimate FinTS product identity.
 - Refresh `actions/setup-python` in validation and immutable publication to official v7.0.0.
 - Reject mutable action tags and the temporary insecure Node.js runtime opt-out in regression coverage.
 - Preserve the v1.28.0 DKB FinTS registration/capability-probe gate and all production runtime behavior unchanged.
+
+## v1.28.2 — Dependabot GitHub Actions grouping maintenance
+
+- Keep the existing weekly `github-actions` Dependabot schedule and five-open-PR cap.
+- Group all GitHub Actions **version updates** into one pull request per Dependabot update cycle so related action refreshes are reviewed and validated atomically.
+- Keep security updates outside that version-update group; this milestone does not configure a security-update batch.
+- Preserve immutable full-SHA action pinning and the v1.28.1 Node.js 24-capable action versions until a reviewed dependency update changes them.
+- Preserve the v1.28.0 DKB FinTS registration/capability-probe gate and all production runtime behavior unchanged.

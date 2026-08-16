@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway — Comdirect v1.28.1
+# Portfolio Architect Gateway — Comdirect v1.28.2
 
-Version 1.28.1 is package alignment for GitHub Actions runtime maintenance.
+Version 1.28.2 is package alignment for Dependabot workflow maintenance.
 Comdirect runtime behavior is unchanged from the live-accepted v1.27.4 fix:
 provider-specific OAuth/session maintenance runs independently of the 15-minute
 portfolio acquisition cadence and performs no portfolio acquisition itself.

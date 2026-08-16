@@ -19,7 +19,7 @@ provider-neutral runtime code. `GatewayState` and `create_server()` consume
 
 ## Official App identities
 
-| Provider | Display name | App slug | v1.28.1 state |
+| Provider | Display name | App slug | v1.28.2 state |
 | --- | --- | --- | --- |
 | Comdirect | Portfolio Architect Gateway — Comdirect | `portfolio_architect_gateway` | stable live provider, auto-start |
 | DKB | Portfolio Architect Gateway — DKB | `portfolio_architect_gateway_dkb` | experimental manual-only anonymous FinTS capability probe; no live portfolio acquisition |

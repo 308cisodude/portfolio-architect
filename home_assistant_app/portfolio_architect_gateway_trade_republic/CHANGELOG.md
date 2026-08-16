@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.28.2
+
+- Version alignment for Portfolio Architect v1.28.2 Dependabot workflow maintenance.
+- Trade Republic statement import, persisted snapshot, verified HTTPS, schemas and runtime behavior are unchanged.
+
 ## 1.28.1
 
 - Version alignment for Portfolio Architect v1.28.1 GitHub Actions runtime maintenance.

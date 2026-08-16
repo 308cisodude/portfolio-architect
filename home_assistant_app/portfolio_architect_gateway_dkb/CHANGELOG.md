@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.28.2
+
+- Version alignment for Portfolio Architect v1.28.2 Dependabot workflow maintenance.
+- The v1.28.0 registration-gated anonymous FinTS capability probe is unchanged; DKB remains experimental, manual-only and non-live.
+
 ## 1.28.1
 
 - Version alignment for Portfolio Architect v1.28.1 GitHub Actions runtime maintenance.
