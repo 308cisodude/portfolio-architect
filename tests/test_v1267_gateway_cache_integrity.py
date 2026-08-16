@@ -1,4 +1,4 @@
-"""Regression contracts for v1.28.0 Gateway cold-restart snapshot integrity."""
+"""Regression contracts for v1.28.1 Gateway cold-restart snapshot integrity."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ def test_release_version_and_wire_contracts_remain_aligned() -> None:
     manifest = json.loads(
         (ROOT / "custom_components" / "portfolio_architect" / "manifest.json").read_text()
     )
-    assert manifest["version"] == "1.28.0"
+    assert manifest["version"] == "1.28.1"
     notes = (ROOT / "docs" / "RELEASE-NOTES.md").read_text(encoding="utf-8")
     assert "payload schema 8: unchanged" in notes
     assert "REST portfolio schema 1: unchanged" in notes
@@ -58,6 +58,6 @@ def test_common_integrity_fix_is_synced_to_provider_apps() -> None:
 
 
 def test_upgrade_guide_requires_no_dashboard_or_authentication_migration() -> None:
-    guide = (ROOT / "docs" / "UPGRADE-1.28.0.md").read_text(encoding="utf-8")
+    guide = (ROOT / "docs" / "UPGRADE-1.28.1.md").read_text(encoding="utf-8")
     assert "No dashboard YAML migration is required" in guide
     assert "Do not reauthenticate Comdirect" in guide

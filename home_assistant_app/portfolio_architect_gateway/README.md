@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway — Comdirect v1.28.0
+# Portfolio Architect Gateway — Comdirect v1.28.1
 
-Version 1.28.0 is package alignment for the DKB FinTS capability-probe milestone.
+Version 1.28.1 is package alignment for GitHub Actions runtime maintenance.
 Comdirect runtime behavior is unchanged from the live-accepted v1.27.4 fix:
 provider-specific OAuth/session maintenance runs independently of the 15-minute
 portfolio acquisition cadence and performs no portfolio acquisition itself.

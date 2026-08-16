@@ -232,3 +232,12 @@ legitimate FinTS product identity.
 - Preserve payload schema 8, REST schema 1, health schema 6, v1.27 verified HTTPS,
   Comdirect v1.27.4 session maintenance, Trade Republic statement import and the
   no-trading/write-capability boundary.
+
+
+## v1.28.1 — GitHub Actions Node.js 24 runtime maintenance
+
+- Keep every GitHub Action reference immutable and full-SHA pinned.
+- Refresh all four `actions/checkout` workflow invocations to official v7.0.1.
+- Refresh `actions/setup-python` in validation and immutable publication to official v7.0.0.
+- Reject mutable action tags and the temporary insecure Node.js runtime opt-out in regression coverage.
+- Preserve the v1.28.0 DKB FinTS registration/capability-probe gate and all production runtime behavior unchanged.

@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.28.1
+
+- Refreshes every `actions/checkout` workflow invocation from immutable v4.4.0 to immutable v7.0.1 and the validation/release `actions/setup-python` invocation from immutable v5.6.0 to immutable v7.0.0.
+- Removes the remaining Portfolio Architect GitHub Actions dependency on the deprecated Node.js 20 action runtime while retaining full-SHA supply-chain pinning.
+- Extends the controlled checkout refresh to HACS and hassfest workflows, which Dependabot's two-file proposal did not update.
+- Adds regression coverage that requires the approved action SHAs, rejects mutable action tags and rejects the insecure Node-runtime compatibility opt-out.
+- Changes no Portfolio Architect, provider, Gateway, FinTS, schema, calculation, authentication, TLS, LKG, entity or dashboard runtime behavior.
+
 ## 1.28.0
 
 - Begins the DKB live-acquisition track with a registration-gated anonymous FinTS 3.0 BPD capability probe inside the isolated DKB Gateway App.

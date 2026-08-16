@@ -1,11 +1,10 @@
-# Portfolio Architect Gateway runtime v1.28.0
+# Portfolio Architect Gateway runtime v1.28.1
 
-Version 1.28.0 keeps the standalone/provider-neutral Gateway and v1.27 private-PKI
-HTTPS contracts unchanged. The DKB FinTS capability probe added by this release is
-isolated in the DKB Home Assistant App and does not widen the common provider
-contract or standalone Comdirect service. Comdirect retains the live-accepted
-v1.27.4 provider-specific OAuth/session-maintenance cadence. REST schema 1, health
-schema 6 and bearer authentication remain unchanged.
+Version 1.28.1 is package alignment for a GitHub Actions runtime-maintenance
+release. The standalone/provider-neutral Gateway, v1.27 private-PKI HTTPS contracts,
+v1.28.0 DKB FinTS capability-probe boundary and live-accepted v1.27.4 Comdirect
+OAuth/session-maintenance cadence are unchanged. REST schema 1, health schema 6 and
+bearer authentication remain unchanged.
 
 The Gateway is a dedicated, Python-library-dependency-free service that converts one
 provider-specific portfolio source into provider-neutral Portfolio Architect REST
@@ -53,9 +52,9 @@ non-secret and carries no account/depot identity. Health schemas 1 through 5 rem
 available unchanged for older Portfolio Architect versions.
 
 The provider contract and official future App identities are documented in
-`docs/GATEWAY-PROVIDERS.md`. The common runtime remains provider-neutral in v1.28.0;
+`docs/GATEWAY-PROVIDERS.md`. The common runtime remains provider-neutral in v1.28.1;
 provider-specific acquisition continues to live only in the corresponding App package.
-The ISIN-first v1.26.1 hotfix is implemented in Portfolio Architect's Home Assistant calculation layer and does not change Gateway REST schema 1 or health schema 6. Version 1.28.0 retains the private-PKI HTTPS helper and v1.26.7 quantity-bearing cached-snapshot/ETag-precedence guarantees. Comdirect OAuth session maintenance is provider-specific; provider acquisition contracts and REST/health schemas are unchanged.
+The ISIN-first v1.26.1 hotfix is implemented in Portfolio Architect's Home Assistant calculation layer and does not change Gateway REST schema 1 or health schema 6. Version 1.28.1 retains the private-PKI HTTPS helper and v1.26.7 quantity-bearing cached-snapshot/ETag-precedence guarantees. Comdirect OAuth session maintenance is provider-specific; provider acquisition contracts and REST/health schemas are unchanged.
 
 ## Authorized investment cash
 
