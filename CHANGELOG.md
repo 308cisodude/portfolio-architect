@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.31.1
+
+- Fixes live v1.31.0 acceptance where a Trade Republic ISIN-only holding became outside current plan scope and the Home Assistant payload parser rejected its intentionally empty WKN.
+- Restores the established ISIN-first identity contract: whole-portfolio holdings may omit WKN when a non-empty ISIN is present, while holdings with neither identity still fail closed.
+- Excludes empty WKN placeholders from duplicate-WKN detection so multiple legitimate ISIN-only holdings remain valid without inventing provider metadata.
+- Adds an end-to-end regression for the exact live topology: accumulating Robotics is the active target, the distributing Robotics holding comes only from Trade Republic with no WKN, remains outside scope, and the complete Home Assistant model parses successfully at six-of-seven target coverage.
+- Keeps the v1.31 canonical target, superseded exception, schema-2 execution-provider configuration, payload schema 8, REST schema 1, Gateway health schema 6, provider acquisition, private-PKI HTTPS, and advisory/no-trading boundary unchanged.
+
 ## 1.31.0
 
 - Retargets the active Robotics allocation from distributing `IE00BYWZ0333` / `A2ANH1` to accumulating `IE00BYZK4552` / `A2ANH0`.

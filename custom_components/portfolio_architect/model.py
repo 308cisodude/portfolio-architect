@@ -932,20 +932,25 @@ def parse_holdings(value: Any, positions: dict[str, PositionData]) -> dict[str, 
         ):
             raise PortfolioArchitectDataError(f"holdings[{index}].position_id is invalid or duplicate")
         wkn = raw.get("wkn")
-        if not isinstance(wkn, str) or not wkn.strip() or len(wkn.strip()) > 16:
+        if not isinstance(wkn, str) or len(wkn.strip()) > 16:
             raise PortfolioArchitectDataError(f"holdings[{index}].wkn is invalid")
         wkn = wkn.strip().upper()
-        if wkn in seen_wkns:
-            raise PortfolioArchitectDataError(f"Duplicate WKN in holdings: {wkn}")
-        seen_wkns.add(wkn)
 
         isin = raw.get("isin")
         if not isinstance(isin, str) or len(isin.strip()) > 32:
             raise PortfolioArchitectDataError(f"holdings[{index}].isin is invalid")
         isin = isin.strip().upper()
-        if isin and isin in seen_isins:
-            raise PortfolioArchitectDataError(f"Duplicate ISIN in holdings: {isin}")
+        if not wkn and not isin:
+            raise PortfolioArchitectDataError(
+                f"holdings[{index}] must expose an ISIN or WKN identity"
+            )
+        if wkn:
+            if wkn in seen_wkns:
+                raise PortfolioArchitectDataError(f"Duplicate WKN in holdings: {wkn}")
+            seen_wkns.add(wkn)
         if isin:
+            if isin in seen_isins:
+                raise PortfolioArchitectDataError(f"Duplicate ISIN in holdings: {isin}")
             seen_isins.add(isin)
 
         name = raw.get("name")

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.31.1
+
+- Package/version alignment for the v1.31.1 Home Assistant-side ISIN-only outside-scope holding validation hotfix; the DKB App remains experimental, manual-only and non-live with the unchanged registration-gated anonymous FinTS capability probe.
+
 ## 1.31.0
 
 - Package/version alignment for v1.31.0 canonical Robotics-target and historical-exception correction; the DKB App remains experimental, manual-only and non-live with the unchanged registration-gated anonymous FinTS capability probe.

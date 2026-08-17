@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.31.1
+
+- Package/version alignment for the v1.31.1 Home Assistant-side ISIN-only outside-scope holding validation hotfix; Comdirect acquisition, OAuth/session maintenance, private-PKI HTTPS and Gateway wire behavior are unchanged.
+
 ## 1.31.0
 
 - Package/version alignment for v1.31.0 canonical Robotics-target and historical-exception correction; Comdirect acquisition, OAuth/session maintenance, private-PKI HTTPS and Gateway wire behavior are unchanged.
