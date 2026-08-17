@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.31.2
+
+- Hardens the DKB anonymous FinTS BPD probe after the first live registered attempt reached the fixed endpoint but exposed Ingress-navigation and diagnostic-state defects.
+- Requires the issued FinTS registration ID to be exactly 25 alphanumeric characters and proves the complete value occurs exactly once in `HKVVB`'s product-designation field.
+- Makes DKB Ingress POST redirects relative to the App root so Store/Probe actions cannot navigate the iframe to Home Assistant's absolute `/`.
+- Persists bounded probe outcomes so failed attempts no longer disappear back to `ready / not probed`; valid FinTS return-code responses without BPD are retained as `bank_rejected` together with bounded sanitized `HIRMG`/`HIRMS` operator text.
+- Keeps DKB experimental/manual-only/non-live, discards raw responses after extracting bounded diagnostics and a response fingerprint/length, and adds no login, PIN/TAN, holdings, order, transfer, payment or transaction-history operation.
+- Records future user-configurable target architecture and first-class dynamic portfolio presentation as roadmap goals rather than hard-coding more current-plan entities into the dashboard.
 ## 1.31.1
 
 - Fixes live v1.31.0 acceptance where a Trade Republic ISIN-only holding became outside current plan scope and the Home Assistant payload parser rejected its intentionally empty WKN.
