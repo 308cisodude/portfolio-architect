@@ -1,4 +1,4 @@
-"""Regression coverage for the v1.29.0 DKB FinTS capability-probe milestone."""
+"""Regression coverage for the v1.30.0 DKB FinTS capability-probe milestone."""
 
 from __future__ import annotations
 
@@ -172,7 +172,7 @@ def test_product_registration_and_probe_result_are_private_and_sanitized(tmp_pat
 
 def test_dkb_app_remains_manual_experimental_and_without_live_acquisition() -> None:
     config = yaml.safe_load((APP / "config.yaml").read_text(encoding="utf-8"))
-    assert config["version"] == "1.29.0"
+    assert config["version"] == "1.30.0"
     assert config["stage"] == "experimental"
     assert config["boot"] == "manual_only"
     assert config["environment"]["PA_PROVIDER_ID"] == "dkb"
@@ -212,7 +212,7 @@ def test_dkb_ingress_has_no_bank_credential_or_transaction_form_fields() -> None
 
 
 def test_v1280_documentation_preserves_registration_and_user_capability_gates() -> None:
-    upgrade = (ROOT / "docs" / "UPGRADE-1.29.0.md").read_text(encoding="utf-8")
+    upgrade = (ROOT / "docs" / "UPGRADE-1.30.0.md").read_text(encoding="utf-8")
     roadmap = (ROOT / "docs" / "ROADMAP.md").read_text(encoding="utf-8")
     for source in (upgrade, roadmap):
         assert "FinTS" in source

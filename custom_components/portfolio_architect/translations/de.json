@@ -243,6 +243,15 @@
           },
           "source_values_eur": {
             "name": "Quellenbeiträge"
+          },
+          "execution_provider": {
+            "name": "Ausführungsanbieter"
+          },
+          "execution_provider_name": {
+            "name": "Ausführungsanbieter"
+          },
+          "execution_fee_data_as_of": {
+            "name": "Gebührendaten vom"
           }
         }
       },
@@ -351,7 +360,8 @@
           "error": "Fehler",
           "warning": "Warnung",
           "accepted_exception": "Akzeptierte Ausnahme",
-          "opportunity": "Optimierungsmöglichkeit"
+          "opportunity": "Optimierungsmöglichkeit",
+          "review_required": "Überprüfung erforderlich"
         },
         "state_attributes": {
           "fund_name": {
@@ -418,7 +428,8 @@
           "error": "Fehler",
           "warning": "Warnung",
           "accepted_exception": "Akzeptierte Ausnahme",
-          "opportunity": "Optimierungsmöglichkeit"
+          "opportunity": "Optimierungsmöglichkeit",
+          "review_required": "Überprüfung erforderlich"
         },
         "state_attributes": {
           "fund_name": {
@@ -485,7 +496,8 @@
           "error": "Fehler",
           "warning": "Warnung",
           "accepted_exception": "Akzeptierte Ausnahme",
-          "opportunity": "Optimierungsmöglichkeit"
+          "opportunity": "Optimierungsmöglichkeit",
+          "review_required": "Überprüfung erforderlich"
         },
         "state_attributes": {
           "fund_name": {
@@ -552,7 +564,8 @@
           "error": "Fehler",
           "warning": "Warnung",
           "accepted_exception": "Akzeptierte Ausnahme",
-          "opportunity": "Optimierungsmöglichkeit"
+          "opportunity": "Optimierungsmöglichkeit",
+          "review_required": "Überprüfung erforderlich"
         },
         "state_attributes": {
           "fund_name": {
@@ -619,7 +632,8 @@
           "error": "Fehler",
           "warning": "Warnung",
           "accepted_exception": "Akzeptierte Ausnahme",
-          "opportunity": "Optimierungsmöglichkeit"
+          "opportunity": "Optimierungsmöglichkeit",
+          "review_required": "Überprüfung erforderlich"
         },
         "state_attributes": {
           "fund_name": {
@@ -686,7 +700,8 @@
           "error": "Fehler",
           "warning": "Warnung",
           "accepted_exception": "Akzeptierte Ausnahme",
-          "opportunity": "Optimierungsmöglichkeit"
+          "opportunity": "Optimierungsmöglichkeit",
+          "review_required": "Überprüfung erforderlich"
         },
         "state_attributes": {
           "fund_name": {
@@ -753,7 +768,8 @@
           "error": "Fehler",
           "warning": "Warnung",
           "accepted_exception": "Akzeptierte Ausnahme",
-          "opportunity": "Optimierungsmöglichkeit"
+          "opportunity": "Optimierungsmöglichkeit",
+          "review_required": "Überprüfung erforderlich"
         },
         "state_attributes": {
           "fund_name": {
@@ -820,7 +836,8 @@
           "error": "Fehler",
           "warning": "Warnung",
           "accepted_exception": "Akzeptierte Ausnahme",
-          "opportunity": "Optimierungsmöglichkeit"
+          "opportunity": "Optimierungsmöglichkeit",
+          "review_required": "Überprüfung erforderlich"
         },
         "state_attributes": {
           "fund_name": {
@@ -1472,7 +1489,8 @@
       "policy_exception_detail": {
         "name": "{fund_name}: Richtlinienausnahme",
         "state": {
-          "accepted_exception": "Akzeptierte Ausnahme"
+          "accepted_exception": "Akzeptierte Ausnahme",
+          "review_required": "Überprüfung erforderlich"
         },
         "state_attributes": {
           "fund_name": {
@@ -1528,6 +1546,15 @@
           },
           "review_on": {
             "name": "Überprüfungsdatum"
+          },
+          "review_reason": {
+            "name": "Prüfgrund"
+          },
+          "expected_provider": {
+            "name": "Bisher angenommener Anbieter"
+          },
+          "observed_provider": {
+            "name": "Aktuell bevorzugter Anbieter"
           }
         }
       },
@@ -1624,6 +1651,15 @@
           },
           "estimated_cash_outlay_eur": {
             "name": "Geschätzter Geldabfluss"
+          },
+          "execution_provider": {
+            "name": "Ausführungsanbieter"
+          },
+          "execution_provider_name": {
+            "name": "Ausführungsanbieter"
+          },
+          "execution_fee_data_as_of": {
+            "name": "Gebührendaten vom"
           }
         }
       },
@@ -1633,7 +1669,8 @@
           "error": "Verbindlicher Verstoß",
           "warning": "Warnung",
           "opportunity": "Optimierungsmöglichkeit",
-          "accepted_exception": "Akzeptierte Ausnahme"
+          "accepted_exception": "Akzeptierte Ausnahme",
+          "review_required": "Überprüfung erforderlich"
         },
         "state_attributes": {
           "fund_name": {
@@ -1659,6 +1696,15 @@
           },
           "review_on": {
             "name": "Überprüfung am"
+          },
+          "review_reason": {
+            "name": "Prüfgrund"
+          },
+          "expected_provider": {
+            "name": "Bisher angenommener Anbieter"
+          },
+          "observed_provider": {
+            "name": "Aktuell bevorzugter Anbieter"
           }
         }
       },
@@ -1830,6 +1876,9 @@
             "name": "Tage bis zur geplanten Ausführung"
           }
         }
+      },
+      "exception_review_required_count": {
+        "name": "Erforderliche Ausnahmeprüfungen"
       }
     },
     "date": {

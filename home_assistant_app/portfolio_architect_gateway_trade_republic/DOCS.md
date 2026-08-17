@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway — Trade Republic v1.29.0
+# Portfolio Architect Gateway — Trade Republic v1.30.0
 
-Version 1.29.0 is package alignment for the native policy-dashboard presentation release.
+Version 1.30.0 is package alignment for the provider-aware local execution-policy release.
 Trade Republic `DEPOTAUSZUG` statement import, persisted normalized snapshot,
 verified HTTPS/private CA trust, bearer authentication, REST schema 1 and health
 schema 6 are unchanged.

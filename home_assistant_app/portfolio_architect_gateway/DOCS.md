@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway — Comdirect v1.29.0
+# Portfolio Architect Gateway — Comdirect v1.30.0
 
-Version 1.29.0 is package alignment for the native policy-dashboard presentation release.
+Version 1.30.0 is package alignment for the provider-aware local execution-policy release.
 Comdirect runtime behavior is unchanged from the live-accepted v1.27.4 fix:
 provider-specific OAuth/session maintenance runs independently of the 15-minute
 portfolio acquisition cadence and performs no portfolio acquisition itself.

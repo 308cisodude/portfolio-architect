@@ -391,6 +391,9 @@ views:
         hold_action:
           action: more-info
           entity: sensor.portfolio_architect_world_isin
+        state_content:
+        - state
+        - execution_provider_name
       grid_options:
         columns: 6
         rows: auto
@@ -431,6 +434,9 @@ views:
         hold_action:
           action: more-info
           entity: sensor.portfolio_architect_emerging_markets_isin
+        state_content:
+        - state
+        - execution_provider_name
       grid_options:
         columns: 6
         rows: auto
@@ -471,6 +477,9 @@ views:
         hold_action:
           action: more-info
           entity: sensor.portfolio_architect_world_small_cap_isin
+        state_content:
+        - state
+        - execution_provider_name
       grid_options:
         columns: 6
         rows: auto
@@ -511,6 +520,9 @@ views:
         hold_action:
           action: more-info
           entity: sensor.portfolio_architect_healthcare_isin
+        state_content:
+        - state
+        - execution_provider_name
       grid_options:
         columns: 6
         rows: auto
@@ -551,6 +563,9 @@ views:
         hold_action:
           action: more-info
           entity: sensor.portfolio_architect_ai_big_data_isin
+        state_content:
+        - state
+        - execution_provider_name
       grid_options:
         columns: 6
         rows: auto
@@ -591,6 +606,9 @@ views:
         hold_action:
           action: more-info
           entity: sensor.portfolio_architect_cybersecurity_isin
+        state_content:
+        - state
+        - execution_provider_name
       grid_options:
         columns: 6
         rows: auto
@@ -631,6 +649,9 @@ views:
         hold_action:
           action: more-info
           entity: sensor.portfolio_architect_robotics_isin
+        state_content:
+        - state
+        - execution_provider_name
       grid_options:
         columns: 6
         rows: auto
@@ -750,6 +771,23 @@ views:
           action: more-info
         color: amber
         icon: mdi:shield-half-full
+        hide_state: true
+      grid_options:
+        columns: 6
+        rows: auto
+    - type: conditional
+      conditions:
+      - condition: state
+        entity: sensor.portfolio_architect_robotics_accumulating_preferred_policy_exception
+        state: review_required
+      card:
+        type: tile
+        entity: sensor.portfolio_architect_robotics_accumulating_preferred_policy_exception
+        name: Robotics review
+        tap_action:
+          action: more-info
+        color: amber
+        icon: mdi:shield-sync-outline
         hide_state: true
       grid_options:
         columns: 6
@@ -2975,6 +3013,9 @@ views:
         hold_action:
           action: more-info
           entity: sensor.portfolio_architect_world_isin
+        state_content:
+        - state
+        - execution_provider_name
       grid_options:
         columns: 6
         rows: auto
@@ -3015,6 +3056,9 @@ views:
         hold_action:
           action: more-info
           entity: sensor.portfolio_architect_emerging_markets_isin
+        state_content:
+        - state
+        - execution_provider_name
       grid_options:
         columns: 6
         rows: auto
@@ -3055,6 +3099,9 @@ views:
         hold_action:
           action: more-info
           entity: sensor.portfolio_architect_world_small_cap_isin
+        state_content:
+        - state
+        - execution_provider_name
       grid_options:
         columns: 6
         rows: auto
@@ -3095,6 +3142,9 @@ views:
         hold_action:
           action: more-info
           entity: sensor.portfolio_architect_healthcare_isin
+        state_content:
+        - state
+        - execution_provider_name
       grid_options:
         columns: 6
         rows: auto
@@ -3135,6 +3185,9 @@ views:
         hold_action:
           action: more-info
           entity: sensor.portfolio_architect_ai_big_data_isin
+        state_content:
+        - state
+        - execution_provider_name
       grid_options:
         columns: 6
         rows: auto
@@ -3175,6 +3228,9 @@ views:
         hold_action:
           action: more-info
           entity: sensor.portfolio_architect_cybersecurity_isin
+        state_content:
+        - state
+        - execution_provider_name
       grid_options:
         columns: 6
         rows: auto
@@ -3215,6 +3271,9 @@ views:
         hold_action:
           action: more-info
           entity: sensor.portfolio_architect_robotics_isin
+        state_content:
+        - state
+        - execution_provider_name
       grid_options:
         columns: 6
         rows: auto
@@ -3334,6 +3393,23 @@ views:
           action: more-info
         color: amber
         icon: mdi:shield-half-full
+        hide_state: true
+      grid_options:
+        columns: 6
+        rows: auto
+    - type: conditional
+      conditions:
+      - condition: state
+        entity: sensor.portfolio_architect_robotics_accumulating_preferred_policy_exception
+        state: review_required
+      card:
+        type: tile
+        entity: sensor.portfolio_architect_robotics_accumulating_preferred_policy_exception
+        name: Robotik prüfen
+        tap_action:
+          action: more-info
+        color: amber
+        icon: mdi:shield-sync-outline
         hide_state: true
       grid_options:
         columns: 6

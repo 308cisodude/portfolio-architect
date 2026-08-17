@@ -265,3 +265,21 @@ legitimate FinTS product identity.
   dependency.
 - Preserve provider acquisition, private-PKI HTTPS, schemas, Comdirect session
   maintenance, Trade Republic import and the v1.28 DKB FinTS gate unchanged.
+
+## v1.30.0 — provider-aware execution policy
+
+- Separate portfolio acquisition provenance from future purchase execution-provider
+  choice.
+- Preserve `broker.yaml` schema 1 and add opt-in schema 2 for multiple execution
+  providers with explicit fee evidence, provenance and bounded freshness.
+- Evaluate savings-plan and optional manual-order routes across fresh providers and
+  expose the selected provider with each recommendation.
+- Make savings-plan fee policy provider-aware so a compliant alternative route can
+  remove an otherwise unnecessary fee opportunity.
+- Allow accepted exceptions to bind to the preferred execution provider that justified
+  the decision; reopen the exception as `review_required` when that assumption changes
+  while preserving audit history.
+- Detect execution-provider changes in the private decision trace and present provider
+  names using native Home Assistant Tile state content.
+- Keep provider Gateway acquisition, credentials, REST/health schemas, private-PKI
+  transport, LKG and the advisory/no-trading boundary unchanged.

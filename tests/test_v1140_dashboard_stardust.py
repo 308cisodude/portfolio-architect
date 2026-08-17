@@ -35,18 +35,21 @@ def _exception_cards(path: Path) -> list[dict]:
 
 
 def test_localised_exception_tiles_remain_compact() -> None:
-    expected_names = {"en": "Robotics exception", "de": "Robotik-Ausnahme"}
-    for locale, expected_name in expected_names.items():
+    expected_names = {
+        "en": {"Robotics exception", "Robotics review"},
+        "de": {"Robotik-Ausnahme", "Robotik prüfen"},
+    }
+    for locale, names in expected_names.items():
         path = DASHBOARD / locale / "policy-compliance.yaml"
         cards = _exception_cards(path)
-        assert len(cards) == 1
-        wrapper = cards[0]
-        tile = wrapper["card"]
-        assert wrapper["grid_options"]["columns"] == 6
-        assert tile["name"] == expected_name
-        assert len(tile["name"]) <= 20
-        assert tile["hide_state"] is True
-        assert tile["color"] == "amber"
+        assert len(cards) == 2
+        assert {card["card"]["name"] for card in cards} == names
+        for wrapper in cards:
+            tile = wrapper["card"]
+            assert wrapper["grid_options"]["columns"] == 6
+            assert len(tile["name"]) <= 20
+            assert tile["hide_state"] is True
+            assert tile["color"] == "amber"
 
 
 def test_complete_views_preserve_the_compact_exception_layout() -> None:
@@ -56,7 +59,7 @@ def test_complete_views_preserve_the_compact_exception_layout() -> None:
         DASHBOARD / "bilingual-dashboard.yaml",
     ]:
         cards = _exception_cards(path)
-        expected = 2 if path.name == "bilingual-dashboard.yaml" else 1
+        expected = 4 if path.name == "bilingual-dashboard.yaml" else 2
         assert len(cards) == expected
         for wrapper in cards:
             tile = wrapper["card"]

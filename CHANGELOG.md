@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.30.0
+
+- Adds provider-aware execution routing with an opt-in `broker.yaml` schema 2 while preserving schema-1 single-broker behavior.
+- Chooses the lowest-cost fresh eligible execution route across configured providers and exposes the selected provider plus fee-data date on purchase recommendations.
+- Scopes accepted exceptions to an optional preferred-execution-provider assumption; a changed preferred provider reopens the exception as `review_required` while retaining the original governance decision for auditability.
+- Makes savings-plan policy checks provider-aware, so a fresh compliant route can remove a fee optimisation finding without changing the instrument itself.
+- Adds bounded provider-fee provenance/freshness validation, native Home Assistant provider presentation, and decision-trace detection of execution-provider changes.
+- Keeps portfolio-source identity separate from execution-provider choice and adds no order placement, trading, transfer, payment or new Gateway network capability.
+
 ## 1.29.0
 
 - Adds a native conditional **Optimisation opportunities / Optimierungsmöglichkeiten** subtitle to the policy-compliance dashboard, separating governed accepted exceptions from non-critical optimisation findings.

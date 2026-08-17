@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.30.0
+
+- Package/version alignment for v1.30.0 provider-aware local execution-policy planning; Trade Republic statement import, private snapshot storage and Gateway wire behavior are unchanged.
+
 ## 1.29.0
 
 - Package/version alignment for the v1.29.0 native policy-dashboard presentation release; Trade Republic statement import, private-PKI HTTPS, schemas and read-only behavior are unchanged.

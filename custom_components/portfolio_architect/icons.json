@@ -71,7 +71,8 @@
           "error": "mdi:alert-octagon",
           "warning": "mdi:alert",
           "accepted_exception": "mdi:shield-lock-open",
-          "opportunity": "mdi:lightbulb-on-outline"
+          "opportunity": "mdi:lightbulb-on-outline",
+          "review_required": "mdi:shield-sync"
         }
       },
       "policy_finding_ucits_required": {
@@ -80,7 +81,8 @@
           "error": "mdi:alert-octagon",
           "warning": "mdi:alert",
           "accepted_exception": "mdi:shield-lock-open",
-          "opportunity": "mdi:lightbulb-on-outline"
+          "opportunity": "mdi:lightbulb-on-outline",
+          "review_required": "mdi:shield-sync"
         }
       },
       "policy_finding_accumulating_preferred": {
@@ -89,7 +91,8 @@
           "error": "mdi:alert-octagon",
           "warning": "mdi:alert",
           "accepted_exception": "mdi:shield-lock-open",
-          "opportunity": "mdi:lightbulb-on-outline"
+          "opportunity": "mdi:lightbulb-on-outline",
+          "review_required": "mdi:shield-sync"
         }
       },
       "policy_finding_ireland_preferred": {
@@ -98,7 +101,8 @@
           "error": "mdi:alert-octagon",
           "warning": "mdi:alert",
           "accepted_exception": "mdi:shield-lock-open",
-          "opportunity": "mdi:lightbulb-on-outline"
+          "opportunity": "mdi:lightbulb-on-outline",
+          "review_required": "mdi:shield-sync"
         }
       },
       "policy_finding_max_ter_pct": {
@@ -107,7 +111,8 @@
           "error": "mdi:alert-octagon",
           "warning": "mdi:alert",
           "accepted_exception": "mdi:shield-lock-open",
-          "opportunity": "mdi:lightbulb-on-outline"
+          "opportunity": "mdi:lightbulb-on-outline",
+          "review_required": "mdi:shield-sync"
         }
       },
       "policy_finding_minimum_fund_size_eur": {
@@ -116,7 +121,8 @@
           "error": "mdi:alert-octagon",
           "warning": "mdi:alert",
           "accepted_exception": "mdi:shield-lock-open",
-          "opportunity": "mdi:lightbulb-on-outline"
+          "opportunity": "mdi:lightbulb-on-outline",
+          "review_required": "mdi:shield-sync"
         }
       },
       "policy_finding_savings_plan_required": {
@@ -125,7 +131,8 @@
           "error": "mdi:alert-octagon",
           "warning": "mdi:alert",
           "accepted_exception": "mdi:shield-lock-open",
-          "opportunity": "mdi:lightbulb-on-outline"
+          "opportunity": "mdi:lightbulb-on-outline",
+          "review_required": "mdi:shield-sync"
         }
       },
       "policy_finding_free_savings_plan_preferred": {
@@ -134,7 +141,8 @@
           "error": "mdi:alert-octagon",
           "warning": "mdi:alert",
           "accepted_exception": "mdi:shield-lock-open",
-          "opportunity": "mdi:lightbulb-on-outline"
+          "opportunity": "mdi:lightbulb-on-outline",
+          "review_required": "mdi:shield-sync"
         }
       },
       "portfolio_value": {
@@ -316,7 +324,8 @@
       "policy_exception_detail": {
         "default": "mdi:shield-half-full",
         "state": {
-          "accepted_exception": "mdi:shield-lock-open"
+          "accepted_exception": "mdi:shield-lock-open",
+          "review_required": "mdi:shield-sync"
         }
       },
       "available_investment_reserve": {
@@ -368,6 +377,9 @@
           "not_ready": "mdi:pause-circle-outline",
           "not_actionable": "mdi:shield-off-outline"
         }
+      },
+      "exception_review_required_count": {
+        "default": "mdi:shield-sync-outline"
       }
     },
     "date": {

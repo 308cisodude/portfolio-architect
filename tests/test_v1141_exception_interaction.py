@@ -39,18 +39,27 @@ def _exception_cards(path: Path) -> list[dict]:
 
 
 def test_exception_tile_is_compact_clickable_and_bounded() -> None:
-    expected_names = {"en": "Robotics exception", "de": "Robotik-Ausnahme"}
-    for locale, expected_name in expected_names.items():
+    expected_names = {
+        "en": ("Robotics exception", "Robotics review"),
+        "de": ("Robotik-Ausnahme", "Robotik prüfen"),
+    }
+    for locale, (accepted_name, review_name) in expected_names.items():
         cards = _exception_cards(DASHBOARD / locale / "policy-compliance.yaml")
-        assert len(cards) == 1
-        wrapper = cards[0]
-        tile = wrapper["card"]
-        assert wrapper["grid_options"]["columns"] == 6
-        assert tile["name"] == expected_name
-        assert tile["tap_action"] == {"action": "more-info"}
-        assert tile["hide_state"] is True
-        assert tile["color"] == "amber"
-        assert wrapper["conditions"][0]["entity"] == DETAIL_ENTITY
+        assert len(cards) == 2
+        by_state = {wrapper["conditions"][0]["state"]: wrapper for wrapper in cards}
+        assert set(by_state) == {"accepted_exception", "review_required"}
+        for state, expected_name in (
+            ("accepted_exception", accepted_name),
+            ("review_required", review_name),
+        ):
+            wrapper = by_state[state]
+            tile = wrapper["card"]
+            assert wrapper["grid_options"]["columns"] == 6
+            assert tile["name"] == expected_name
+            assert tile["tap_action"] == {"action": "more-info"}
+            assert tile["hide_state"] is True
+            assert tile["color"] == "amber"
+            assert wrapper["conditions"][0]["entity"] == DETAIL_ENTITY
 
 
 def test_complete_views_use_the_bounded_detail_entity() -> None:
@@ -60,7 +69,7 @@ def test_complete_views_use_the_bounded_detail_entity() -> None:
         DASHBOARD / "bilingual-dashboard.yaml",
     ]:
         cards = _exception_cards(path)
-        expected = 2 if path.name == "bilingual-dashboard.yaml" else 1
+        expected = 4 if path.name == "bilingual-dashboard.yaml" else 2
         assert len(cards) == expected
         for wrapper in cards:
             assert wrapper["card"]["tap_action"] == {"action": "more-info"}
@@ -87,5 +96,13 @@ def test_exception_detail_translations_are_complete() -> None:
         detail = data["entity"]["sensor"]["policy_exception_detail"]
         assert detail["state"]["accepted_exception"]
         assert set(detail["state_attributes"]) == {
-            "fund_name", "rule", "observed", "expected", "decision_on", "review_on"
+            "fund_name",
+            "rule",
+            "observed",
+            "expected",
+            "decision_on",
+            "review_on",
+            "review_reason",
+            "expected_provider",
+            "observed_provider",
         }

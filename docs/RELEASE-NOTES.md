@@ -1,69 +1,103 @@
-# Portfolio Architect 1.29.0
+# Portfolio Architect 1.30.0
 
-Version 1.29.0 is a presentation-only milestone prepared from the exact published and
-live-accepted v1.28.2 baseline. It refines the native Home Assistant policy-compliance
-reference dashboard without changing Portfolio Architect calculations, entities,
-provider acquisition, Gateway runtime or wire contracts.
+Version 1.30.0 is a provider-aware execution-policy milestone prepared from the exact
+published and live-accepted v1.29.0 baseline. It separates the provider that supplies
+portfolio holdings from the provider through which a future purchase is best executed.
+Portfolio Architect remains advisory and read-only.
 
-## Policy-compliance visual hierarchy
+## Provider-aware execution routes
 
-The accepted-exception lifecycle is already a governed state rather than a policy
-failure: the dashboard shows the accepted exception count, the concrete Robotics
-exception, the decision date and the next/overdue review date as one coherent block.
-The four savings-plan fee findings below it are different: they are non-critical
-optimisation opportunities.
+`broker.yaml` schema 1 remains fully supported and preserves the established
+single-provider behavior. A new opt-in schema 2 can describe multiple execution
+providers, each with bounded:
 
-Version 1.29.0 makes that distinction visible by inserting one native conditional
-Heading card between those two groups:
+- provider identity and display name;
+- fee-data provenance text;
+- `as_of` date and a common maximum evidence age;
+- per-instrument savings-plan availability/fee; and
+- optional provider-local manual-order fee formula.
 
-- English: **Optimisation opportunities**
-- German: **Optimierungsmöglichkeiten**
-- style: native Home Assistant `subtitle`
-- icon: `mdi:lightbulb-on-outline`
-- visibility: only while `sensor.portfolio_architect_optimisation_opportunity_count`
-  is greater than zero
-- badge: the existing optimisation-opportunity count, shown as a compact native entity
-  badge with normal more-info interaction
+Schema-2 fee evidence that is stale remains known but is ineligible for route selection
+or fee-policy compliance. Future-dated evidence is rejected. Portfolio Architect does
+not scrape broker sites or infer a missing fee.
 
-The subtitle disappears completely when there are no optimisation opportunities.
+For each instrument the planner evaluates fresh eligible savings-plan/manual routes and
+prefers the lowest cost ratio. Provider priority is only a deterministic tie-breaker
+between economically equal routes.
 
-## Preserved dashboard contracts
+Recommendations add three optional backward-compatible fields:
 
-The existing green mandatory-controls banner is unchanged. The accepted-exception
-count, Robotics exception, last decision and next/overdue review tiles are unchanged.
-The four concrete fee-opportunity tiles remain blue, full-width and individually
-inspectable through Home Assistant more-info.
+- `execution_provider`;
+- `execution_provider_name`; and
+- `execution_fee_data_as_of`.
 
-No custom card, JavaScript, CSS/card-mod or Markdown card is added. The reference
-layout continues to use native Home Assistant dashboard primitives only.
+The existing payload remains schema 8 because the additions are optional and older
+recommendations without provider metadata remain valid.
 
-The optimisation-opportunity count remains an existing native entity; v1.29.0 does
-not create a new entity or change its value semantics. It is surfaced only as the
-small heading badge and does not become another primary tile.
+## Provider-aware fee policy
 
-## Runtime and security invariants
+`savings_plan_required` and `free_savings_plan_preferred` now evaluate across all fresh
+eligible execution providers instead of assuming a single broker. A fresh zero-fee
+route therefore satisfies the fee preference even when another provider would charge a
+fee for the same instrument.
+
+The reference purchase Tiles use native Home Assistant `state_content` to display the
+selected execution-provider name beneath the proposed amount. No custom card or
+frontend extension is introduced.
+
+## Route-scoped accepted exceptions
+
+Exceptions schema 2 adds one optional bounded assumption:
+
+```yaml
+assumptions:
+  preferred_execution_provider: comdirect
+```
+
+The accepted Robotics exception in the public current-plan fixture is migrated to this
+model. While Comdirect remains the preferred execution route the exception retains its
+established `accepted_exception` state.
+
+If fresh execution evidence makes another provider preferable, the decision is not
+deleted. Instead:
+
+- the finding becomes `review_required`;
+- it no longer contributes to the accepted-exception count;
+- the original rule severity becomes active again until review;
+- the expected and observed provider IDs are exposed as bounded exception-detail
+  metadata;
+- the original decision date remains visible for auditability; and
+- the old future scheduled-review date no longer presents as the next active review.
+
+The English/German reference dashboards show a compact amber **Robotics exception
+review / Robotik-Ausnahme prüfen** Tile when this state occurs.
+
+Existing schema-1 exceptions without provider assumptions retain their prior behavior.
+
+## Decision trace
+
+The private two-evaluation decision trace now records the optional execution-provider
+ID. A provider change is a material recommendation change with bounded reason code
+`execution_provider_changed`. Persisted pre-v1.30 snapshots without this optional field
+remain loadable.
+
+## Preserved boundaries
 
 - payload schema 8: unchanged
 - REST portfolio schema 1: unchanged
 - Gateway health schema 6: unchanged; schemas 1–5 remain supported
-- entity IDs, unique IDs and machine-readable states: unchanged
-- policy evaluation and accepted-exception semantics: unchanged
-- portfolio calculations and execution recommendations: unchanged
-- source atomicity and LKG behavior: unchanged
-- v1.27 private-PKI verified HTTPS and bearer authentication: unchanged
+- portfolio-source identity and execution-provider identity remain separate
+- provider Gateway acquisition and credentials: unchanged
+- v1.27 private-PKI verified HTTPS, bearer authentication, Supervisor trust discovery,
+  DNS pinning and no-plaintext fallback: unchanged
 - Comdirect v1.27.4 OAuth/session maintenance: unchanged
-- Trade Republic statement import: unchanged
+- Trade Republic statement import/private snapshot behavior: unchanged
 - v1.28 DKB FinTS registration/capability-probe gate: unchanged
+- v1.28.1 immutable GitHub Actions pins and v1.28.2 Dependabot grouping: unchanged
+- v1.29 native dashboard hierarchy: retained
 - No trading, order, transfer, payment, or transaction-history capability is added
 - the historical `v1.19.0-rc2` experimental brokerage probe is not promoted by this release
 
-DKB live Gateway acquisition remains a later authenticated milestone. Trade Republic statement import remains provider-isolated; this release does not move PDF parsing into Portfolio Architect.
+DKB remains experimental, manual-only and non-live. DKB live Gateway acquisition remains a later authenticated milestone. `registration_required` remains the expected state until Portfolio Architect receives its own FinTS registration number; any later positive `HIWPDS` result remains bank-level research evidence only. Trade Republic statement import remains provider-isolated; this release does not move PDF parsing into Portfolio Architect.
 
-## Dashboard update
-
-The reference dashboard is static user-owned Home Assistant configuration after it is
-imported. HACS does not overwrite an existing dashboard. Therefore users who want the
-v1.29.0 presentation polish must deliberately apply the updated reference YAML or
-merge the documented policy-section change into their existing dashboard.
-
-See `docs/UPGRADE-1.29.0.md`.
+See `docs/EXECUTION-PROVIDERS.md` and `docs/UPGRADE-1.30.0.md`.

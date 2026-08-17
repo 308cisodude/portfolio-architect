@@ -68,6 +68,9 @@ class Recommendation:
     buy_enabled: bool
     proposed_buy_eur: Decimal
     execution_route: str = "legacy"
+    execution_provider: str | None = None
+    execution_provider_name: str | None = None
+    execution_fee_data_as_of: str | None = None
     estimated_fee_eur: Decimal = Decimal("0")
     estimated_cash_outlay_eur: Decimal = Decimal("0")
     estimated_cost_ratio_pct: Decimal = Decimal("0")
@@ -99,6 +102,9 @@ class Recommendation:
             "buy_enabled": self.buy_enabled,
             "proposed_buy_eur": self.proposed_buy_eur,
             "execution_route": self.execution_route,
+            "execution_provider": self.execution_provider,
+            "execution_provider_name": self.execution_provider_name,
+            "execution_fee_data_as_of": self.execution_fee_data_as_of,
             "estimated_fee_eur": self.estimated_fee_eur,
             "estimated_cash_outlay_eur": self.estimated_cash_outlay_eur,
             "estimated_cost_ratio_pct": self.estimated_cost_ratio_pct,
@@ -125,6 +131,9 @@ class Finding:
     exception_approved_on: str | None = None
     exception_last_reviewed_on: str | None = None
     exception_review_on: str | None = None
+    exception_review_reason: str | None = None
+    exception_expected_provider: str | None = None
+    exception_observed_provider: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
