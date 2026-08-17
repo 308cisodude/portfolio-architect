@@ -243,6 +243,15 @@
           },
           "source_values_eur": {
             "name": "Source contributions"
+          },
+          "execution_provider": {
+            "name": "Execution provider"
+          },
+          "execution_provider_name": {
+            "name": "Execution provider"
+          },
+          "execution_fee_data_as_of": {
+            "name": "Fee data as of"
           }
         }
       },
@@ -351,7 +360,8 @@
           "error": "Error",
           "warning": "Warning",
           "accepted_exception": "Accepted exception",
-          "opportunity": "Optimisation opportunity"
+          "opportunity": "Optimisation opportunity",
+          "review_required": "Review required"
         },
         "state_attributes": {
           "fund_name": {
@@ -418,7 +428,8 @@
           "error": "Error",
           "warning": "Warning",
           "accepted_exception": "Accepted exception",
-          "opportunity": "Optimisation opportunity"
+          "opportunity": "Optimisation opportunity",
+          "review_required": "Review required"
         },
         "state_attributes": {
           "fund_name": {
@@ -485,7 +496,8 @@
           "error": "Error",
           "warning": "Warning",
           "accepted_exception": "Accepted exception",
-          "opportunity": "Optimisation opportunity"
+          "opportunity": "Optimisation opportunity",
+          "review_required": "Review required"
         },
         "state_attributes": {
           "fund_name": {
@@ -552,7 +564,8 @@
           "error": "Error",
           "warning": "Warning",
           "accepted_exception": "Accepted exception",
-          "opportunity": "Optimisation opportunity"
+          "opportunity": "Optimisation opportunity",
+          "review_required": "Review required"
         },
         "state_attributes": {
           "fund_name": {
@@ -619,7 +632,8 @@
           "error": "Error",
           "warning": "Warning",
           "accepted_exception": "Accepted exception",
-          "opportunity": "Optimisation opportunity"
+          "opportunity": "Optimisation opportunity",
+          "review_required": "Review required"
         },
         "state_attributes": {
           "fund_name": {
@@ -686,7 +700,8 @@
           "error": "Error",
           "warning": "Warning",
           "accepted_exception": "Accepted exception",
-          "opportunity": "Optimisation opportunity"
+          "opportunity": "Optimisation opportunity",
+          "review_required": "Review required"
         },
         "state_attributes": {
           "fund_name": {
@@ -753,7 +768,8 @@
           "error": "Error",
           "warning": "Warning",
           "accepted_exception": "Accepted exception",
-          "opportunity": "Optimisation opportunity"
+          "opportunity": "Optimisation opportunity",
+          "review_required": "Review required"
         },
         "state_attributes": {
           "fund_name": {
@@ -820,7 +836,8 @@
           "error": "Error",
           "warning": "Warning",
           "accepted_exception": "Accepted exception",
-          "opportunity": "Optimisation opportunity"
+          "opportunity": "Optimisation opportunity",
+          "review_required": "Review required"
         },
         "state_attributes": {
           "fund_name": {
@@ -1472,7 +1489,8 @@
       "policy_exception_detail": {
         "name": "{fund_name}: policy exception",
         "state": {
-          "accepted_exception": "Accepted exception"
+          "accepted_exception": "Accepted exception",
+          "review_required": "Review required"
         },
         "state_attributes": {
           "fund_name": {
@@ -1528,6 +1546,15 @@
           },
           "review_on": {
             "name": "Review date"
+          },
+          "review_reason": {
+            "name": "Review reason"
+          },
+          "expected_provider": {
+            "name": "Previously assumed provider"
+          },
+          "observed_provider": {
+            "name": "Current preferred provider"
           }
         }
       },
@@ -1624,6 +1651,15 @@
           },
           "estimated_cash_outlay_eur": {
             "name": "Estimated cash outlay"
+          },
+          "execution_provider": {
+            "name": "Execution provider"
+          },
+          "execution_provider_name": {
+            "name": "Execution provider"
+          },
+          "execution_fee_data_as_of": {
+            "name": "Fee data as of"
           }
         }
       },
@@ -1633,7 +1669,8 @@
           "error": "Mandatory failure",
           "warning": "Warning",
           "opportunity": "Optimisation opportunity",
-          "accepted_exception": "Accepted exception"
+          "accepted_exception": "Accepted exception",
+          "review_required": "Review required"
         },
         "state_attributes": {
           "fund_name": {
@@ -1659,6 +1696,15 @@
           },
           "review_on": {
             "name": "Review date"
+          },
+          "review_reason": {
+            "name": "Review reason"
+          },
+          "expected_provider": {
+            "name": "Previously assumed provider"
+          },
+          "observed_provider": {
+            "name": "Current preferred provider"
           }
         }
       },
@@ -1830,6 +1876,9 @@
             "name": "Days until scheduled execution"
           }
         }
+      },
+      "exception_review_required_count": {
+        "name": "Exception reviews required"
       }
     },
     "date": {

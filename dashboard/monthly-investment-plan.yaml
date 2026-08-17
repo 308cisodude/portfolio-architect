@@ -246,6 +246,9 @@ cards:
     hold_action:
       action: more-info
       entity: sensor.portfolio_architect_world_proposed_buy
+    state_content:
+    - state
+    - execution_provider_name
   grid_options:
     columns: 6
     rows: auto
@@ -266,6 +269,9 @@ cards:
     hold_action:
       action: more-info
       entity: sensor.portfolio_architect_emerging_markets_proposed_buy
+    state_content:
+    - state
+    - execution_provider_name
   grid_options:
     columns: 6
     rows: auto
@@ -286,6 +292,9 @@ cards:
     hold_action:
       action: more-info
       entity: sensor.portfolio_architect_world_small_cap_proposed_buy
+    state_content:
+    - state
+    - execution_provider_name
   grid_options:
     columns: 6
     rows: auto
@@ -306,6 +315,9 @@ cards:
     hold_action:
       action: more-info
       entity: sensor.portfolio_architect_healthcare_proposed_buy
+    state_content:
+    - state
+    - execution_provider_name
   grid_options:
     columns: 6
     rows: auto
@@ -326,6 +338,9 @@ cards:
     hold_action:
       action: more-info
       entity: sensor.portfolio_architect_ai_big_data_proposed_buy
+    state_content:
+    - state
+    - execution_provider_name
   grid_options:
     columns: 6
     rows: auto
@@ -346,6 +361,9 @@ cards:
     hold_action:
       action: more-info
       entity: sensor.portfolio_architect_cybersecurity_proposed_buy
+    state_content:
+    - state
+    - execution_provider_name
   grid_options:
     columns: 6
     rows: auto
@@ -366,6 +384,9 @@ cards:
     hold_action:
       action: more-info
       entity: sensor.portfolio_architect_robotics_proposed_buy
+    state_content:
+    - state
+    - execution_provider_name
   grid_options:
     columns: 6
     rows: auto

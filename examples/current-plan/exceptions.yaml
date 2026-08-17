@@ -1,4 +1,4 @@
-schema_version: 1
+schema_version: 2
 as_of: 2026-07-27
 exceptions:
   - id: robotics_distributing_share_class
@@ -6,9 +6,13 @@ exceptions:
     rule: accumulating_preferred
     status: accepted
     rationale: >-
-      The distributing iShares share class is retained because Comdirect offers
-      it at 0% savings-plan fee, it provides the preferred broad automation and
-      robotics exposure, and the accumulating share class is not fee-free.
+      The distributing iShares share class is retained because the accepted
+      execution decision used Comdirect, where it was available at 0% savings-plan
+      fee, it provides the preferred broad automation and robotics exposure, and
+      the accumulating share class was not fee-free on that route. The exception
+      must be reviewed if Portfolio Architect prefers a different execution provider.
+    assumptions:
+      preferred_execution_provider: comdirect
     approved_on: 2026-07-27
     last_reviewed_on: 2026-07-27
     review_on: 2027-07-27
@@ -16,3 +20,4 @@ exceptions:
     compensating_controls:
       - Treat cash distributions as available capital for the next monthly contribution.
       - Reassess if the accumulating share class becomes fee-free at Comdirect.
+      - Reassess immediately if Portfolio Architect prefers a different execution provider.

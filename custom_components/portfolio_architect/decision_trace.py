@@ -143,6 +143,7 @@ class PositionDecisionSnapshot:
     execution_state: str
     recommendation_reason: str
     deferred: bool
+    execution_provider: str | None = None
 
     ALLOCATION_STATES: ClassVar[frozenset[str]] = frozenset(
         {"underweight", "on_target", "overweight"}
@@ -186,11 +187,20 @@ class PositionDecisionSnapshot:
                 maximum=96,
             ),
             deferred=_bounded_bool(position.deferred, field="deferred"),
+            execution_provider=(
+                None
+                if getattr(position, "execution_provider", None) is None
+                else _bounded_text(
+                    position.execution_provider,
+                    field="execution_provider",
+                    maximum=32,
+                )
+            ),
         )
 
     @classmethod
     def from_dict(cls, raw: Any) -> PositionDecisionSnapshot:
-        expected = {
+        legacy_expected = {
             "fund_id",
             "fund_name",
             "allocation_status",
@@ -201,7 +211,11 @@ class PositionDecisionSnapshot:
             "recommendation_reason",
             "deferred",
         }
-        if not isinstance(raw, dict) or set(raw) != expected:
+        current_expected = legacy_expected | {"execution_provider"}
+        if not isinstance(raw, dict) or frozenset(raw) not in {
+            frozenset(legacy_expected),
+            frozenset(current_expected),
+        }:
             raise DecisionTraceError("Persisted position snapshot has invalid fields")
         return cls(
             fund_id=_bounded_text(raw["fund_id"], field="fund_id", maximum=64),
@@ -239,6 +253,15 @@ class PositionDecisionSnapshot:
                 maximum=96,
             ),
             deferred=_bounded_bool(raw["deferred"], field="deferred"),
+            execution_provider=(
+                None
+                if raw.get("execution_provider") is None
+                else _bounded_text(
+                    raw["execution_provider"],
+                    field="execution_provider",
+                    maximum=32,
+                )
+            ),
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -252,6 +275,7 @@ class PositionDecisionSnapshot:
             "execution_state": self.execution_state,
             "recommendation_reason": self.recommendation_reason,
             "deferred": self.deferred,
+            "execution_provider": self.execution_provider,
         }
 
 
@@ -619,6 +643,9 @@ def _position_change(
         if previous.execution_route != current.execution_route:
             categories.append("recommendation")
             reasons.append("execution_route_changed")
+        if previous.execution_provider != current.execution_provider:
+            categories.append("recommendation")
+            reasons.append("execution_provider_changed")
         if previous.execution_state != current.execution_state:
             categories.append("recommendation")
             reasons.append("position_execution_state_changed")
@@ -665,6 +692,12 @@ def _position_change(
         ),
         "current_recommendation_reason": (
             None if current is None else current.recommendation_reason
+        ),
+        "previous_execution_provider": (
+            None if previous is None else previous.execution_provider
+        ),
+        "current_execution_provider": (
+            None if current is None else current.execution_provider
         ),
     }
 

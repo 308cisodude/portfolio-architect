@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.30.0
+
+- Package/version alignment for v1.30.0 provider-aware local execution-policy planning; the DKB App remains experimental, manual-only and non-live with the unchanged registration-gated anonymous FinTS capability probe.
+
 ## 1.29.0
 
 - Package/version alignment for the v1.29.0 native policy-dashboard presentation release; the v1.28 DKB FinTS registration/capability-probe gate remains experimental, manual-only and non-live.

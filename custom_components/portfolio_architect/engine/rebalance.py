@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import date
 from decimal import Decimal, ROUND_HALF_UP
 import re
 from typing import Any
@@ -10,12 +11,8 @@ from .execution import (
     POLICY_EFFICIENCY_FIRST,
     ROUTE_MANUAL_ORDER,
     ROUTE_UNAVAILABLE,
-    choose_route,
-    efficient_manual_cash_required,
-    estimate_savings_plan,
-    maximum_manual_order_for_cash,
-    maximum_savings_plan_order_for_cash,
-    savings_plan_fee_pct,
+    choose_route_for_cash,
+    efficient_manual_cash_required_for_broker,
 )
 from .identity import build_position_identity_index, match_position_for_target
 from .models import Position, Recommendation
@@ -174,6 +171,7 @@ def allocate_buys(
     broker: dict[str, Any] | None = None,
     execution: dict[str, Any] | None = None,
     available_reserve_eur: Decimal | None = None,
+    evaluated_on: date | None = None,
 ) -> list[Recommendation]:
     """Calculate allocation and cost-aware buy recommendations.
 
@@ -267,6 +265,9 @@ def allocate_buys(
 
     proposed = {fund["wkn"]: D("0") for fund in funds}
     routes = {fund["wkn"]: "legacy" for fund in funds}
+    execution_providers = {fund["wkn"]: None for fund in funds}
+    execution_provider_names = {fund["wkn"]: None for fund in funds}
+    execution_fee_data_as_of = {fund["wkn"]: None for fund in funds}
     fees = {fund["wkn"]: D("0") for fund in funds}
     cash_outlays = {fund["wkn"]: D("0") for fund in funds}
     ratios = {fund["wkn"]: D("0") for fund in funds}
@@ -322,53 +323,16 @@ def allocate_buys(
                     desired = min(remaining_reserve, execution_need[wkn])
                     if desired <= 0:
                         continue
-                    rounded_desired = floor_to_step(desired, step)
-                    manual_amount = floor_to_step(
-                        min(
-                            rounded_desired,
-                            maximum_manual_order_for_cash(
-                                remaining_reserve, execution_config
-                            ),
-                        ),
-                        step,
-                    )
-                    configured_savings_fee = savings_plan_fee_pct(
-                        broker_document, fund["isin"]
-                    )
-                    savings_amount = D("0")
-                    if configured_savings_fee is not None:
-                        # A Comdirect savings-plan rate is the total cash debit.
-                        # The percentage fee is contained in that rate, so derive
-                        # the maximum invested principal from the remaining gross
-                        # periodic cash budget instead of adding the fee on top of
-                        # the configured contribution.
-                        savings_cash_budget = min(
-                            remaining_reserve, remaining_periodic_budget
-                        )
-                        maximum_savings_principal = maximum_savings_plan_order_for_cash(
-                            savings_cash_budget, configured_savings_fee
-                        )
-                        savings_amount = min(
-                            desired, maximum_savings_principal
-                        ).quantize(D("0.01"), rounding=ROUND_HALF_UP)
-                        while (
-                            savings_amount > 0
-                            and estimate_savings_plan(
-                                savings_amount, configured_savings_fee
-                            ).cash_outlay_eur
-                            > savings_cash_budget
-                        ):
-                            savings_amount -= D("0.01")
-                    if manual_amount < minimum:
-                        manual_amount = D("0")
-                    if savings_amount < minimum:
-                        savings_amount = D("0")
-                    route = choose_route(
+                    route = choose_route_for_cash(
                         isin=fund["isin"],
-                        savings_plan_amount_eur=savings_amount,
-                        manual_order_amount_eur=manual_amount,
+                        desired_amount_eur=desired,
+                        periodic_cash_budget_eur=remaining_periodic_budget,
+                        reserve_cash_budget_eur=remaining_reserve,
+                        minimum_order_eur=minimum,
+                        rounding_step_eur=step,
                         broker=broker_document,
                         config=execution_config,
+                        evaluated_on=evaluated_on,
                     )
                     if route.route != ROUTE_UNAVAILABLE:
                         candidates.append((fund, route))
@@ -399,12 +363,17 @@ def allocate_buys(
                     selected_fund, selected_route = candidates[0]
                     wkn = selected_fund["wkn"]
                     routes[wkn] = selected_route.route
+                    execution_providers[wkn] = selected_route.provider_id
+                    execution_provider_names[wkn] = selected_route.provider_name
+                    execution_fee_data_as_of[wkn] = selected_route.fee_data_as_of
                     fees[wkn] = selected_route.fee_eur
                     cash_outlays[wkn] = selected_route.cash_outlay_eur
                     ratios[wkn] = selected_route.cost_ratio_pct
                     deferred[wkn] = True
                     reasons[wkn] = "transaction_cost_threshold_not_met"
-                    threshold = efficient_manual_cash_required(execution_config)
+                    threshold = efficient_manual_cash_required_for_broker(
+                        broker_document, execution_config, evaluated_on=evaluated_on
+                    )
                     additional[wkn] = max(D("0"), threshold - reserve).quantize(
                         D("0.01"), rounding=ROUND_HALF_UP
                     )
@@ -414,6 +383,9 @@ def allocate_buys(
                 amount = min(selected_route.order_amount_eur, remaining_reserve)
                 proposed[wkn] = amount.quantize(D("0.01"), rounding=ROUND_HALF_UP)
                 routes[wkn] = selected_route.route
+                execution_providers[wkn] = selected_route.provider_id
+                execution_provider_names[wkn] = selected_route.provider_name
+                execution_fee_data_as_of[wkn] = selected_route.fee_data_as_of
                 fees[wkn] = selected_route.fee_eur
                 cash_outlays[wkn] = selected_route.cash_outlay_eur
                 ratios[wkn] = selected_route.cost_ratio_pct
@@ -449,6 +421,9 @@ def allocate_buys(
             buy_enabled=bool(fund.get("buy_enabled", True)),
             proposed_buy_eur=proposed[fund["wkn"]],
             execution_route=routes[fund["wkn"]],
+            execution_provider=execution_providers[fund["wkn"]],
+            execution_provider_name=execution_provider_names[fund["wkn"]],
+            execution_fee_data_as_of=execution_fee_data_as_of[fund["wkn"]],
             estimated_fee_eur=fees[fund["wkn"]],
             estimated_cash_outlay_eur=cash_outlays[fund["wkn"]],
             estimated_cost_ratio_pct=ratios[fund["wkn"]],

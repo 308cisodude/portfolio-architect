@@ -27,7 +27,7 @@ from .importers import CsvSourceConfig
 from .models import Holding, Position
 from .plan import apply_plan_override
 from .policy import evaluate
-from .execution import ExecutionConfig, choose_route
+from .execution import ExecutionConfig, choose_route, preferred_execution_route
 from .rebalance import allocate_buys, target_funds
 
 D = Decimal
@@ -47,6 +47,7 @@ def _minimum_cash_required_for_next_purchase(
     portfolio: dict[str, Any],
     broker: dict[str, Any],
     execution_config: dict[str, Any] | None,
+    evaluated_on: date | None = None,
 ) -> Decimal:
     """Return minimum gross cash needed for the next buyable target position."""
     buyable = [item for item in recommendations if item.buy_enabled]
@@ -73,6 +74,7 @@ def _minimum_cash_required_for_next_purchase(
         manual_order_amount_eur=minimum_order,
         broker=broker,
         config=config,
+        evaluated_on=evaluated_on,
     )
     return route.cash_outlay_eur
 
@@ -172,8 +174,23 @@ def calculate_portfolio_payload_from_positions(
         broker=broker,
         execution=execution_config if isinstance(execution_config, dict) else None,
         available_reserve_eur=available_reserve,
+        evaluated_on=analysis_date,
     )
     holdings = _build_holdings(positions, portfolio, recommendations)
+    execution_policy = ExecutionConfig.from_mapping(
+        execution_config if isinstance(execution_config, dict) else None
+    )
+    reference_amount = D(str(portfolio["portfolio"]["monthly_contribution"]))
+    preferred_execution_providers: dict[str, str | None] = {}
+    for fund in target_funds(portfolio):
+        route = preferred_execution_route(
+            isin=fund["isin"],
+            reference_amount_eur=reference_amount,
+            broker=broker,
+            config=execution_policy,
+            evaluated_on=analysis_date,
+        )
+        preferred_execution_providers[fund["isin"]] = route.provider_id
     findings = evaluate(
         portfolio,
         policy,
@@ -181,18 +198,22 @@ def calculate_portfolio_payload_from_positions(
         broker,
         exceptions,
         evaluated_on=analysis_date,
+        preferred_execution_providers=preferred_execution_providers,
     )
     coverage = calculate_target_coverage(recommendations)
 
-    failed = [item for item in findings if item.status == "fail"]
+    failed = [item for item in findings if item.status in {"fail", "review_required"}]
     accepted = [item for item in findings if item.status == "accepted_exception"]
+    exception_reviews_required = [
+        item for item in findings if item.status == "review_required"
+    ]
     policy_errors = [item for item in failed if item.severity == "error"]
     policy_warnings = [item for item in failed if item.severity == "warning"]
     policy_opportunities = [item for item in failed if item.severity == "info"]
 
     review_dates: list[date] = []
     decision_dates: list[date] = []
-    for finding in accepted:
+    for finding in [*accepted, *exception_reviews_required]:
         for raw_value in (
             finding.exception_last_reviewed_on,
             finding.exception_approved_on,
@@ -204,7 +225,7 @@ def calculate_portfolio_payload_from_positions(
                 break
             except ValueError:
                 continue
-        if finding.exception_review_on:
+        if finding.status == "accepted_exception" and finding.exception_review_on:
             try:
                 review_dates.append(date.fromisoformat(finding.exception_review_on))
             except ValueError:
@@ -287,6 +308,7 @@ def calculate_portfolio_payload_from_positions(
                 portfolio=portfolio,
                 broker=broker,
                 execution_config=execution_config,
+                evaluated_on=analysis_date,
             )
             if minimum_cash_required > investment_reserve + D("0.01"):
                 execution_state = "waiting_for_reserve"
@@ -425,6 +447,7 @@ def calculate_portfolio_payload_from_positions(
             "policy_warning_findings": len(policy_warnings),
             "policy_opportunity_findings": len(policy_opportunities),
             "policy_accepted_exceptions": len(accepted),
+            "policy_exception_reviews_required": len(exception_reviews_required),
             "mandatory_controls_compliant": not policy_errors and not policy_warnings,
             "next_exception_review_on": next_exception_review_on,
             "exception_review_overdue": bool(overdue_review_dates),

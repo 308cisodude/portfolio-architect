@@ -101,6 +101,7 @@ async def async_setup_entry(
             PortfolioPolicyErrorCountSensor(coordinator, entry),
             PortfolioPolicyWarningCountSensor(coordinator, entry),
             PortfolioAcceptedExceptionCountSensor(coordinator, entry),
+            PortfolioExceptionReviewRequiredCountSensor(coordinator, entry),
             PortfolioOptimisationOpportunityCountSensor(coordinator, entry),
             PortfolioNextExceptionReviewSensor(coordinator, entry),
             PortfolioOverdueExceptionReviewCountSensor(coordinator, entry),
@@ -248,7 +249,7 @@ async def async_setup_entry(
                     )
                 )
             if (
-                finding.status == "accepted_exception"
+                finding.status in {"accepted_exception", "review_required"}
                 and finding.key not in known_policy_exception_details
             ):
                 known_policy_exception_details.add(finding.key)
@@ -679,6 +680,8 @@ class PortfolioDeferredContributionSensor(_PortfolioMonthlyMoneySensor):
                 "fund_id": item.fund_id,
                 "fund_name": item.name,
                 "execution_route": item.execution_route,
+                "execution_provider": item.execution_provider,
+                "execution_provider_name": item.execution_provider_name,
                 "estimated_fee_eur": item.estimated_fee_eur,
                 "estimated_cash_outlay_eur": item.estimated_cash_outlay_eur,
                 "estimated_cost_ratio_pct": item.estimated_cost_ratio_pct,
@@ -981,6 +984,7 @@ class PortfolioPolicyStatusSensor(
             "error_findings": policy.errors,
             "warning_findings": policy.warnings,
             "accepted_exceptions": policy.accepted_exceptions,
+            "exception_reviews_required": policy.exception_reviews_required,
             "optimisation_opportunities": policy.opportunities,
             "mandatory_controls_compliant": policy.mandatory_controls_compliant,
             **base,
@@ -1035,6 +1039,12 @@ class PortfolioAcceptedExceptionCountSensor(_PortfolioPolicyCountSensor):
     _attr_translation_key = "accepted_exception_count"
     value_attribute = "accepted_exceptions"
     object_id = "accepted_exception_count"
+
+
+class PortfolioExceptionReviewRequiredCountSensor(_PortfolioPolicyCountSensor):
+    _attr_translation_key = "exception_review_required_count"
+    value_attribute = "exception_reviews_required"
+    object_id = "exception_review_required_count"
 
 
 class PortfolioOptimisationOpportunityCountSensor(_PortfolioPolicyCountSensor):
@@ -1128,7 +1138,7 @@ class PortfolioPolicyFindingSensor(
 
     _attr_has_entity_name = True
     _attr_device_class = SensorDeviceClass.ENUM
-    _attr_options = ["error", "warning", "accepted_exception", "opportunity"]
+    _attr_options = ["error", "warning", "accepted_exception", "review_required", "opportunity"]
 
     def __init__(
         self,
@@ -1186,7 +1196,7 @@ class PortfolioPolicyDecisionDetailSensor(
     _attr_has_entity_name = True
     _attr_translation_key = "policy_decision_detail"
     _attr_device_class = SensorDeviceClass.ENUM
-    _attr_options = ["error", "warning", "opportunity", "accepted_exception"]
+    _attr_options = ["error", "warning", "opportunity", "accepted_exception", "review_required"]
 
     def __init__(self, coordinator, entry, fund_id, rule):
         super().__init__(coordinator, context=f"{fund_id}:{rule}:policy_decision")
@@ -1231,7 +1241,7 @@ class PortfolioPolicyDecisionDetailSensor(
             "expected": f.attributes.get("expected"),
             "reason_code": f"policy_{f.entity_state}",
         }
-        if f.status == "accepted_exception":
+        if f.status in {"accepted_exception", "review_required"}:
             attrs.update(f.exception_detail_attributes)
         return {**attrs, **base}
 
@@ -1244,7 +1254,7 @@ class PortfolioPolicyExceptionDetailSensor(
     _attr_has_entity_name = True
     _attr_translation_key = "policy_exception_detail"
     _attr_device_class = SensorDeviceClass.ENUM
-    _attr_options = ["accepted_exception"]
+    _attr_options = ["accepted_exception", "review_required"]
 
     def __init__(
         self,
@@ -1278,12 +1288,12 @@ class PortfolioPolicyExceptionDetailSensor(
         return (
             super().available
             and self._key in self.coordinator.data.policy.findings
-            and self._finding.status == "accepted_exception"
+            and self._finding.status in {"accepted_exception", "review_required"}
         )
 
     @property
     def native_value(self) -> str | None:
-        return "accepted_exception" if self.available else None
+        return self._finding.status if self.available else None
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
@@ -1414,6 +1424,13 @@ class PortfolioPurchaseExplanationSensor(_PortfolioPositionDetailSensor):
             "buy_enabled": p.buy_enabled,
             "proposed_buy_eur": p.proposed_buy_eur,
             "execution_route": p.execution_route,
+            "execution_provider": p.execution_provider,
+            "execution_provider_name": p.execution_provider_name,
+            "execution_fee_data_as_of": (
+                p.execution_fee_data_as_of.isoformat()
+                if p.execution_fee_data_as_of is not None
+                else None
+            ),
             "estimated_fee_eur": p.estimated_fee_eur,
             "estimated_cash_outlay_eur": p.estimated_cash_outlay_eur,
             "estimated_cost_ratio_pct": p.estimated_cost_ratio_pct,
@@ -1584,6 +1601,13 @@ class PortfolioProposedBuySensor(
             "allocation_status": position.allocation_status,
             "deviation_pp": position.deviation_pp,
             "execution_route": position.execution_route,
+            "execution_provider": position.execution_provider,
+            "execution_provider_name": position.execution_provider_name,
+            "execution_fee_data_as_of": (
+                position.execution_fee_data_as_of.isoformat()
+                if position.execution_fee_data_as_of is not None
+                else None
+            ),
             "estimated_fee_eur": position.estimated_fee_eur,
             "estimated_cost_ratio_pct": position.estimated_cost_ratio_pct,
             "recommendation_reason": position.recommendation_reason,

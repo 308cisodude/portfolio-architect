@@ -32,7 +32,7 @@ POLICY_RULES = frozenset({
     "free_savings_plan_preferred",
 })
 POLICY_SEVERITIES = frozenset({"error", "warning", "info"})
-POLICY_STATUSES = frozenset({"pass", "fail", "accepted_exception"})
+POLICY_STATUSES = frozenset({"pass", "fail", "accepted_exception", "review_required"})
 
 EXECUTION_ROUTES = frozenset({
     "legacy",
@@ -64,6 +64,7 @@ RECOMMENDATION_REASONS = frozenset({
     "execution_route_unavailable",
 })
 _FUND_ID_RE = re.compile(r"^[a-z0-9_]{1,64}$")
+_EXECUTION_PROVIDER_RE = re.compile(r"^[a-z0-9_]{1,32}$")
 _VERSION_RE = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+(?:[-+][A-Za-z0-9.-]+)?$")
 _COVERAGE_KEYS = {
     "target_positions_total",
@@ -180,6 +181,9 @@ class PositionData:
     buy_enabled: bool
     proposed_buy_eur: float
     execution_route: str = "legacy"
+    execution_provider: str | None = None
+    execution_provider_name: str | None = None
+    execution_fee_data_as_of: date | None = None
     estimated_fee_eur: float = 0.0
     estimated_cash_outlay_eur: float = 0.0
     execution_state: str = "ready"
@@ -222,6 +226,13 @@ class PositionData:
             "buy_enabled": self.buy_enabled,
             "proposed_buy_eur": self.proposed_buy_eur,
             "execution_route": self.execution_route,
+            "execution_provider": self.execution_provider,
+            "execution_provider_name": self.execution_provider_name,
+            "execution_fee_data_as_of": (
+                self.execution_fee_data_as_of.isoformat()
+                if self.execution_fee_data_as_of is not None
+                else None
+            ),
             "estimated_fee_eur": self.estimated_fee_eur,
             "estimated_cash_outlay_eur": self.estimated_cash_outlay_eur,
             "estimated_cost_ratio_pct": self.estimated_cost_ratio_pct,
@@ -403,12 +414,17 @@ class PolicyFindingData:
     exception_approved_on: date | None
     exception_last_reviewed_on: date | None
     exception_review_on: date | None
+    exception_review_reason: str | None = None
+    exception_expected_provider: str | None = None
+    exception_observed_provider: str | None = None
 
     @property
     def entity_state(self) -> str:
         """Return a language-neutral state for a native enum sensor."""
         if self.status == "accepted_exception":
             return "accepted_exception"
+        if self.status == "review_required":
+            return "review_required"
         if self.status == "pass":
             return "pass"
         if self.severity == "error":
@@ -449,12 +465,18 @@ class PolicyFindingData:
             attributes["exception_last_reviewed_on"] = self.exception_last_reviewed_on.isoformat()
         if self.exception_review_on is not None:
             attributes["exception_review_on"] = self.exception_review_on.isoformat()
+        if self.exception_review_reason is not None:
+            attributes["exception_review_reason"] = self.exception_review_reason
+        if self.exception_expected_provider is not None:
+            attributes["exception_expected_provider"] = self.exception_expected_provider
+        if self.exception_observed_provider is not None:
+            attributes["exception_observed_provider"] = self.exception_observed_provider
         return attributes
 
     @property
     def exception_detail_attributes(self) -> dict[str, Any]:
         """Return the bounded native detail view for an accepted exception."""
-        if self.status != "accepted_exception":
+        if self.status not in {"accepted_exception", "review_required"}:
             return {}
         attributes: dict[str, Any] = {
             "fund_name": self.fund_name,
@@ -467,6 +489,12 @@ class PolicyFindingData:
             attributes["decision_on"] = decision_on.isoformat()
         if self.exception_review_on is not None:
             attributes["review_on"] = self.exception_review_on.isoformat()
+        if self.exception_review_reason is not None:
+            attributes["review_reason"] = self.exception_review_reason
+        if self.exception_expected_provider is not None:
+            attributes["expected_provider"] = self.exception_expected_provider
+        if self.exception_observed_provider is not None:
+            attributes["observed_provider"] = self.exception_observed_provider
         return attributes
 
 
@@ -487,6 +515,7 @@ class PolicySummaryData:
     oldest_overdue_review_on: date | None
     last_exception_decision_on: date | None
     findings: dict[str, PolicyFindingData]
+    exception_reviews_required: int = 0
 
     @property
     def non_pass_findings(self) -> tuple[PolicyFindingData, ...]:
@@ -720,6 +749,40 @@ def parse_recommendations(value: Any) -> dict[str, PositionData]:
         source_ids, source_values_eur = _parse_source_provenance(
             raw_item, context=f"recommendations[{index}]"
         )
+        execution_provider = raw_item.get("execution_provider")
+        if execution_provider is not None:
+            if (
+                not isinstance(execution_provider, str)
+                or _EXECUTION_PROVIDER_RE.fullmatch(execution_provider) is None
+            ):
+                raise PortfolioArchitectDataError(
+                    f"recommendations[{index}].execution_provider is invalid"
+                )
+        execution_provider_name = raw_item.get("execution_provider_name")
+        if execution_provider_name is not None:
+            if (
+                not isinstance(execution_provider_name, str)
+                or not execution_provider_name.strip()
+                or len(execution_provider_name.strip()) > 80
+                or any(ord(char) < 32 for char in execution_provider_name)
+            ):
+                raise PortfolioArchitectDataError(
+                    f"recommendations[{index}].execution_provider_name is invalid"
+                )
+            execution_provider_name = execution_provider_name.strip()
+        execution_fee_data_as_of = None
+        raw_fee_as_of = raw_item.get("execution_fee_data_as_of")
+        if raw_fee_as_of is not None:
+            if not isinstance(raw_fee_as_of, str) or len(raw_fee_as_of) > 16:
+                raise PortfolioArchitectDataError(
+                    f"recommendations[{index}].execution_fee_data_as_of is invalid"
+                )
+            try:
+                execution_fee_data_as_of = date.fromisoformat(raw_fee_as_of)
+            except ValueError as err:
+                raise PortfolioArchitectDataError(
+                    f"recommendations[{index}].execution_fee_data_as_of is invalid"
+                ) from err
         positions[fund_id] = PositionData(
             fund_id=fund_id,
             wkn=wkn,
@@ -778,6 +841,9 @@ def parse_recommendations(value: Any) -> dict[str, PositionData]:
                 default="legacy",
                 allowed=EXECUTION_ROUTES,
             ),
+            execution_provider=execution_provider,
+            execution_provider_name=execution_provider_name,
+            execution_fee_data_as_of=execution_fee_data_as_of,
             estimated_fee_eur=_optional_float(raw_item, "estimated_fee_eur", index, default=0.0, minimum=0, maximum=MAX_MONEY_EUR),
             estimated_cash_outlay_eur=_optional_float(raw_item, "estimated_cash_outlay_eur", index, default=0.0, minimum=0, maximum=MAX_MONEY_EUR),
             estimated_cost_ratio_pct=_optional_float(raw_item, "estimated_cost_ratio_pct", index, default=0.0, minimum=0, maximum=100),
@@ -1690,11 +1756,42 @@ def parse_policy_findings(
         approved_date = _optional_policy_date("exception_approved_on")
         last_reviewed_date = _optional_policy_date("exception_last_reviewed_on")
         review_date = _optional_policy_date("exception_review_on")
+        exception_review_reason = _bounded_optional_text(
+            raw.get("exception_review_reason"),
+            field=f"policy_findings[{index}].exception_review_reason",
+            maximum=96,
+        )
+        exception_expected_provider = _bounded_optional_text(
+            raw.get("exception_expected_provider"),
+            field=f"policy_findings[{index}].exception_expected_provider",
+            maximum=32,
+        )
+        exception_observed_provider = _bounded_optional_text(
+            raw.get("exception_observed_provider"),
+            field=f"policy_findings[{index}].exception_observed_provider",
+            maximum=32,
+        )
 
-        if status == "accepted_exception":
+        if status in {"accepted_exception", "review_required"}:
             if exception_id is None or exception_rationale is None:
                 raise PortfolioArchitectDataError(
-                    f"policy_findings[{index}] accepted exception metadata is incomplete"
+                    f"policy_findings[{index}] exception metadata is incomplete"
+                )
+            if status == "review_required":
+                if (
+                    exception_review_reason != "preferred_execution_provider_changed"
+                    or exception_expected_provider is None
+                ):
+                    raise PortfolioArchitectDataError(
+                        f"policy_findings[{index}] review-required metadata is incomplete"
+                    )
+            elif (
+                exception_review_reason is not None
+                or exception_expected_provider is not None
+                or exception_observed_provider is not None
+            ):
+                raise PortfolioArchitectDataError(
+                    f"policy_findings[{index}] accepted exception contains review-only metadata"
                 )
         elif (
             exception_id is not None
@@ -1702,6 +1799,9 @@ def parse_policy_findings(
             or approved_date is not None
             or last_reviewed_date is not None
             or review_date is not None
+            or exception_review_reason is not None
+            or exception_expected_provider is not None
+            or exception_observed_provider is not None
         ):
             raise PortfolioArchitectDataError(
                 f"policy_findings[{index}] contains exception metadata for a non-exception"
@@ -1733,6 +1833,9 @@ def parse_policy_findings(
             exception_approved_on=approved_date,
             exception_last_reviewed_on=last_reviewed_date,
             exception_review_on=review_date,
+            exception_review_reason=exception_review_reason,
+            exception_expected_provider=exception_expected_provider,
+            exception_observed_provider=exception_observed_provider,
         )
         if finding.key in findings:
             raise PortfolioArchitectDataError(
@@ -1754,10 +1857,12 @@ def _parse_policy_summary(
     """Validate policy findings and cross-check the engine summary contract."""
     findings = parse_policy_findings(policy_findings, positions)
     values = tuple(findings.values())
-    errors = sum(1 for item in values if item.status == "fail" and item.severity == "error")
-    warnings = sum(1 for item in values if item.status == "fail" and item.severity == "warning")
-    opportunities = sum(1 for item in values if item.status == "fail" and item.severity == "info")
+    active_failures = {"fail", "review_required"}
+    errors = sum(1 for item in values if item.status in active_failures and item.severity == "error")
+    warnings = sum(1 for item in values if item.status in active_failures and item.severity == "warning")
+    opportunities = sum(1 for item in values if item.status in active_failures and item.severity == "info")
     accepted = sum(1 for item in values if item.status == "accepted_exception")
+    reviews_required = sum(1 for item in values if item.status == "review_required")
     mandatory_compliant = errors == 0 and warnings == 0
     status = "non_compliant" if errors else "attention" if warnings or opportunities else "compliant"
     review_dates = sorted(
@@ -1772,7 +1877,7 @@ def _parse_policy_summary(
     decision_dates = [
         item.exception_last_reviewed_on or item.exception_approved_on
         for item in values
-        if item.status == "accepted_exception"
+        if item.status in {"accepted_exception", "review_required"}
         and (item.exception_last_reviewed_on or item.exception_approved_on) is not None
     ]
     last_decision = max(decision_dates) if decision_dates else None
@@ -1793,6 +1898,11 @@ def _parse_policy_summary(
         for key, expected in expected_values.items():
             if summary.get(key) != expected:
                 raise PortfolioArchitectDataError(f"summary.{key} is inconsistent with policy_findings")
+    if "policy_exception_reviews_required" in summary:
+        if summary.get("policy_exception_reviews_required") != reviews_required:
+            raise PortfolioArchitectDataError(
+                "summary.policy_exception_reviews_required is inconsistent with policy_findings"
+            )
 
     review_present = _POLICY_REVIEW_KEYS.intersection(summary)
     if require_review_contract and review_present != _POLICY_REVIEW_KEYS:
@@ -1833,6 +1943,7 @@ def _parse_policy_summary(
         warnings=warnings,
         opportunities=opportunities,
         accepted_exceptions=accepted,
+        exception_reviews_required=reviews_required,
         mandatory_controls_compliant=mandatory_compliant,
         next_exception_review_on=next_review,
         review_overdue=bool(overdue_dates),

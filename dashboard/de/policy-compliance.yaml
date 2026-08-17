@@ -96,6 +96,23 @@ cards:
 - type: conditional
   conditions:
   - condition: state
+    entity: sensor.portfolio_architect_robotics_accumulating_preferred_policy_exception
+    state: review_required
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_robotics_accumulating_preferred_policy_exception
+    name: Robotik prüfen
+    tap_action:
+      action: more-info
+    color: amber
+    icon: mdi:shield-sync-outline
+    hide_state: true
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
     entity: sensor.portfolio_architect_last_exception_decision
     state_not: unavailable
   card:
