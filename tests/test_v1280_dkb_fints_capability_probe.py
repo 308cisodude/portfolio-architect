@@ -1,4 +1,4 @@
-"""Regression coverage for the v1.31.1 DKB FinTS capability-probe milestone."""
+"""Regression coverage for the v1.31.2 DKB FinTS capability-probe milestone."""
 
 from __future__ import annotations
 
@@ -70,8 +70,9 @@ def test_anonymous_probe_request_contains_only_dialog_initialization_segments() 
 
 def test_product_registration_number_is_strictly_bounded_for_wire_use() -> None:
     fints, _app = _load_package()
-    assert fints.normalise_product_id(" ABC123 ") == "ABC123"
-    for value in ("", "A" * 26, "ABC+123", "ABC?123", "ABC'123", "ABC:123"):
+    product_id = "9FA6681DEC0CF3046BFC2F8A6"
+    assert fints.normalise_product_id(f" {product_id} ") == product_id
+    for value in ("", "A" * 24, "A" * 26, "ABC+123", "ABC?123", "ABC'123", "ABC:123"):
         with pytest.raises(ValueError):
             fints.normalise_product_id(value)
 
@@ -112,7 +113,7 @@ def test_parser_rejects_unterminated_or_malformed_fints_messages() -> None:
         b"HIBPA:1:3+1'HNHBS:2:1+1'",  # no header envelope
         b"HNHBK:1:3+000000000055+300+dialog+1''HNHBS:2:1+1'",  # empty segment
         b"HNHBK:1:3+000000000065+300+dialog+1'@9@tiny'HNHBS:2:1+1'",  # binary field overrun
-        _response_payload(b"HIRMG:2:2+0010::accepted'"),  # no bank parameters
+        _response_payload(b"HISALS:2:7+payload'"),  # no bank parameters or return codes
     ):
         with pytest.raises(fints.ProtocolError):
             fints.parse_capability_response(payload)
@@ -140,8 +141,8 @@ def test_probe_transport_is_fixed_verified_https_without_proxy_or_redirect_surfa
 def test_product_registration_and_probe_result_are_private_and_sanitized(tmp_path: Path) -> None:
     _fints, app = _load_package()
     controller = app.DKBProbeController(tmp_path)
-    controller.configure_product_id("ABC123")
-    assert controller.product_id() == "ABC123"
+    controller.configure_product_id("9FA6681DEC0CF3046BFC2F8A6")
+    assert controller.product_id() == "9FA6681DEC0CF3046BFC2F8A6"
     assert stat.S_IMODE(controller.product_id_file.stat().st_mode) == 0o600
 
     result = {
@@ -155,24 +156,35 @@ def test_product_registration_and_probe_result_are_private_and_sanitized(tmp_pat
     app.save_json_state(controller.probe_state_file, result)
     view = controller.probe_view()
     assert view.result is not None and view.result.holdings_advertised is True
-    assert set(view.result.as_dict()) == {
+    serialized = view.result.as_dict()
+    assert set(serialized) == {
         "schema_version",
         "probed_at",
+        "outcome",
+        "failure_category",
+        "http_status",
         "bpd_version",
         "parameter_segments",
         "return_codes",
+        "return_messages",
+        "response_sha256",
+        "response_bytes",
         "holdings_advertised",
     }
+    # Legacy schema-1 success evidence gains no invented diagnostic text or raw-response metadata.
+    assert serialized["return_messages"] == []
+    assert serialized["response_sha256"] is None
+    assert serialized["response_bytes"] is None
 
-    controller.configure_product_id("XYZ789")
-    assert controller.product_id() == "XYZ789"
+    controller.configure_product_id("0123456789ABCDEFGHIJKLMNO")
+    assert controller.product_id() == "0123456789ABCDEFGHIJKLMNO"
     assert not controller.probe_state_file.exists()
     assert controller.probe_view().state == "ready"
 
 
 def test_dkb_app_remains_manual_experimental_and_without_live_acquisition() -> None:
     config = yaml.safe_load((APP / "config.yaml").read_text(encoding="utf-8"))
-    assert config["version"] == "1.31.1"
+    assert config["version"] == "1.31.2"
     assert config["stage"] == "experimental"
     assert config["boot"] == "manual_only"
     assert config["environment"]["PA_PROVIDER_ID"] == "dkb"
@@ -212,7 +224,7 @@ def test_dkb_ingress_has_no_bank_credential_or_transaction_form_fields() -> None
 
 
 def test_v1280_documentation_preserves_registration_and_user_capability_gates() -> None:
-    upgrade = (ROOT / "docs" / "UPGRADE-1.31.1.md").read_text(encoding="utf-8")
+    upgrade = (ROOT / "docs" / "UPGRADE-1.31.2.md").read_text(encoding="utf-8")
     roadmap = (ROOT / "docs" / "ROADMAP.md").read_text(encoding="utf-8")
     for source in (upgrade, roadmap):
         assert "FinTS" in source

@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.31.2
+
+- Requires the project's issued FinTS product registration ID to be exactly 25 alphanumeric characters and transmits it only in `HKVVB`'s product-designation field.
+- Fixes Home Assistant Ingress POST redirects so Store/Probe actions remain inside the DKB App instead of navigating the iframe to absolute `/`.
+- Persists sanitized probe outcomes across Web UI reloads, including bounded `bank_rejected`, HTTP, transport and protocol failure states.
+- Retains bounded `HIRMG`/`HIRMS` return codes plus bounded sanitized operator-message text from valid FinTS responses, redacts the configured product ID if echoed, and discards arbitrary payload/raw response bytes after recording a decoded-response SHA-256 and byte count.
+- Keeps the DKB App experimental, manual-only, fail-closed and non-live; no DKB credential, holdings, order, transfer, payment or transaction-history operation is added.
 ## 1.31.1
 
 - Package/version alignment for the v1.31.1 Home Assistant-side ISIN-only outside-scope holding validation hotfix; the DKB App remains experimental, manual-only and non-live with the unchanged registration-gated anonymous FinTS capability probe.

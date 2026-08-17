@@ -13,6 +13,7 @@ from datetime import datetime, timezone
 import base64
 import binascii
 import http.client
+import hashlib
 import re
 import ssl
 from typing import Final
@@ -37,12 +38,13 @@ MAX_BASE64_RESPONSE_BYTES: Final = ((MAX_RESPONSE_BYTES + 2) // 3) * 4 + 16
 MAX_SEGMENTS: Final = 256
 MAX_PARAMETER_SEGMENTS: Final = 128
 MAX_RETURN_CODES: Final = 32
+MAX_RETURN_MESSAGES: Final = 32
+MAX_RETURN_MESSAGE_CHARS: Final = 256
 DEFAULT_TIMEOUT_SECONDS: Final = 20
 
-_PRODUCT_ID_RE = re.compile(r"^[A-Za-z0-9]{1,25}$")
+_PRODUCT_ID_RE = re.compile(r"^[A-Za-z0-9]{25}$")
 _SEGMENT_HEADER_RE = re.compile(rb"^([A-Z][A-Z0-9]{1,5}):(\d{1,3}):(\d{1,3})(?::\d{1,3})?$")
 _PARAMETER_SEGMENT_RE = re.compile(r"^HI[A-Z0-9]{3}S$")
-_RETURN_CODE_RE = re.compile(rb"(?:^|\+)(\d{4}):")
 
 
 @dataclass(frozen=True, slots=True)
@@ -55,22 +57,45 @@ class SegmentSummary:
 
 
 @dataclass(frozen=True, slots=True)
+class ReturnMessage:
+    """Bounded sanitized HIRMG/HIRMS return-message evidence."""
+
+    code: str
+    text: str
+
+    def as_dict(self) -> dict[str, str]:
+        return {"code": self.code, "text": self.text}
+
+
+@dataclass(frozen=True, slots=True)
 class CapabilityProbeResult:
-    """Sanitized anonymous BPD capability-probe result."""
+    """Sanitized anonymous BPD capability-probe result or bounded failure evidence."""
 
     probed_at: str
     bpd_version: int | None
     parameter_segments: tuple[str, ...]
     return_codes: tuple[str, ...]
-    holdings_advertised: bool
+    holdings_advertised: bool | None
+    outcome: str = "complete"
+    failure_category: str | None = None
+    http_status: int | None = None
+    return_messages: tuple[ReturnMessage, ...] = ()
+    response_sha256: str | None = None
+    response_bytes: int | None = None
 
     def as_dict(self) -> dict[str, object]:
         return {
-            "schema_version": 1,
+            "schema_version": 2,
             "probed_at": self.probed_at,
+            "outcome": self.outcome,
+            "failure_category": self.failure_category,
+            "http_status": self.http_status,
             "bpd_version": self.bpd_version,
             "parameter_segments": list(self.parameter_segments),
             "return_codes": list(self.return_codes),
+            "return_messages": [message.as_dict() for message in self.return_messages],
+            "response_sha256": self.response_sha256,
+            "response_bytes": self.response_bytes,
             "holdings_advertised": self.holdings_advertised,
         }
 
@@ -81,7 +106,7 @@ def normalise_product_id(value: str) -> str:
         raise ValueError("FinTS product registration number must be text")
     token = value.strip()
     if _PRODUCT_ID_RE.fullmatch(token) is None:
-        raise ValueError("FinTS product registration number must be 1-25 alphanumeric characters")
+        raise ValueError("FinTS product registration number must be exactly 25 alphanumeric characters")
     return token
 
 
@@ -123,7 +148,7 @@ def probe_dkb_bpd(product_id: str, *, timeout_seconds: int = DEFAULT_TIMEOUT_SEC
             headers={
                 "Content-Type": "text/plain",
                 "Content-Length": str(len(encoded)),
-                "User-Agent": "PortfolioArchitect-DKB/1.31.1",
+                "User-Agent": "PortfolioArchitect-DKB/1.31.2",
                 "Connection": "close",
             },
         )
@@ -144,15 +169,28 @@ def probe_dkb_bpd(product_id: str, *, timeout_seconds: int = DEFAULT_TIMEOUT_SEC
         raise ProtocolError("DKB FinTS response is not valid base64") from err
     if not payload or len(payload) > MAX_RESPONSE_BYTES:
         raise ProtocolError("DKB FinTS response is empty or too large")
-    return parse_capability_response(payload)
+    try:
+        return parse_capability_response(payload, redact_tokens=(product_id,))
+    except ProtocolError as err:
+        # Preserve only a correlation fingerprint/length for malformed decoded FinTS
+        # responses. Raw response bytes and parse-error detail remain ephemeral.
+        err.response_sha256 = hashlib.sha256(payload).hexdigest()
+        err.response_bytes = len(payload)
+        raise
 
 
-def parse_capability_response(payload: bytes, *, now: datetime | None = None) -> CapabilityProbeResult:
-    """Reduce a FinTS institute response to non-private BPD capability metadata."""
+def parse_capability_response(
+    payload: bytes,
+    *,
+    now: datetime | None = None,
+    redact_tokens: tuple[str, ...] = (),
+) -> CapabilityProbeResult:
+    """Reduce a FinTS institute response to bounded non-private diagnostic evidence."""
     segments = _split_segments(payload)
     summaries: list[SegmentSummary] = []
     parameter_segments: set[str] = set()
     return_codes: list[str] = []
+    return_messages: list[ReturnMessage] = []
     bpd_version: int | None = None
 
     for index, segment in enumerate(segments):
@@ -183,26 +221,104 @@ def parse_capability_response(payload: bytes, *, now: datetime | None = None) ->
                 raise ProtocolError("FinTS bank-parameter version is invalid")
             bpd_version = int(first)
         if segment_type in {"HIRMG", "HIRMS"}:
-            for code in _RETURN_CODE_RE.findall(b"+" + body):
-                value = code.decode("ascii")
+            for group in _split_unescaped(body, ord("+")):
+                fields = _split_unescaped(group, ord(":"))
+                if not fields or len(fields[0]) != 4 or not fields[0].isdigit():
+                    continue
+                value = fields[0].decode("ascii")
                 if value not in return_codes:
                     if len(return_codes) >= MAX_RETURN_CODES:
                         raise ProtocolError("FinTS response contains too many return codes")
                     return_codes.append(value)
+                if len(fields) >= 3:
+                    text = _sanitize_return_message(fields[2], redact_tokens=redact_tokens)
+                    if text:
+                        message = ReturnMessage(value, text)
+                        if message not in return_messages:
+                            if len(return_messages) >= MAX_RETURN_MESSAGES:
+                                raise ProtocolError("FinTS response contains too many return messages")
+                            return_messages.append(message)
 
     if not summaries or summaries[0].type != "HNHBK" or summaries[-1].type != "HNHBS":
         raise ProtocolError("FinTS response does not contain a complete message envelope")
-    if bpd_version is None:
-        raise ProtocolError("FinTS response does not contain bank-parameter data")
     timestamp = (now or datetime.now(timezone.utc)).astimezone(timezone.utc).isoformat()
     ordered_parameters = tuple(sorted(parameter_segments))
+    response_sha256 = hashlib.sha256(payload).hexdigest()
+    response_bytes = len(payload)
+    if bpd_version is None:
+        if not return_codes:
+            raise ProtocolError("FinTS response does not contain bank-parameter data or return codes")
+        return CapabilityProbeResult(
+            probed_at=timestamp,
+            bpd_version=None,
+            parameter_segments=ordered_parameters,
+            return_codes=tuple(return_codes),
+            holdings_advertised=None,
+            outcome="bank_rejected",
+            failure_category="bank_response_without_bpd",
+            return_messages=tuple(return_messages),
+            response_sha256=response_sha256,
+            response_bytes=response_bytes,
+        )
     return CapabilityProbeResult(
         probed_at=timestamp,
         bpd_version=bpd_version,
         parameter_segments=ordered_parameters,
         return_codes=tuple(return_codes),
         holdings_advertised=HOLDINGS_PARAMETER_SEGMENT in parameter_segments,
+        return_messages=tuple(return_messages),
+        response_sha256=response_sha256,
+        response_bytes=response_bytes,
     )
+
+
+def _split_unescaped(value: bytes, delimiter: int) -> list[bytes]:
+    """Split one FinTS field on an unescaped delimiter while retaining escape pairs."""
+    parts: list[bytearray] = [bytearray()]
+    index = 0
+    while index < len(value):
+        current = value[index]
+        if current == ord("?"):
+            if index + 1 >= len(value):
+                raise ProtocolError("FinTS return message contains a dangling escape")
+            parts[-1].extend(value[index : index + 2])
+            index += 2
+            continue
+        if current == delimiter:
+            parts.append(bytearray())
+        else:
+            parts[-1].append(current)
+        index += 1
+    return [bytes(part) for part in parts]
+
+
+def _unescape_fints(value: bytes) -> bytes:
+    output = bytearray()
+    index = 0
+    while index < len(value):
+        current = value[index]
+        if current == ord("?"):
+            if index + 1 >= len(value):
+                raise ProtocolError("FinTS return message contains a dangling escape")
+            output.append(value[index + 1])
+            index += 2
+            continue
+        output.append(current)
+        index += 1
+    return bytes(output)
+
+
+def _sanitize_return_message(value: bytes, *, redact_tokens: tuple[str, ...]) -> str:
+    """Return bounded operator-visible bank text without retaining arbitrary fields."""
+    text = _unescape_fints(value).decode("iso-8859-1")
+    text = "".join(" " if ord(char) < 32 or ord(char) == 127 else char for char in text)
+    text = " ".join(text.split())
+    for token in redact_tokens:
+        if token:
+            text = text.replace(token, "[REDACTED_PRODUCT_ID]")
+    if len(text) > MAX_RETURN_MESSAGE_CHARS:
+        text = text[: MAX_RETURN_MESSAGE_CHARS - 1].rstrip() + "…"
+    return text
 
 
 def _split_segments(payload: bytes) -> list[bytes]:

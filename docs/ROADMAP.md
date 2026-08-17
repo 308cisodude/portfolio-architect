@@ -314,3 +314,43 @@ legitimate FinTS product identity.
   model to parse the resulting six-of-seven portfolio successfully.
 - Keep provider acquisition, Gateway wire schemas, verified HTTPS, LKG, DKB FinTS gates and
   the advisory/no-trading boundary unchanged.
+
+## v1.31.2 — DKB first-probe diagnostics hardening
+
+- Require the issued FinTS registration identity to be exactly 25 alphanumeric characters
+  and place the complete value only in `HKVVB`'s product-designation field.
+- Keep registration/probe POST navigation inside the DKB Home Assistant Ingress namespace.
+- Persist sanitized probe outcome state so a failed attempt cannot disappear back to
+  `ready / not probed` when the Web UI is reopened.
+- Preserve bounded `HIRMG`/`HIRMS` return codes and sanitized operator-message text from
+  syntactically valid FinTS responses without BPD and classify them as inconclusive
+  `bank_rejected` evidence.
+- Redact the configured product identity if echoed, retain only a decoded-response SHA-256
+  and byte count for correlation, discard arbitrary/unknown segment payload plus raw response
+  bytes, and do not infer registration propagation without documented evidence.
+- Keep DKB experimental, manual-only and non-live; authenticated user-capability/UPD and
+  DKB-App decoupled authentication remain later gates before any holdings implementation.
+
+## Future — generic target architecture and first-class presentation model
+
+Portfolio Architect must evolve from the current reference retirement plan into a reusable
+portfolio engine whose target architecture belongs to each user rather than to the product.
+
+- Make the number of target positions, their stable target IDs, names, instruments, target
+  weights and buy/policy metadata user-configurable within strict bounded validation.
+- Treat the current seven-ETF retirement plan as an example/reference configuration only;
+  no engine, entity or dashboard contract may assume those seven targets exist for another
+  user.
+- Keep stable Home Assistant entity identity anchored to immutable configured target IDs,
+  not list position, display name, WKN or current ISIN, so harmless renames/reordering and
+  deliberate instrument migrations do not churn entity IDs.
+- Build a first-class bounded Portfolio Architect presentation model for configured targets,
+  current-plan holdings, outside-scope holdings, source provenance and policy state.
+- Let native Home Assistant presentation consume that model without hard-coded `holding_*`
+  entity inventories, `auto-entities`, card-mod, custom JavaScript or other frontend
+  dependencies.
+- Require the visible outside-scope inventory to reconcile with Portfolio Architect's
+  `outside_scope_position_count`; the v1.31 Robotics-only outside-scope Tile is the motivating
+  example of why hand-maintained dashboard lists do not scale.
+- Preserve privacy, stable identity, fail-closed parsing, bounded entity creation and the
+  advisory/no-trading boundary while making the portfolio definition genuinely reusable.

@@ -1,9 +1,6 @@
-# Portfolio Architect Gateway — Comdirect v1.31.1
+# Portfolio Architect Gateway — Comdirect v1.31.2
 
-Version 1.31.1 is package alignment for the Home Assistant-side ISIN-only outside-scope holding validation hotfix; provider App runtime behavior is unchanged.
-Comdirect runtime behavior is unchanged from the live-accepted v1.27.4 fix:
-provider-specific OAuth/session maintenance runs independently of the 15-minute
-portfolio acquisition cadence and performs no portfolio acquisition itself.
+Version 1.31.2 is package/version alignment for the v1.31.2 DKB FinTS capability-probe hardening release; provider App runtime behavior is unchanged.
 
 Verified HTTPS/private CA trust, bearer authentication, PhotoTAN bootstrap, account
 selection, authorized cash, request-timeout behavior, REST schema 1, health schema 6,

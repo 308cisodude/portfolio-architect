@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.31.2
+
+- Package/version alignment for the v1.31.2 DKB FinTS capability-probe hardening release; Trade Republic statement import, private snapshot storage and Gateway wire behavior are unchanged.
 ## 1.31.1
 
 - Package/version alignment for the v1.31.1 Home Assistant-side ISIN-only outside-scope holding validation hotfix; Trade Republic statement import, private snapshot storage and Gateway wire behavior are unchanged.
