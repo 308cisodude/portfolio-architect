@@ -23,7 +23,7 @@ def _payload(*, authorized: str, eligible: str, policy: str, cap: str | None) ->
     return calculate_portfolio_payload_from_positions(
         positions,
         ROOT / "examples" / "current-plan",
-        evaluated_at=datetime(2026, 8, 10, 21, 0, tzinfo=timezone.utc),
+        evaluated_at=datetime(2026, 8, 17, 21, 0, tzinfo=timezone.utc),
         plan_override={
             "enabled": False,
             "execution": {

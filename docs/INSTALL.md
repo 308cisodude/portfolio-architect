@@ -112,4 +112,4 @@ grep -n '^VERSION' /config/custom_components/portfolio_architect/const.py
 grep -n '^__version__' /config/custom_components/portfolio_architect/engine/__init__.py
 ```
 
-All three markers must report `1.30.0`.
+All three markers must report `1.31.0`.

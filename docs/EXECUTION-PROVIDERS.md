@@ -150,6 +150,46 @@ A `review_required` exception:
 Existing schema-1 exceptions without provider assumptions retain their established
 behavior.
 
+## Superseded exception history
+
+Schema 2 also permits a historical exception to enter the terminal audit state
+`superseded` when the active plan no longer relies on the instrument/decision that
+required the exception:
+
+```yaml
+schema_version: 2
+exceptions:
+  - id: old_distribution_exception
+    instrument_id: IE0000000001
+    rule: accumulating_preferred
+    status: superseded
+    assumptions:
+      preferred_execution_provider: broker_a
+    approved_on: 2026-07-27
+    last_reviewed_on: 2026-08-17
+    review_on: null
+    superseded_on: 2026-08-17
+    superseded_by_instrument_id: IE0000000002
+    superseded_reason: preferred_accumulating_route_available
+```
+
+A superseded exception is retained only as validated governance history. It is not an
+active exception, does not contribute to accepted/review-required counts, and does not
+create a transaction or sell instruction. Its replacement instrument must be distinct
+and its audit dates/reason are bounded and fail closed.
+
+The v1.31 current-plan migration uses this lifecycle for the former distributing
+Robotics share class: the accumulating share class is the sole active target, while an
+already-owned distributing position remains an ordinary outside-plan holding.
+
+### Exact-instrument evidence only
+
+Execution configuration is not a brokerage capability catalogue. Adding one confirmed
+provider/instrument savings-plan route does **not** imply that every target instrument is
+tradable through that provider. Prefer exact per-instrument entries. Add a provider-wide
+manual-order formula only when its availability semantics are actually intended and
+evidenced for the instruments PA may evaluate.
+
 ## Security and architectural boundary
 
 Provider-aware routing changes only local planning/policy evaluation. It does not:

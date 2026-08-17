@@ -1,23 +1,26 @@
 schema_version: 2
-as_of: 2026-07-27
+as_of: '2026-08-17'
 exceptions:
-  - id: robotics_distributing_share_class
-    instrument_id: IE00BYWZ0333
-    rule: accumulating_preferred
-    status: accepted
-    rationale: >-
-      The distributing iShares share class is retained because the accepted
-      execution decision used Comdirect, where it was available at 0% savings-plan
-      fee, it provides the preferred broad automation and robotics exposure, and
-      the accumulating share class was not fee-free on that route. The exception
-      must be reviewed if Portfolio Architect prefers a different execution provider.
-    assumptions:
-      preferred_execution_provider: comdirect
-    approved_on: 2026-07-27
-    last_reviewed_on: 2026-07-27
-    review_on: 2027-07-27
-    expires_on: null
-    compensating_controls:
-      - Treat cash distributions as available capital for the next monthly contribution.
-      - Reassess if the accumulating share class becomes fee-free at Comdirect.
-      - Reassess immediately if Portfolio Architect prefers a different execution provider.
+- id: robotics_distributing_share_class
+  instrument_id: IE00BYWZ0333
+  rule: accumulating_preferred
+  status: superseded
+  rationale: Historical decision retained for auditability. The distributing share
+    class was accepted when the preferred execution decision used Comdirect, where
+    it was available at 0% savings-plan fee and the accumulating share class was not
+    fee-free on that route. The decision is superseded because the accumulating share
+    class is now the canonical Robotics target and a verified Trade Republic savings-plan
+    route is available.
+  assumptions:
+    preferred_execution_provider: comdirect
+  approved_on: 2026-07-27
+  last_reviewed_on: '2026-08-17'
+  review_on: null
+  expires_on: null
+  compensating_controls:
+  - Do not make additional purchases of the distributing share class.
+  - Treat the existing distributing holding as outside current plan scope.
+  - Do not infer an automatic sell recommendation from the superseded exception.
+  superseded_on: '2026-08-17'
+  superseded_by_instrument_id: IE00BYZK4552
+  superseded_reason: preferred_accumulating_route_available

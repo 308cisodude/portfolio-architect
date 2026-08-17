@@ -126,7 +126,7 @@ def test_rest_positions_use_the_same_stable_schema_8_engine() -> None:
     payload = calculate_portfolio_payload_from_positions(
         positions,
         ROOT / "examples" / "current-plan",
-        evaluated_at=datetime(2026, 7, 30, 14, 30, tzinfo=timezone.utc),
+        evaluated_at=datetime(2026, 8, 17, 14, 30, tzinfo=timezone.utc),
         source_provider=PROVIDER_LOCAL_REST_JSON,
         source_label="portfolio-gateway.local/api/v1/portfolio",
     )

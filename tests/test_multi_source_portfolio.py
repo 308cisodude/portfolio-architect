@@ -157,7 +157,7 @@ def test_cross_source_wkn_identity_collision_fails_closed() -> None:
 
 
 def test_supplied_overlap_changes_the_next_350_euro_distribution() -> None:
-    generated_at = datetime(2026, 7, 31, tzinfo=timezone.utc)
+    generated_at = datetime(2026, 8, 17, tzinfo=timezone.utc)
     aggregation = aggregate_sources(
         (
             PortfolioSourceSnapshot(

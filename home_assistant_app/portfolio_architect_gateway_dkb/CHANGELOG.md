@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.31.0
+
+- Package/version alignment for v1.31.0 canonical Robotics-target and historical-exception correction; the DKB App remains experimental, manual-only and non-live with the unchanged registration-gated anonymous FinTS capability probe.
+
 ## 1.30.0
 
 - Package/version alignment for v1.30.0 provider-aware local execution-policy planning; the DKB App remains experimental, manual-only and non-live with the unchanged registration-gated anonymous FinTS capability probe.

@@ -1,103 +1,94 @@
-# Portfolio Architect 1.30.0
+# Portfolio Architect 1.31.0
 
-Version 1.30.0 is a provider-aware execution-policy milestone prepared from the exact
-published and live-accepted v1.29.0 baseline. It separates the provider that supplies
-portfolio holdings from the provider through which a future purchase is best executed.
-Portfolio Architect remains advisory and read-only.
+Version 1.31.0 is a narrow current-plan and policy-governance correction prepared from
+the exact published and live-accepted v1.30.0 baseline. It fixes the abstraction exposed
+during v1.30 live acceptance: the instrument that was historically allowed by an
+exception must not remain the canonical target after the preferred accumulating share
+class becomes a valid execution route. Portfolio Architect remains advisory and
+read-only.
 
-## Provider-aware execution routes
+## Canonical Robotics target
 
-`broker.yaml` schema 1 remains fully supported and preserves the established
-single-provider behavior. A new opt-in schema 2 can describe multiple execution
-providers, each with bounded:
+The active Robotics allocation now targets:
 
-- provider identity and display name;
-- fee-data provenance text;
-- `as_of` date and a common maximum evidence age;
-- per-instrument savings-plan availability/fee; and
-- optional provider-local manual-order fee formula.
+- ISIN `IE00BYZK4552`;
+- WKN `A2ANH0`;
+- accumulating share class; and
+- the existing 5% target weight.
 
-Schema-2 fee evidence that is stale remains known but is ineligible for route selection
-or fee-policy compliance. Future-dated evidence is rejected. Portfolio Architect does
-not scrape broker sites or infer a missing fee.
+The former distributing target `IE00BYWZ0333` / `A2ANH1` is no longer part of the
+active allocation. Its instrument metadata remains available so an already-owned
+distributing position can still be identified and valued.
 
-For each instrument the planner evaluates fresh eligible savings-plan/manual routes and
-prefers the lowest cost ratio. Provider priority is only a deterministic tie-breaker
-between economically equal routes.
+An existing distributing holding therefore becomes an ordinary **outside current plan
+scope** holding. It continues to contribute to total portfolio value and whole-portfolio
+allocation views, but it does not satisfy the active Robotics target, receives no future
+purchase recommendation, and never creates an automatic sell instruction. Before the
+first accumulating holding is acquired, an otherwise complete seven-target portfolio is
+expected to report six of seven active targets held.
 
-Recommendations add three optional backward-compatible fields:
+## Historical exception lifecycle
 
-- `execution_provider`;
-- `execution_provider_name`; and
-- `execution_fee_data_as_of`.
+Exceptions schema 2 now accepts an explicit terminal audit state, `superseded`. A
+superseded entry is strictly validated but is not an active policy exception. It does
+not contribute to either the accepted-exception count or the review-required count.
 
-The existing payload remains schema 8 because the additions are optional and older
-recommendations without provider metadata remain valid.
+The historical `robotics_distributing_share_class` decision is retained with its
+original approval date and Comdirect route assumption, plus bounded supersession
+metadata:
 
-## Provider-aware fee policy
+- `superseded_on`;
+- `superseded_by_instrument_id`; and
+- `superseded_reason`.
 
-`savings_plan_required` and `free_savings_plan_preferred` now evaluate across all fresh
-eligible execution providers instead of assuming a single broker. A fresh zero-fee
-route therefore satisfies the fee preference even when another provider would charge a
-fee for the same instrument.
+The history is therefore preserved without pretending that an exception is still needed
+for current planning. Unknown exception states, future supersession dates, malformed
+replacement instruments, and invalid audit metadata fail closed.
 
-The reference purchase Tiles use native Home Assistant `state_content` to display the
-selected execution-provider name beneath the proposed amount. No custom card or
-frontend extension is introduced.
+## Exact provider-aware execution evidence
 
-## Route-scoped accepted exceptions
+The current reference `broker.yaml` now uses the v1.30 schema-2 provider model. Existing
+Comdirect evidence remains present, and the accumulating Robotics ISIN gains one explicit
+Trade Republic savings-plan route with its own provenance and evidence date.
 
-Exceptions schema 2 adds one optional bounded assumption:
+This is intentionally **instrument-specific**. The configuration does not infer that
+other target instruments are eligible at Trade Republic, does not infer provider-wide
+manual-order availability, and does not derive execution eligibility from a Trade
+Republic portfolio source. Fee evidence remains bounded by the v1.30 freshness contract.
 
-```yaml
-assumptions:
-  preferred_execution_provider: comdirect
-```
+## Dashboard and scope presentation
 
-The accepted Robotics exception in the public current-plan fixture is migrated to this
-model. While Comdirect remains the preferred execution route the exception retains its
-established `accepted_exception` state.
+The reference allocation views now show both concepts separately:
 
-If fresh execution evidence makes another provider preferable, the decision is not
-deleted. Instead:
+- the canonical accumulating Robotics target in the whole-portfolio distribution; and
+- the former distributing Robotics holding as a compact outside-plan holding when it is
+  present.
 
-- the finding becomes `review_required`;
-- it no longer contributes to the accepted-exception count;
-- the original rule severity becomes active again until review;
-- the expected and observed provider IDs are exposed as bounded exception-detail
-  metadata;
-- the original decision date remains visible for auditability; and
-- the old future scheduled-review date no longer presents as the next active review.
-
-The English/German reference dashboards show a compact amber **Robotics exception
-review / Robotik-Ausnahme prüfen** Tile when this state occurs.
-
-Existing schema-1 exceptions without provider assumptions retain their prior behavior.
-
-## Decision trace
-
-The private two-evaluation decision trace now records the optional execution-provider
-ID. A provider change is a material recommendation change with bounded reason code
-`execution_provider_changed`. Persisted pre-v1.30 snapshots without this optional field
-remain loadable.
+The English outside-plan label is `Robotics · Dist`; the German reference uses
+`Robotik · Aussch.`. No custom frontend code, CSS, card-mod, or Markdown card is added.
 
 ## Preserved boundaries
 
 - payload schema 8: unchanged
 - REST portfolio schema 1: unchanged
 - Gateway health schema 6: unchanged; schemas 1–5 remain supported
+- v1.30 provider-aware execution engine: retained
 - portfolio-source identity and execution-provider identity remain separate
 - provider Gateway acquisition and credentials: unchanged
 - v1.27 private-PKI verified HTTPS, bearer authentication, Supervisor trust discovery,
   DNS pinning and no-plaintext fallback: unchanged
 - Comdirect v1.27.4 OAuth/session maintenance: unchanged
 - Trade Republic statement import/private snapshot behavior: unchanged
+- this release does not move PDF parsing into Portfolio Architect
 - v1.28 DKB FinTS registration/capability-probe gate: unchanged
 - v1.28.1 immutable GitHub Actions pins and v1.28.2 Dependabot grouping: unchanged
-- v1.29 native dashboard hierarchy: retained
+- v1.29 native policy-dashboard hierarchy: retained
 - No trading, order, transfer, payment, or transaction-history capability is added
-- the historical `v1.19.0-rc2` experimental brokerage probe is not promoted by this release
+- no automatic sell capability is added
 
-DKB remains experimental, manual-only and non-live. DKB live Gateway acquisition remains a later authenticated milestone. `registration_required` remains the expected state until Portfolio Architect receives its own FinTS registration number; any later positive `HIWPDS` result remains bank-level research evidence only. Trade Republic statement import remains provider-isolated; this release does not move PDF parsing into Portfolio Architect.
+DKB remains experimental, manual-only and non-live. A FinTS product registration number
+is still required before the existing anonymous BPD capability probe can run; this
+release does not embed or assume an unissued registration identity. DKB live Gateway acquisition remains a later authenticated milestone. The historical `v1.19.0-rc2`
+experimental brokerage probe remains excluded and is not promoted by this release.
 
-See `docs/EXECUTION-PROVIDERS.md` and `docs/UPGRADE-1.30.0.md`.
+See `docs/EXECUTION-PROVIDERS.md` and `docs/UPGRADE-1.31.0.md`.

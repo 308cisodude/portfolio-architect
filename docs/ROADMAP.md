@@ -283,3 +283,20 @@ legitimate FinTS product identity.
   names using native Home Assistant Tile state content.
 - Keep provider Gateway acquisition, credentials, REST/health schemas, private-PKI
   transport, LKG and the advisory/no-trading boundary unchanged.
+
+## v1.31.0 — canonical accumulating Robotics target
+
+- Correct the active Robotics target from distributing `IE00BYWZ0333` / `A2ANH1` to
+  accumulating `IE00BYZK4552` / `A2ANH0`.
+- Retain the already-owned distributing instrument as an identifiable outside-current-
+  plan holding: visible and valued, but never a future purchase target or automatic
+  sell instruction.
+- Retain the old distributing-share-class exception as validated `superseded` audit
+  history instead of deleting the governance decision.
+- Activate the v1.30 schema-2 execution-provider model in the current reference plan
+  with exact, independently evidenced route configuration only; do not infer broad
+  provider tradability from a holdings source.
+- Make six-of-seven target coverage the intentional pre-purchase state until the
+  accumulating Robotics share class is actually held.
+- Preserve payload schema 8, REST schema 1, health schema 6, provider acquisition,
+  private-PKI transport, LKG, DKB FinTS gates and the advisory/no-trading boundary.

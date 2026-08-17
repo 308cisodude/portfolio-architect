@@ -1849,6 +1849,12 @@ views:
       - entity: sensor.portfolio_architect_cybersecurity_whole_portfolio_allocation
         name: Cybersecurity
         color: '#fb8c00'
+      - entity: sensor.portfolio_architect_robotics_whole_portfolio_allocation
+        name: Robotics
+        color: '#00acc1'
+      - entity: sensor.portfolio_architect_holding_ie00bywz0333_whole_portfolio_allocation
+        name: Robotics · Dist
+        color: '#546e7a'
       - entity: sensor.portfolio_architect_holding_a113fm_whole_portfolio_allocation
         name: MSCI World IT
         color: '#757575'
@@ -1979,6 +1985,21 @@ views:
         type: tile
         entity: sensor.portfolio_architect_holding_a1x3w3_holding_value
         name: Loewe
+        tap_action:
+          action: more-info
+        icon: mdi:briefcase-outline
+      grid_options:
+        columns: 6
+        rows: auto
+    - type: conditional
+      conditions:
+      - condition: state
+        entity: sensor.portfolio_architect_holding_ie00bywz0333_holding_value
+        state_not: unavailable
+      card:
+        type: tile
+        entity: sensor.portfolio_architect_holding_ie00bywz0333_holding_value
+        name: Robotics · Dist
         tap_action:
           action: more-info
         icon: mdi:briefcase-outline

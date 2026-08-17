@@ -24,7 +24,7 @@ def _payload(reserve: str) -> dict:
     return calculate_portfolio_payload_from_positions(
         positions,
         ROOT / "examples" / "current-plan",
-        evaluated_at=datetime(2026, 8, 2, 8, 0, tzinfo=timezone.utc),
+        evaluated_at=datetime(2026, 8, 17, 8, 0, tzinfo=timezone.utc),
         plan_override={
             "enabled": False,
             "execution": {
@@ -90,4 +90,4 @@ def test_dashboard_uses_execution_state_not_ambiguous_plan_not_ready() -> None:
 
 
 def test_v1163_version_metadata_is_aligned() -> None:
-    assert 'version = "1.30.0"' in (ROOT / "pyproject.toml").read_text()
+    assert 'version = "1.31.0"' in (ROOT / "pyproject.toml").read_text()

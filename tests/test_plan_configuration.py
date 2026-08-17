@@ -1,6 +1,6 @@
 """v1.2 native plan configuration and recurring schedule tests."""
 
-from datetime import date
+from datetime import date, datetime, timezone
 from decimal import Decimal
 import importlib.util
 from pathlib import Path
@@ -113,7 +113,10 @@ def test_ui_budget_is_split_per_period_and_schema_8_is_validated():
         "instruments": portfolio["portfolio"]["allocation"],
     }
     payload = engine.calculate_portfolio_payload(
-        csv_path, config_dir, plan_override=override
+        csv_path,
+        config_dir,
+        evaluated_at=datetime(2026, 8, 17, 12, 0, tzinfo=timezone.utc),
+        plan_override=override,
     )
     summary = payload["summary"]
     assert payload["schema_version"] == 8

@@ -84,6 +84,12 @@ cards:
   - entity: sensor.portfolio_architect_cybersecurity_whole_portfolio_allocation
     name: Cybersecurity
     color: '#fb8c00'
+  - entity: sensor.portfolio_architect_robotics_whole_portfolio_allocation
+    name: Robotik
+    color: '#00acc1'
+  - entity: sensor.portfolio_architect_holding_ie00bywz0333_whole_portfolio_allocation
+    name: Robotik · Aussch.
+    color: '#546e7a'
   - entity: sensor.portfolio_architect_holding_a113fm_whole_portfolio_allocation
     name: MSCI World IT
     color: '#757575'
@@ -235,7 +241,7 @@ cards:
     name: Cybersecurity
     color: '#fb8c00'
   - entity: sensor.portfolio_architect_robotics_current_allocation
-    name: Robotics
+    name: Robotik
     color: '#00acc1'
   grid_options:
     columns: full
@@ -262,7 +268,7 @@ cards:
     name: Cybersecurity
     color: '#fb8c00'
   - entity: sensor.portfolio_architect_robotics_target_allocation
-    name: Robotics
+    name: Robotik
     color: '#00acc1'
   grid_options:
     columns: full

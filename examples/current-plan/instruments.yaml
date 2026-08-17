@@ -1,10 +1,10 @@
 schema_version: 1
-as_of: 2026-07-27
+as_of: '2026-08-17'
 valuation_currency: EUR
 valuation_fx:
   source: ECB
-  date: 2026-07-27
-  eur_usd: 1.1389
+  date: '2026-07-31'
+  eur_usd: 1.1485
 instruments:
   IE00BJ0KDQ92:
     ucits: true
@@ -47,7 +47,7 @@ instruments:
     domicile: IE
     distribution: accumulating
     fund_currency: USD
-    ter_pct: 0.40
+    ter_pct: 0.4
     fund_size_eur: 1011267971
     fund_size_native: 1151733092
     fund_size_native_currency: USD
@@ -83,7 +83,7 @@ instruments:
     domicile: IE
     distribution: distributing
     fund_currency: USD
-    ter_pct: 0.40
+    ter_pct: 0.4
     fund_size_eur: 4386773963
     fund_size_native: 4996096866
     fund_size_native_currency: USD
@@ -102,3 +102,15 @@ instruments:
     fund_size_as_of: 2026-07-24
     metadata_status: verified
     metadata_source: DWS Xtrackers factsheet
+  IE00BYZK4552:
+    ucits: true
+    domicile: IE
+    distribution: accumulating
+    fund_currency: USD
+    ter_pct: 0.4
+    fund_size_eur: 4542455190
+    fund_size_native: 5217009785.35
+    fund_size_native_currency: USD
+    fund_size_as_of: '2026-07-31'
+    metadata_status: verified
+    metadata_source: iShares product page

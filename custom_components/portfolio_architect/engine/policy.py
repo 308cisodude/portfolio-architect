@@ -28,19 +28,16 @@ def _active_exceptions(
     for item in items:
         if not isinstance(item, dict):
             raise ValueError("exception entry must be an object")
-        if item.get("status") != "accepted":
-            continue
-        expires_on = item.get("expires_on")
-        if expires_on:
-            try:
-                if date.fromisoformat(str(expires_on)) < evaluated_on:
-                    continue
-            except ValueError:
-                continue
+        status = item.get("status")
+        if status not in {"accepted", "superseded"}:
+            raise ValueError("exception status is unsupported")
         instrument_id = item.get("instrument_id")
         rule = item.get("rule")
-        if not instrument_id or not rule:
-            continue
+        if not isinstance(instrument_id, str) or not instrument_id.strip():
+            raise ValueError("exception instrument_id is invalid")
+        if not isinstance(rule, str) or not rule.strip():
+            raise ValueError("exception rule is invalid")
+
         assumptions = item.get("assumptions")
         if assumptions is not None:
             if schema_version < 2:
@@ -57,7 +54,43 @@ def _active_exceptions(
                 or any(char not in "abcdefghijklmnopqrstuvwxyz0123456789_" for char in provider)
             ):
                 raise ValueError("exception preferred_execution_provider is invalid")
-        key = (str(instrument_id), str(rule))
+
+        if status == "superseded":
+            if schema_version < 2:
+                raise ValueError("superseded exceptions require schema_version 2")
+            superseded_on = item.get("superseded_on")
+            replacement = item.get("superseded_by_instrument_id")
+            reason = item.get("superseded_reason")
+            try:
+                superseded_date = date.fromisoformat(str(superseded_on))
+            except ValueError as err:
+                raise ValueError("superseded exception date is invalid") from err
+            if superseded_date > evaluated_on:
+                raise ValueError("superseded exception date is in the future")
+            if (
+                not isinstance(replacement, str)
+                or not replacement.strip()
+                or len(replacement.strip()) > 32
+                or replacement.strip() == instrument_id.strip()
+            ):
+                raise ValueError("superseded exception replacement instrument is invalid")
+            if (
+                not isinstance(reason, str)
+                or not reason.strip()
+                or len(reason.strip()) > 96
+                or any(ord(char) < 32 for char in reason)
+            ):
+                raise ValueError("superseded exception reason is invalid")
+            continue
+
+        expires_on = item.get("expires_on")
+        if expires_on:
+            try:
+                if date.fromisoformat(str(expires_on)) < evaluated_on:
+                    continue
+            except ValueError:
+                continue
+        key = (instrument_id, rule)
         if key in result:
             raise ValueError("duplicate active exception for instrument/rule")
         result[key] = item

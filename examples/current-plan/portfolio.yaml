@@ -43,9 +43,9 @@ portfolio:
     target_pct: 5
     buy_enabled: true
   - id: robotics
-    name: iShares Automation & Robotics UCITS ETF USD Dist
-    wkn: A2ANH1
-    isin: IE00BYWZ0333
+    name: iShares Automation & Robotics UCITS ETF USD Acc
+    wkn: A2ANH0
+    isin: IE00BYZK4552
     target_pct: 5
     buy_enabled: true
 rebalancing:

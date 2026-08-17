@@ -251,11 +251,12 @@ def test_preferred_execution_route_uses_provider_not_acquisition_source() -> Non
     assert route.route == "free_savings_plan"
 
 
-def test_current_public_exception_is_scoped_to_comdirect_route() -> None:
+def test_current_public_exception_retains_v130_provider_assumption_as_history() -> None:
     text = (ROOT / "examples/current-plan/exceptions.yaml").read_text(encoding="utf-8")
     assert "schema_version: 2" in text
     assert "preferred_execution_provider: comdirect" in text
-    assert "Reassess immediately if Portfolio Architect prefers a different execution provider." in text
+    assert "status: superseded" in text
+    assert "superseded_by_instrument_id: IE00BYZK4552" in text
 
 
 def test_dashboard_purchase_tiles_expose_provider_using_native_state_content() -> None:
@@ -325,11 +326,28 @@ def test_full_payload_reopens_route_scoped_exception_when_provider_changes(tmp_p
     config_dir = tmp_path / "plan"
     shutil.copytree(ROOT / "examples" / "current-plan", config_dir)
     current_broker = yaml.safe_load((config_dir / "broker.yaml").read_text(encoding="utf-8"))
-    comdirect_plans = current_broker["broker"]["savings_plans"]
+    comdirect_plans = current_broker["providers"]["comdirect"]["savings_plans"]
     provider_broker = _provider_broker()
     provider_broker["providers"]["comdirect"]["savings_plans"] = comdirect_plans
     (config_dir / "broker.yaml").write_text(
         yaml.safe_dump(provider_broker, sort_keys=False), encoding="utf-8"
+    )
+
+    # Keep the v1.30 full-payload regression independent from the evolving current
+    # reference plan: reconstruct the distributing target and accepted exception that
+    # originally exercised provider-assumption review.
+    portfolio = yaml.safe_load((config_dir / "portfolio.yaml").read_text(encoding="utf-8"))
+    robotics = next(item for item in portfolio["portfolio"]["allocation"] if item["id"] == "robotics")
+    robotics.update(
+        name="iShares Automation & Robotics UCITS ETF USD Dist",
+        wkn="A2ANH1",
+        isin=ROBOTICS_ISIN,
+    )
+    (config_dir / "portfolio.yaml").write_text(
+        yaml.safe_dump(portfolio, sort_keys=False), encoding="utf-8"
+    )
+    (config_dir / "exceptions.yaml").write_text(
+        yaml.safe_dump(_exception(), sort_keys=False), encoding="utf-8"
     )
 
     positions = read_positions(
