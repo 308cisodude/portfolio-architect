@@ -1,7 +1,7 @@
-# Portfolio Architect Gateway — DKB v1.31.0
+# Portfolio Architect Gateway — DKB v1.31.1
 
-Version 1.31.0 leaves the v1.28.0 DKB research boundary unchanged while aligning
-the package with the Home Assistant-side canonical Robotics target and historical-exception correction. Provider-aware execution routing remains a Home Assistant integration concern. The DKB App still does not
+Version 1.31.1 leaves the v1.28.0 DKB research boundary unchanged while aligning
+the package with the Home Assistant-side ISIN-only outside-scope holding validation hotfix. Provider-aware execution routing remains a Home Assistant integration concern. The DKB App still does not
 become a portfolio source. The App remains **experimental** and
 **manual-only** and adds only a registration-gated anonymous FinTS 3.0 bank-parameter
 (BPD) capability probe.
@@ -20,7 +20,7 @@ before running the probe. Do not reuse a FinTS library/kernel registration numbe
 those identifiers are for internal testing rather than the user-facing application.
 
 The product registration number is stored only in the App-private data directory
-with mode `0600`. No DKB login name, PIN or TAN is requested or stored in v1.31.0.
+with mode `0600`. No DKB login name, PIN or TAN is requested or stored in v1.31.1.
 
 ## Deliberate limits
 
@@ -30,7 +30,7 @@ does not prove that an authenticated user's UPD advertises the same capability.
 Authenticated user-capability validation and DKB-App decoupled authentication are a
 later gate.
 
-The v1.31.0 DKB App sends no holdings request and contains no order, transfer,
+The v1.31.1 DKB App sends no holdings request and contains no order, transfer,
 payment, debit, transaction-history or other write-capable FinTS operation. Its
 provider REST source remains fail-closed and cannot publish a DKB portfolio snapshot.
 

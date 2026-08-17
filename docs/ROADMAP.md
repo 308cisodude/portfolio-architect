@@ -300,3 +300,17 @@ legitimate FinTS product identity.
   accumulating Robotics share class is actually held.
 - Preserve payload schema 8, REST schema 1, health schema 6, provider acquisition,
   private-PKI transport, LKG, DKB FinTS gates and the advisory/no-trading boundary.
+
+## v1.31.1 — ISIN-only outside-scope holding hotfix
+
+- Preserve the v1.31 canonical accumulating Robotics target and migrated plan unchanged.
+- Restore the v1.26.1 ISIN-first identity contract at the Home Assistant payload boundary: an
+  imported whole-portfolio holding may omit WKN when it has a valid non-empty ISIN.
+- Exclude empty WKN placeholders from duplicate-WKN detection while retaining duplicate
+  checks for real WKNs and ISINs.
+- Fail closed when a holding exposes neither ISIN nor WKN.
+- Reproduce the exact live v1.31.0 failure with a Trade Republic-only distributing Robotics
+  holding that becomes outside current plan scope, and require the complete Home Assistant
+  model to parse the resulting six-of-seven portfolio successfully.
+- Keep provider acquisition, Gateway wire schemas, verified HTTPS, LKG, DKB FinTS gates and
+  the advisory/no-trading boundary unchanged.
