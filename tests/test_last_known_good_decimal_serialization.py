@@ -40,7 +40,7 @@ def test_real_engine_payload_with_decimals_round_trips_through_json_cache() -> N
                 )
             },
             ROOT / "examples" / "current-plan",
-            evaluated_at=datetime(2026, 7, 31, 10, 0, tzinfo=timezone.utc),
+            evaluated_at=datetime(2026, 8, 17, 10, 0, tzinfo=timezone.utc),
             source_provider="local_rest_json",
             source_label="test",
         )

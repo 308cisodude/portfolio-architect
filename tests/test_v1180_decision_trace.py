@@ -34,7 +34,7 @@ def _data():
     payload = calculate_portfolio_payload_from_positions(
         positions,
         ROOT / "examples" / "current-plan",
-        evaluated_at=datetime(2026, 8, 2, 8, 0, tzinfo=timezone.utc),
+        evaluated_at=datetime(2026, 8, 17, 8, 0, tzinfo=timezone.utc),
         source_provider=PROVIDER_COMDIRECT,
         source_label="Comdirect CSV",
     )
@@ -57,7 +57,7 @@ def _snapshot(data, when):
 
 
 def test_first_evaluation_establishes_a_bounded_baseline() -> None:
-    current = _snapshot(_data(), datetime(2026, 8, 2, 8, 0, tzinfo=timezone.utc))
+    current = _snapshot(_data(), datetime(2026, 8, 17, 8, 0, tzinfo=timezone.utc))
     history, changed = advance_history(EvaluationHistory(), current)
     delta = compare_history(history)
     assert changed is True
@@ -69,8 +69,8 @@ def test_first_evaluation_establishes_a_bounded_baseline() -> None:
 
 def test_identical_decision_content_at_a_new_evaluation_is_unchanged() -> None:
     data = _data()
-    first = _snapshot(data, datetime(2026, 8, 2, 8, 0, tzinfo=timezone.utc))
-    second = _snapshot(data, datetime(2026, 8, 2, 9, 0, tzinfo=timezone.utc))
+    first = _snapshot(data, datetime(2026, 8, 17, 8, 0, tzinfo=timezone.utc))
+    second = _snapshot(data, datetime(2026, 8, 17, 9, 0, tzinfo=timezone.utc))
     history, _ = advance_history(EvaluationHistory(), first)
     history, changed = advance_history(history, second)
     delta = compare_history(history)
@@ -81,8 +81,8 @@ def test_identical_decision_content_at_a_new_evaluation_is_unchanged() -> None:
 
 def test_position_entering_corridor_and_losing_purchase_is_traced() -> None:
     data = _data()
-    previous = _snapshot(data, datetime(2026, 8, 2, 8, 0, tzinfo=timezone.utc))
-    position = data.positions["world_small_cap"]
+    previous = _snapshot(data, datetime(2026, 8, 17, 8, 0, tzinfo=timezone.utc))
+    position = data.positions["robotics"]
     changed_position = replace(
         position,
         allocation_status="on_target",
@@ -92,15 +92,15 @@ def test_position_entering_corridor_and_losing_purchase_is_traced() -> None:
     )
     current_data = replace(
         data,
-        positions={**data.positions, "world_small_cap": changed_position},
+        positions={**data.positions, "robotics": changed_position},
     )
     current = _snapshot(
-        current_data, datetime(2026, 8, 2, 9, 0, tzinfo=timezone.utc)
+        current_data, datetime(2026, 8, 17, 9, 0, tzinfo=timezone.utc)
     )
     delta = compare_history(EvaluationHistory(previous=previous, current=current))
     assert delta is not None and delta.state == "multiple_changes"
     change = delta.attributes["position_changes"][0]
-    assert change["fund_id"] == "world_small_cap"
+    assert change["fund_id"] == "robotics"
     assert change["categories"] == ["allocation", "recommendation"]
     assert "entered_target_corridor" in change["reason_codes"]
     assert "proposed_purchase_removed" in change["reason_codes"]
@@ -110,8 +110,8 @@ def test_position_entering_corridor_and_losing_purchase_is_traced() -> None:
 
 def test_subthreshold_noise_is_not_reported_as_material_change() -> None:
     data = _data()
-    previous = _snapshot(data, datetime(2026, 8, 2, 8, 0, tzinfo=timezone.utc))
-    position = data.positions["world_small_cap"]
+    previous = _snapshot(data, datetime(2026, 8, 17, 8, 0, tzinfo=timezone.utc))
+    position = data.positions["robotics"]
     changed_position = replace(
         position,
         deviation_pp=position.deviation_pp + MATERIAL_DRIFT_DELTA_PP / 2,
@@ -119,10 +119,10 @@ def test_subthreshold_noise_is_not_reported_as_material_change() -> None:
     )
     current_data = replace(
         data,
-        positions={**data.positions, "world_small_cap": changed_position},
+        positions={**data.positions, "robotics": changed_position},
     )
     current = _snapshot(
-        current_data, datetime(2026, 8, 2, 9, 0, tzinfo=timezone.utc)
+        current_data, datetime(2026, 8, 17, 9, 0, tzinfo=timezone.utc)
     )
     delta = compare_history(EvaluationHistory(previous=previous, current=current))
     assert delta is not None and delta.state == "unchanged"
@@ -130,7 +130,7 @@ def test_subthreshold_noise_is_not_reported_as_material_change() -> None:
 
 def test_execution_policy_and_reserve_transition_is_distinct() -> None:
     data = _data()
-    previous = _snapshot(data, datetime(2026, 8, 2, 8, 0, tzinfo=timezone.utc))
+    previous = _snapshot(data, datetime(2026, 8, 17, 8, 0, tzinfo=timezone.utc))
     changed_plan = replace(
         data.monthly_plan,
         execution_state="waiting_for_reserve",
@@ -140,7 +140,7 @@ def test_execution_policy_and_reserve_transition_is_distinct() -> None:
     )
     current = _snapshot(
         replace(data, monthly_plan=changed_plan),
-        datetime(2026, 8, 2, 9, 0, tzinfo=timezone.utc),
+        datetime(2026, 8, 17, 9, 0, tzinfo=timezone.utc),
     )
     delta = compare_history(EvaluationHistory(previous=previous, current=current))
     assert delta is not None and delta.state == "execution_state_changed"
@@ -149,7 +149,7 @@ def test_execution_policy_and_reserve_transition_is_distinct() -> None:
 
 def test_policy_finding_changes_are_keyed_without_free_form_messages() -> None:
     data = _data()
-    previous = _snapshot(data, datetime(2026, 8, 2, 8, 0, tzinfo=timezone.utc))
+    previous = _snapshot(data, datetime(2026, 8, 17, 8, 0, tzinfo=timezone.utc))
     changed_policy = replace(
         data.policy,
         status="compliant",
@@ -161,7 +161,7 @@ def test_policy_finding_changes_are_keyed_without_free_form_messages() -> None:
     )
     current = _snapshot(
         replace(data, policy=changed_policy),
-        datetime(2026, 8, 2, 9, 0, tzinfo=timezone.utc),
+        datetime(2026, 8, 17, 9, 0, tzinfo=timezone.utc),
     )
     delta = compare_history(EvaluationHistory(previous=previous, current=current))
     assert delta is not None and delta.state == "policy_changed"
@@ -171,8 +171,8 @@ def test_policy_finding_changes_are_keyed_without_free_form_messages() -> None:
 
 def test_history_round_trip_is_strict_and_only_contains_two_evaluations() -> None:
     data = _data()
-    first = _snapshot(data, datetime(2026, 8, 2, 8, 0, tzinfo=timezone.utc))
-    second = _snapshot(data, datetime(2026, 8, 2, 9, 0, tzinfo=timezone.utc))
+    first = _snapshot(data, datetime(2026, 8, 17, 8, 0, tzinfo=timezone.utc))
+    second = _snapshot(data, datetime(2026, 8, 17, 9, 0, tzinfo=timezone.utc))
     history = EvaluationHistory(previous=first, current=second)
     restored = EvaluationHistory.from_dict(history.to_dict())
     assert restored == history
@@ -230,9 +230,9 @@ def test_storage_and_diagnostics_keep_the_trace_private_and_integrity_checked() 
 
 def test_v1180_metadata_and_compatibility_contracts_are_aligned() -> None:
     manifest = json.loads((COMPONENT / "manifest.json").read_text())
-    assert manifest["version"] == "1.30.0"
-    assert 'VERSION: Final = "1.30.0"' in (COMPONENT / "const.py").read_text()
-    assert '__version__ = "1.30.0"' in (COMPONENT / "engine" / "__init__.py").read_text()
+    assert manifest["version"] == "1.31.0"
+    assert 'VERSION: Final = "1.31.0"' in (COMPONENT / "const.py").read_text()
+    assert '__version__ = "1.31.0"' in (COMPONENT / "engine" / "__init__.py").read_text()
     release_notes = (ROOT / "docs" / "RELEASE-NOTES.md").read_text()
     assert "payload schema 8" in release_notes.lower()
     assert "REST portfolio schema 1" in release_notes
@@ -245,7 +245,7 @@ def test_v1180_metadata_and_compatibility_contracts_are_aligned() -> None:
 
 def test_persisted_trace_rejects_type_confusion_and_duplicate_keys() -> None:
     data = _data()
-    snapshot = _snapshot(data, datetime(2026, 8, 2, 8, 0, tzinfo=timezone.utc))
+    snapshot = _snapshot(data, datetime(2026, 8, 17, 8, 0, tzinfo=timezone.utc))
 
     malformed_bool = EvaluationHistory(current=snapshot).to_dict()
     malformed_bool["current"]["positions"][0]["deferred"] = "false"

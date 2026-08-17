@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.31.0
+
+- Retargets the active Robotics allocation from distributing `IE00BYWZ0333` / `A2ANH1` to accumulating `IE00BYZK4552` / `A2ANH0`.
+- Treats an existing distributing Robotics holding as outside current plan scope: it remains visible in whole-portfolio/out-of-plan views, receives no future purchase recommendation, and does not imply an automatic sell.
+- Extends exceptions schema 2 with an explicit fail-closed `superseded` audit state and retires the historical distributing-share-class exception without deleting its original decision context.
+- Activates the v1.30 provider-aware broker schema in the current reference plan with an exact-instrument Trade Republic savings-plan route for the accumulating Robotics share class; no provider-wide tradability or fee is inferred.
+- Preserves the legacy distributing instrument metadata so imported historical holdings remain identifiable after the target migration.
+- Keeps payload schema 8, REST portfolio schema 1, Gateway health schema 6, provider acquisition, private-PKI HTTPS, LKG, DKB FinTS gating, and the advisory/no-trading boundary unchanged.
+
 ## 1.30.0
 
 - Adds provider-aware execution routing with an opt-in `broker.yaml` schema 2 while preserving schema-1 single-broker behavior.

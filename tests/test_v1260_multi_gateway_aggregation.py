@@ -19,7 +19,7 @@ from engine.aggregation import (  # noqa: E402
 from engine.calculator import calculate_portfolio_payload_from_positions  # noqa: E402
 from engine.models import Position  # noqa: E402
 
-NOW = datetime(2026, 8, 14, 9, 0, tzinfo=timezone.utc)
+NOW = datetime(2026, 8, 17, 9, 0, tzinfo=timezone.utc)
 CONFIG = ROOT / "examples" / "current-plan"
 
 
@@ -66,11 +66,11 @@ def test_trade_republic_gateway_snapshot_completes_target_architecture() -> None
         "A1XB5U": _position("A1XB5U", "IE00BJ0KDQ92", "250", "MSCI World")
     }
     trade_republic = {
-        "IE00BYWZ0333": _position(
+        "IE00BYZK4552": _position(
             "",
-            "IE00BYWZ0333",
+            "IE00BYZK4552",
             "500",
-            "Synthetic Automation & Robotics holding",
+            "Synthetic Automation & Robotics accumulating holding",
         )
     }
     aggregation = aggregate_sources(

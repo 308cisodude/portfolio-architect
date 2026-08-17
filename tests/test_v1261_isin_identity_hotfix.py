@@ -47,7 +47,7 @@ from portfolio_architect_gateway_tr_v1261_test.trade_republic_statement import (
     parse_statement_text,
 )
 
-NOW = datetime(2026, 8, 14, 12, 0, tzinfo=timezone.utc)
+NOW = datetime(2026, 8, 17, 12, 0, tzinfo=timezone.utc)
 CONFIG = ROOT / "examples" / "current-plan"
 
 
@@ -82,12 +82,12 @@ def test_rest_parser_does_not_mislabel_isin_identifier_as_wkn() -> None:
         {
             "schema_version": 1,
             "currency": "EUR",
-            "generated_at": "2026-08-14T11:00:00Z",
+            "generated_at": "2026-08-17T11:00:00Z",
             "positions": [
                 {
-                    "identifier": "IE00BYWZ0333",
-                    "isin": "IE00BYWZ0333",
-                    "name": "Synthetic Automation & Robotics holding",
+                    "identifier": "IE00BYZK4552",
+                    "isin": "IE00BYZK4552",
+                    "name": "Synthetic Automation & Robotics accumulating holding",
                     "instrument_type": "ETF",
                     "market_value_eur": "500",
                     "quantity": "4.25",
@@ -97,8 +97,8 @@ def test_rest_parser_does_not_mislabel_isin_identifier_as_wkn() -> None:
         now=NOW,
     )
 
-    position = snapshot.positions["IE00BYWZ0333"]
-    assert position.isin == "IE00BYWZ0333"
+    position = snapshot.positions["IE00BYZK4552"]
+    assert position.isin == "IE00BYZK4552"
     assert position.wkn == ""
 
 
@@ -106,16 +106,16 @@ def _synthetic_robotics_statement() -> str:
     return "\n".join(
         [
             "TRADE REPUBLIC BANK GMBH           SYNTHETIC TEST DOCUMENT",
-            "SYNTHETIC PERSON                                      DATUM 14.08.2026",
+            "SYNTHETIC PERSON                                      DATUM 17.08.2026",
             "DEPOT SYNTHETIC",
             "                                      DEPOTAUSZUG",
-            "                                       zum 14.08.2026",
+            "                                       zum 17.08.2026",
             "POSITIONEN",
             "STK. / NOMINALE   WERTPAPIERBEZEICHNUNG                          KURS PRO STUECK      KURSWERT IN EUR",
-            "4,250000 Stk.     Synthetic Automation & Robotics holding         117,65                 500,00",
-            "                  ISIN: IE00BYWZ0333",
+            "4,250000 Stk.     Synthetic Automation & Robotics accumulating holding         117,65                 500,00",
+            "                  ISIN: IE00BYZK4552",
             "                  ANZAHL POSITIONEN: 1                                             500,00 EUR",
-            "Erstellt am 2026-08-14 11:00:00 Europe/Berlin (UTC+02:00) Seite 1 von 1",
+            "Erstellt am 2026-08-17 11:00:00 Europe/Berlin (UTC+02:00) Seite 1 von 1",
         ]
     )
 
@@ -135,10 +135,10 @@ def test_real_trade_republic_rest_identity_shape_completes_seven_of_seven() -> N
     }
     dkb = {"A1XB5U": _position("A1XB5U", "IE00BJ0KDQ92", "250", "MSCI World")}
     provider_snapshot = parse_statement_text(_synthetic_robotics_statement(), now=NOW)
-    assert provider_snapshot.positions[0].identifier == "IE00BYWZ0333"
-    assert provider_snapshot.positions[0].isin == "IE00BYWZ0333"
+    assert provider_snapshot.positions[0].identifier == "IE00BYZK4552"
+    assert provider_snapshot.positions[0].isin == "IE00BYZK4552"
     trade_republic = parse_rest_snapshot(provider_snapshot.as_dict(), now=NOW)
-    assert trade_republic.positions["IE00BYWZ0333"].wkn == ""
+    assert trade_republic.positions["IE00BYZK4552"].wkn == ""
 
     aggregation = aggregate_sources(
         (
@@ -171,14 +171,14 @@ def test_real_trade_republic_rest_identity_shape_completes_seven_of_seven() -> N
 
     recommendations = {item["fund_id"]: item for item in payload["recommendations"]}
     robotics = recommendations["robotics"]
-    assert robotics["wkn"] == "A2ANH1"
-    assert robotics["isin"] == "IE00BYWZ0333"
+    assert robotics["wkn"] == "A2ANH0"
+    assert robotics["isin"] == "IE00BYZK4552"
     assert robotics["current_value_eur"] == Decimal("500")
     assert robotics["source_ids"] == ["trade_republic"]
 
     holdings = {item["position_id"]: item for item in payload["holdings"]}
-    assert holdings["robotics"]["wkn"] == "A2ANH1"
-    assert holdings["robotics"]["isin"] == "IE00BYWZ0333"
+    assert holdings["robotics"]["wkn"] == "A2ANH0"
+    assert holdings["robotics"]["isin"] == "IE00BYZK4552"
     assert holdings["robotics"]["strategy_scope"] == "current_plan"
 
 

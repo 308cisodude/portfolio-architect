@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.31.0
+
+- Package/version alignment for v1.31.0 canonical Robotics-target and historical-exception correction; Comdirect acquisition, OAuth/session maintenance, private-PKI HTTPS and Gateway wire behavior are unchanged.
+
 ## 1.30.0
 
 - Package/version alignment for v1.30.0 provider-aware local execution-policy planning; Comdirect acquisition, OAuth/session maintenance, private-PKI HTTPS and Gateway wire behavior are unchanged.

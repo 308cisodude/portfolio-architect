@@ -1,6 +1,7 @@
 """Complete-portfolio and current-plan scope regression tests."""
 
 import importlib.util
+from datetime import datetime, timezone
 from pathlib import Path
 import sys
 
@@ -19,21 +20,25 @@ def test_current_reference_depot_scope_contract():
     payload=calculate_portfolio_payload(
         depot,
         ROOT/'examples'/'current-plan',
+        evaluated_at=datetime(2026,8,17,12,0,tzinfo=timezone.utc),
     )
     summary=payload['summary']
     assert payload['schema_version']==8
     assert summary['whole_portfolio_position_count']==13
     assert summary['current_plan_position_count']==7
-    assert summary['current_plan_held_position_count']==7
-    assert summary['outside_scope_position_count']==6
+    assert summary['current_plan_held_position_count']==6
+    assert summary['outside_scope_position_count']==7
     assert float(round(summary['whole_portfolio_value_eur'],2))==14053.01
-    assert float(round(summary['current_plan_value_eur'],2))==11050.00
-    assert float(round(summary['outside_scope_value_eur'],2))==3003.01
+    assert float(round(summary['current_plan_value_eur'],2))==10550.00
+    assert float(round(summary['outside_scope_value_eur'],2))==3503.01
     assert [x['fund_id'] for x in payload['recommendations']]==[
         'world','emerging_markets','world_small_cap','healthcare','ai_big_data','cybersecurity','robotics'
     ]
     it=next(x for x in payload['holdings'] if x['wkn']=='A113FM')
     assert it['strategy_scope']=='outside_scope'
+    old_robotics=next(x for x in payload['holdings'] if x['isin']=='IE00BYWZ0333')
+    assert old_robotics['position_id']=='holding_ie00bywz0333'
+    assert old_robotics['strategy_scope']=='outside_scope'
     assert it['plan_current_pct'] is None
     assert all(x['fund_id']!='legacy_world_information_technology' for x in payload['recommendations'])
 
@@ -43,8 +48,8 @@ def test_current_reference_depot_scope_contract():
     assert len(data.holdings)==13
     assert len(data.positions)==7
     assert data.allocation.underweight==1
-    assert data.allocation.on_target==5
-    assert data.allocation.overweight==1
+    assert data.allocation.on_target==4
+    assert data.allocation.overweight==2
 
 
 def test_outside_scope_holding_cannot_claim_plan_metadata():

@@ -80,7 +80,7 @@ def test_disabled_cost_aware_execution_ignores_gateway_reserve() -> None:
     payload = calculate_portfolio_payload_from_positions(
         positions,
         ROOT / "examples" / "current-plan",
-        evaluated_at=datetime(2026, 8, 2, 8, 0, tzinfo=timezone.utc),
+        evaluated_at=datetime(2026, 8, 17, 8, 0, tzinfo=timezone.utc),
         plan_override={
             "enabled": False,
             "execution": {
@@ -114,4 +114,4 @@ def test_calculation_failures_are_not_mislabelled_as_supplemental_source_failure
 
 
 def test_v1162_version_metadata_is_aligned() -> None:
-    assert 'version = "1.30.0"' in (ROOT / "pyproject.toml").read_text()
+    assert 'version = "1.31.0"' in (ROOT / "pyproject.toml").read_text()
