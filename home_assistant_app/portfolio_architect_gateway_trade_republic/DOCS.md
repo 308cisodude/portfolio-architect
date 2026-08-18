@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway — Trade Republic v1.32.0
+# Portfolio Architect Gateway — Trade Republic v1.33.0
 
-Version 1.32.0 adds a bounded persistent **latest import diagnostic** while preserving the
+Version 1.33.0 adds a bounded persistent **latest import diagnostic** while preserving the
 established local `DEPOTAUSZUG` statement-import and provider-snapshot contracts.
 
 The App may persist only an allowlisted/genericized `accepted`, `rejected` or

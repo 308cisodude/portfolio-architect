@@ -47,6 +47,10 @@ from .const import (
     CONF_REST_ENDPOINT_URL,
     CONF_REST_TLS_CA_CERTIFICATE,
     CONF_FRESHNESS_HOURS,
+    CONF_FRESHNESS_LIVE_API_HOURS,
+    CONF_FRESHNESS_STATEMENT_HOURS,
+    CONF_FRESHNESS_CSV_HOURS,
+    CONF_FRESHNESS_OTHER_HOURS,
     CONF_PLAN_BUDGET_AMOUNT,
     CONF_PLAN_BUDGET_BASIS,
     CONF_PLAN_EXECUTION_DAY,
@@ -89,6 +93,7 @@ from .const import (
     MAX_EXECUTION_MONTH,
     MAX_EXECUTION_MONTH_OFFSET,
     MAX_FRESHNESS_HOURS,
+    MAX_DOCUMENT_FRESHNESS_HOURS,
     MAX_PLAN_BUDGET_EUR,
     MAX_PLAN_INSTRUMENTS,
     MAX_REVIEW_LEAD_DAYS,
@@ -164,19 +169,12 @@ from .source import (
 )
 
 
-_PLAN_OPTION_KEYS = (
+_PLAN_OVERRIDE_OPTION_KEYS = (
     CONF_PLAN_OVERRIDE_ENABLED,
     CONF_PLAN_NAME,
     CONF_PLAN_BUDGET_AMOUNT,
     CONF_PLAN_BUDGET_BASIS,
-    CONF_PLAN_FREQUENCY,
-    CONF_PLAN_SCHEDULE_ENABLED,
-    CONF_PLAN_EXECUTION_DAY,
-    CONF_PLAN_EXECUTION_DAYS,
-    CONF_PLAN_EXECUTION_MONTH,
-    CONF_PLAN_EXECUTION_MONTH_OFFSET,
     CONF_PLAN_INSTRUMENTS,
-    CONF_REVIEW_LEAD_DAYS,
 )
 
 _GENERIC_KEYS = (
@@ -890,13 +888,14 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
     _draft_instruments: list[dict[str, Any]]
     _instrument_index: int
     _execution_draft: dict[str, Any] | None = None
+    _schedule_settings_draft: dict[str, Any] | None = None
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         """Present native configuration areas."""
         del user_input
-        menu_options = ["plan", "execution", "sources", "runtime"]
+        menu_options = ["plan", "plan_schedule", "execution", "sources", "runtime"]
         if self.config_entry.options.get(CONF_PLAN_OVERRIDE_ENABLED):
             menu_options.append("reset_plan")
         return self.async_show_menu(
@@ -1135,6 +1134,127 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
                     )
                 }
             ),
+        )
+
+    async def async_step_plan_schedule(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Configure recurring execution/review scheduling independently of target scope."""
+        options = dict(self.config_entry.options)
+        suggested = {
+            CONF_PLAN_SCHEDULE_ENABLED: bool(
+                options.get(CONF_PLAN_SCHEDULE_ENABLED, False)
+            ),
+            CONF_PLAN_FREQUENCY: options.get(
+                CONF_PLAN_FREQUENCY, DEFAULT_PLAN_FREQUENCY
+            ),
+        }
+        if user_input is not None:
+            enabled = bool(user_input[CONF_PLAN_SCHEDULE_ENABLED])
+            frequency = str(user_input[CONF_PLAN_FREQUENCY])
+            if not enabled:
+                options[CONF_PLAN_SCHEDULE_ENABLED] = False
+                options[CONF_PLAN_FREQUENCY] = frequency
+                for key in (
+                    CONF_PLAN_EXECUTION_DAYS,
+                    CONF_PLAN_EXECUTION_MONTH,
+                    CONF_PLAN_EXECUTION_MONTH_OFFSET,
+                    CONF_REVIEW_LEAD_DAYS,
+                ):
+                    options.pop(key, None)
+                return self.async_create_entry(data=options)
+            self._schedule_settings_draft = {
+                CONF_PLAN_SCHEDULE_ENABLED: True,
+                CONF_PLAN_FREQUENCY: frequency,
+            }
+            return await self.async_step_plan_schedule_details()
+
+        schema = vol.Schema(
+            {
+                vol.Required(CONF_PLAN_SCHEDULE_ENABLED): BooleanSelector(
+                    BooleanSelectorConfig()
+                ),
+                vol.Required(CONF_PLAN_FREQUENCY): SelectSelector(
+                    SelectSelectorConfig(
+                        options=list(PLAN_FREQUENCIES),
+                        mode=SelectSelectorMode.DROPDOWN,
+                        translation_key="plan_frequency",
+                    )
+                ),
+            }
+        )
+        return self.async_show_form(
+            step_id="plan_schedule",
+            data_schema=self.add_suggested_values_to_schema(schema, suggested),
+        )
+
+    async def async_step_plan_schedule_details(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Configure the dates for the independent recurring plan schedule."""
+        if not self._schedule_settings_draft:
+            return self.async_abort(reason="invalid_schedule")
+        frequency = str(self._schedule_settings_draft[CONF_PLAN_FREQUENCY])
+        options = dict(self.config_entry.options)
+        maximum_day = 7 if frequency == PLAN_FREQUENCY_WEEKLY else 28
+        suggested: dict[str, Any] = {
+            CONF_REVIEW_LEAD_DAYS: int(
+                options.get(CONF_REVIEW_LEAD_DAYS, DEFAULT_REVIEW_LEAD_DAYS)
+            ),
+            CONF_PLAN_EXECUTION_DAYS: _safe_execution_day_strings(
+                options.get(CONF_PLAN_EXECUTION_DAYS), maximum=maximum_day
+            ),
+        }
+        if frequency == PLAN_FREQUENCY_QUARTERLY:
+            suggested[CONF_PLAN_EXECUTION_MONTH_OFFSET] = str(
+                options.get(CONF_PLAN_EXECUTION_MONTH_OFFSET, 1)
+            )
+        elif frequency == PLAN_FREQUENCY_YEARLY:
+            suggested[CONF_PLAN_EXECUTION_MONTH] = str(
+                options.get(CONF_PLAN_EXECUTION_MONTH, 1)
+            )
+
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            suggested.update(user_input)
+            days = [int(value) for value in user_input[CONF_PLAN_EXECUTION_DAYS]]
+            month = user_input.get(CONF_PLAN_EXECUTION_MONTH)
+            offset = user_input.get(CONF_PLAN_EXECUTION_MONTH_OFFSET)
+            try:
+                schedule = validate_schedule_config(
+                    frequency,
+                    days,
+                    execution_month=int(month) if month is not None else None,
+                    execution_month_offset=int(offset) if offset is not None else None,
+                )
+            except (TypeError, ValueError):
+                errors["base"] = "invalid_schedule"
+            else:
+                options[CONF_PLAN_SCHEDULE_ENABLED] = True
+                options[CONF_PLAN_FREQUENCY] = schedule.frequency
+                options[CONF_REVIEW_LEAD_DAYS] = int(
+                    user_input[CONF_REVIEW_LEAD_DAYS]
+                )
+                options[CONF_PLAN_EXECUTION_DAYS] = list(schedule.execution_days)
+                if schedule.execution_month is None:
+                    options.pop(CONF_PLAN_EXECUTION_MONTH, None)
+                else:
+                    options[CONF_PLAN_EXECUTION_MONTH] = schedule.execution_month
+                if schedule.execution_month_offset is None:
+                    options.pop(CONF_PLAN_EXECUTION_MONTH_OFFSET, None)
+                else:
+                    options[CONF_PLAN_EXECUTION_MONTH_OFFSET] = (
+                        schedule.execution_month_offset
+                    )
+                self._schedule_settings_draft = None
+                return self.async_create_entry(data=options)
+
+        return self.async_show_form(
+            step_id="plan_schedule_details",
+            data_schema=self.add_suggested_values_to_schema(
+                _schedule_schema(frequency), suggested
+            ),
+            errors=errors,
         )
 
     async def async_step_execution(
@@ -1512,7 +1632,7 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
             return self.async_abort(reason="plan_already_uses_yaml")
         if user_input is not None and user_input.get("confirm_reset"):
             options = dict(self.config_entry.options)
-            for key in _PLAN_OPTION_KEYS:
+            for key in _PLAN_OVERRIDE_OPTION_KEYS:
                 options.pop(key, None)
             return self.async_create_entry(data=options)
         return self.async_show_form(
@@ -1529,27 +1649,57 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
     async def async_step_runtime(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Configure the fallback freshness threshold."""
+        """Configure explicit evidence-kind freshness thresholds."""
         options = dict(self.config_entry.options)
+        legacy = int(options.get(CONF_FRESHNESS_HOURS, DEFAULT_FRESHNESS_HOURS))
         suggested = {
-            CONF_FRESHNESS_HOURS: int(
-                options.get(CONF_FRESHNESS_HOURS, DEFAULT_FRESHNESS_HOURS)
-            )
+            CONF_FRESHNESS_LIVE_API_HOURS: int(
+                options.get(CONF_FRESHNESS_LIVE_API_HOURS, legacy)
+            ),
+            CONF_FRESHNESS_STATEMENT_HOURS: int(
+                options.get(CONF_FRESHNESS_STATEMENT_HOURS, legacy)
+            ),
+            CONF_FRESHNESS_CSV_HOURS: int(
+                options.get(CONF_FRESHNESS_CSV_HOURS, legacy)
+            ),
+            CONF_FRESHNESS_OTHER_HOURS: int(
+                options.get(CONF_FRESHNESS_OTHER_HOURS, legacy)
+            ),
         }
         if user_input is not None:
-            options[CONF_FRESHNESS_HOURS] = int(user_input[CONF_FRESHNESS_HOURS])
+            for key in (
+                CONF_FRESHNESS_LIVE_API_HOURS,
+                CONF_FRESHNESS_STATEMENT_HOURS,
+                CONF_FRESHNESS_CSV_HOURS,
+                CONF_FRESHNESS_OTHER_HOURS,
+            ):
+                options[key] = int(user_input[key])
             return self.async_create_entry(data=options)
+
+        live_selector = NumberSelector(
+            NumberSelectorConfig(
+                min=MIN_FRESHNESS_HOURS,
+                max=MAX_FRESHNESS_HOURS,
+                step=1,
+                mode=NumberSelectorMode.BOX,
+                unit_of_measurement="h",
+            )
+        )
+        document_selector = NumberSelector(
+            NumberSelectorConfig(
+                min=MIN_FRESHNESS_HOURS,
+                max=MAX_DOCUMENT_FRESHNESS_HOURS,
+                step=1,
+                mode=NumberSelectorMode.BOX,
+                unit_of_measurement="h",
+            )
+        )
         schema = vol.Schema(
             {
-                vol.Required(CONF_FRESHNESS_HOURS): NumberSelector(
-                    NumberSelectorConfig(
-                        min=MIN_FRESHNESS_HOURS,
-                        max=MAX_FRESHNESS_HOURS,
-                        step=1,
-                        mode=NumberSelectorMode.BOX,
-                        unit_of_measurement="h",
-                    )
-                )
+                vol.Required(CONF_FRESHNESS_LIVE_API_HOURS): live_selector,
+                vol.Required(CONF_FRESHNESS_STATEMENT_HOURS): document_selector,
+                vol.Required(CONF_FRESHNESS_CSV_HOURS): document_selector,
+                vol.Required(CONF_FRESHNESS_OTHER_HOURS): live_selector,
             }
         )
         return self.async_show_form(

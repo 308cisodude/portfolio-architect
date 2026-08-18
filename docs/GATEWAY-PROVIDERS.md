@@ -19,7 +19,7 @@ provider-neutral runtime code. `GatewayState` and `create_server()` consume
 
 ## Official App identities
 
-| Provider | Display name | App slug | v1.32.0 state |
+| Provider | Display name | App slug | v1.33.0 state |
 | --- | --- | --- | --- |
 | Comdirect | Portfolio Architect Gateway — Comdirect | `portfolio_architect_gateway` | stable live provider, auto-start |
 | DKB | Portfolio Architect Gateway — DKB | `portfolio_architect_gateway_dkb` | experimental manual-only anonymous FinTS capability probe; no live portfolio acquisition |
@@ -156,3 +156,12 @@ On the Home Assistant side, per-source freshness evidence is additive observabil
 The oldest contributing source remains the authoritative aggregate freshness gate; provider
 classification does not introduce a different age limit or make a stale plan actionable in
 v1.32.0.
+
+
+## v1.33 source-freshness and plan-schedule separation
+
+Version 1.33.0 again leaves provider acquisition and wire schemas unchanged. Home Assistant now
+evaluates each source against an explicit bounded evidence-kind age policy independently from
+recurring plan review dates. Existing installations inherit their prior global threshold for all
+kinds until the operator deliberately saves different values. Provider Apps receive package/User-
+Agent alignment only; the v1.32 diagnostic evidence policy remains authoritative.

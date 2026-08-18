@@ -84,9 +84,9 @@ def test_current_runtime_versions_are_aligned() -> None:
     manifest = json.loads((COMPONENT / "manifest.json").read_text())
     const = (COMPONENT / "const.py").read_text(encoding="utf-8")
     engine_init = (COMPONENT / "engine" / "__init__.py").read_text(encoding="utf-8")
-    assert manifest["version"] == "1.32.0"
-    assert 'VERSION: Final = "1.32.0"' in const
-    assert '__version__ = "1.32.0"' in engine_init
+    assert manifest["version"] == "1.33.0"
+    assert 'VERSION: Final = "1.33.0"' in const
+    assert '__version__ = "1.33.0"' in engine_init
 
 
 def test_native_monthly_plan_runtime_and_policy_entities_are_registered() -> None:
@@ -159,7 +159,9 @@ def test_v12_plan_and_schedule_contract_is_native_and_fail_closed():
     assert 'SelectSelectorConfig' in flow
     assert 'validate_schedule_config' in flow
     assert 'plan_override=plan_override' in coordinator
-    assert 'current_date <= schedule.next_review_on' in coordinator
+    assert 'source_freshness_evidence' in coordinator
+    assert 'plan_review_schedule' in coordinator
+    assert 'review_schedule_configured' in coordinator
     assert 'PlanScheduleConfig' in schedule
     assert '_first_execution_in_next_period' in schedule
 

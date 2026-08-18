@@ -1,4 +1,4 @@
-"""v1.32.0 provider freshness and diagnostics foundation regressions."""
+"""v1.33.0 provider freshness and diagnostics foundation regressions."""
 
 from __future__ import annotations
 
@@ -117,9 +117,8 @@ def test_future_or_invalid_source_timestamp_fails_observability_closed() -> None
     assert all(item["within_age_threshold"] is False for item in rows)
 
 
-def test_coordinator_preserves_oldest_source_fail_closed_actionability_contract() -> None:
+def test_coordinator_preserves_v132_source_evidence_and_fail_closed_actionability_surface() -> None:
     source = (COMPONENT / "coordinator.py").read_text(encoding="utf-8")
-    assert "timestamp = self.oldest_source_generated_at or self.data_timestamp" in source
     assert 'if self.data is None or not self.is_data_fresh()' in source
     assert 'return "data_stale"' in source
     assert "source_freshness_evidence" in source

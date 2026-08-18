@@ -361,3 +361,22 @@ second duplicate guard. `async_step_hassio` still requires zero entries for init
 Comdirect setup or exactly one entry for migration/supplemental handling; it never
 uses discovery as permission to create an arbitrary second Portfolio Architect
 instance.
+
+## v1.33 source freshness and plan schedule are separate controls
+
+Portfolio Architect no longer treats a recurring plan review date as a substitute for provider
+evidence freshness. Every contributing source has an evidence kind and an effective bounded age
+threshold. Aggregate source freshness is true only when every source satisfies its own threshold;
+invalid or materially future timestamps fail closed.
+
+Existing installations migrate conservatively. If no v1.33 evidence-kind threshold has been
+explicitly stored, all kinds inherit the pre-v1.33 global `freshness_hours` value. Provider
+classification therefore cannot silently make a previously stale portfolio actionable.
+
+Recurring execution/review scheduling remains planning context. It supplies planned execution and
+review dates but does not authorize old bank evidence. Conversely, review due/overdue state does
+not mutate the source-freshness result.
+
+The target-plan definition and schedule persistence boundaries are also distinct. Restoring the
+file-based target plan removes only Home Assistant target/budget override fields; schedule timing,
+source configuration, execution policy and runtime safeguards remain separate options.

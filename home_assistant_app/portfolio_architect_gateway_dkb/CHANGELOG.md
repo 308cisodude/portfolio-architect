@@ -1,10 +1,13 @@
 # Changelog
 
+## 1.33.0
+
+- Package/User-Agent alignment for Portfolio Architect v1.33.0 source-freshness and plan-schedule separation; DKB FinTS probe behavior is unchanged and remains experimental/manual-only/non-live.
+
 ## 1.32.0
 
-- Package/version alignment for Portfolio Architect v1.32.0.
+- Package/version alignment for Portfolio Architect v1.32.0 provider freshness/diagnostics foundation.
 - The live-accepted v1.31.2 DKB FinTS registration, Ingress and persisted sanitized probe-diagnostic behavior is unchanged; DKB remains experimental, manual-only and non-live.
-
 ## 1.31.2
 
 - Requires the project's issued FinTS product registration ID to be exactly 25 alphanumeric characters and transmits it only in `HKVVB`'s product-designation field.

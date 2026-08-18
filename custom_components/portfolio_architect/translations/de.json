@@ -2046,6 +2046,12 @@
           },
           "stale_source_summary": {
             "name": "Aktualitätsblocker (Englisch)"
+          },
+          "freshness_policy": {
+            "name": "Aktualitätsrichtlinie"
+          },
+          "freshness_thresholds": {
+            "name": "Wirksame Aktualitätsschwellen"
           }
         }
       },
@@ -2270,7 +2276,8 @@
           "runtime": "Laufzeitschutz",
           "reset_plan": "Dateibasierten Plan wiederherstellen",
           "sources": "Portfolioquellen",
-          "execution": "Ausführung und Transaktionskosten"
+          "execution": "Ausführung und Transaktionskosten",
+          "plan_schedule": "Ausführungs- & Prüfplan"
         }
       },
       "plan": {
@@ -2286,7 +2293,7 @@
         },
         "data_description": {
           "plan_budget_amount": "Der Betrag wird entweder auf alle Ausführungen im Zeitraum verteilt oder bei jeder Ausführung eingesetzt.",
-          "plan_schedule_enabled": "Aktivieren, um Ausführungstermine, Prüftermine und terminbasierte Aktualität zu berechnen.",
+          "plan_schedule_enabled": "Aktivieren, um geplante Ausführungen und Prüftermine zu berechnen. Die Quellenaktualität wird unabhängig davon bewertet.",
           "selected_instruments": "Wähle 1 bis 32 Instrumente. Für jedes ausgewählte Instrument wird anschließend ein Zielgewicht festgelegt."
         }
       },
@@ -2321,17 +2328,23 @@
       },
       "runtime": {
         "title": "Laufzeitschutz",
-        "description": "Die Altersschwelle wird nur verwendet, wenn kein Prüfplan konfiguriert ist. Mit Prüfplan bleiben die Daten bis einschließlich des geplanten Prüftags aktuell.",
+        "description": "Das Alter der Quellenbelege wird unabhängig vom Prüfplan bewertet. Bestehende Installationen behalten für jede Belegart zunächst die bisherige globale Schwelle, bis diese Werte bewusst gespeichert werden.",
         "data": {
-          "freshness_hours": "Ersatz-Aktualitätsschwelle"
+          "freshness_live_api_hours": "Aktualität Live-API / Gateway-Snapshot",
+          "freshness_statement_hours": "Aktualität importierter Abrechnungen",
+          "freshness_csv_hours": "Aktualität importierter CSV-Daten",
+          "freshness_other_hours": "Aktualität sonstiger Quellen"
         },
         "data_description": {
-          "freshness_hours": "Zulässiges Datenalter ohne wiederkehrenden Prüfplan (1–168 Stunden)."
+          "freshness_live_api_hours": "Maximales Alter für Live-API- und Provider-Gateway-Snapshots (1–168 Stunden).",
+          "freshness_statement_hours": "Maximales Alter importierter Provider-Abrechnungen wie Trade-Republic-DEPOTAUSZUG-Belegen (1–744 Stunden).",
+          "freshness_csv_hours": "Maximales Alter importierter CSV-Belege wie DKB-CSV-Ergänzungen (1–744 Stunden).",
+          "freshness_other_hours": "Maximales Alter für nicht anderweitig zugeordnete Quellenarten (1–168 Stunden)."
         }
       },
       "reset_plan": {
         "title": "Dateibasierten Plan wiederherstellen",
-        "description": "Verwirf die Home-Assistant-Planüberschreibung und verwende wieder den in portfolio.yaml definierten Plan. Laufzeitschutz-Einstellungen bleiben erhalten.",
+        "description": "Nur die Home-Assistant-Zielplan-Überschreibung verwerfen und wieder den in portfolio.yaml definierten Plan verwenden. Wiederkehrender Ausführungs-/Prüfplan, Quellenkonfiguration, Ausführungsrichtlinie und Laufzeitschutz bleiben erhalten.",
         "data": {
           "confirm_reset": "Plan aus portfolio.yaml wiederherstellen"
         }
@@ -2425,6 +2438,32 @@
         "description": "Ein zusätzliches Gateway nicht mehr einlesen. Gateway-App und private Daten werden dadurch nicht verändert.",
         "data": {
           "provider_id": "Provider"
+        }
+      },
+      "plan_schedule": {
+        "title": "Ausführungs- & Prüfplan konfigurieren",
+        "description": "Wiederkehrende Plantermine unabhängig von der Quelle der Zielplan-Definition konfigurieren. Änderungen oder das Wiederherstellen von portfolio.yaml entfernen diesen Zeitplan nicht.",
+        "data": {
+          "plan_schedule_enabled": "Wiederkehrenden Zeitplan aktivieren",
+          "plan_frequency": "Planfrequenz"
+        },
+        "data_description": {
+          "plan_schedule_enabled": "Wenn deaktiviert, sind geplante Ausführungs- und nächste Prüftermine nicht verfügbar; die Quellenaktualität bleibt altersbasiert.",
+          "plan_frequency": "Intervall für Ausführungs- und Prüftermine auswählen."
+        }
+      },
+      "plan_schedule_details": {
+        "title": "Wiederkehrende Ausführungstermine konfigurieren",
+        "description": "Ausführungstermine und Vorlauf für die Prüfung festlegen. Diese Termine übersteuern die Aktualität der Provider-Belege nicht.",
+        "data": {
+          "review_lead_days": "Vorlauf der Prüfung",
+          "plan_execution_days": "Ausführungstage",
+          "plan_execution_month": "Ausführungsmonat",
+          "plan_execution_month_offset": "Monat im Quartal"
+        },
+        "data_description": {
+          "review_lead_days": "Anzahl der Tage vor der Ausführung, für die die nächste Prüfung fällig wird.",
+          "plan_execution_days": "Bei wöchentlichen Plänen sind dies Wochentage, ansonsten Monatstage von 1 bis 28."
         }
       }
     },
