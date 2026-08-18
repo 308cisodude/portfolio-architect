@@ -380,3 +380,26 @@ not mutate the source-freshness result.
 The target-plan definition and schedule persistence boundaries are also distinct. Restoring the
 file-based target plan removes only Home Assistant target/budget override fields; schedule timing,
 source configuration, execution policy and runtime safeguards remain separate options.
+
+## v1.34 stable target identity and structural presentation contract
+
+Portfolio targets now have an explicit user-owned identity separate from the current
+instrument. Portfolio schema 2 requires `target_id`; schema 1 legacy `id` remains a
+compatibility input and is canonicalized to the same token. Target/entity identity therefore
+does not depend on list order, display name, WKN or ISIN. A deliberate instrument replacement
+can preserve the same target role without churning Home Assistant target entities.
+
+The target architecture is generic but bounded: at most 32 positive-weight targets are accepted
+and duplicate target IDs or instrument identities fail closed. The current seven-ETF retirement
+plan is reference configuration only.
+
+A diagnostic `presentation_model` entity exposes presentation schema 1 as a bounded structural
+index: configured targets, current-plan holding identities, complete outside-current-plan
+holding inventory, source provenance IDs and aggregate policy/actionability state. It does not
+replace the dedicated monetary/action entities and deliberately omits quantities, values and
+purchase amounts so recorder churn and data exposure stay bounded.
+
+The presentation model is a backend contract, not a frontend plugin. v1.34 keeps the reference
+dashboard native and does not add `auto-entities`, card-mod, JavaScript or custom cards. A later
+presentation milestone may consume this contract to remove the remaining static sample tile
+lists.

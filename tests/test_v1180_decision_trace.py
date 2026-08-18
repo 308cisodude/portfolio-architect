@@ -46,6 +46,14 @@ def _data():
     )
 
 
+def _robotics_target_id(data) -> str:
+    return next(
+        target_id
+        for target_id, position in data.positions.items()
+        if position.isin == "IE00BYZK4552"
+    )
+
+
 def _snapshot(data, when):
     return build_evaluation_snapshot(
         data,
@@ -82,7 +90,8 @@ def test_identical_decision_content_at_a_new_evaluation_is_unchanged() -> None:
 def test_position_entering_corridor_and_losing_purchase_is_traced() -> None:
     data = _data()
     previous = _snapshot(data, datetime(2026, 8, 17, 8, 0, tzinfo=timezone.utc))
-    position = data.positions["robotics"]
+    robotics_target_id = _robotics_target_id(data)
+    position = data.positions[robotics_target_id]
     changed_position = replace(
         position,
         allocation_status="on_target",
@@ -92,7 +101,7 @@ def test_position_entering_corridor_and_losing_purchase_is_traced() -> None:
     )
     current_data = replace(
         data,
-        positions={**data.positions, "robotics": changed_position},
+        positions={**data.positions, robotics_target_id: changed_position},
     )
     current = _snapshot(
         current_data, datetime(2026, 8, 17, 9, 0, tzinfo=timezone.utc)
@@ -100,7 +109,7 @@ def test_position_entering_corridor_and_losing_purchase_is_traced() -> None:
     delta = compare_history(EvaluationHistory(previous=previous, current=current))
     assert delta is not None and delta.state == "multiple_changes"
     change = delta.attributes["position_changes"][0]
-    assert change["fund_id"] == "robotics"
+    assert change["fund_id"] == robotics_target_id
     assert change["categories"] == ["allocation", "recommendation"]
     assert "entered_target_corridor" in change["reason_codes"]
     assert "proposed_purchase_removed" in change["reason_codes"]
@@ -111,7 +120,8 @@ def test_position_entering_corridor_and_losing_purchase_is_traced() -> None:
 def test_subthreshold_noise_is_not_reported_as_material_change() -> None:
     data = _data()
     previous = _snapshot(data, datetime(2026, 8, 17, 8, 0, tzinfo=timezone.utc))
-    position = data.positions["robotics"]
+    robotics_target_id = _robotics_target_id(data)
+    position = data.positions[robotics_target_id]
     changed_position = replace(
         position,
         deviation_pp=position.deviation_pp + MATERIAL_DRIFT_DELTA_PP / 2,
@@ -119,7 +129,7 @@ def test_subthreshold_noise_is_not_reported_as_material_change() -> None:
     )
     current_data = replace(
         data,
-        positions={**data.positions, "robotics": changed_position},
+        positions={**data.positions, robotics_target_id: changed_position},
     )
     current = _snapshot(
         current_data, datetime(2026, 8, 17, 9, 0, tzinfo=timezone.utc)
@@ -230,9 +240,9 @@ def test_storage_and_diagnostics_keep_the_trace_private_and_integrity_checked() 
 
 def test_v1180_metadata_and_compatibility_contracts_are_aligned() -> None:
     manifest = json.loads((COMPONENT / "manifest.json").read_text())
-    assert manifest["version"] == "1.33.1"
-    assert 'VERSION: Final = "1.33.1"' in (COMPONENT / "const.py").read_text()
-    assert '__version__ = "1.33.1"' in (COMPONENT / "engine" / "__init__.py").read_text()
+    assert manifest["version"] == "1.34.0"
+    assert 'VERSION: Final = "1.34.0"' in (COMPONENT / "const.py").read_text()
+    assert '__version__ = "1.34.0"' in (COMPONENT / "engine" / "__init__.py").read_text()
     release_notes = (ROOT / "docs" / "RELEASE-NOTES.md").read_text()
     assert "payload schema 8" in release_notes.lower()
     assert "REST portfolio schema 1" in release_notes

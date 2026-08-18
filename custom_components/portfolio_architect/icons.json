@@ -380,6 +380,9 @@
       },
       "exception_review_required_count": {
         "default": "mdi:shield-sync-outline"
+      },
+      "presentation_model": {
+        "default": "mdi:view-dashboard-outline"
       }
     },
     "date": {

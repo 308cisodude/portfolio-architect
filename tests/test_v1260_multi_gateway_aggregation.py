@@ -97,12 +97,12 @@ def test_trade_republic_gateway_snapshot_completes_target_architecture() -> None
     assert summary["provider_count"] == 3
     assert summary["provider_ids"] == ["comdirect", "trade_republic", "dkb"]
 
-    recommendations = {item["fund_id"]: item for item in payload["recommendations"]}
-    robotics = recommendations["robotics"]
+    recommendations = {item["isin"]: item for item in payload["recommendations"]}
+    robotics = recommendations["IE00BYZK4552"]
     assert robotics["current_value_eur"] == Decimal("500")
     assert robotics["source_ids"] == ["trade_republic"]
     assert robotics["source_values_eur"] == {"trade_republic": Decimal("500")}
-    world = recommendations["world"]
+    world = recommendations["IE00BJ0KDQ92"]
     assert world["source_ids"] == ["comdirect", "dkb_1"]
     assert world["source_values_eur"] == {
         "comdirect": Decimal("4500"),

@@ -337,7 +337,7 @@ def test_full_payload_reopens_route_scoped_exception_when_provider_changes(tmp_p
     # reference plan: reconstruct the distributing target and accepted exception that
     # originally exercised provider-assumption review.
     portfolio = yaml.safe_load((config_dir / "portfolio.yaml").read_text(encoding="utf-8"))
-    robotics = next(item for item in portfolio["portfolio"]["allocation"] if item["id"] == "robotics")
+    robotics = next(item for item in portfolio["portfolio"]["allocation"] if item["isin"] == "IE00BYZK4552")
     robotics.update(
         name="iShares Automation & Robotics UCITS ETF USD Dist",
         wkn="A2ANH1",

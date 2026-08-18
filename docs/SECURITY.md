@@ -9,9 +9,9 @@ Portfolio Architect treats every configured CSV, REST response, and YAML input a
 - optional REST traffic is confined to an explicitly configured local endpoint;
 - no shell command construction inside the engine or integration;
 - bounded architecture/payload size of 32 positions;
-- safe fund-ID character set: lowercase ASCII letters, digits, and underscore;
+- safe target-ID character set: lowercase ASCII letters, digits, and underscore;
 - bounded printable instrument names and identifiers;
-- duplicate fund ID, WKN, and ISIN rejection;
+- duplicate target ID, WKN, and ISIN rejection;
 - finite numeric values and explicit range validation;
 - target weights must total 100%;
 - current percentage totals must match whether the portfolio has value;
@@ -19,7 +19,8 @@ Portfolio Architect treats every configured CSV, REST response, and YAML input a
   against the engine summary;
 - malformed or unavailable source data fails closed;
 - diagnostics omit instrument names and monetary values;
-- entity IDs and migrations use stable non-secret identifiers.
+- entity IDs and migrations use stable non-secret identifiers;
+- portfolio schema 2 requires explicit target IDs and rejects mismatched legacy-ID aliases.
 
 ## Trust boundaries
 

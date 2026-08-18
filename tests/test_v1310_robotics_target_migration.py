@@ -31,9 +31,9 @@ def _load(name: str) -> dict:
 
 def test_robotics_target_is_now_the_accumulating_share_class() -> None:
     portfolio = _load("portfolio.yaml")
-    robotics = next(item for item in portfolio["portfolio"]["allocation"] if item["id"] == "robotics")
-    assert robotics == {
-        "id": "robotics",
+    robotics = next(item for item in portfolio["portfolio"]["allocation"] if item["isin"] == NEW_ROBOTICS_ISIN)
+    assert robotics["target_id"].startswith("target_") and len(robotics["target_id"]) == 39
+    assert {key: value for key, value in robotics.items() if key != "target_id"} == {
         "name": "iShares Automation & Robotics UCITS ETF USD Acc",
         "wkn": "A2ANH0",
         "isin": NEW_ROBOTICS_ISIN,
@@ -91,11 +91,16 @@ def test_old_distributing_holding_becomes_outside_scope_without_sell_semantics()
     assert summary["target_positions_held"] == 6
     assert summary["target_positions_missing"] == 1
     assert summary["target_architecture_complete"] is False
-    assert summary["missing_target_fund_ids"] == ["robotics"]
+    robotics_id = next(
+        item["target_id"] for item in _load("portfolio.yaml")["portfolio"]["allocation"]
+        if item["isin"] == NEW_ROBOTICS_ISIN
+    )
+    assert summary["missing_target_fund_ids"] == [robotics_id]
     assert summary["policy_accepted_exceptions"] == 0
     assert summary["policy_exception_reviews_required"] == 0
 
-    robotics = next(item for item in payload["recommendations"] if item["fund_id"] == "robotics")
+    robotics = next(item for item in payload["recommendations"] if item["isin"] == NEW_ROBOTICS_ISIN)
+    assert robotics["fund_id"] == robotics_id
     assert robotics["isin"] == NEW_ROBOTICS_ISIN
     assert robotics["wkn"] == "A2ANH0"
     assert robotics["current_value_eur"] == D("0")
@@ -170,9 +175,13 @@ def test_reference_dashboard_surfaces_legacy_robotics_as_outside_scope() -> None
         ROOT / "dashboard" / "de" / "view.yaml",
         ROOT / "dashboard" / "bilingual-dashboard.yaml",
     )
+    robotics_id = next(
+        item["target_id"] for item in _load("portfolio.yaml")["portfolio"]["allocation"]
+        if item["isin"] == NEW_ROBOTICS_ISIN
+    )
     for path in distribution_files:
         text = path.read_text(encoding="utf-8")
-        assert "sensor.portfolio_architect_robotics_whole_portfolio_allocation" in text, path
+        assert f"sensor.portfolio_architect_{robotics_id}_whole_portfolio_allocation" in text, path
         assert "sensor.portfolio_architect_holding_ie00bywz0333_whole_portfolio_allocation" in text, path
 
     for relative in (".tmp_en.yaml", ".tmp_de.yaml", "en/view.yaml", "de/view.yaml"):

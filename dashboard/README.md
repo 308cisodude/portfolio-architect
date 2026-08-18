@@ -32,7 +32,7 @@ raw evaluation counters. The aggregate Checks entity remains native Home Assista
 state but is omitted from the primary reference layout. The existing optimisation-
 opportunity count appears only as a compact heading badge, not as a competing tile.
 The dashboard pairs the accepted-exception count with its concrete exception, then the
-last decision with the next (or overdue) review. A native conditional subtitle separates
+last decision with the next (or overdue) **exception** review. A native conditional subtitle separates
 that governed exception lifecycle from non-critical optimisation opportunities and shows
 the existing opportunity count as a compact heading badge. The subtitle is hidden when
 there are no opportunities. Concrete opportunity tiles remain full-width below it.
@@ -43,10 +43,14 @@ the always-available actionability entity. Their more-info actions still target 
 original monetary/count entities, whose fail-closed availability semantics remain
 unchanged.
 
-The complete-portfolio Distribution card and per-instrument plan cards explicitly
-reference the current sample configuration. New holdings and plan instruments
-receive entities automatically but must be added to the static native dashboard
-YAML to appear in those lists.
+The complete-portfolio Distribution card and per-instrument plan cards still explicitly
+reference the current sample configuration. v1.34 adds a first-class structural
+`sensor.portfolio_architect_presentation_model` that inventories actual configured
+targets, current-plan holdings and outside-scope holdings with stable entity keys.
+The reference dashboard does not yet consume that model dynamically; v1.34 deliberately
+avoids adding more hard-coded holdings as a temporary workaround. A later native
+presentation milestone will remove those static inventories without adding custom
+frontend dependencies.
 
 ## Allocation overview contract
 

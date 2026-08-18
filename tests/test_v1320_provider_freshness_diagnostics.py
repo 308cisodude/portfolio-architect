@@ -1,4 +1,4 @@
-"""v1.33.1 provider freshness and diagnostics foundation regressions."""
+"""v1.34.0 provider freshness and diagnostics foundation regressions."""
 
 from __future__ import annotations
 

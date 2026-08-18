@@ -1,72 +1,91 @@
-# Portfolio Architect 1.33.1
+# Portfolio Architect 1.34.0
 
-Version 1.33.1 is a narrow **plan-schedule anchor hotfix** prepared from the exact
-live-tested v1.33.0 tracked-source baseline.
+Version 1.34.0 is the **generic portfolio target architecture and first-class current-state
+presentation-model** milestone, prepared from the exact live-accepted v1.33.1 baseline.
 
-Live acceptance of v1.33.0 proved that source freshness and review cadence are now
-correctly independent, but exposed one remaining legacy dependency: recurring
-execution/review dates were still anchored to `oldest_source_generated_at` before
-falling back to the portfolio evaluation timestamp. With a valid 31-day DKB CSV
-from 31 July and a current evaluation on 18 August, that produced an obsolete
-**7 August** scheduled execution and **5 September** next plan review.
+## Opaque 128-bit target identity
 
-## Schedule dates use the latest valid evaluation
+Portfolio-definition schema 2 introduces explicit `target_id` values. A schema-2 target ID is
+`target_` followed by 32 lowercase hexadecimal digits generated from 128 random bits.
 
-`plan_review_schedule()` now derives its cycle only from Portfolio Architect's
-existing latest valid evaluation timestamp (`data_timestamp`). It no longer uses
-the oldest contributing source timestamp as a schedule anchor.
+The target ID represents one currently configured strategic role. It is deliberately independent
+from ISIN, WKN, display name, list order, target weight and purchase eligibility. The native plan
+editor generates the ID once when a new target role is created and persists it with that role.
+Users do not have to derive or type an identity from a security name or identifier.
 
-The exact live topology is regression-covered:
+ISIN remains the canonical instrument identity. WKN remains secondary fallback/validation
+metadata and never participates in target-ID generation. The native plan editor now keys
+candidate selection by ISIN and shows WKN only as secondary metadata.
 
-- latest valid Portfolio Architect evaluation: 18 August 2026;
-- recurring frequency: monthly;
-- execution day: 7;
-- review lead: 2 days;
-- DKB CSV evidence: 31 July 2026, still valid under the explicitly configured
-  744-hour CSV freshness policy;
-- expected scheduled execution: **7 September 2026**; and
-- expected next plan review: **5 October 2026**.
+Schema 1 remains supported for existing installations and historical UI overrides. Legacy human-
+readable `id` values continue to canonicalize as compatibility target identity there. Schema 2 is
+stricter: an explicit opaque 128-bit `target_id` is required. `fund_id` / `plan_fund_id` remain
+payload-schema-8 compatibility aliases for the same target identity.
 
-The old DKB CSV timestamp remains relevant only to its own evidence-age freshness
-check. It cannot move the recurring plan calendar backwards.
+## Current-state lifecycle
 
-## v1.33.0 source-freshness and plan-schedule separation preserved
+Portfolio Architect remains about **the portfolio now and the next investment cycle**, not target
+history.
 
-This hotfix does not change any configured freshness threshold, evidence-kind
-classification, stale-source fail-closed behavior, runtime safeguards, target-plan
-configuration, or execution/review schedule settings.
+Deleting a target removes that current strategic role. PA does not keep a tombstone or retired-
+target database. If the same ISIN is introduced as a target again later through PA, a fresh target
+ID is generated rather than resurrecting the old role.
 
-The explicit 24h/168h/744h/24h live acceptance profile remains operator-owned
-configuration; no longer-lived document policy becomes a product default.
+Outside-current-plan holdings have no configured target identity. They exist only while accepted
+source evidence reports them. Once all relevant accepted sources supersede the holding with data
+that no longer contains it, it disappears automatically from the whole-portfolio and presentation
+model. Source failure, old still-accepted evidence, or LKG state is never interpreted as a sale.
 
-`Restore file-based plan` retains the v1.33.0 corrected boundary and continues to
-preserve schedule/runtime/source options while clearing only Home Assistant target-
-plan override fields.
+## Generic bounded plans
 
-## Provider runtimes preserved
+Plans remain bounded to at most 32 positive-weight targets. The reference seven-ETF plan is now
+only example configuration. Its schema-2 migration uses opaque IDs generated through the same PA
+target-ID generator and therefore intentionally performs a one-time target-entity identity
+migration from the historical semantic IDs.
 
-Comdirect acquisition/OAuth/session/PhotoTAN/cash behavior is unchanged. Trade
-Republic statement import/private diagnostic behavior is unchanged; this release does not move PDF parsing into Portfolio Architect. DKB retains the
-live-accepted registered anonymous FinTS diagnostic contract and remains
-experimental/manual-only/non-live; no new DKB probe is required for this release.
-DKB live Gateway acquisition remains a later authenticated provider-specific milestone.
+The supplied reference dashboard is aligned to the migrated opaque IDs. Existing imported user
+dashboards are never overwritten automatically.
 
-## Preserved contracts
+## First-class structural presentation model
 
-- portfolio payload schema 8: unchanged;
-- REST portfolio schema 1: unchanged;
-- Gateway health schema 6: unchanged; schemas 1–5 remain supported where previously supported;
-- v1.33.0 per-source/evidence-kind freshness policy: unchanged;
-- source evidence timestamps remain authoritative for source freshness only;
-- target-plan and recurring-schedule persistence boundaries: unchanged from v1.33.0;
-- v1.31 canonical accumulating Robotics target and outside-scope distributing holding: unchanged;
-- provider-aware execution policy/broker schema 2: unchanged;
-- private-PKI HTTPS, bearer authentication, Supervisor trust discovery, DNS pinning and no-plaintext fallback: unchanged;
-- provider diagnostic evidence policy from v1.32: unchanged;
-- historical `v1.19.0-rc2` brokerage probe remains excluded and is not promoted by this release; and
-- advisory/no-trading boundary: unchanged.
+A diagnostic `presentation_model` sensor exposes presentation schema 1 as a bounded current-state
+structural index. It contains:
 
-No trading, order, transfer, payment, or transaction-history capability is added.
-No automatic sell capability is added.
+- configured targets with stable target/entity keys and source provenance;
+- current-plan holding identities and target relationships;
+- every currently evidenced outside-current-plan holding with stable ISIN-first holding identity;
+- bounded plan-actionability and policy-summary state.
 
-See `docs/UPGRADE-1.33.1.md` for the live-acceptance sequence.
+It deliberately excludes quantities, values, proposed purchase amounts and other high-churn data
+already represented by dedicated native entities. It also contains no bank-account, credential or
+provider-authentication material.
+
+This is the backend contract for a later dynamic native-dashboard milestone. v1.34.0 adds no
+`auto-entities`, card-mod, custom JavaScript or other custom frontend dependency.
+
+## Presentation wording
+
+The ambiguous policy tile **Next review** becomes **Exception review** (German:
+**Ausnahmeprüfung**) so it cannot be confused with the independent **Next plan review** schedule.
+
+## Preserved runtime/provider contracts
+
+- Portfolio payload schema 8: unchanged.
+- REST portfolio schema 1: unchanged.
+- Gateway health schema 6: unchanged; schemas 1–5 remain supported.
+- v1.33.0 source-freshness and plan-schedule separation remains preserved; evidence-kind source freshness is unchanged. v1.34.0 does not change any configured freshness threshold.
+- v1.33.1 evaluation-anchored recurring scheduling remains anchored to the latest valid Portfolio Architect evaluation.
+- Comdirect acquisition/OAuth/session/PhotoTAN/cash unchanged.
+- Trade Republic statement import/private diagnostics unchanged; PDF parsing remains provider-side
+  and memory-only.
+- DKB registered anonymous FinTS probe unchanged. DKB live Gateway acquisition remains a later
+  provider-specific milestone; DKB remains experimental/manual-only/non-live and authenticated
+  user-capability/UPD remains a later gate.
+- This release does not move PDF parsing into Portfolio Architect; Trade Republic statement PDF
+  parsing remains isolated provider-side and memory-only.
+- Private-PKI HTTPS, bearer authentication, Supervisor trust discovery, DNS pinning and no-
+  plaintext fallback unchanged.
+- Historical v1.19.0-rc2 brokerage probe remains excluded and is not promoted by this release.
+- No trading, order, transfer, payment, or transaction-history capability is introduced. No automatic sell capability is introduced either.
+
+See `docs/TARGET-ARCHITECTURE.md` and `docs/UPGRADE-1.34.0.md`.

@@ -100,9 +100,12 @@ Open **Settings → Devices & services → Portfolio Architect → Configure →
 Investment plan**.
 
 `portfolio.yaml` supplies the initial plan and remains the fallback until the UI
-plan is saved. The UI supports budget, budget basis, frequency, recurring
-execution days, review lead time, instrument scope, target weights, and purchase
-eligibility.
+plan is saved. Portfolio schema 2 uses a stable user-owned `target_id` for each
+target; keep it unchanged across reordering, renaming, or deliberate instrument
+replacement so Home Assistant target entity identity remains stable. Schema 1
+legacy `id` plans remain supported. The UI supports budget, budget basis, frequency,
+recurring execution days, review lead time, instrument scope, stable target IDs,
+target weights, and purchase eligibility. See `docs/TARGET-ARCHITECTURE.md`.
 
 ## Verification
 
@@ -112,4 +115,4 @@ grep -n '^VERSION' /config/custom_components/portfolio_architect/const.py
 grep -n '^__version__' /config/custom_components/portfolio_architect/engine/__init__.py
 ```
 
-All three markers must report `1.33.1`.
+All three markers must report `1.34.0`.

@@ -19,7 +19,7 @@ provider-neutral runtime code. `GatewayState` and `create_server()` consume
 
 ## Official App identities
 
-| Provider | Display name | App slug | v1.33.1 state |
+| Provider | Display name | App slug | v1.34.0 state |
 | --- | --- | --- | --- |
 | Comdirect | Portfolio Architect Gateway — Comdirect | `portfolio_architect_gateway` | stable live provider, auto-start |
 | DKB | Portfolio Architect Gateway — DKB | `portfolio_architect_gateway_dkb` | experimental manual-only anonymous FinTS capability probe; no live portfolio acquisition |
@@ -162,6 +162,7 @@ v1.32.0.
 
 Version 1.33.0 leaves provider acquisition and wire schemas unchanged while Home Assistant
 evaluates each source against an explicit bounded evidence-kind age policy independently from
-recurring plan review dates. Version 1.33.1 changes only the Home Assistant recurring-schedule
-anchor; Provider Apps receive package/User-Agent alignment only and the v1.32 diagnostic evidence
-policy remains authoritative.
+recurring plan review dates. Version 1.33.1 changes only the Home Assistant recurring-schedule anchor. Version 1.34.0 adds
+generic target identity/presentation architecture in the Home Assistant/engine layer; Provider Apps
+receive package/User-Agent alignment only and the v1.32 diagnostic evidence policy remains
+authoritative.

@@ -31,19 +31,19 @@ cards:
   show_state: false
   state_color: true
   entities:
-  - entity: binary_sensor.portfolio_architect_world_target_position_held
+  - entity: binary_sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_target_position_held
     name: MSCI World
-  - entity: binary_sensor.portfolio_architect_emerging_markets_target_position_held
+  - entity: binary_sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_target_position_held
     name: Emerging Markets
-  - entity: binary_sensor.portfolio_architect_world_small_cap_target_position_held
+  - entity: binary_sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_target_position_held
     name: World Small Cap
-  - entity: binary_sensor.portfolio_architect_healthcare_target_position_held
+  - entity: binary_sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_target_position_held
     name: Healthcare
-  - entity: binary_sensor.portfolio_architect_ai_big_data_target_position_held
+  - entity: binary_sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_target_position_held
     name: AI & Big Data
-  - entity: binary_sensor.portfolio_architect_cybersecurity_target_position_held
+  - entity: binary_sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_target_position_held
     name: Cybersecurity
-  - entity: binary_sensor.portfolio_architect_robotics_target_position_held
+  - entity: binary_sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_target_position_held
     name: Robotics
   grid_options:
     columns: full
@@ -51,11 +51,11 @@ cards:
 - type: conditional
   conditions:
   - condition: numeric_state
-    entity: sensor.portfolio_architect_world_position_sources
+    entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_position_sources
     above: 1
   card:
     type: tile
-    entity: sensor.portfolio_architect_world_position_sources
+    entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_position_sources
     name: MSCI World sources
     state_content: source_summary
     tap_action:
@@ -68,11 +68,11 @@ cards:
 - type: conditional
   conditions:
   - condition: numeric_state
-    entity: sensor.portfolio_architect_emerging_markets_position_sources
+    entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_position_sources
     above: 1
   card:
     type: tile
-    entity: sensor.portfolio_architect_emerging_markets_position_sources
+    entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_position_sources
     name: Emerging Markets sources
     state_content: source_summary
     tap_action:
@@ -85,11 +85,11 @@ cards:
 - type: conditional
   conditions:
   - condition: numeric_state
-    entity: sensor.portfolio_architect_world_small_cap_position_sources
+    entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_position_sources
     above: 1
   card:
     type: tile
-    entity: sensor.portfolio_architect_world_small_cap_position_sources
+    entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_position_sources
     name: World Small Cap sources
     state_content: source_summary
     tap_action:
@@ -102,11 +102,11 @@ cards:
 - type: conditional
   conditions:
   - condition: numeric_state
-    entity: sensor.portfolio_architect_healthcare_position_sources
+    entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_position_sources
     above: 1
   card:
     type: tile
-    entity: sensor.portfolio_architect_healthcare_position_sources
+    entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_position_sources
     name: Healthcare sources
     state_content: source_summary
     tap_action:
@@ -119,11 +119,11 @@ cards:
 - type: conditional
   conditions:
   - condition: numeric_state
-    entity: sensor.portfolio_architect_ai_big_data_position_sources
+    entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_position_sources
     above: 1
   card:
     type: tile
-    entity: sensor.portfolio_architect_ai_big_data_position_sources
+    entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_position_sources
     name: AI & Big Data sources
     state_content: source_summary
     tap_action:
@@ -136,11 +136,11 @@ cards:
 - type: conditional
   conditions:
   - condition: numeric_state
-    entity: sensor.portfolio_architect_cybersecurity_position_sources
+    entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_position_sources
     above: 1
   card:
     type: tile
-    entity: sensor.portfolio_architect_cybersecurity_position_sources
+    entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_position_sources
     name: Cybersecurity sources
     state_content: source_summary
     tap_action:
@@ -153,11 +153,11 @@ cards:
 - type: conditional
   conditions:
   - condition: numeric_state
-    entity: sensor.portfolio_architect_robotics_position_sources
+    entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_position_sources
     above: 1
   card:
     type: tile
-    entity: sensor.portfolio_architect_robotics_position_sources
+    entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_position_sources
     name: Robotics sources
     state_content: source_summary
     tap_action:

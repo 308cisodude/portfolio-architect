@@ -36,6 +36,10 @@ from .engine.importers import PROVIDER_COMDIRECT, PROVIDER_DKB, PROVIDER_GENERIC
 from .engine.rest import PROVIDER_LOCAL_REST_JSON
 from .execution_semantics import PLAN_ACTIONABILITY_STATES, derive_plan_actionability
 from .model import HoldingData, PolicyFindingData, PositionData
+from .portfolio_presentation import (
+    PRESENTATION_SCHEMA_VERSION,
+    build_portfolio_presentation,
+)
 from .presentation import (
     display_count_de,
     display_datetime_de,
@@ -63,6 +67,7 @@ async def async_setup_entry(
     coordinator: PortfolioArchitectCoordinator = entry.runtime_data
     static_entities: list[SensorEntity] = [
             PortfolioTargetCoverageSensor(coordinator, entry),
+            PortfolioPresentationModelSensor(coordinator, entry),
             PortfolioValueSensor(coordinator, entry),
             PortfolioCurrentPlanValueSensor(coordinator, entry),
             PortfolioOutsideScopeValueSensor(coordinator, entry),
@@ -266,6 +271,48 @@ async def async_setup_entry(
 
     _add_missing_entities()
     entry.async_on_unload(coordinator.async_add_listener(_add_missing_entities))
+
+
+class PortfolioPresentationModelSensor(
+    CoordinatorEntity[PortfolioArchitectCoordinator], SensorEntity
+):
+    """Generic machine-readable target and outside-scope presentation model."""
+
+    _attr_has_entity_name = True
+    _attr_translation_key = "presentation_model"
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    def __init__(
+        self, coordinator: PortfolioArchitectCoordinator, entry: ConfigEntry
+    ) -> None:
+        super().__init__(coordinator, context="presentation_model")
+        source_key = entry.unique_id or entry.entry_id
+        self._attr_unique_id = f"{source_key}_presentation_model"
+        self._attr_device_info = _device_info(source_key)
+
+    @property
+    def suggested_object_id(self) -> str:
+        return "presentation_model"
+
+    @property
+    def native_value(self) -> str | None:
+        if not self.available:
+            return None
+        return f"schema_{PRESENTATION_SCHEMA_VERSION}"
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        base = _source_attributes(self.coordinator)
+        if not self.available:
+            return base
+        return {
+            **build_portfolio_presentation(
+                self.coordinator.data,
+                plan_actionable=self.coordinator.plan_actionable,
+                actionability_reason=self.coordinator.plan_actionability_reason,
+            ),
+            **base,
+        }
 
 
 class PortfolioTargetCoverageSensor(
@@ -1528,6 +1575,7 @@ class PortfolioPositionSourcesSensor(_PortfolioPositionDetailSensor):
         position = self._position
         contributions = _position_source_contributions(self.coordinator, position)
         return {
+            "target_id": position.target_id,
             "fund_id": position.fund_id,
             "fund_name": position.name,
             "isin": position.isin,
@@ -1597,6 +1645,7 @@ class PortfolioProposedBuySensor(
             "fund_name": position.name,
             "isin": position.isin,
             "wkn": position.wkn,
+            "target_id": position.target_id,
             "fund_id": position.fund_id,
             "allocation_status": position.allocation_status,
             "deviation_pp": position.deviation_pp,
@@ -1667,6 +1716,7 @@ class PortfolioInstrumentIsinSensor(
         attributes = {
             "fund_name": position.name,
             "wkn": position.wkn,
+            "target_id": position.target_id,
             "fund_id": position.fund_id,
             **base,
         }
@@ -2986,6 +3036,7 @@ class PortfolioAllocationSensor(
 
         position = self._position
         identity = {
+            "target_id": position.target_id,
             "fund_id": position.fund_id,
             "wkn": position.wkn,
             "isin": position.isin,

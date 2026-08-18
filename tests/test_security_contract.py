@@ -12,11 +12,12 @@ DIAGNOSTICS = ROOT / "custom_components" / "portfolio_architect" / "diagnostics.
 def test_input_sizes_and_identifiers_are_bounded() -> None:
     model = MODEL.read_text(encoding="utf-8")
     engine = ENGINE.read_text(encoding="utf-8")
+    targets = (ENGINE_DIR / "targets.py").read_text(encoding="utf-8")
     assert "MAX_POSITIONS = 32" in model
     assert "MAX_HOLDINGS = 512" in model
     assert "^[a-z0-9_]{1,64}$" in model
-    assert "_MAX_FUNDS = 32" in engine
-    assert "^[a-z0-9_]{1,64}$" in engine
+    assert "MAX_TARGETS = 32" in targets
+    assert "^[a-z0-9_]{1,64}$" in targets
 
 
 def test_diagnostics_omit_financial_values_and_fund_names() -> None:

@@ -843,6 +843,7 @@ class PortfolioTargetPositionHeld(
             return base
         position = self._position
         return {
+            "target_id": position.target_id,
             "fund_id": position.fund_id,
             "wkn": position.wkn,
             "isin": position.isin,

@@ -68,7 +68,7 @@ Examples include:
 - `position_execution_state_changed`;
 - `deferral_state_changed`.
 
-Each change row is keyed by the stable plan `fund_id` and includes only the
+Each change row is keyed by the opaque target ID (still carried in the compatibility `fund_id` field) and includes only the
 previous/current bounded decision values required for explanation.
 
 ## Persistence and failure semantics

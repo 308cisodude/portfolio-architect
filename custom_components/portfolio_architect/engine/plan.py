@@ -8,12 +8,13 @@ from decimal import Decimal
 import re
 from typing import Any
 
+from .targets import MAX_TARGETS, resolve_target_id
+
 D = Decimal
-_ID_RE = re.compile(r"^[a-z0-9_]{1,64}$")
 _WKN_RE = re.compile(r"^[A-Z0-9]{5,16}$")
 _ISIN_RE = re.compile(r"^[A-Z]{2}[A-Z0-9]{9}[0-9]$")
 _MAX_NAME_LENGTH = 160
-_MAX_INSTRUMENTS = 32
+_MAX_INSTRUMENTS = MAX_TARGETS
 _MAX_BUDGET = D("10000000")
 _BUDGET_BASES = {"per_period", "per_execution"}
 _FREQUENCIES = {"weekly", "monthly", "quarterly", "yearly"}
@@ -110,10 +111,15 @@ def _validate_instruments(raw: object) -> list[dict[str, Any]]:
     for index, value in enumerate(raw):
         if not isinstance(value, dict):
             raise ValueError(f"plan instrument {index} must be an object")
-        fund_id = str(value.get("id", "")).strip()
-        if _ID_RE.fullmatch(fund_id) is None or fund_id in seen_ids:
-            raise ValueError(f"plan instrument {index} has an invalid or duplicate id")
-        seen_ids.add(fund_id)
+        try:
+            target_id = resolve_target_id(value, index=index)
+        except ValueError as err:
+            raise ValueError(
+                f"plan instrument {index} has an invalid target_id"
+            ) from err
+        if target_id in seen_ids:
+            raise ValueError(f"plan instrument {index} has a duplicate target_id")
+        seen_ids.add(target_id)
 
         wkn = str(value.get("wkn", "")).strip().upper()
         isin = str(value.get("isin", "")).strip().upper()
@@ -135,7 +141,9 @@ def _validate_instruments(raw: object) -> list[dict[str, Any]]:
         target_sum += target
         result.append(
             {
-                "id": fund_id,
+                "target_id": target_id,
+                # ``id`` remains the payload/engine compatibility alias.
+                "id": target_id,
                 "wkn": wkn,
                 "isin": isin,
                 "name": name,

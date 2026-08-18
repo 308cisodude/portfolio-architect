@@ -79,11 +79,11 @@ cards:
 - type: conditional
   conditions:
   - condition: state
-    entity: sensor.portfolio_architect_robotics_accumulating_preferred_policy_exception
+    entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_accumulating_preferred_policy_exception
     state: accepted_exception
   card:
     type: tile
-    entity: sensor.portfolio_architect_robotics_accumulating_preferred_policy_exception
+    entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_accumulating_preferred_policy_exception
     name: Robotics exception
     tap_action:
       action: more-info
@@ -96,11 +96,11 @@ cards:
 - type: conditional
   conditions:
   - condition: state
-    entity: sensor.portfolio_architect_robotics_accumulating_preferred_policy_exception
+    entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_accumulating_preferred_policy_exception
     state: review_required
   card:
     type: tile
-    entity: sensor.portfolio_architect_robotics_accumulating_preferred_policy_exception
+    entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_accumulating_preferred_policy_exception
     name: Robotics review
     tap_action:
       action: more-info
@@ -151,7 +151,7 @@ cards:
   card:
     type: tile
     entity: date.portfolio_architect_next_exception_review
-    name: Next review
+    name: Exception review
     tap_action:
       action: more-info
       entity: sensor.portfolio_architect_next_exception_review
@@ -183,11 +183,11 @@ cards:
 - type: conditional
   conditions:
   - condition: state
-    entity: sensor.portfolio_architect_world_free_savings_plan_preferred_policy_finding
+    entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_free_savings_plan_preferred_policy_finding
     state: opportunity
   card:
     type: tile
-    entity: sensor.portfolio_architect_world_free_savings_plan_preferred_policy_finding
+    entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_free_savings_plan_preferred_policy_finding
     name: MSCI World · fee 1.5% → 0%
     tap_action:
       action: more-info
@@ -200,11 +200,11 @@ cards:
 - type: conditional
   conditions:
   - condition: state
-    entity: sensor.portfolio_architect_emerging_markets_free_savings_plan_preferred_policy_finding
+    entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_free_savings_plan_preferred_policy_finding
     state: opportunity
   card:
     type: tile
-    entity: sensor.portfolio_architect_emerging_markets_free_savings_plan_preferred_policy_finding
+    entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_free_savings_plan_preferred_policy_finding
     name: Emerging Markets · fee 1.5% → 0%
     tap_action:
       action: more-info
@@ -217,11 +217,11 @@ cards:
 - type: conditional
   conditions:
   - condition: state
-    entity: sensor.portfolio_architect_healthcare_free_savings_plan_preferred_policy_finding
+    entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_free_savings_plan_preferred_policy_finding
     state: opportunity
   card:
     type: tile
-    entity: sensor.portfolio_architect_healthcare_free_savings_plan_preferred_policy_finding
+    entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_free_savings_plan_preferred_policy_finding
     name: Healthcare · fee 1.5% → 0%
     tap_action:
       action: more-info
@@ -234,11 +234,11 @@ cards:
 - type: conditional
   conditions:
   - condition: state
-    entity: sensor.portfolio_architect_cybersecurity_free_savings_plan_preferred_policy_finding
+    entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_free_savings_plan_preferred_policy_finding
     state: opportunity
   card:
     type: tile
-    entity: sensor.portfolio_architect_cybersecurity_free_savings_plan_preferred_policy_finding
+    entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_free_savings_plan_preferred_policy_finding
     name: Cybersecurity · fee 1.5% → 0%
     tap_action:
       action: more-info
