@@ -230,6 +230,10 @@ def test_public_dashboard_uses_positive_colours_and_short_localised_schedule() -
 
 
 
-def test_review_schedule_uses_oldest_contributing_source_contract() -> None:
+def test_review_schedule_uses_latest_evaluation_contract() -> None:
     source = (COMPONENT / "coordinator.py").read_text()
-    assert "timestamp = self.oldest_source_generated_at or self.data_timestamp" in source
+    start = source.index("    def plan_review_schedule")
+    end = source.index("    def is_plan_review_due", start)
+    body = source[start:end]
+    assert "timestamp = self.data_timestamp" in body
+    assert "oldest_source_generated_at" not in body

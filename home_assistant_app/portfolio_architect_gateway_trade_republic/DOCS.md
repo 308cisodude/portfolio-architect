@@ -1,7 +1,8 @@
-# Portfolio Architect Gateway — Trade Republic v1.33.0
+# Portfolio Architect Gateway — Trade Republic v1.33.1
 
-Version 1.33.0 adds a bounded persistent **latest import diagnostic** while preserving the
-established local `DEPOTAUSZUG` statement-import and provider-snapshot contracts.
+Version 1.33.1 is package alignment for the Home Assistant-side recurring-schedule anchor
+hotfix. The bounded persistent **latest import diagnostic** introduced in v1.32.0 and the
+established local `DEPOTAUSZUG` statement-import/provider-snapshot contracts are unchanged.
 
 The App may persist only an allowlisted/genericized `accepted`, `rejected` or
 `internal_error` outcome next to its private snapshot. Unexpected parser/document text is

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.33.1
+
+- Package/User-Agent alignment for the Portfolio Architect v1.33.1 recurring-schedule anchor hotfix; Trade Republic statement import, private diagnostics, accepted snapshot and Gateway wire behavior remain unchanged.
+
 ## 1.33.0
 
 - Package/User-Agent alignment for Portfolio Architect v1.33.0 source-freshness and plan-schedule separation; Trade Republic statement import, private diagnostic state, accepted snapshot and Gateway wire behavior are unchanged.

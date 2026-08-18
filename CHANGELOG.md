@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.33.1
+
+- Fixes recurring execution/review dates so they are anchored to the latest valid Portfolio Architect evaluation instead of the oldest contributing source timestamp.
+- Reproduces the live 18-August topology: monthly day 7 now yields 7 September scheduled execution and 5 October next review even with a valid 31-July DKB CSV.
+- Preserves v1.33.0 evidence-kind freshness, schedule/file-plan persistence separation, provider runtimes, wire schemas and the advisory/no-trading boundary.
+
 ## 1.33.0
 
 - Separates provider-evidence freshness from recurring plan review scheduling: future review dates can no longer make old bank evidence fresh, and overdue reviews no longer rewrite source freshness.

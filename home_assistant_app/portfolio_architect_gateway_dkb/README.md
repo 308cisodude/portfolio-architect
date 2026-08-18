@@ -1,8 +1,8 @@
-# Portfolio Architect Gateway — DKB v1.33.0
+# Portfolio Architect Gateway — DKB v1.33.1
 
-Version 1.33.0 preserves the live-accepted v1.31.2 registration-gated anonymous FinTS 3.0
-BPD capability-probe behavior while aligning the App with the shared provider-diagnostics
-policy. The current live probe has reached DKB and returned bounded product-registration
+Version 1.33.1 is package alignment for the Home Assistant-side recurring-schedule anchor
+hotfix and preserves the live-accepted v1.31.2 registration-gated anonymous FinTS 3.0 BPD
+capability-probe plus the shared provider-diagnostics policy. The current live probe has reached DKB and returned bounded product-registration
 rejection evidence; no DKB acquisition capability is added. The DKB App remains **experimental**, **manual-only** and non-live
 as a Portfolio Architect source.
 
@@ -54,7 +54,7 @@ live DKB holdings and does not prove that an authenticated user's UPD advertises
 capability. Authenticated user-capability validation and DKB-App decoupled authentication
 remain later gates.
 
-The v1.33.0 DKB App requests no DKB login name, PIN or TAN and sends no holdings, balance,
+The v1.33.1 DKB App requests no DKB login name, PIN or TAN and sends no holdings, balance,
 transaction, order, transfer, payment, debit or transaction-history business transaction.
 Its provider REST source remains fail-closed and cannot publish a DKB portfolio snapshot.
 
