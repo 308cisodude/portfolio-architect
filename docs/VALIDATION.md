@@ -1,50 +1,59 @@
-# v1.31.2 validation
+# v1.32.0 validation
 
-Portfolio Architect v1.31.2 is a DKB FinTS capability-probe hardening release based on the
-exact immutable v1.31.1 source baseline.
+Portfolio Architect v1.32.0 is a provider freshness-observability and provider-diagnostics
+foundation release based on the exact immutable v1.31.2 tracked source baseline.
 
 The release must prove:
 
-- integration, engine, common Gateway and all three App versions align at `1.31.2`;
-- FinTS registration input requires exactly 25 alphanumeric characters;
-- the complete 25-character registration ID occurs exactly once in the anonymous FinTS
-  request and specifically in `HKVVB`'s product-designation field;
-- the request continues to contain only `HNHBK`, `HKIDN`, `HKVVB` and `HNHBS` and no
-  holdings/order/payment-capable segment;
-- registration/probe POST redirects are relative to the App root and cannot navigate the
-  Ingress iframe to Home Assistant's absolute `/`;
-- a valid bounded FinTS envelope with return codes but no BPD persists as `bank_rejected`;
-- bounded sanitized text is retained only from recognized `HIRMG`/`HIRMS` return-message
-  structures, with the configured product ID redacted and oversized text bounded;
-- arbitrary/unknown segment payload and raw FinTS response bytes are never persisted;
-- decoded-response SHA-256 and byte count provide non-content correlation evidence;
-- protocol, transport and remote-HTTP failures persist only bounded failure metadata and do
-  not revert to `ready / not probed` after reopening the App;
-- previous schema-1 successful probe evidence remains loadable;
-- a positive `HIWPDS` remains only bank-level research evidence and does not enable DKB
-  holdings;
-- DKB stays experimental, manual-only and fail-closed as a portfolio source; and
-- v1.31.1 portfolio calculation/identity behavior remains unchanged.
+- integration, engine, common Gateway and all three official App versions align at `1.32.0`;
+- payload schema 8, REST portfolio schema 1 and Gateway health schema 6 remain unchanged;
+- the established oldest-contributing-source freshness gate remains authoritative;
+- the configured freshness threshold is not relaxed or replaced by provider-specific policy;
+- per-source freshness evidence identifies source/provider, evidence kind, timestamp, age,
+  applicable threshold and whether the source is within that threshold;
+- the exact live three-source regression (Comdirect + Trade Republic + DKB CSV) identifies
+  only the old DKB CSV source as stale under the 168-hour policy;
+- invalid or materially future source timestamps fail observability closed;
+- native English/German dashboard Tiles surface the stale-source/actionability detail without
+  custom frontend dependencies;
+- Trade Republic persists at most the latest bounded allowlisted import diagnostic in
+  App-private mode `0600`, never the uploaded PDF or a PDF fingerprint;
+- injected private text cannot escape through Trade Republic persisted diagnostics or Web UI,
+  including after a malformed/tampered diagnostic state file is reopened;
+- a later successful Trade Republic import replaces obsolete failure evidence;
+- Comdirect keeps bounded error/re-auth classifications, App-relative Ingress navigation and
+  no authenticated raw/free-text response persistence;
+- DKB retains the live-accepted v1.31.2 exact-25-character HKVVB registration, Ingress-safe
+  navigation and bounded anonymous FinTS diagnostics without enabling live acquisition;
+- the common provider diagnostic policy explicitly requires classified evidence, bounded
+  persistence/redaction and no raw-upstream-body retention; and
+- no trading, order placement, automatic sell, transfer, payment or transaction-history
+  capability is introduced.
 
-Run the complete regression suite, strict publication/privacy checks, three independent
-reproducible release builds, release verification, artifact privacy checks, and independent
-Git-overlay/binary-patch replay over the exact v1.31.1 tracked baseline.
+Run the complete regression suite, `git diff --check`, Python compilation, structured-file
+parsing, strict publication/privacy checks, three independent reproducible release builds,
+release verification, release-artifact privacy validation and independent Git-overlay/binary-
+patch replay over the exact v1.31.2 baseline.
 
 Protected GitHub workflows remain authoritative for actual provider-App Docker/private-PKI
-smoke execution when local Docker is unavailable.
+smoke execution because Docker is unavailable in the preparation environment.
 
 ## Live acceptance
 
-Upgrade all components to v1.31.2 in place, preserving DKB App-private state. Start the DKB
-App manually and verify the configured registration suffix survived. Store/re-store only if
-necessary and confirm the Web UI remains inside the App after POST navigation.
+1. Upgrade the Home Assistant integration to 1.32.0 and restart once.
+2. Replace the reference bilingual dashboard YAML if the new blocker detail should be visible.
+3. Upgrade Comdirect, DKB and Trade Republic Apps in place; preserve each App-private volume.
+4. Do not reauthenticate Comdirect when the existing session is healthy.
+5. Do not re-import the Trade Republic statement merely because of the package upgrade.
+6. Do not re-enter the DKB FinTS registration or run another DKB probe merely for v1.32.0.
+7. Confirm the current stale-source topology remains fail closed: Snapshot freshness stays
+   off and the plan remains non-actionable while the old DKB CSV source exceeds the existing
+   168-hour threshold.
+8. Confirm the new attributes/dashboard identify DKB CSV as the actual freshness blocker and
+   do not falsely blame the newer Comdirect or Trade Republic sources.
+9. Confirm Source healthy, Gateway status, verified HTTPS, snapshot integrity and provider
+   aggregation remain otherwise unchanged.
 
-Run exactly one anonymous BPD probe. The decisive acceptance condition is that the resulting
-state remains visible after reopening the DKB Web UI. If DKB returns a valid FinTS rejection
-without BPD, the bounded return codes and sanitized bank return messages must remain visible as
-`bank_rejected`; if transport or protocol processing fails, the corresponding bounded failure
-state must remain visible. When a decoded FinTS payload existed, its fingerprint/byte count may
-remain as correlation evidence without retaining the payload.
-
-A successful BPD with `HIWPDS` moves only to the later authenticated user-capability/UPD
-research gate. It does not enable live holdings in v1.31.2.
+The later DKB propagation retry remains a separate research event. If a future probe yields
+BPD with `HIWPDS`, authenticated user capability/UPD and decoupled-authentication research is
+still required before any holdings implementation.

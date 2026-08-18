@@ -1,8 +1,9 @@
-# Portfolio Architect Gateway — DKB v1.31.2
+# Portfolio Architect Gateway — DKB v1.32.0
 
-Version 1.31.2 hardens the registration-gated anonymous FinTS 3.0 BPD capability probe
-after the first live registered attempt reached DKB but exposed Ingress-navigation and
-failure-diagnostic gaps. The DKB App remains **experimental**, **manual-only** and non-live
+Version 1.32.0 preserves the live-accepted v1.31.2 registration-gated anonymous FinTS 3.0
+BPD capability-probe behavior while aligning the App with the shared provider-diagnostics
+policy. The current live probe has reached DKB and returned bounded product-registration
+rejection evidence; no DKB acquisition capability is added. The DKB App remains **experimental**, **manual-only** and non-live
 as a Portfolio Architect source.
 
 The probe stays fixed to DKB's documented FinTS endpoint and bank code. It sends only
@@ -12,7 +13,7 @@ Raw FinTS response content is discarded after bounded diagnostic extraction and 
 ## Registration gate
 
 FinTS production access requires Portfolio Architect's own issued product registration
-identity. Version 1.31.2 enforces the authoritative contract received with registration:
+identity. The live-accepted contract remains:
 
 - the ID must contain exactly 25 alphanumeric characters;
 - the complete value is sent exclusively as the product designation in `HKVVB`;
@@ -53,7 +54,7 @@ live DKB holdings and does not prove that an authenticated user's UPD advertises
 capability. Authenticated user-capability validation and DKB-App decoupled authentication
 remain later gates.
 
-The v1.31.2 DKB App requests no DKB login name, PIN or TAN and sends no holdings, balance,
+The v1.32.0 DKB App requests no DKB login name, PIN or TAN and sends no holdings, balance,
 transaction, order, transfer, payment, debit or transaction-history business transaction.
 Its provider REST source remains fail-closed and cannot publish a DKB portfolio snapshot.
 

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-
+from datetime import datetime, timezone
 from email import policy
 from email.parser import BytesHeaderParser
 from html import escape
@@ -11,12 +11,14 @@ from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler
 import logging
 from pathlib import Path
+import re
 import secrets
 import threading
 from typing import Final
 from urllib.parse import urlsplit
 
 from . import __version__
+from .errors import ProtocolError
 from .pending_app import (
     APP_DATA_DIRECTORY,
     INGRESS_BIND,
@@ -28,6 +30,7 @@ from .pending_app import (
     build_server_config,
 )
 from .runtime_config import ensure_api_token
+from .store import load_json_state, save_json_state
 from .server import GatewayState, create_server
 from .trade_republic_statement import (
     MAX_PDF_BYTES,
@@ -40,6 +43,69 @@ from .trade_republic_statement import (
 _LOGGER = logging.getLogger(__name__)
 MAX_MULTIPART_BYTES: Final = MAX_PDF_BYTES + 64 * 1024
 MAX_BOUNDARY_BYTES: Final = 70
+IMPORT_DIAGNOSTIC_FILE_NAME: Final = "trade-republic-import-diagnostic.json"
+_IMPORT_DIAGNOSTIC_OUTCOMES: Final = frozenset({"accepted", "rejected", "internal_error"})
+_ACCEPTED_NOTICE_RE: Final = re.compile(
+    r"^Statement accepted: \d{1,3} positions; snapshot timestamp "
+    r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:.+-]+\.$"
+)
+_INTERNAL_ERROR_NOTICES: Final = frozenset(
+    {
+        "Statement import failed internally; no new snapshot was activated.",
+        "Stored import diagnostic is invalid.",
+    }
+)
+_SAFE_IMPORT_ERRORS: Final = frozenset(
+    {
+        "PDF is empty or exceeds the 5 MiB import limit",
+        "Uploaded file is not a PDF document",
+        "Encrypted PDF statements are not supported",
+        "PDF page count is outside the supported range",
+        "PDF page content exceeds the import safety limit",
+        "PDF does not contain an extractable text layer",
+        "Extracted PDF text exceeds the import safety limit",
+        "PDF could not be parsed safely",
+        "Statement text is empty or too large",
+        "Unsupported Trade Republic document type",
+        "Document issuer is not the supported Trade Republic statement format",
+        "Statement date and document creation date do not match",
+        "Statement creation timestamp is in the future",
+        "Statement contains no supported positions or too many positions",
+        "Each supported position must contain exactly one ISIN",
+        "Statement contains a duplicate ISIN",
+        "Position quantity is outside the supported range",
+        "Statement position count does not match the parsed holdings",
+        "Statement portfolio total does not match the parsed holdings",
+        "Parsed statement violates the portfolio snapshot contract",
+        "Statement contains an ambiguous as-of date",
+        "Statement as-of date is invalid",
+        "Statement contains an ambiguous creation timestamp",
+        "Statement creation timezone offset is invalid",
+        "Statement creation timestamp is invalid",
+        "Statement contains an ambiguous holdings summary",
+        "Statement holdings summary is outside the supported range",
+        "Statement position name is invalid",
+        "Import form session is invalid; reload the page and try again",
+        "Imported statement could not be activated",
+        "Import request headers are too large",
+        "Import request must use multipart/form-data",
+        "Import form boundary is missing",
+        "Import form boundary is invalid",
+        "Import request length is invalid",
+        "Import request is empty or too large",
+        "Import request body is incomplete",
+        "Import form body is malformed",
+        "Import form part is malformed",
+        "Import form part headers are malformed",
+        "Import form part headers are too large",
+        "Import form part disposition is invalid",
+        "Import form contains unexpected or duplicate fields",
+    }
+)
+_SAFE_DECIMAL_ERROR_RE: Final = re.compile(
+    r"^Statement (quantity|market value|portfolio total) "
+    r"(is not a supported German decimal|is invalid|is outside the supported range)$"
+)
 
 
 class TradeRepublicIngressServer(ProviderShellIngressServer):
@@ -58,7 +124,9 @@ class TradeRepublicIngressServer(ProviderShellIngressServer):
     ) -> None:
         self.statement_provider = provider
         self.import_nonce = secrets.token_urlsafe(32)
-        self.last_notice: str | None = None
+        self.import_diagnostic_file = (
+            provider.snapshot_file.parent / IMPORT_DIAGNOSTIC_FILE_NAME
+        )
         super().__init__(
             address,
             state=state,
@@ -68,6 +136,51 @@ class TradeRepublicIngressServer(ProviderShellIngressServer):
             require_user_header=require_user_header,
             handler_class=TradeRepublicIngressHandler,
         )
+
+    def record_import_diagnostic(self, outcome: str, message: str) -> None:
+        """Persist one bounded operator diagnostic without document content."""
+        if outcome not in _IMPORT_DIAGNOSTIC_OUTCOMES:
+            raise ValueError("Unsupported Trade Republic import diagnostic outcome")
+        safe_message = _validated_import_notice(outcome, message)
+        save_json_state(
+            self.import_diagnostic_file,
+            {
+                "schema_version": 1,
+                "recorded_at": datetime.now(timezone.utc).isoformat(),
+                "outcome": outcome,
+                "message": safe_message,
+            },
+        )
+
+    def import_diagnostic(self) -> dict[str, str] | None:
+        """Load and strictly validate the latest bounded import diagnostic."""
+        try:
+            raw = load_json_state(self.import_diagnostic_file)
+        except ProtocolError:
+            return _invalid_import_diagnostic()
+        if raw is None:
+            return None
+        if set(raw) != {"schema_version", "recorded_at", "outcome", "message"}:
+            return _invalid_import_diagnostic()
+        outcome = raw.get("outcome")
+        recorded_at = raw.get("recorded_at")
+        message = raw.get("message")
+        if (
+            raw.get("schema_version") != 1
+            or outcome not in _IMPORT_DIAGNOSTIC_OUTCOMES
+            or not isinstance(recorded_at, str)
+            or not isinstance(message, str)
+            or not _valid_recorded_at(recorded_at)
+        ):
+            return _invalid_import_diagnostic()
+        safe_message = _validated_import_notice(str(outcome), message)
+        if safe_message != message:
+            return _invalid_import_diagnostic()
+        return {
+            "outcome": str(outcome),
+            "message": safe_message,
+            "recorded_at": recorded_at,
+        }
 
 
 class TradeRepublicIngressHandler(ProviderShellIngressHandler):
@@ -107,18 +220,24 @@ class TradeRepublicIngressHandler(ProviderShellIngressHandler):
                 self.tr_server.statement_provider.replace_snapshot(previous)
                 raise StatementImportError("Imported statement could not be activated")
             summary = import_summary(snapshot)
-            self.tr_server.last_notice = (
+            self.tr_server.record_import_diagnostic(
+                "accepted",
                 f"Statement accepted: {summary.position_count} positions; "
-                f"snapshot timestamp {summary.generated_at.isoformat(timespec='seconds')}."
+                f"snapshot timestamp {summary.generated_at.isoformat(timespec='seconds')}.",
             )
         except StatementImportError as err:
             _LOGGER.warning("Trade Republic statement import rejected")
-            self.tr_server.last_notice = f"Statement rejected: {err}"
+            self.tr_server.record_import_diagnostic(
+                "rejected", f"Statement rejected: {_public_statement_error(err)}"
+            )
             self._html_status(self._render_import_page(), HTTPStatus.BAD_REQUEST)
             return
         except Exception:
             _LOGGER.exception("Trade Republic statement import failed internally")
-            self.tr_server.last_notice = "Statement import failed internally; no new snapshot was activated."
+            self.tr_server.record_import_diagnostic(
+                "internal_error",
+                "Statement import failed internally; no new snapshot was activated.",
+            )
             self._html_status(self._render_import_page(), HTTPStatus.INTERNAL_SERVER_ERROR)
             return
 
@@ -169,9 +288,14 @@ class TradeRepublicIngressHandler(ProviderShellIngressHandler):
         nonce = escape(self.tr_server.import_nonce)
         snapshot = self.tr_server.statement_provider.snapshot
         notice = ""
-        if self.tr_server.last_notice:
-            css_class = "ok" if self.tr_server.last_notice.startswith("Statement accepted") else "warn"
-            notice = f'<p class="{css_class}">{escape(self.tr_server.last_notice)}</p>'
+        diagnostic = self.tr_server.import_diagnostic()
+        if diagnostic is not None:
+            css_class = "ok" if diagnostic["outcome"] == "accepted" else "warn"
+            notice = (
+                f'<p class="{css_class}">{escape(diagnostic["message"])}</p>'
+                f'<p class="small">Latest import diagnostic: {escape(diagnostic["outcome"])} · '
+                f'{escape(diagnostic["recorded_at"])}</p>'
+            )
         if snapshot is None:
             snapshot_text = "No supported statement has been imported yet."
         else:
@@ -180,7 +304,7 @@ class TradeRepublicIngressHandler(ProviderShellIngressHandler):
                 f"Active private snapshot: {summary.position_count} positions; "
                 f"timestamp {escape(summary.generated_at.isoformat(timespec='seconds'))}."
             )
-        body = f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Portfolio Architect Gateway — {name}</title><style>body{{font-family:system-ui,sans-serif;max-width:760px;margin:2rem auto;padding:0 1rem;background:#111;color:#eee}}section{{border:1px solid #444;border-radius:12px;padding:1rem;margin:1rem 0}}code{{word-break:break-all}}.warn{{color:#ffca28}}.ok{{color:#7ddc7a}}input[type=file]{{display:block;margin:.8rem 0 1rem}}button{{padding:.6rem 1rem}}</style></head><body><main><h1>Portfolio Architect Gateway — {name}</h1><section><h2>Trade Republic depot statement import</h2><p>Portfolio Architect {escape(__version__)} supports the German text-PDF <strong>DEPOTAUSZUG</strong> statement family. The uploaded PDF is parsed in memory and is not stored. Only the validated provider-neutral holdings snapshot is persisted in this App's private data volume.</p>{notice}<p>{escape(snapshot_text)}</p><form method="post" action="./import" enctype="multipart/form-data"><input type="hidden" name="nonce" value="{nonce}"><label for="statement">Trade Republic DEPOTAUSZUG PDF</label><input id="statement" type="file" name="statement" accept="application/pdf,.pdf" required><button type="submit">Import statement</button></form><p class="warn">Unsupported, encrypted, scanned/image-only, ambiguous, or internally inconsistent documents are rejected without replacing the last accepted snapshot.</p></section><section><h2>Runtime</h2><p>Provider ID: <code>{provider_id}</code></p><p>Gateway status: <strong>{status}</strong></p><p>Bearer token: <code>{token}</code></p><p>The token and normalized snapshot are App-private state and survive in-place upgrades. Do not publish screenshots containing the token.</p></section></main></body></html>"""
+        body = f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Portfolio Architect Gateway — {name}</title><style>body{{font-family:system-ui,sans-serif;max-width:760px;margin:2rem auto;padding:0 1rem;background:#111;color:#eee}}section{{border:1px solid #444;border-radius:12px;padding:1rem;margin:1rem 0}}code{{word-break:break-all}}.warn{{color:#ffca28}}.ok{{color:#7ddc7a}}.small{{font-size:.9rem;color:#bbb}}input[type=file]{{display:block;margin:.8rem 0 1rem}}button{{padding:.6rem 1rem}}</style></head><body><main><h1>Portfolio Architect Gateway — {name}</h1><section><h2>Trade Republic depot statement import</h2><p>Portfolio Architect {escape(__version__)} supports the German text-PDF <strong>DEPOTAUSZUG</strong> statement family. The uploaded PDF is parsed in memory and is not stored. Only the validated provider-neutral holdings snapshot is persisted in this App's private data volume.</p>{notice}<p>{escape(snapshot_text)}</p><form method="post" action="./import" enctype="multipart/form-data"><input type="hidden" name="nonce" value="{nonce}"><label for="statement">Trade Republic DEPOTAUSZUG PDF</label><input id="statement" type="file" name="statement" accept="application/pdf,.pdf" required><button type="submit">Import statement</button></form><p class="warn">Unsupported, encrypted, scanned/image-only, ambiguous, or internally inconsistent documents are rejected without replacing the last accepted snapshot.</p></section><section><h2>Runtime</h2><p>Provider ID: <code>{provider_id}</code></p><p>Gateway status: <strong>{status}</strong></p><p>Bearer token: <code>{token}</code></p><p>The token and normalized snapshot are App-private state and survive in-place upgrades. Do not publish screenshots containing the token.</p></section></main></body></html>"""
         return body.encode("utf-8")
 
     def _html_status(self, body: bytes, status: HTTPStatus) -> None:
@@ -189,6 +313,64 @@ class TradeRepublicIngressHandler(ProviderShellIngressHandler):
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
+
+
+def _invalid_import_diagnostic() -> dict[str, str]:
+    """Return one fixed fail-closed state without echoing corrupted private state."""
+    return {
+        "outcome": "internal_error",
+        "message": "Stored import diagnostic is invalid.",
+        "recorded_at": "unknown",
+    }
+
+
+def _valid_recorded_at(value: str) -> bool:
+    """Accept only bounded timezone-aware ISO timestamps from our own state writer."""
+    if not 1 <= len(value) <= 40:
+        return False
+    try:
+        parsed = datetime.fromisoformat(value)
+    except ValueError:
+        return False
+    return parsed.tzinfo is not None and parsed.utcoffset() is not None
+
+
+def _validated_import_notice(outcome: str, value: str) -> str:
+    """Validate persisted notices against the provider-specific diagnostic allowlist."""
+    text = _bounded_notice(value)
+    if outcome == "accepted":
+        return text if _ACCEPTED_NOTICE_RE.fullmatch(text) else "Stored import diagnostic is invalid."
+    if outcome == "rejected":
+        prefix = "Statement rejected: "
+        if not text.startswith(prefix):
+            return "Stored import diagnostic is invalid."
+        detail = text[len(prefix) :]
+        if (
+            detail in _SAFE_IMPORT_ERRORS
+            or _SAFE_DECIMAL_ERROR_RE.fullmatch(detail)
+            or detail == "Statement rejected by the bounded import parser"
+        ):
+            return text
+        return "Stored import diagnostic is invalid."
+    if outcome == "internal_error" and text in _INTERNAL_ERROR_NOTICES:
+        return text
+    return "Stored import diagnostic is invalid."
+
+
+def _public_statement_error(err: StatementImportError) -> str:
+    """Return only allowlisted parser/form diagnostics, never document-derived text."""
+    message = " ".join(str(err).split())
+    if message in _SAFE_IMPORT_ERRORS or _SAFE_DECIMAL_ERROR_RE.fullmatch(message):
+        return message
+    return "Statement rejected by the bounded import parser"
+
+
+def _bounded_notice(value: str) -> str:
+    """Normalize and bound persisted operator-visible diagnostic text."""
+    text = " ".join(str(value).split())
+    if not text:
+        return "No diagnostic detail available"
+    return text[:256]
 
 
 def _parse_multipart_body(body: bytes, boundary: bytes) -> tuple[str, bytes]:

@@ -1,5 +1,17 @@
-# Portfolio Architect Gateway — Trade Republic v1.31.2
+# Portfolio Architect Gateway — Trade Republic v1.32.0
 
-Version 1.31.2 is package/version alignment for the v1.31.2 DKB FinTS capability-probe hardening release; provider App runtime behavior is unchanged.
+Version 1.32.0 adds a bounded persistent **latest import diagnostic** while preserving the
+established local `DEPOTAUSZUG` statement-import and provider-snapshot contracts.
 
-Upgrade in place to retain App-private TLS state and the accepted provider snapshot.
+The App may persist only an allowlisted/genericized `accepted`, `rejected` or
+`internal_error` outcome next to its private snapshot. Unexpected parser/document text is
+never echoed into persisted diagnostics, malformed diagnostic state fails closed, and a later
+successful import replaces obsolete failure evidence. The diagnostic file is App-private mode
+`0600`.
+
+The uploaded PDF is still parsed in memory and is not stored. No persistent PDF SHA-256 or
+raw document content is added for troubleshooting. Verified HTTPS/private CA trust, bearer
+authentication, REST schema 1, health schema 6 and accepted snapshot serving are unchanged.
+
+Upgrade in place to retain App-private TLS state and the accepted provider snapshot. No
+statement re-import is required merely because of the upgrade.

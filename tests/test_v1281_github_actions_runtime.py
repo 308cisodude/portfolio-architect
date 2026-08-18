@@ -1,4 +1,4 @@
-"""Regression coverage for v1.31.2 GitHub Actions runtime maintenance."""
+"""Regression coverage for v1.32.0 GitHub Actions runtime maintenance."""
 from __future__ import annotations
 
 import re

@@ -35,6 +35,14 @@ async def async_get_config_entry_diagnostics(
         "source_provider": coordinator.source_provider,
         "source_adapter": coordinator.source_adapter_diagnostics,
         "source": coordinator.source_label,
+        "source_freshness": {
+            "mode": coordinator.freshness_mode,
+            "threshold_hours": coordinator.freshness_hours,
+            "data_fresh": coordinator.is_data_fresh(),
+            "stale_source_ids": list(coordinator.stale_source_ids),
+            "stale_source_summary": coordinator.stale_source_summary,
+            "sources": list(coordinator.source_freshness_evidence()),
+        },
         "gateway_health": (
             {
                 "version": coordinator.gateway_health.gateway_version,

@@ -1,6 +1,10 @@
-# Portfolio Architect Gateway — Comdirect v1.31.2
+# Portfolio Architect Gateway — Comdirect v1.32.0
 
-Version 1.31.2 is package/version alignment for the v1.31.2 DKB FinTS capability-probe hardening release; provider App runtime behavior is unchanged.
+Version 1.32.0 is package alignment plus a diagnostic-policy audit. Comdirect runtime behavior
+is unchanged: authenticated upstream failures remain reduced to bounded failure classes and
+approved OAuth/session rejection reasons; remote response bodies, credentials, qSession state
+and private account material are not retained for diagnostics. App POST navigation remains
+relative to the Ingress namespace.
 
 Verified HTTPS/private CA trust, bearer authentication, PhotoTAN bootstrap, account
 selection, authorized cash, request-timeout behavior, REST schema 1, health schema 6,
