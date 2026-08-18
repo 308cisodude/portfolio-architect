@@ -1,7 +1,7 @@
-# Portfolio Architect Gateway — Comdirect v1.33.0
+# Portfolio Architect Gateway — Comdirect v1.33.1
 
-Version 1.33.0 is package alignment plus a diagnostic-policy audit. Comdirect runtime behavior
-is unchanged: authenticated upstream failures remain reduced to bounded failure classes and
+Version 1.33.1 is package alignment for the Home Assistant-side recurring-schedule anchor
+hotfix. The v1.32 diagnostic-policy audit and Comdirect runtime behavior are unchanged: authenticated upstream failures remain reduced to bounded failure classes and
 approved OAuth/session rejection reasons; remote response bodies, credentials, qSession state
 and private account material are not retained for diagnostics. App POST navigation remains
 relative to the Ingress namespace.

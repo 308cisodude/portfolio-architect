@@ -1,99 +1,72 @@
-# Portfolio Architect 1.33.0
+# Portfolio Architect 1.33.1
 
-Version 1.33.0 is the **source-freshness and plan-schedule separation** release prepared from
-the exact live-accepted v1.32.0 tracked-source baseline.
+Version 1.33.1 is a narrow **plan-schedule anchor hotfix** prepared from the exact
+live-tested v1.33.0 tracked-source baseline.
 
-The release follows two live observations: v1.32 finally exposed that a DKB CSV source was the
-freshness blocker, and comparison with the earlier v1.30 dashboard proved that the same old CSV
-had previously remained "fresh" only because a configured review date replaced the source-age
-gate. The v1.31 `Restore file-based plan` operation had also removed that schedule together
-with the target-plan override.
+Live acceptance of v1.33.0 proved that source freshness and review cadence are now
+correctly independent, but exposed one remaining legacy dependency: recurring
+execution/review dates were still anchored to `oldest_source_generated_at` before
+falling back to the portfolio evaluation timestamp. With a valid 31-day DKB CSV
+from 31 July and a current evaluation on 18 August, that produced an obsolete
+**7 August** scheduled execution and **5 September** next plan review.
 
-## Evidence freshness is no longer review cadence
+## Schedule dates use the latest valid evaluation
 
-Provider evidence age and recurring review dates are now separate controls.
+`plan_review_schedule()` now derives its cycle only from Portfolio Architect's
+existing latest valid evaluation timestamp (`data_timestamp`). It no longer uses
+the oldest contributing source timestamp as a schedule anchor.
 
-`is_data_fresh()` evaluates every contributing source against its effective evidence-age
-threshold. It no longer asks whether `next_review_on` lies in the future. Therefore:
+The exact live topology is regression-covered:
 
-- a future review date cannot authorize old provider evidence;
-- an overdue plan review does not rewrite source freshness;
-- one stale contributing source still makes the aggregate plan non-actionable; and
-- invalid/materially future source timestamps remain fail-closed.
+- latest valid Portfolio Architect evaluation: 18 August 2026;
+- recurring frequency: monthly;
+- execution day: 7;
+- review lead: 2 days;
+- DKB CSV evidence: 31 July 2026, still valid under the explicitly configured
+  744-hour CSV freshness policy;
+- expected scheduled execution: **7 September 2026**; and
+- expected next plan review: **5 October 2026**.
 
-The existing `freshness_mode: age_threshold` token is retained for machine-state compatibility.
-New diagnostics expose an explicit freshness-policy token, the effective threshold map and the
-earliest evidence-age `fresh_through` deadline.
+The old DKB CSV timestamp remains relevant only to its own evidence-age freshness
+check. It cannot move the recurring plan calendar backwards.
 
-## User-owned evidence-kind thresholds
+## v1.33.0 source-freshness and plan-schedule separation preserved
 
-v1.33 can apply separate bounded thresholds to:
+This hotfix does not change any configured freshness threshold, evidence-kind
+classification, stale-source fail-closed behavior, runtime safeguards, target-plan
+configuration, or execution/review schedule settings.
 
-- `live_api` and provider `gateway_snapshot` evidence;
-- `imported_statement` evidence;
-- `imported_csv` evidence; and
-- `other` evidence.
+The explicit 24h/168h/744h/24h live acceptance profile remains operator-owned
+configuration; no longer-lived document policy becomes a product default.
 
-Live/other limits are bounded to 1–168 hours. Imported statement/CSV limits are bounded to
-1–744 hours (31 days).
-
-Migration is intentionally conservative. Existing installations do not receive a longer
-provider-specific lifetime automatically. When none of the new options has been saved, every
-category inherits the pre-v1.33 global `freshness_hours` value. A stale v1.32 plan therefore
-stays stale immediately after upgrading to v1.33.
-
-Only an explicit operator save under **Runtime safeguards** activates different evidence-kind
-values.
-
-## File-plan restoration no longer destroys scheduling
-
-The reset boundary is corrected. **Restore file-based plan** now removes only the Home
-Assistant target-plan definition override. It preserves:
-
-- recurring schedule enabled/disabled state;
-- plan frequency used by the schedule;
-- execution days/month/quarter offset;
-- review lead time;
-- provider/source configuration;
-- execution/cost policy; and
-- runtime safeguards.
-
-A dedicated **Execution & review schedule** options flow is added so a schedule can be restored
-or changed while the target architecture continues to come from `portfolio.yaml`. This is
-particularly useful for installations whose schedule was already lost during the v1.31 plan
-migration.
-
-## v1.32 observability remains the presentation layer
-
-The existing v1.32 per-source `source_freshness` rows and native dashboard blocker summary are
-reused. Each row now carries the source's effective evidence-kind threshold, so the dashboard
-can naturally render, for example, a DKB CSV blocker against a 31-day policy without new custom
-frontend code.
-
-The bilingual reference dashboard itself is unchanged from v1.32.0.
+`Restore file-based plan` retains the v1.33.0 corrected boundary and continues to
+preserve schedule/runtime/source options while clearing only Home Assistant target-
+plan override fields.
 
 ## Provider runtimes preserved
 
-Comdirect acquisition/OAuth/session/PhotoTAN/cash behavior is unchanged. Trade Republic
-statement import/private diagnostic behavior is unchanged, and this release does not move PDF parsing into Portfolio Architect. DKB keeps the live-accepted v1.31.2
-registered anonymous FinTS diagnostic contract and remains experimental/manual-only/non-live.
-The current `9078` registration-propagation evidence is not re-probed by this release. DKB live Gateway acquisition remains a later authenticated milestone after the bank-level and authenticated user-capability gates.
+Comdirect acquisition/OAuth/session/PhotoTAN/cash behavior is unchanged. Trade
+Republic statement import/private diagnostic behavior is unchanged; this release does not move PDF parsing into Portfolio Architect. DKB retains the
+live-accepted registered anonymous FinTS diagnostic contract and remains
+experimental/manual-only/non-live; no new DKB probe is required for this release.
+DKB live Gateway acquisition remains a later authenticated provider-specific milestone.
 
 ## Preserved contracts
 
 - portfolio payload schema 8: unchanged;
 - REST portfolio schema 1: unchanged;
 - Gateway health schema 6: unchanged; schemas 1–5 remain supported where previously supported;
-- multi-source atomicity and no-partial-live-aggregate behavior: unchanged;
-- one stale source remains sufficient to make a recommendation non-actionable;
+- v1.33.0 per-source/evidence-kind freshness policy: unchanged;
+- source evidence timestamps remain authoritative for source freshness only;
+- target-plan and recurring-schedule persistence boundaries: unchanged from v1.33.0;
 - v1.31 canonical accumulating Robotics target and outside-scope distributing holding: unchanged;
 - provider-aware execution policy/broker schema 2: unchanged;
-- private-PKI HTTPS, bearer authentication, Supervisor trust discovery, DNS pinning and
-  no-plaintext fallback: unchanged;
-- provider diagnostic evidence policy from v1.32: unchanged; and
-- the historical `v1.19.0-rc2` brokerage probe remains excluded and is not promoted by this release; and
+- private-PKI HTTPS, bearer authentication, Supervisor trust discovery, DNS pinning and no-plaintext fallback: unchanged;
+- provider diagnostic evidence policy from v1.32: unchanged;
+- historical `v1.19.0-rc2` brokerage probe remains excluded and is not promoted by this release; and
 - advisory/no-trading boundary: unchanged.
 
-No trading, order, transfer, payment, or transaction-history capability is added. No automatic sell capability is added.
+No trading, order, transfer, payment, or transaction-history capability is added.
+No automatic sell capability is added.
 
-See `docs/UPGRADE-1.33.0.md` for the conservative migration and live-acceptance sequence.
+See `docs/UPGRADE-1.33.1.md` for the live-acceptance sequence.

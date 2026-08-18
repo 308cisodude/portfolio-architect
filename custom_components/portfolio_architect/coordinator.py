@@ -1164,8 +1164,8 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
         return None
 
     def plan_review_schedule(self) -> PlanReviewSchedule | None:
-        """Return the review cycle derived from the last valid evaluation."""
-        timestamp = self.oldest_source_generated_at or self.data_timestamp
+        """Return the review cycle derived from the latest valid evaluation."""
+        timestamp = self.data_timestamp
         if timestamp is None or self.schedule_config is None:
             return None
         evaluated_on = dt_util.as_local(timestamp).date()

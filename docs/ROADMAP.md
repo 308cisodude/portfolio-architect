@@ -370,6 +370,14 @@ Any future materiality-based freshness exception (for example ignoring a small s
 contribution) still requires a separate bounded error model and must not be inferred merely
 from current portfolio value.
 
+## v1.33.1 — recurring schedule anchor hotfix
+
+- Correct the remaining legacy schedule dependency exposed by v1.33.0 live acceptance.
+- Derive scheduled execution and next plan review from the latest valid Portfolio Architect
+  evaluation timestamp, never from the oldest contributing source timestamp.
+- Keep source timestamps authoritative only for their own v1.33 evidence-age freshness policy.
+- Preserve the v1.33.0 configuration, provider runtime, wire-schema and fail-closed boundaries.
+
 ## Future — generic target architecture and first-class presentation model
 
 Portfolio Architect must evolve from the current reference retirement plan into a reusable

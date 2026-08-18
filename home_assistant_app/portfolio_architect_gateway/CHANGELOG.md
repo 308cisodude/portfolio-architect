@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.33.1
+
+- Package/User-Agent alignment for the Portfolio Architect v1.33.1 recurring-schedule anchor hotfix; Comdirect acquisition, OAuth/session maintenance, private-PKI HTTPS and diagnostics remain unchanged.
+
 ## 1.33.0
 
 - Package/User-Agent alignment for Portfolio Architect v1.33.0 source-freshness and plan-schedule separation; Comdirect acquisition, OAuth/session maintenance, private-PKI HTTPS and diagnostic behavior are unchanged.
