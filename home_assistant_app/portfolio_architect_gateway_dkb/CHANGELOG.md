@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.34.1
+
+- Package/User-Agent alignment for Portfolio Architect v1.34.1 whole-portfolio allocation-presentation hotfix; DKB FinTS probe behavior remains unchanged and experimental/manual-only/non-live.
+
 ## 1.34.0
 
 - Package/User-Agent alignment for Portfolio Architect v1.34.0 generic target/presentation architecture; DKB FinTS probe behavior remains unchanged and experimental/manual-only/non-live.

@@ -72,8 +72,8 @@ def test_complete_portfolio_and_scope_entities_are_visible():
     assert 'portfolio_architect_portfolio_value' in source
     assert 'portfolio_architect_current_plan_share' in source
     assert 'portfolio_architect_outside_scope_share' in source
-    assert 'holding_a113fm_whole_portfolio_allocation' in source
-    assert 'holding_555750_holding_value' in source
+    assert 'holding_ie00bm67ht60_whole_portfolio_allocation' in source
+    assert 'holding_de0005557508_holding_value' in source
     assert 'legacy' not in source.casefold()
 
 

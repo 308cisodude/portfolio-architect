@@ -143,6 +143,7 @@ async def async_setup_entry(
     async_add_entities(static_entities)
 
     known_allocations: set[tuple[str, AllocationKind]] = set()
+    known_whole_allocations: set[str] = set()
     known_holdings: set[str] = set()
     known_position_details: set[str] = set()
     known_explanation_details: set[str] = set()
@@ -212,15 +213,27 @@ async def async_setup_entry(
                         fund_id=fund_id,
                     )
                 )
-        for position_id in coordinator.data.holdings:
+            if position.is_target_position and fund_id not in known_whole_allocations:
+                known_whole_allocations.add(fund_id)
+                entities.append(
+                    PortfolioTargetWholeAllocationSensor(
+                        coordinator=coordinator, entry=entry, fund_id=fund_id
+                    )
+                )
+        for position_id, holding in coordinator.data.holdings.items():
             if position_id in known_holdings:
                 continue
             known_holdings.add(position_id)
-            entities.extend(
-                [
+            holding_entities: list[SensorEntity] = []
+            if position_id not in known_whole_allocations:
+                known_whole_allocations.add(position_id)
+                holding_entities.append(
                     PortfolioHoldingWholeAllocationSensor(
                         coordinator=coordinator, entry=entry, position_id=position_id
-                    ),
+                    )
+                )
+            holding_entities.extend(
+                [
                     PortfolioHoldingValueSensor(
                         coordinator=coordinator, entry=entry, position_id=position_id
                     ),
@@ -232,6 +245,7 @@ async def async_setup_entry(
                     ),
                 ]
             )
+            entities.extend(holding_entities)
         for finding in coordinator.data.policy.non_pass_findings:
             if finding.key not in known_policy_findings:
                 known_policy_findings.add(finding.key)
@@ -2875,6 +2889,54 @@ class PortfolioVersionSensor(
             "versions_match": engine_version in {None, VERSION},
         }
 
+
+
+class PortfolioTargetWholeAllocationSensor(
+    CoordinatorEntity[PortfolioArchitectCoordinator], SensorEntity
+):
+    """Whole-portfolio allocation for one configured target, including zero holdings."""
+
+    _attr_has_entity_name = True
+    _attr_translation_key = "whole_portfolio_allocation"
+    _attr_native_unit_of_measurement = PERCENTAGE
+    _attr_suggested_display_precision = 2
+    _attr_state_class = SensorStateClass.MEASUREMENT
+
+    def __init__(
+        self,
+        coordinator: PortfolioArchitectCoordinator,
+        entry: ConfigEntry,
+        fund_id: str,
+    ) -> None:
+        super().__init__(coordinator, context=f"target:{fund_id}:whole_portfolio_allocation")
+        self._fund_id = fund_id
+        source_key = entry.unique_id or entry.entry_id
+        self._attr_unique_id = f"{source_key}_{fund_id}_whole_portfolio_allocation"
+        self._attr_translation_placeholders = {"holding_name": self._position.name}
+        self._attr_device_info = _device_info(source_key)
+
+    @property
+    def suggested_object_id(self) -> str:
+        return f"{self._fund_id}_whole_portfolio_allocation"
+
+    @property
+    def _position(self) -> PositionData:
+        return self.coordinator.data.positions[self._fund_id]
+
+    @property
+    def available(self) -> bool:
+        return super().available and self._fund_id in self.coordinator.data.positions
+
+    @property
+    def native_value(self) -> float | None:
+        return self._position.whole_portfolio_pct if self.available else None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        base = _source_attributes(self.coordinator)
+        if not self.available:
+            return base
+        return {**_position_attributes(self.coordinator, self._position), **base}
 
 
 class _PortfolioHoldingSensor(

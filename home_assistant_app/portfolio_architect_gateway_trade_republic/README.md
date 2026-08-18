@@ -1,7 +1,7 @@
-# Portfolio Architect Gateway — Trade Republic v1.34.0
+# Portfolio Architect Gateway — Trade Republic v1.34.1
 
-Version 1.34.0 is package/User-Agent alignment for the Home Assistant-side generic target and
-presentation-model milestone. The bounded latest-import diagnostic introduced in v1.32.0 and
+Version 1.34.1 is package/User-Agent alignment for the Home Assistant-side allocation-presentation
+hotfix; the v1.34.0 generic target/presentation architecture is unchanged. The bounded latest-import diagnostic introduced in v1.32.0 and
 the established local `DEPOTAUSZUG` statement-import/provider-snapshot contracts are unchanged.
 
 The App may persist only an allowlisted/genericized `accepted`, `rejected` or

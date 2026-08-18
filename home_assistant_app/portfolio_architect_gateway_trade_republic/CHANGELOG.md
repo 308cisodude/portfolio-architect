@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.34.1
+
+- Package/User-Agent alignment for Portfolio Architect v1.34.1 whole-portfolio allocation-presentation hotfix; Trade Republic statement import, private diagnostics, accepted snapshot and Gateway wire behavior remain unchanged.
+
 ## 1.34.0
 
 - Package/User-Agent alignment for Portfolio Architect v1.34.0 generic target/presentation architecture; Trade Republic statement import, private diagnostics, accepted snapshot and Gateway wire behavior remain unchanged.

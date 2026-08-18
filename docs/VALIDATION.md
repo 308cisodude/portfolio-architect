@@ -1,42 +1,44 @@
-# v1.34.0 validation
+# v1.34.1 validation
 
-Portfolio Architect v1.34.0 is prepared from the exact live-accepted v1.33.1 tracked-source baseline.
+Portfolio Architect v1.34.1 is a presentation-correctness hotfix prepared from the exact
+live-accepted v1.34.0 tracked-source baseline.
 
 The release must prove:
 
-- integration, engine, common Gateway and all three official App versions align at `1.34.0`;
-- schema 1 legacy target IDs remain accepted;
-- schema 2 requires an explicit opaque `target_` + 32-hex target ID representing 128 random bits;
-- the PA generator creates fresh target IDs without ISIN/WKN/name/order input;
-- the native plan editor keys candidate selection by ISIN and never derives target identity from WKN;
-- deleting a target from the active plan does not preserve/resurrect its identity through a later matching ISIN;
-- target count is generic and bounded to 32 rather than fixed at seven;
-- an existing target ID survives reorder, rename, weight/policy change and deliberate instrument replacement for the same current role;
-- the reference schema-2 plan uses seven opaque target IDs and preserves the same allocation/instrument semantics;
-- payload schema 8 remains unchanged while `target_id` / `plan_target_id` aliases match compatibility `fund_id` / `plan_fund_id`;
-- presentation schema 1 exposes every current configured target, current-plan holding and currently evidenced outside-scope holding;
-- no target tombstone/history registry or outside-scope history registry is introduced;
-- outside-scope inventory is derived only from accepted current portfolio data;
-- reference dashboards remain native-only and are aligned to the migrated opaque reference IDs;
-- v1.33 evidence-kind freshness and v1.33.1 evaluation-anchored scheduling remain unchanged;
-- Comdirect, Trade Republic and DKB runtime/diagnostic behavior remains unchanged apart from normal package/User-Agent alignment;
-- DKB stays experimental/manual-only/non-live and authenticated user-capability/UPD remains a later gate; and
-- no trading, order placement, automatic sell, transfer, payment or transaction-history capability is introduced.
+- integration, engine, common Gateway and all three official App versions align at `1.34.1`;
+- every configured target receives the established whole-portfolio allocation entity from target
+  state, including a missing target at exactly `0%`;
+- held-target allocation entity IDs/unique IDs remain unchanged from v1.34.0 and no duplicate
+  holding allocation entity is created for the same current-plan target;
+- outside-current-plan allocation entities remain evidence-driven;
+- all reference-dashboard outside-scope distribution bindings use current ISIN-first holding IDs
+  rather than obsolete WKN-era IDs;
+- the hard-coded outside-scope detail Tile inventory remains intentionally unchanged;
+- the v1.34 presentation model remains the complete dynamic current-state inventory;
+- opaque target IDs, schema-1 compatibility, portfolio calculations, freshness, scheduling,
+  provider acquisition/diagnostics, authorized-cash and execution behavior remain unchanged;
+- payload schema 8, REST portfolio schema 1 and Gateway health schema 6 remain unchanged; and
+- no trading, order placement, automatic sell, transfer, payment or transaction-history
+  capability is introduced.
 
-Run the complete regression suite, `git diff --check`, Python compilation, structured-file parsing,
-strict publication/privacy checks, three independent reproducible release builds, release
-verification, release-artifact privacy validation and independent Git-overlay/binary-patch replay
-over the exact v1.33.1 tracked baseline.
+Run the complete regression suite, `git diff --check`, Python compilation, structured-file
+parsing, strict publication/privacy checks, three independent reproducible release builds,
+release verification, release-artifact privacy validation and independent Git-overlay/binary-
+patch replay over the exact v1.34.0 tracked baseline.
 
 Protected GitHub workflows remain authoritative for actual provider-App Docker/private-PKI smoke
 execution because Docker is unavailable in the preparation environment.
 
 ## Live acceptance
 
-1. Upgrade Portfolio Architect to 1.34.0 and restart without changing the existing live schema-1 `portfolio.yaml`.
-2. Confirm the legacy plan remains healthy with the same 6/7 target coverage, source freshness, 7-Sep/5-Oct schedule, provider aggregation and existing target entities.
-3. Upgrade all three Gateway Apps in place; do not reauthenticate Comdirect, re-import Trade Republic or re-probe DKB solely for this release.
-4. Back up `portfolio.yaml`, then deliberately install the supplied schema-2 current-plan migration and matching reference dashboard together.
-5. Re-evaluate and confirm the same 6/7 economic/strategy state, the expected one-time opaque target-entity identity migration, no automatic sell, and unchanged freshness/schedule behavior.
-6. Inspect the presentation-model entity: seven configured target IDs, six held current-plan roles, and the complete live outside-scope inventory should reconcile with the whole-portfolio model.
-7. Confirm an outside-scope holding disappears only after accepted source evidence no longer reports it; do not infer absence from a failed or stale source.
+1. Update Portfolio Architect to 1.34.1 and restart Home Assistant; keep the schema-2 plan, source
+   configuration, schedule, freshness policy and broker configuration unchanged.
+2. Confirm the whole-portfolio distribution shows the missing accumulating Robotics target by its
+   friendly name at `0%`, not as an unresolved entity ID.
+3. Replace/update the copied reference dashboard with the v1.34.1 dashboard and confirm every
+   currently referenced outside-scope distribution item has a real percentage rather than
+   `Unavailable`.
+4. Confirm 6/7 target coverage, three healthy providers, source freshness, 7-Sep/5-Oct schedule
+   and the presentation-model outside-scope inventory remain unchanged.
+5. Align all three Gateway Apps to 1.34.1 in place; no Comdirect reauthentication, Trade Republic
+   re-import or DKB reprobe is required.

@@ -378,6 +378,12 @@ from current portfolio value.
 - Keep source timestamps authoritative only for their own v1.33 evidence-age freshness policy.
 - Preserve the v1.33.0 configuration, provider runtime, wire-schema and fail-closed boundaries.
 
+## v1.34.1 — whole-portfolio allocation presentation hotfix
+
+- Ensure every configured target has a whole-portfolio allocation entity, including missing targets at 0%.
+- Align reference-dashboard outside-scope distribution bindings with established ISIN-first holding IDs.
+- Keep the static outside-scope detail Tile inventory and future dynamic native-dashboard milestone unchanged.
+
 ## v1.34.0 — generic target architecture and first-class presentation model
 
 - Promote current strategic target identity to schema-2 opaque `target_id` values generated from 128 random bits; retain schema-1 `id` and payload `fund_id` only for compatibility.
