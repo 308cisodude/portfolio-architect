@@ -714,6 +714,32 @@ class PortfolioAvailableInvestmentReserveSensor(_PortfolioMonthlyMoneySensor):
             "eligible_investment_cash_eur": plan.eligible_investment_cash_eur,
             "authorization_policy": plan.investment_cash_authorization_policy,
             "authorization_cap_eur": plan.investment_cash_authorization_cap_eur,
+            "provider_investment_cash": [
+                {
+                    "provider_id": item.provider_id,
+                    "provider_name": item.provider_name,
+                    "available_eur": item.available_eur,
+                    "remaining_eur": item.remaining_eur,
+                    "as_of": item.as_of.isoformat() if item.as_of else None,
+                    "authorization_policy": item.authorization_policy,
+                    "authorization_cap_eur": item.authorization_cap_eur,
+                }
+                for item in plan.provider_investment_cash
+            ],
+            "funding_transfers": [
+                {
+                    "from_provider": item.from_provider,
+                    "from_provider_name": item.from_provider_name,
+                    "to_provider": item.to_provider,
+                    "to_provider_name": item.to_provider_name,
+                    "amount_eur": item.amount_eur,
+                    "fee_eur": item.fee_eur,
+                    "settlement_business_days": item.settlement_business_days,
+                }
+                for item in plan.funding_transfers
+            ],
+            "estimated_funding_transfer_fees_eur": plan.estimated_funding_transfer_fees_eur,
+            "estimated_total_execution_costs_eur": plan.estimated_total_execution_costs_eur,
             **base,
         }
 
@@ -743,6 +769,11 @@ class PortfolioDeferredContributionSensor(_PortfolioMonthlyMoneySensor):
                 "execution_route": item.execution_route,
                 "execution_provider": item.execution_provider,
                 "execution_provider_name": item.execution_provider_name,
+                "funding_provider": item.funding_provider,
+                "funding_provider_name": item.funding_provider_name,
+                "funding_transfer_required": item.funding_transfer_required,
+                "funding_transfer_fee_eur": item.funding_transfer_fee_eur,
+                "funding_transfer_business_days": item.funding_transfer_business_days,
                 "estimated_fee_eur": item.estimated_fee_eur,
                 "estimated_cash_outlay_eur": item.estimated_cash_outlay_eur,
                 "estimated_cost_ratio_pct": item.estimated_cost_ratio_pct,
@@ -1487,6 +1518,11 @@ class PortfolioPurchaseExplanationSensor(_PortfolioPositionDetailSensor):
             "execution_route": p.execution_route,
             "execution_provider": p.execution_provider,
             "execution_provider_name": p.execution_provider_name,
+            "funding_provider": p.funding_provider,
+            "funding_provider_name": p.funding_provider_name,
+            "funding_transfer_required": p.funding_transfer_required,
+            "funding_transfer_fee_eur": p.funding_transfer_fee_eur,
+            "funding_transfer_business_days": p.funding_transfer_business_days,
             "execution_fee_data_as_of": (
                 p.execution_fee_data_as_of.isoformat()
                 if p.execution_fee_data_as_of is not None
@@ -1666,6 +1702,11 @@ class PortfolioProposedBuySensor(
             "execution_route": position.execution_route,
             "execution_provider": position.execution_provider,
             "execution_provider_name": position.execution_provider_name,
+            "funding_provider": position.funding_provider,
+            "funding_provider_name": position.funding_provider_name,
+            "funding_transfer_required": position.funding_transfer_required,
+            "funding_transfer_fee_eur": position.funding_transfer_fee_eur,
+            "funding_transfer_business_days": position.funding_transfer_business_days,
             "execution_fee_data_as_of": (
                 position.execution_fee_data_as_of.isoformat()
                 if position.execution_fee_data_as_of is not None

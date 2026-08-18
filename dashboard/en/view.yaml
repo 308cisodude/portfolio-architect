@@ -388,7 +388,7 @@ sections:
     card:
       type: tile
       entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_proposed_buy
-      name: Robotics
+      name: Robotics · Acc
       tap_action:
         action: more-info
         entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_isin
@@ -709,7 +709,7 @@ sections:
     - entity: binary_sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_target_position_held
       name: Cybersecurity
     - entity: binary_sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_target_position_held
-      name: Robotics
+      name: Robotics · Acc
     grid_options:
       columns: full
       rows: auto
@@ -823,7 +823,7 @@ sections:
     card:
       type: tile
       entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_position_sources
-      name: Robotics sources
+      name: Robotics · Acc sources
       state_content: source_summary
       tap_action:
         action: more-info
@@ -1291,7 +1291,7 @@ sections:
       name: Cybersecurity
       color: '#fb8c00'
     - entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_whole_portfolio_allocation
-      name: Robotics
+      name: Robotics · Acc
       color: '#00acc1'
     - entity: sensor.portfolio_architect_holding_ie00bywz0333_whole_portfolio_allocation
       name: Robotics · Dist
@@ -1476,7 +1476,7 @@ sections:
       name: Cybersecurity
       color: '#fb8c00'
     - entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_current_allocation
-      name: Robotics
+      name: Robotics · Acc
       color: '#00acc1'
     grid_options:
       columns: full
@@ -1510,7 +1510,7 @@ sections:
       name: Cybersecurity
       color: '#fb8c00'
     - entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_target_allocation
-      name: Robotics
+      name: Robotics · Acc
       color: '#00acc1'
     grid_options:
       columns: full
@@ -1963,7 +1963,7 @@ sections:
     card:
       type: tile
       entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_allocation_drift
-      name: Robotics
+      name: Robotics · Acc
       tap_action:
         action: more-info
       color: amber
@@ -1983,7 +1983,7 @@ sections:
     card:
       type: tile
       entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_allocation_drift
-      name: Robotics
+      name: Robotics · Acc
       tap_action:
         action: more-info
       color: green
@@ -2003,7 +2003,7 @@ sections:
     card:
       type: tile
       entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_allocation_drift
-      name: Robotics
+      name: Robotics · Acc
       tap_action:
         action: more-info
       color: red

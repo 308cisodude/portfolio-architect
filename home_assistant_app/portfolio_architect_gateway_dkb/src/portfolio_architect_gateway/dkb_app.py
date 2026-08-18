@@ -24,6 +24,7 @@ from .dkb_fints import (
     DKB_FINTS_ENDPOINT,
     FINTS_PRODUCT_VERSION,
     HOLDINGS_PARAMETER_SEGMENT,
+    MAX_BASE64_RESPONSE_BYTES,
     MAX_RESPONSE_BYTES,
     MAX_RETURN_MESSAGE_CHARS,
     MAX_RETURN_MESSAGES,
@@ -182,6 +183,8 @@ class DKBProbeController:
         except ProtocolError as err:
             response_sha256 = getattr(err, "response_sha256", None)
             response_bytes = getattr(err, "response_bytes", None)
+            raw_response_sha256 = getattr(err, "raw_response_sha256", None)
+            raw_response_bytes = getattr(err, "raw_response_bytes", None)
             failure = CapabilityProbeResult(
                 probed_at=datetime.now(timezone.utc).isoformat(),
                 bpd_version=None,
@@ -192,6 +195,8 @@ class DKBProbeController:
                 failure_category="protocol_error",
                 response_sha256=response_sha256 if isinstance(response_sha256, str) else None,
                 response_bytes=response_bytes if isinstance(response_bytes, int) else None,
+                raw_response_sha256=raw_response_sha256 if isinstance(raw_response_sha256, str) else None,
+                raw_response_bytes=raw_response_bytes if isinstance(raw_response_bytes, int) else None,
             )
             save_json_state(self.probe_state_file, failure.as_dict())
             _LOGGER.warning("DKB anonymous FinTS capability probe failed: %s", type(err).__name__)
@@ -245,6 +250,8 @@ class DKBProbeController:
                 "return_messages": [message.as_dict() for message in view.result.return_messages] if view.result else [],
                 "response_sha256": view.result.response_sha256 if view.result else None,
                 "response_bytes": view.result.response_bytes if view.result else None,
+                "raw_response_sha256": view.result.raw_response_sha256 if view.result else None,
+                "raw_response_bytes": view.result.raw_response_bytes if view.result else None,
                 "probed_at": view.result.probed_at if view.result else None,
             },
         }
@@ -367,6 +374,8 @@ class DKBIngressHandler(BaseHTTPRequestHandler):
             bank_messages = "<code>none recorded</code>"
         response_fingerprint = result.response_sha256 if result and result.response_sha256 else "not available"
         response_bytes = str(result.response_bytes) if result and result.response_bytes is not None else "not available"
+        raw_response_fingerprint = result.raw_response_sha256 if result and result.raw_response_sha256 else "not available"
+        raw_response_bytes = str(result.raw_response_bytes) if result and result.raw_response_bytes is not None else "not available"
         if result is None:
             holdings = "not probed"
         elif result.holdings_advertised is None:
@@ -376,7 +385,7 @@ class DKBIngressHandler(BaseHTTPRequestHandler):
         bpd = str(result.bpd_version) if result and result.bpd_version is not None else "unknown"
         suffix = f"…{product[-6:]}" if product and len(product) > 6 else (product or "not configured")
         csrf = escape(controller.csrf_token, quote=True)
-        body = f"""<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Portfolio Architect Gateway — DKB</title><style>body{{font-family:system-ui,sans-serif;max-width:850px;margin:2rem auto;padding:0 1rem;background:#111;color:#eee}}section{{border:1px solid #444;border-radius:12px;padding:1rem;margin:1rem 0}}code{{word-break:break-all}}input{{width:min(34rem,95%);padding:.55rem}}button{{padding:.55rem .8rem;margin-top:.5rem}}.warn{{color:#ffca28}}.ok{{color:#66bb6a}}.small{{font-size:.9rem;color:#bbb}}</style></head><body><main><h1>Portfolio Architect Gateway — DKB</h1><section><h2>v{escape(__version__)} capability-probe milestone</h2><p class=\"warn\">Live DKB portfolio acquisition is deliberately not enabled in this release.</p><p>This App can perform only a registered, anonymous FinTS 3.0 BPD capability probe against DKB's fixed endpoint. It never asks for or stores a DKB login name, PIN or TAN and sends no holdings, order, transfer or payment business transaction.</p></section><section><h2>FinTS registration</h2><p>Fixed endpoint: <code>{escape(DKB_FINTS_ENDPOINT)}</code><br>Bank code: <code>{escape(DKB_BANK_CODE)}</code><br>Configured registration: <code>{escape(suffix)}</code></p><form method=\"post\" action=\"configure-product\"><input type=\"hidden\" name=\"csrf\" value=\"{csrf}\"><label for=\"product_id\">FinTS product registration number</label><br><input id=\"product_id\" name=\"product_id\" minlength=\"25\" maxlength=\"25\" pattern=\"[A-Za-z0-9]{{25}}\" autocomplete=\"off\" required><br><button type=\"submit\">Store registration number</button></form><p class=\"small\">Use the complete 25-character registration number issued for Portfolio Architect itself. It is transmitted only as the HKVVB product designation; a library/kernel registration must not be reused for production access.</p></section><section><h2>Anonymous BPD capability probe</h2><p>State: <strong>{escape(view.state)}</strong></p><p>{escape(view.message)}</p><form method=\"post\" action=\"probe\"><input type=\"hidden\" name=\"csrf\" value=\"{csrf}\"><button type=\"submit\" {'disabled' if product is None else ''}>Probe DKB FinTS capabilities</button></form><p>BPD version: <code>{escape(bpd)}</code><br>{HOLDINGS_PARAMETER_SEGMENT} advertised: <strong>{holdings}</strong><br>Observed parameter segments: <code>{escape(param)}</code><br>Bounded return codes: <code>{escape(codes)}</code></p><p>Sanitized bank return messages:</p>{bank_messages}<p>Decoded response SHA-256: <code>{escape(response_fingerprint)}</code><br>Decoded response bytes: <code>{escape(response_bytes)}</code></p><p class=\"small\">Only bounded HIRMG/HIRMS return-message text is retained for diagnostics. The configured product registration is redacted if echoed; arbitrary segment payload and the raw FinTS response are discarded after fingerprinting. A positive bank-level BPD result is only evidence to continue research; authenticated user-parameter validation is still required before holdings acquisition may be implemented.</p></section><section><h2>Gateway boundary</h2><p>Bearer token: <code>{escape(self.app_server.api_token)}</code></p><p class=\"small\">The token and FinTS registration state are App-private and survive in-place upgrades. The provider REST source remains fail-closed because no DKB snapshot acquisition exists yet.</p></section></main></body></html>"""
+        body = f"""<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Portfolio Architect Gateway — DKB</title><style>body{{font-family:system-ui,sans-serif;max-width:850px;margin:2rem auto;padding:0 1rem;background:#111;color:#eee}}section{{border:1px solid #444;border-radius:12px;padding:1rem;margin:1rem 0}}code{{word-break:break-all}}input{{width:min(34rem,95%);padding:.55rem}}button{{padding:.55rem .8rem;margin-top:.5rem}}.warn{{color:#ffca28}}.ok{{color:#66bb6a}}.small{{font-size:.9rem;color:#bbb}}</style></head><body><main><h1>Portfolio Architect Gateway — DKB</h1><section><h2>v{escape(__version__)} capability-probe milestone</h2><p class=\"warn\">Live DKB portfolio acquisition is deliberately not enabled in this release.</p><p>This App can perform only a registered, anonymous FinTS 3.0 BPD capability probe against DKB's fixed endpoint. It never asks for or stores a DKB login name, PIN or TAN and sends no holdings, order, transfer or payment business transaction.</p></section><section><h2>FinTS registration</h2><p>Fixed endpoint: <code>{escape(DKB_FINTS_ENDPOINT)}</code><br>Bank code: <code>{escape(DKB_BANK_CODE)}</code><br>Configured registration: <code>{escape(suffix)}</code></p><form method=\"post\" action=\"configure-product\"><input type=\"hidden\" name=\"csrf\" value=\"{csrf}\"><label for=\"product_id\">FinTS product registration number</label><br><input id=\"product_id\" name=\"product_id\" minlength=\"25\" maxlength=\"25\" pattern=\"[A-Za-z0-9]{{25}}\" autocomplete=\"off\" required><br><button type=\"submit\">Store registration number</button></form><p class=\"small\">Use the complete 25-character registration number issued for Portfolio Architect itself. It is transmitted only as the HKVVB product designation; a library/kernel registration must not be reused for production access.</p></section><section><h2>Anonymous BPD capability probe</h2><p>State: <strong>{escape(view.state)}</strong></p><p>{escape(view.message)}</p><form method=\"post\" action=\"probe\"><input type=\"hidden\" name=\"csrf\" value=\"{csrf}\"><button type=\"submit\" {'disabled' if product is None else ''}>Probe DKB FinTS capabilities</button></form><p>BPD version: <code>{escape(bpd)}</code><br>{HOLDINGS_PARAMETER_SEGMENT} advertised: <strong>{holdings}</strong><br>Observed parameter segments: <code>{escape(param)}</code><br>Bounded return codes: <code>{escape(codes)}</code></p><p>Sanitized bank return messages:</p>{bank_messages}<p>Raw response body SHA-256: <code>{escape(raw_response_fingerprint)}</code><br>Raw response body bytes: <code>{escape(raw_response_bytes)}</code><br>Decoded response SHA-256: <code>{escape(response_fingerprint)}</code><br>Decoded response bytes: <code>{escape(response_bytes)}</code></p><p class=\"small\">Only bounded HIRMG/HIRMS return-message text plus cryptographic response fingerprints and byte counts are retained for diagnostics. The configured product registration is redacted if echoed; arbitrary segment payload and the raw FinTS response are discarded after fingerprinting; exact raw/decoded response bytes never persist. A positive bank-level BPD result is only evidence to continue research; authenticated user-parameter validation is still required before holdings acquisition may be implemented.</p></section><section><h2>Gateway boundary</h2><p>Bearer token: <code>{escape(self.app_server.api_token)}</code></p><p class=\"small\">The token and FinTS registration state are App-private and survive in-place upgrades. The provider REST source remains fail-closed because no DKB snapshot acquisition exists yet.</p></section></main></body></html>"""
         return body.encode("utf-8")
 
     def _redirect(self, location: str) -> None:
@@ -439,6 +448,8 @@ def _parse_persisted_probe(raw: dict[str, Any]) -> CapabilityProbeResult:
         return_messages_raw = []
         response_sha256 = None
         response_bytes = None
+        raw_response_sha256 = None
+        raw_response_bytes = None
     elif schema == 2:
         expected = {
             "schema_version", "probed_at", "outcome", "failure_category", "http_status",
@@ -453,6 +464,32 @@ def _parse_persisted_probe(raw: dict[str, Any]) -> CapabilityProbeResult:
         return_messages_raw = raw["return_messages"]
         response_sha256 = raw["response_sha256"]
         response_bytes = raw["response_bytes"]
+        raw_response_sha256 = None
+        raw_response_bytes = None
+        allowed_outcomes = {"complete", "bank_rejected", "remote_http_error", "transport_error", "protocol_error", "gateway_error", "unexpected_error"}
+        if not isinstance(outcome, str) or outcome not in allowed_outcomes:
+            raise ValueError("invalid probe outcome")
+        if failure_category is not None and (not isinstance(failure_category, str) or failure_category not in {"bank_response_without_bpd", "remote_http_error", "transport_error", "protocol_error", "gateway_error", "unexpected_error"}):
+            raise ValueError("invalid probe failure category")
+        if http_status is not None and (isinstance(http_status, bool) or not isinstance(http_status, int) or not 100 <= http_status <= 599):
+            raise ValueError("invalid probe HTTP status")
+    elif schema == 3:
+        expected = {
+            "schema_version", "probed_at", "outcome", "failure_category", "http_status",
+            "bpd_version", "parameter_segments", "return_codes", "return_messages",
+            "response_sha256", "response_bytes", "raw_response_sha256", "raw_response_bytes",
+            "holdings_advertised",
+        }
+        if set(raw) != expected:
+            raise ValueError("unsupported probe state")
+        outcome = raw["outcome"]
+        failure_category = raw["failure_category"]
+        http_status = raw["http_status"]
+        return_messages_raw = raw["return_messages"]
+        response_sha256 = raw["response_sha256"]
+        response_bytes = raw["response_bytes"]
+        raw_response_sha256 = raw["raw_response_sha256"]
+        raw_response_bytes = raw["raw_response_bytes"]
         allowed_outcomes = {"complete", "bank_rejected", "remote_http_error", "transport_error", "protocol_error", "gateway_error", "unexpected_error"}
         if not isinstance(outcome, str) or outcome not in allowed_outcomes:
             raise ValueError("invalid probe outcome")
@@ -529,24 +566,44 @@ def _parse_persisted_probe(raw: dict[str, Any]) -> CapabilityProbeResult:
         raise ValueError("invalid response size")
     if (response_sha256 is None) != (response_bytes is None):
         raise ValueError("incomplete response correlation metadata")
+    if raw_response_sha256 is not None and (
+        not isinstance(raw_response_sha256, str)
+        or re.fullmatch(r"[0-9a-f]{64}", raw_response_sha256) is None
+    ):
+        raise ValueError("invalid raw response fingerprint")
+    if raw_response_bytes is not None and (
+        isinstance(raw_response_bytes, bool)
+        or not isinstance(raw_response_bytes, int)
+        or not 1 <= raw_response_bytes <= MAX_BASE64_RESPONSE_BYTES
+    ):
+        raise ValueError("invalid raw response size")
+    if (raw_response_sha256 is None) != (raw_response_bytes is None):
+        raise ValueError("incomplete raw response correlation metadata")
 
     if outcome == "complete":
         if bpd_version is None or not isinstance(holdings, bool) or failure_category is not None or http_status is not None:
             raise ValueError("inconsistent successful probe state")
-        if schema == 2 and (response_sha256 is None or response_bytes is None):
+        if schema in {2, 3} and (response_sha256 is None or response_bytes is None):
             raise ValueError("successful probe lacks response correlation metadata")
+        if schema == 3 and (raw_response_sha256 is None or raw_response_bytes is None):
+            raise ValueError("successful probe lacks raw response correlation metadata")
     elif outcome == "bank_rejected":
         if bpd_version is not None or holdings is not None or not codes or failure_category != "bank_response_without_bpd" or http_status is not None:
             raise ValueError("inconsistent bank rejection state")
         if response_sha256 is None or response_bytes is None:
             raise ValueError("bank rejection lacks response correlation metadata")
+        if schema == 3 and (raw_response_sha256 is None or raw_response_bytes is None):
+            raise ValueError("bank rejection lacks raw response correlation metadata")
     elif outcome == "remote_http_error":
-        if http_status is None or failure_category != "remote_http_error" or bpd_version is not None or holdings is not None or parameters or codes or return_messages or response_sha256 is not None or response_bytes is not None:
+        if http_status is None or failure_category != "remote_http_error" or bpd_version is not None or holdings is not None or parameters or codes or return_messages or response_sha256 is not None or response_bytes is not None or raw_response_sha256 is not None or raw_response_bytes is not None:
             raise ValueError("inconsistent remote HTTP failure state")
     elif outcome in {"transport_error", "protocol_error", "gateway_error", "unexpected_error"}:
         if failure_category != outcome or http_status is not None or bpd_version is not None or holdings is not None or parameters or codes or return_messages:
             raise ValueError("inconsistent probe failure state")
-        if outcome != "protocol_error" and (response_sha256 is not None or response_bytes is not None):
+        if outcome != "protocol_error" and (
+            response_sha256 is not None or response_bytes is not None
+            or raw_response_sha256 is not None or raw_response_bytes is not None
+        ):
             raise ValueError("unexpected response correlation metadata")
 
     return CapabilityProbeResult(
@@ -555,6 +612,8 @@ def _parse_persisted_probe(raw: dict[str, Any]) -> CapabilityProbeResult:
         return_messages=tuple(return_messages),
         response_sha256=response_sha256,
         response_bytes=response_bytes,
+        raw_response_sha256=raw_response_sha256,
+        raw_response_bytes=raw_response_bytes,
     )
 
 

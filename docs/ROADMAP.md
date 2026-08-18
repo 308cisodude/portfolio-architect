@@ -397,6 +397,28 @@ from current portfolio value.
 - Rename the ambiguous policy-dashboard `Next review` label to `Exception review` while keeping plan-review and exception-review clocks distinct.
 - Add no custom frontend dependency; the reference dashboard remains static until the following dynamic-presentation milestone.
 
+## v1.35.0 — provider-scoped cash and funding topology
+
+- Preserve authorized investment cash as provider-owned evidence across all accepted REST Gateway
+  snapshots instead of collapsing supplemental-provider cash into one global reserve.
+- Add broker schema 3 with explicit directed funding-transfer relationships, operator-owned
+  transfer fees and conservative settlement time in business days; never infer the reverse edge.
+- Evaluate funding provider and execution provider together. Include transfer cost in route
+  economics and use settlement delay only after economic cost when otherwise choosing between
+  equivalent routes.
+- Keep same-provider funding implicit and free; cross-provider funding is unavailable unless the
+  exact directed relationship is configured. Multiple provider cash pools remain separate and are
+  debited only by recommendations that actually use them.
+- Expose bounded advisory transfer plans plus provider cash remaining after recommendations while
+  preserving established `all_available`/`capped` authorization semantics.
+- Keep Portfolio Architect strictly advisory: no money movement, order placement, transaction
+  history, inferred execution, or sell capability is introduced.
+- Preserve REST portfolio schema 1, Gateway health schema 6, private-PKI HTTPS, bearer
+  authentication, Supervisor trust discovery, DNS pinning and provider isolation.
+- Quietly disambiguate the accumulating Robotics reference-dashboard label from the retained
+  distributing outside-scope holding and add raw DKB capability-probe response-body SHA-256/byte
+  evidence without persisting the response body itself.
+
 ## Future — native dynamic portfolio presentation
 
 - Consume the v1.34 presentation contract so the reference dashboard can render the actual

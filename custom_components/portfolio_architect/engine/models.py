@@ -73,6 +73,11 @@ class Recommendation:
     execution_provider: str | None = None
     execution_provider_name: str | None = None
     execution_fee_data_as_of: str | None = None
+    funding_provider: str | None = None
+    funding_provider_name: str | None = None
+    funding_transfer_required: bool = False
+    funding_transfer_fee_eur: Decimal = Decimal("0")
+    funding_transfer_business_days: int = 0
     estimated_fee_eur: Decimal = Decimal("0")
     estimated_cash_outlay_eur: Decimal = Decimal("0")
     estimated_cost_ratio_pct: Decimal = Decimal("0")
@@ -114,6 +119,11 @@ class Recommendation:
             "execution_provider": self.execution_provider,
             "execution_provider_name": self.execution_provider_name,
             "execution_fee_data_as_of": self.execution_fee_data_as_of,
+            "funding_provider": self.funding_provider,
+            "funding_provider_name": self.funding_provider_name,
+            "funding_transfer_required": self.funding_transfer_required,
+            "funding_transfer_fee_eur": self.funding_transfer_fee_eur,
+            "funding_transfer_business_days": self.funding_transfer_business_days,
             "estimated_fee_eur": self.estimated_fee_eur,
             "estimated_cash_outlay_eur": self.estimated_cash_outlay_eur,
             "estimated_cost_ratio_pct": self.estimated_cost_ratio_pct,

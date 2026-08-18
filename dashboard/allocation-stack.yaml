@@ -85,7 +85,7 @@ cards:
     name: Cybersecurity
     color: '#fb8c00'
   - entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_whole_portfolio_allocation
-    name: Robotics
+    name: Robotics · Acc
     color: '#00acc1'
   - entity: sensor.portfolio_architect_holding_ie00bywz0333_whole_portfolio_allocation
     name: Robotics · Dist
@@ -241,7 +241,7 @@ cards:
     name: Cybersecurity
     color: '#fb8c00'
   - entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_current_allocation
-    name: Robotics
+    name: Robotics · Acc
     color: '#00acc1'
   grid_options:
     columns: full
@@ -268,7 +268,7 @@ cards:
     name: Cybersecurity
     color: '#fb8c00'
   - entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_target_allocation
-    name: Robotics
+    name: Robotics · Acc
     color: '#00acc1'
   grid_options:
     columns: full
@@ -714,7 +714,7 @@ cards:
   card:
     type: tile
     entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_allocation_drift
-    name: Robotics
+    name: Robotics · Acc
     tap_action:
       action: more-info
     color: amber
@@ -734,7 +734,7 @@ cards:
   card:
     type: tile
     entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_allocation_drift
-    name: Robotics
+    name: Robotics · Acc
     tap_action:
       action: more-info
     color: green
@@ -754,7 +754,7 @@ cards:
   card:
     type: tile
     entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_allocation_drift
-    name: Robotics
+    name: Robotics · Acc
     tap_action:
       action: more-info
     color: red

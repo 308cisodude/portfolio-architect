@@ -1,4 +1,4 @@
-"""Regression coverage for v1.34.1 DKB Gateway discovery suppression."""
+"""Regression coverage for v1.35.0 DKB Gateway discovery suppression."""
 
 from __future__ import annotations
 

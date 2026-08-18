@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.35.0
+
+- Aligns the Comdirect App package with Portfolio Architect v1.35.0 provider-scoped funding; REST schema 1 and provider-owned authorized-cash semantics are unchanged.
+- Comdirect acquisition, OAuth/session maintenance, private-PKI HTTPS, diagnostics and the read-only boundary remain unchanged.
+
 ## 1.34.1
 
 - Package/User-Agent alignment for Portfolio Architect v1.34.1 whole-portfolio allocation-presentation hotfix; Comdirect acquisition, OAuth/session maintenance, private-PKI HTTPS and diagnostics remain unchanged.

@@ -1,10 +1,10 @@
-# Portfolio Architect Gateway — Comdirect v1.34.1
+# Portfolio Architect Gateway — Comdirect v1.35.0
 
-Version 1.34.1 is package alignment for the Home Assistant-side whole-portfolio allocation-
-presentation hotfix; the v1.34.0 generic target/presentation architecture is unchanged. The v1.32 diagnostic-policy audit and Comdirect runtime behavior are unchanged: authenticated upstream failures remain reduced to bounded failure classes and
-approved OAuth/session rejection reasons; remote response bodies, credentials, qSession state
-and private account material are not retained for diagnostics. App POST navigation remains
-relative to the Ingress namespace.
+Version 1.35.0 is package/User-Agent alignment for provider-scoped funding. The Comdirect
+Gateway continues to publish only its own provider-owned authorized investment cash through the
+unchanged REST schema 1 contract; the Home Assistant integration is responsible for keeping that
+cash separate from other providers and for advisory funding-route planning. Comdirect acquisition,
+OAuth/session maintenance and provider diagnostics are unchanged.
 
 Verified HTTPS/private CA trust, bearer authentication, PhotoTAN bootstrap, account
 selection, authorized cash, request-timeout behavior, REST schema 1, health schema 6,

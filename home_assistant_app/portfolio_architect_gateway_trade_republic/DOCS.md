@@ -1,8 +1,10 @@
-# Portfolio Architect Gateway — Trade Republic v1.34.1
+# Portfolio Architect Gateway — Trade Republic v1.35.0
 
-Version 1.34.1 is package alignment for the Home Assistant-side allocation-presentation hotfix;
-the v1.34.0 generic target/presentation architecture is unchanged. The bounded persistent **latest import diagnostic** introduced in v1.32.0 and the
-established local `DEPOTAUSZUG` statement-import/provider-snapshot contracts are unchanged.
+Version 1.35.0 is package alignment for Portfolio Architect's provider-scoped funding
+milestone. The Trade Republic App keeps its established local statement-import/snapshot boundary;
+any authorized cash it may expose through the provider-neutral REST contract remains provider-owned
+and is never merged with another institution inside the Gateway. Statement parsing and diagnostics
+are otherwise unchanged.
 
 The App may persist only an allowlisted/genericized `accepted`, `rejected` or
 `internal_error` outcome next to its private snapshot. Unexpected parser/document text is

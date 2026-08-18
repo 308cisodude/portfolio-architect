@@ -28,6 +28,7 @@ from .models import Holding, Position
 from .plan import apply_plan_override
 from .policy import evaluate
 from .execution import ExecutionConfig, choose_route, preferred_execution_route
+from .funding import provider_cash_from_metadata
 from .rebalance import allocate_buys, target_funds
 
 D = Decimal
@@ -156,8 +157,23 @@ def calculate_portfolio_payload_from_positions(
         execution_config = plan_override.get("execution")
     if execution_config is None:
         execution_config = portfolio.get("execution")
+    provider_cash = provider_cash_from_metadata(source_metadata.get("provider_investment_cash"))
+    provider_cash_is_execution_reserve = bool(
+        provider_cash
+        and isinstance(execution_config, dict)
+        and execution_config.get("enabled")
+        and execution_config.get("reserve_mode", "contribution_only") == "gateway_balance"
+    )
+    provider_reserve_by_provider = (
+        {item.provider_id: item.available_eur for item in provider_cash}
+        if provider_cash_is_execution_reserve
+        else None
+    )
+    funding_provider_names = {item.provider_id: item.provider_name for item in provider_cash}
     reserve_value = source_metadata.get("investment_reserve_eur")
     available_reserve = D(str(reserve_value)) if reserve_value is not None else None
+    if provider_reserve_by_provider is not None:
+        available_reserve = sum(provider_reserve_by_provider.values(), D("0"))
     cash_authorization_present = all(
         key in source_metadata
         for key in (
@@ -174,6 +190,8 @@ def calculate_portfolio_payload_from_positions(
         broker=broker,
         execution=execution_config if isinstance(execution_config, dict) else None,
         available_reserve_eur=available_reserve,
+        available_reserve_by_provider=provider_reserve_by_provider,
+        funding_provider_names=funding_provider_names,
         evaluated_on=analysis_date,
     )
     holdings = _build_holdings(positions, portfolio, recommendations)
@@ -269,6 +287,47 @@ def calculate_portfolio_payload_from_positions(
         for item in recommendations
         if item.proposed_buy_eur > 0
     )
+    estimated_funding_transfer_fees = sum(
+        item.funding_transfer_fee_eur
+        for item in recommendations
+        if item.proposed_buy_eur > 0
+    )
+    funding_transfer_count = len({
+        (item.funding_provider, item.execution_provider)
+        for item in recommendations
+        if item.proposed_buy_eur > 0 and item.funding_transfer_required
+    })
+    provider_remaining = {
+        item.provider_id: item.available_eur for item in provider_cash
+    }
+    transfer_plans: dict[tuple[str, str], dict[str, Any]] = {}
+    for item in recommendations:
+        if item.proposed_buy_eur <= 0 or item.funding_provider is None:
+            continue
+        if item.funding_provider in provider_remaining:
+            provider_remaining[item.funding_provider] -= item.estimated_cash_outlay_eur
+        if not item.funding_transfer_required or item.execution_provider is None:
+            continue
+        edge = (item.funding_provider, item.execution_provider)
+        existing = transfer_plans.get(edge)
+        transfer_amount = item.proposed_buy_eur + item.estimated_fee_eur
+        if existing is None:
+            transfer_plans[edge] = {
+                "from_provider": item.funding_provider,
+                "from_provider_name": item.funding_provider_name or item.funding_provider,
+                "to_provider": item.execution_provider,
+                "to_provider_name": item.execution_provider_name or item.execution_provider,
+                "amount_eur": transfer_amount,
+                "fee_eur": item.funding_transfer_fee_eur,
+                "settlement_business_days": item.funding_transfer_business_days,
+            }
+        else:
+            existing["amount_eur"] += transfer_amount
+            existing["fee_eur"] += item.funding_transfer_fee_eur
+            existing["settlement_business_days"] = max(
+                existing["settlement_business_days"],
+                item.funding_transfer_business_days,
+            )
     estimated_cash_outlay = sum(
         item.estimated_cash_outlay_eur
         for item in recommendations
@@ -393,6 +452,38 @@ def calculate_portfolio_payload_from_positions(
                     "investment_cash_authorization_cap_eur": source_metadata["investment_cash_authorization_cap_eur"],
                 }
                 if cash_authorization_present
+                else {}
+            ),
+            **(
+                {
+                    "provider_investment_cash": [
+                        {
+                            "provider_id": item.provider_id,
+                            "provider_name": item.provider_name,
+                            "available_eur": item.available_eur,
+                            "remaining_eur": max(
+                                D("0"), provider_remaining[item.provider_id]
+                            ),
+                            "as_of": item.as_of,
+                            "account_balance_eur": item.account_balance_eur,
+                            "eligible_eur": item.eligible_eur,
+                            "authorized_eur": item.authorized_eur,
+                            "authorization_policy": item.authorization_policy,
+                            "authorization_cap_eur": item.authorization_cap_eur,
+                        }
+                        for item in provider_cash
+                    ],
+                    "provider_investment_cash_source_count": len(provider_cash),
+                    "funding_transfers": [
+                        transfer_plans[edge] for edge in sorted(transfer_plans)
+                    ],
+                    "estimated_funding_transfer_fees_eur": estimated_funding_transfer_fees,
+                    "estimated_total_execution_costs_eur": (
+                        estimated_transaction_fees + estimated_funding_transfer_fees
+                    ),
+                    "funding_transfer_count": funding_transfer_count,
+                }
+                if provider_cash
                 else {}
             ),
             "execution_policy": (

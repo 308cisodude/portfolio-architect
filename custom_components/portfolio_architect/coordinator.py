@@ -105,7 +105,7 @@ from .engine.importers import (
     select_latest_dkb_exports,
 )
 from .engine.models import Position
-from .engine.rest import PROVIDER_LOCAL_REST_JSON, RestInvestmentCash
+from .engine.rest import PROVIDER_LOCAL_REST_JSON, RestInvestmentCash, RestSnapshot
 from .last_known_good import RestLastKnownGoodStore, configuration_fingerprint
 from .freshness import (
     source_freshness_rows as build_source_freshness_rows,
@@ -1396,6 +1396,7 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
                 supplemental_rest_snapshots,
                 supplemental_health,
                 supplemental_health_errors,
+                supplemental_provider_cash,
             ) = await _async_fetch_supplemental_rest_snapshots(
                 self.hass, self.supplemental_rest_sources
             )
@@ -1486,6 +1487,7 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
                 self._rest_investment_reserve_eur,
                 self._rest_investment_reserve_as_of,
                 self._rest_investment_cash,
+                supplemental_provider_cash,
             )
             data = _parse_payload(payload)
         except SupplementalPortfolioSourceError as err:
@@ -1787,6 +1789,31 @@ def _provider_display_name(provider_id: str) -> str:
 
 
 
+def _provider_cash_metadata(provider_id: str, snapshot: RestSnapshot) -> dict[str, Any] | None:
+    """Return bounded provider-scoped cash evidence without changing REST schema 1."""
+
+    if snapshot.investment_reserve_eur is None or snapshot.investment_reserve_as_of is None:
+        return None
+    result: dict[str, Any] = {
+        "provider_id": provider_id,
+        "provider_name": _provider_display_name(provider_id),
+        "available_eur": snapshot.investment_reserve_eur,
+        "as_of": snapshot.investment_reserve_as_of.isoformat(),
+    }
+    cash = snapshot.investment_cash
+    if cash is not None:
+        result.update(
+            {
+                "account_balance_eur": cash.account_balance_eur,
+                "eligible_eur": cash.eligible_eur,
+                "authorized_eur": cash.authorized_eur,
+                "authorization_policy": cash.policy,
+                "authorization_cap_eur": cash.cap_eur,
+            }
+        )
+    return result
+
+
 def _validate_supplemental_rest_integrity(
     *,
     config: SupplementalRestSourceConfig,
@@ -1835,11 +1862,17 @@ def _validate_supplemental_rest_integrity(
 async def _async_fetch_supplemental_rest_snapshots(
     hass: HomeAssistant,
     configs: tuple[SupplementalRestSourceConfig, ...],
-) -> tuple[tuple[PortfolioSourceSnapshot, ...], dict[str, GatewayHealth], dict[str, str]]:
-    """Fetch additional Gateways atomically with provider-identity health evidence."""
+) -> tuple[
+    tuple[PortfolioSourceSnapshot, ...],
+    dict[str, GatewayHealth],
+    dict[str, str],
+    dict[str, dict[str, Any]],
+]:
+    """Fetch additional Gateways atomically with provider identity and scoped cash."""
     snapshots: list[PortfolioSourceSnapshot] = []
     health_by_provider: dict[str, GatewayHealth] = {}
     errors: dict[str, str] = {}
+    provider_cash: dict[str, dict[str, Any]] = {}
     for config in configs:
         try:
             health = await async_fetch_gateway_health(hass, config.rest_config)
@@ -1855,13 +1888,16 @@ async def _async_fetch_supplemental_rest_snapshots(
         health_by_provider[config.provider_id] = health
         try:
             result = await async_fetch_rest_snapshot(hass, config.rest_config)
-            snapshots.append(
-                _validate_supplemental_rest_integrity(
-                    config=config,
-                    health=health,
-                    result=result,
-                )
+            validated = _validate_supplemental_rest_integrity(
+                config=config,
+                health=health,
+                result=result,
             )
+            snapshots.append(validated)
+            if result.snapshot is not None:
+                cash_metadata = _provider_cash_metadata(config.provider_id, result.snapshot)
+                if cash_metadata is not None:
+                    provider_cash[config.provider_id] = cash_metadata
         except PortfolioRestAuthenticationError:
             errors[config.provider_id] = "authentication_error"
         except (OSError, PortfolioRestError, ValueError) as err:
@@ -1870,7 +1906,7 @@ async def _async_fetch_supplemental_rest_snapshots(
                 if isinstance(err, PortfolioRestError)
                 else "transport_error"
             )
-    return tuple(snapshots), health_by_provider, errors
+    return tuple(snapshots), health_by_provider, errors, provider_cash
 
 
 class SupplementalPortfolioSourceError(ValueError):
@@ -2012,6 +2048,7 @@ def _calculate_rest_payload(
     investment_reserve_eur,
     investment_reserve_as_of: datetime | None,
     investment_cash: RestInvestmentCash | None,
+    supplemental_provider_cash: dict[str, dict[str, Any]],
 ) -> tuple[dict[str, Any], AggregationResult]:
     primary = PortfolioSourceSnapshot(
         source_id=primary_provider_id,
@@ -2030,6 +2067,25 @@ def _calculate_rest_payload(
         raise
     has_supplements = bool(supplemental_paths or supplemental_rest_snapshots)
     provider = PROVIDER_MULTI_SOURCE if has_supplements else PROVIDER_LOCAL_REST_JSON
+    provider_cash: dict[str, dict[str, Any]] = dict(supplemental_provider_cash)
+    if investment_reserve_eur is not None and investment_reserve_as_of is not None:
+        primary_cash: dict[str, Any] = {
+            "provider_id": primary_provider_id,
+            "provider_name": _provider_display_name(primary_provider_id),
+            "available_eur": investment_reserve_eur,
+            "as_of": investment_reserve_as_of.isoformat(),
+        }
+        if investment_cash is not None:
+            primary_cash.update(
+                {
+                    "account_balance_eur": investment_cash.account_balance_eur,
+                    "eligible_eur": investment_cash.eligible_eur,
+                    "authorized_eur": investment_cash.authorized_eur,
+                    "authorization_policy": investment_cash.policy,
+                    "authorization_cap_eur": investment_cash.cap_eur,
+                }
+            )
+        provider_cash[primary_provider_id] = primary_cash
     payload = calculate_portfolio_payload_from_positions(
         aggregation.positions,
         config_directory,
@@ -2039,6 +2095,9 @@ def _calculate_rest_payload(
         source_label=(f"{len(sources)} sources" if has_supplements else _provider_display_name(primary_provider_id)),
         source_metadata={
             **_aggregation_metadata(aggregation),
+            "provider_investment_cash": [
+                provider_cash[key] for key in sorted(provider_cash)
+            ],
             **(
                 {
                     "investment_reserve_eur": investment_reserve_eur,

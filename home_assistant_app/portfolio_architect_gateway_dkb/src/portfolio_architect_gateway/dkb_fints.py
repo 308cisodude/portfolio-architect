@@ -8,7 +8,7 @@ bounded capability metadata and the raw response is discarded.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 import base64
 import binascii
@@ -82,10 +82,15 @@ class CapabilityProbeResult:
     return_messages: tuple[ReturnMessage, ...] = ()
     response_sha256: str | None = None
     response_bytes: int | None = None
+    raw_response_sha256: str | None = None
+    raw_response_bytes: int | None = None
 
     def as_dict(self) -> dict[str, object]:
-        return {
-            "schema_version": 2,
+        raw_evidence_present = (
+            self.raw_response_sha256 is not None and self.raw_response_bytes is not None
+        )
+        result: dict[str, object] = {
+            "schema_version": 3 if raw_evidence_present else 2,
             "probed_at": self.probed_at,
             "outcome": self.outcome,
             "failure_category": self.failure_category,
@@ -98,6 +103,10 @@ class CapabilityProbeResult:
             "response_bytes": self.response_bytes,
             "holdings_advertised": self.holdings_advertised,
         }
+        if raw_evidence_present:
+            result["raw_response_sha256"] = self.raw_response_sha256
+            result["raw_response_bytes"] = self.raw_response_bytes
+        return result
 
 
 def normalise_product_id(value: str) -> str:
@@ -148,7 +157,7 @@ def probe_dkb_bpd(product_id: str, *, timeout_seconds: int = DEFAULT_TIMEOUT_SEC
             headers={
                 "Content-Type": "text/plain",
                 "Content-Length": str(len(encoded)),
-                "User-Agent": "PortfolioArchitect-DKB/1.34.1",
+                "User-Agent": "PortfolioArchitect-DKB/1.35.0",
                 "Connection": "close",
             },
         )
@@ -163,20 +172,38 @@ def probe_dkb_bpd(product_id: str, *, timeout_seconds: int = DEFAULT_TIMEOUT_SEC
         raise RemoteApiError(0, "DKB FinTS transport failed", operation="fints_bpd_probe") from err
     finally:
         connection.close()
+
+    # Fingerprint the exact bounded HTTP response body before whitespace normalization,
+    # base64 decoding, parsing, or discard. Only the digest and length survive.
+    raw_response_sha256 = hashlib.sha256(encoded_response).hexdigest()
+    raw_response_bytes = len(encoded_response)
     try:
         payload = base64.b64decode(encoded_response.strip(), validate=True)
     except (binascii.Error, ValueError) as err:
-        raise ProtocolError("DKB FinTS response is not valid base64") from err
+        protocol_error = ProtocolError("DKB FinTS response is not valid base64")
+        protocol_error.raw_response_sha256 = raw_response_sha256
+        protocol_error.raw_response_bytes = raw_response_bytes
+        raise protocol_error from err
     if not payload or len(payload) > MAX_RESPONSE_BYTES:
-        raise ProtocolError("DKB FinTS response is empty or too large")
+        protocol_error = ProtocolError("DKB FinTS response is empty or too large")
+        protocol_error.raw_response_sha256 = raw_response_sha256
+        protocol_error.raw_response_bytes = raw_response_bytes
+        raise protocol_error
     try:
-        return parse_capability_response(payload, redact_tokens=(product_id,))
+        result = parse_capability_response(payload, redact_tokens=(product_id,))
     except ProtocolError as err:
-        # Preserve only a correlation fingerprint/length for malformed decoded FinTS
-        # responses. Raw response bytes and parse-error detail remain ephemeral.
+        # Preserve only cryptographic correlation evidence. Both exact response-body
+        # bytes and decoded FinTS bytes remain ephemeral.
         err.response_sha256 = hashlib.sha256(payload).hexdigest()
         err.response_bytes = len(payload)
+        err.raw_response_sha256 = raw_response_sha256
+        err.raw_response_bytes = raw_response_bytes
         raise
+    return replace(
+        result,
+        raw_response_sha256=raw_response_sha256,
+        raw_response_bytes=raw_response_bytes,
+    )
 
 
 def parse_capability_response(
