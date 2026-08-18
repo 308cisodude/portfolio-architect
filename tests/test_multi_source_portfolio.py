@@ -186,14 +186,14 @@ def test_supplied_overlap_changes_the_next_350_euro_distribution() -> None:
     )
 
     recommendations = {
-        item["fund_id"]: item for item in payload["recommendations"]
+        item["isin"]: item for item in payload["recommendations"]
     }
     assert payload["summary"]["current_portfolio_value_eur"] == Decimal("14234.109")
     assert payload["summary"]["source_count"] == 2
-    assert recommendations["world"]["current_value_eur"] == Decimal("408.635")
-    assert recommendations["world"]["proposed_buy_eur"] == Decimal("290")
-    assert recommendations["cybersecurity"]["proposed_buy_eur"] == Decimal("20")
-    assert recommendations["robotics"]["proposed_buy_eur"] == Decimal("40")
+    assert recommendations["IE00BJ0KDQ92"]["current_value_eur"] == Decimal("408.635")
+    assert recommendations["IE00BJ0KDQ92"]["proposed_buy_eur"] == Decimal("290")
+    assert recommendations["IE00BLPK3577"]["proposed_buy_eur"] == Decimal("20")
+    assert recommendations["IE00BYZK4552"]["proposed_buy_eur"] == Decimal("40")
     assert sum(
         item["proposed_buy_eur"] for item in payload["recommendations"]
     ) == Decimal("350")

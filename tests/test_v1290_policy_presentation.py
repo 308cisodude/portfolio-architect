@@ -7,9 +7,12 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 DASHBOARD = ROOT / "dashboard"
 OPPORTUNITY_COUNT = "sensor.portfolio_architect_optimisation_opportunity_count"
-WORLD_OPPORTUNITY = (
-    "sensor.portfolio_architect_world_free_savings_plan_preferred_policy_finding"
+_PLAN = yaml.safe_load((ROOT / "examples/current-plan/portfolio.yaml").read_text(encoding="utf-8"))
+_WORLD_TARGET_ID = next(
+    item["target_id"] for item in _PLAN["portfolio"]["allocation"]
+    if item["isin"] == "IE00BJ0KDQ92"
 )
+WORLD_OPPORTUNITY = f"sensor.portfolio_architect_{_WORLD_TARGET_ID}_free_savings_plan_preferred_policy_finding"
 REVIEW_ENTITIES = {
     "date.portfolio_architect_next_exception_review",
     "date.portfolio_architect_oldest_overdue_exception_review",

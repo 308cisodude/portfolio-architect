@@ -45,6 +45,8 @@ class Holding:
 
     def to_dict(self) -> dict[str, Any]:
         result = asdict(self)
+        # v1.34 makes target identity explicit while retaining plan_fund_id.
+        result["plan_target_id"] = self.plan_fund_id
         result["source_ids"] = list(self.source_ids)
         result["source_values_eur"] = {key: value for key, value in self.source_values_eur}
         return result
@@ -81,9 +83,16 @@ class Recommendation:
     source_ids: tuple[str, ...] = ()
     source_values_eur: tuple[tuple[str, Decimal], ...] = ()
 
+    @property
+    def target_id(self) -> str:
+        """Return the explicit user-owned target identity."""
+        return self.fund_id
+
     def to_dict(self) -> dict[str, Any]:
         """Return the stable public recommendation payload contract."""
         return {
+            "target_id": self.target_id,
+            # fund_id remains the schema-8 compatibility alias.
             "fund_id": self.fund_id,
             "wkn": self.wkn,
             "isin": self.isin,

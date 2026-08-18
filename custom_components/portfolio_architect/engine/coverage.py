@@ -35,6 +35,7 @@ class TargetCoverage:
             "target_positions_missing": self.missing,
             "target_position_coverage_pct": self.coverage_pct,
             "target_architecture_complete": self.missing == 0,
+            "missing_target_ids": list(self.missing_fund_ids),
             "missing_target_fund_ids": list(self.missing_fund_ids),
             "missing_target_names": list(self.missing_names),
         }

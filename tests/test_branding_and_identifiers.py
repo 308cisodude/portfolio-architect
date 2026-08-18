@@ -2,6 +2,7 @@
 
 from pathlib import Path
 import json
+import yaml
 from PIL import Image
 
 ROOT = Path(__file__).parents[1]
@@ -45,13 +46,12 @@ def test_copyable_isin_entity_and_dashboard_actions() -> None:
     source = (INTEGRATION / "sensor.py").read_text(encoding="utf-8")
     assert "class PortfolioInstrumentIsinSensor" in source
     assert 'return f"{self._fund_id}_isin"' in source
+    plan = yaml.safe_load((ROOT / "examples/current-plan/portfolio.yaml").read_text(encoding="utf-8"))
+    target_ids = [item["target_id"] for item in plan["portfolio"]["allocation"]]
     for dashboard in (ROOT / "dashboard").rglob("*.yaml"):
         text = dashboard.read_text(encoding="utf-8")
-        for fund_id in (
-            "world", "emerging_markets", "world_small_cap", "healthcare",
-            "ai_big_data", "cybersecurity", "robotics",
-        ):
-            if f"sensor.portfolio_architect_{fund_id}_proposed_buy" not in text:
+        for target_id in target_ids:
+            if f"sensor.portfolio_architect_{target_id}_proposed_buy" not in text:
                 continue
-            assert f"entity: sensor.portfolio_architect_{fund_id}_isin" in text
+            assert f"entity: sensor.portfolio_architect_{target_id}_isin" in text
 

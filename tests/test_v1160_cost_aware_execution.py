@@ -4,6 +4,8 @@ from decimal import Decimal
 from pathlib import Path
 import sys
 
+import yaml
+
 ROOT = Path(__file__).parents[1]
 COMPONENT = ROOT / "custom_components" / "portfolio_architect"
 sys.path.insert(0, str(COMPONENT))
@@ -250,16 +252,21 @@ def test_v1160_dashboard_keeps_native_cost_aware_interaction_contract() -> None:
     ):
         assert dashboard.count(entity) >= 2
 
-    expected_en = """entity: sensor.portfolio_architect_world_proposed_buy
+    plan = yaml.safe_load((ROOT / "examples/current-plan/portfolio.yaml").read_text())
+    world_id = next(
+        item["target_id"] for item in plan["portfolio"]["allocation"]
+        if item["isin"] == "IE00BJ0KDQ92"
+    )
+    expected_en = f"""entity: sensor.portfolio_architect_{world_id}_proposed_buy
         name: MSCI World
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_world_purchase_explanation
+          entity: sensor.portfolio_architect_{world_id}_purchase_explanation
         color: green
         icon: mdi:cart-arrow-down
         hold_action:
           action: more-info
-          entity: sensor.portfolio_architect_world_isin"""
+          entity: sensor.portfolio_architect_{world_id}_isin"""
     assert dashboard.count(expected_en) == 2
 
 

@@ -51,17 +51,23 @@ def test_position_source_provenance_is_a_native_translated_entity() -> None:
 
 
 def test_dashboard_exposes_overlapping_target_position_sources() -> None:
+    plan = yaml.safe_load((ROOT / "examples/current-plan/portfolio.yaml").read_text())
+    world_id = next(
+        item["target_id"]
+        for item in plan["portfolio"]["allocation"]
+        if item["isin"] == "IE00BJ0KDQ92"
+    )
+    entity_id = f"sensor.portfolio_architect_{world_id}_position_sources"
     dashboard = yaml.safe_load((ROOT / "dashboard/target-architecture.yaml").read_text())
     cards = [item for item in _walk(dashboard) if isinstance(item, dict)]
     world = next(
         item for item in cards
-        if item.get("type") == "tile"
-        and item.get("entity") == "sensor.portfolio_architect_world_position_sources"
+        if item.get("type") == "tile" and item.get("entity") == entity_id
     )
     assert world["name"] == "MSCI World sources"
     assert world["state_content"] == "source_summary"
     assert world["color"] == "blue"
     source = (ROOT / "dashboard/bilingual-dashboard.yaml").read_text()
-    assert "sensor.portfolio_architect_world_position_sources" in source
+    assert entity_id in source
     assert "name: MSCI World sources" in source
     assert "name: Quellen MSCI World" in source

@@ -194,6 +194,9 @@
           },
           "missing_names": {
             "name": "Missing positions"
+          },
+          "missing_target_ids": {
+            "name": "Missing target IDs"
           }
         }
       },
@@ -221,8 +224,11 @@
           "wkn": {
             "name": "WKN"
           },
+          "target_id": {
+            "name": "Target ID"
+          },
           "fund_id": {
-            "name": "Internal fund ID"
+            "name": "Legacy fund ID"
           },
           "allocation_status": {
             "name": "Allocation status",
@@ -1236,8 +1242,11 @@
           "wkn": {
             "name": "WKN"
           },
+          "target_id": {
+            "name": "Target ID"
+          },
           "fund_id": {
-            "name": "Internal fund ID"
+            "name": "Legacy fund ID"
           },
           "proposed_buy_eur": {
             "name": "Proposed purchase"
@@ -1472,8 +1481,11 @@
           "consolidated_value_eur": {
             "name": "Consolidated value"
           },
+          "target_id": {
+            "name": "Target ID"
+          },
           "fund_id": {
-            "name": "Internal fund ID"
+            "name": "Legacy fund ID"
           },
           "fund_name": {
             "name": "Instrument"
@@ -1888,6 +1900,50 @@
       },
       "exception_review_required_count": {
         "name": "Exception reviews required"
+      },
+      "presentation_model": {
+        "name": "Portfolio presentation model",
+        "state_attributes": {
+          "presentation_schema_version": {
+            "name": "Presentation schema"
+          },
+          "target_count": {
+            "name": "Targets"
+          },
+          "target_ids": {
+            "name": "Target IDs"
+          },
+          "outside_scope_count": {
+            "name": "Outside-scope holdings"
+          },
+          "outside_scope_position_ids": {
+            "name": "Outside-scope position IDs"
+          },
+          "plan_actionable": {
+            "name": "Plan actionable"
+          },
+          "plan_actionability_reason": {
+            "name": "Actionability reason"
+          },
+          "targets": {
+            "name": "Target inventory"
+          },
+          "outside_scope_holdings": {
+            "name": "Outside-scope inventory"
+          },
+          "policy": {
+            "name": "Policy state"
+          },
+          "current_plan_holding_count": {
+            "name": "Current-plan holdings"
+          },
+          "current_plan_holding_ids": {
+            "name": "Current-plan holding IDs"
+          },
+          "current_plan_holdings": {
+            "name": "Current-plan holding inventory"
+          }
+        }
       }
     },
     "date": {
@@ -2313,7 +2369,7 @@
       },
       "plan_instrument": {
         "title": "Configure {instrument_name}",
-        "description": "WKN {wkn} · ISIN {isin}",
+        "description": "ISIN {isin} · WKN {wkn} · Target ID {target_id}. The target ID is generated once by Portfolio Architect and is independent from instrument identifiers.",
         "data": {
           "target_pct": "Target weight",
           "buy_enabled": "Eligible for purchases"

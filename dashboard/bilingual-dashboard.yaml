@@ -377,20 +377,20 @@ views:
     - type: conditional
       conditions:
       - condition: numeric_state
-        entity: sensor.portfolio_architect_world_proposed_buy
+        entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_proposed_buy
         above: 0
       card:
         type: tile
-        entity: sensor.portfolio_architect_world_proposed_buy
+        entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_proposed_buy
         name: MSCI World
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_world_purchase_explanation
+          entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_purchase_explanation
         color: green
         icon: mdi:cart-arrow-down
         hold_action:
           action: more-info
-          entity: sensor.portfolio_architect_world_isin
+          entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_isin
         state_content:
         - state
         - execution_provider_name
@@ -400,17 +400,17 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_world_purchase_explanation
+        entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_purchase_explanation
         state: deferred
       card:
         type: tile
-        entity: sensor.portfolio_architect_world_purchase_explanation
+        entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_purchase_explanation
         name: MSCI World · wait
         tap_action:
           action: more-info
         hold_action:
           action: more-info
-          entity: sensor.portfolio_architect_world_isin
+          entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_isin
         color: amber
         icon: mdi:cash-clock
         hide_state: true
@@ -420,20 +420,20 @@ views:
     - type: conditional
       conditions:
       - condition: numeric_state
-        entity: sensor.portfolio_architect_emerging_markets_proposed_buy
+        entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_proposed_buy
         above: 0
       card:
         type: tile
-        entity: sensor.portfolio_architect_emerging_markets_proposed_buy
+        entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_proposed_buy
         name: Emerging Markets
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_emerging_markets_purchase_explanation
+          entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_purchase_explanation
         color: green
         icon: mdi:cart-arrow-down
         hold_action:
           action: more-info
-          entity: sensor.portfolio_architect_emerging_markets_isin
+          entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_isin
         state_content:
         - state
         - execution_provider_name
@@ -443,17 +443,17 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_emerging_markets_purchase_explanation
+        entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_purchase_explanation
         state: deferred
       card:
         type: tile
-        entity: sensor.portfolio_architect_emerging_markets_purchase_explanation
+        entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_purchase_explanation
         name: EM · wait
         tap_action:
           action: more-info
         hold_action:
           action: more-info
-          entity: sensor.portfolio_architect_emerging_markets_isin
+          entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_isin
         color: amber
         icon: mdi:cash-clock
         hide_state: true
@@ -463,20 +463,20 @@ views:
     - type: conditional
       conditions:
       - condition: numeric_state
-        entity: sensor.portfolio_architect_world_small_cap_proposed_buy
+        entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_proposed_buy
         above: 0
       card:
         type: tile
-        entity: sensor.portfolio_architect_world_small_cap_proposed_buy
+        entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_proposed_buy
         name: World Small Cap
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_world_small_cap_purchase_explanation
+          entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_purchase_explanation
         color: green
         icon: mdi:cart-arrow-down
         hold_action:
           action: more-info
-          entity: sensor.portfolio_architect_world_small_cap_isin
+          entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_isin
         state_content:
         - state
         - execution_provider_name
@@ -486,17 +486,17 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_world_small_cap_purchase_explanation
+        entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_purchase_explanation
         state: deferred
       card:
         type: tile
-        entity: sensor.portfolio_architect_world_small_cap_purchase_explanation
+        entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_purchase_explanation
         name: Small Cap · wait
         tap_action:
           action: more-info
         hold_action:
           action: more-info
-          entity: sensor.portfolio_architect_world_small_cap_isin
+          entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_isin
         color: amber
         icon: mdi:cash-clock
         hide_state: true
@@ -506,20 +506,20 @@ views:
     - type: conditional
       conditions:
       - condition: numeric_state
-        entity: sensor.portfolio_architect_healthcare_proposed_buy
+        entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_proposed_buy
         above: 0
       card:
         type: tile
-        entity: sensor.portfolio_architect_healthcare_proposed_buy
+        entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_proposed_buy
         name: Healthcare
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_healthcare_purchase_explanation
+          entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_purchase_explanation
         color: green
         icon: mdi:cart-arrow-down
         hold_action:
           action: more-info
-          entity: sensor.portfolio_architect_healthcare_isin
+          entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_isin
         state_content:
         - state
         - execution_provider_name
@@ -529,17 +529,17 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_healthcare_purchase_explanation
+        entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_purchase_explanation
         state: deferred
       card:
         type: tile
-        entity: sensor.portfolio_architect_healthcare_purchase_explanation
+        entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_purchase_explanation
         name: Healthcare · wait
         tap_action:
           action: more-info
         hold_action:
           action: more-info
-          entity: sensor.portfolio_architect_healthcare_isin
+          entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_isin
         color: amber
         icon: mdi:cash-clock
         hide_state: true
@@ -549,20 +549,20 @@ views:
     - type: conditional
       conditions:
       - condition: numeric_state
-        entity: sensor.portfolio_architect_ai_big_data_proposed_buy
+        entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_proposed_buy
         above: 0
       card:
         type: tile
-        entity: sensor.portfolio_architect_ai_big_data_proposed_buy
+        entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_proposed_buy
         name: AI & Big Data
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_ai_big_data_purchase_explanation
+          entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_purchase_explanation
         color: green
         icon: mdi:cart-arrow-down
         hold_action:
           action: more-info
-          entity: sensor.portfolio_architect_ai_big_data_isin
+          entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_isin
         state_content:
         - state
         - execution_provider_name
@@ -572,17 +572,17 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_ai_big_data_purchase_explanation
+        entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_purchase_explanation
         state: deferred
       card:
         type: tile
-        entity: sensor.portfolio_architect_ai_big_data_purchase_explanation
+        entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_purchase_explanation
         name: AI & Data · wait
         tap_action:
           action: more-info
         hold_action:
           action: more-info
-          entity: sensor.portfolio_architect_ai_big_data_isin
+          entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_isin
         color: amber
         icon: mdi:cash-clock
         hide_state: true
@@ -592,20 +592,20 @@ views:
     - type: conditional
       conditions:
       - condition: numeric_state
-        entity: sensor.portfolio_architect_cybersecurity_proposed_buy
+        entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_proposed_buy
         above: 0
       card:
         type: tile
-        entity: sensor.portfolio_architect_cybersecurity_proposed_buy
+        entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_proposed_buy
         name: Cybersecurity
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_cybersecurity_purchase_explanation
+          entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_purchase_explanation
         color: green
         icon: mdi:cart-arrow-down
         hold_action:
           action: more-info
-          entity: sensor.portfolio_architect_cybersecurity_isin
+          entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_isin
         state_content:
         - state
         - execution_provider_name
@@ -615,17 +615,17 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_cybersecurity_purchase_explanation
+        entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_purchase_explanation
         state: deferred
       card:
         type: tile
-        entity: sensor.portfolio_architect_cybersecurity_purchase_explanation
+        entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_purchase_explanation
         name: Cyber · wait
         tap_action:
           action: more-info
         hold_action:
           action: more-info
-          entity: sensor.portfolio_architect_cybersecurity_isin
+          entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_isin
         color: amber
         icon: mdi:cash-clock
         hide_state: true
@@ -635,20 +635,20 @@ views:
     - type: conditional
       conditions:
       - condition: numeric_state
-        entity: sensor.portfolio_architect_robotics_proposed_buy
+        entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_proposed_buy
         above: 0
       card:
         type: tile
-        entity: sensor.portfolio_architect_robotics_proposed_buy
+        entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_proposed_buy
         name: Robotics
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_robotics_purchase_explanation
+          entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_purchase_explanation
         color: green
         icon: mdi:cart-arrow-down
         hold_action:
           action: more-info
-          entity: sensor.portfolio_architect_robotics_isin
+          entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_isin
         state_content:
         - state
         - execution_provider_name
@@ -658,17 +658,17 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_robotics_purchase_explanation
+        entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_purchase_explanation
         state: deferred
       card:
         type: tile
-        entity: sensor.portfolio_architect_robotics_purchase_explanation
+        entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_purchase_explanation
         name: Robotics · wait
         tap_action:
           action: more-info
         hold_action:
           action: more-info
-          entity: sensor.portfolio_architect_robotics_isin
+          entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_isin
         color: amber
         icon: mdi:cash-clock
         hide_state: true
@@ -761,11 +761,11 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_robotics_accumulating_preferred_policy_exception
+        entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_accumulating_preferred_policy_exception
         state: accepted_exception
       card:
         type: tile
-        entity: sensor.portfolio_architect_robotics_accumulating_preferred_policy_exception
+        entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_accumulating_preferred_policy_exception
         name: Robotics exception
         tap_action:
           action: more-info
@@ -778,11 +778,11 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_robotics_accumulating_preferred_policy_exception
+        entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_accumulating_preferred_policy_exception
         state: review_required
       card:
         type: tile
-        entity: sensor.portfolio_architect_robotics_accumulating_preferred_policy_exception
+        entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_accumulating_preferred_policy_exception
         name: Robotics review
         tap_action:
           action: more-info
@@ -833,7 +833,7 @@ views:
       card:
         type: tile
         entity: date.portfolio_architect_next_exception_review
-        name: Next review
+        name: Exception review
         tap_action:
           action: more-info
           entity: sensor.portfolio_architect_next_exception_review
@@ -865,15 +865,15 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_world_free_savings_plan_preferred_policy_finding
+        entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_free_savings_plan_preferred_policy_finding
         state: opportunity
       card:
         type: tile
-        entity: sensor.portfolio_architect_world_free_savings_plan_preferred_policy_finding
+        entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_free_savings_plan_preferred_policy_finding
         name: MSCI World · fee 1.5% → 0%
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_world_free_savings_plan_preferred_policy_decision
+          entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_free_savings_plan_preferred_policy_decision
         color: blue
         icon: mdi:cash-remove
         hide_state: true
@@ -883,15 +883,15 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_emerging_markets_free_savings_plan_preferred_policy_finding
+        entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_free_savings_plan_preferred_policy_finding
         state: opportunity
       card:
         type: tile
-        entity: sensor.portfolio_architect_emerging_markets_free_savings_plan_preferred_policy_finding
+        entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_free_savings_plan_preferred_policy_finding
         name: Emerging Markets · fee 1.5% → 0%
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_emerging_markets_free_savings_plan_preferred_policy_decision
+          entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_free_savings_plan_preferred_policy_decision
         color: blue
         icon: mdi:cash-remove
         hide_state: true
@@ -901,15 +901,15 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_healthcare_free_savings_plan_preferred_policy_finding
+        entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_free_savings_plan_preferred_policy_finding
         state: opportunity
       card:
         type: tile
-        entity: sensor.portfolio_architect_healthcare_free_savings_plan_preferred_policy_finding
+        entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_free_savings_plan_preferred_policy_finding
         name: Healthcare · fee 1.5% → 0%
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_healthcare_free_savings_plan_preferred_policy_decision
+          entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_free_savings_plan_preferred_policy_decision
         color: blue
         icon: mdi:cash-remove
         hide_state: true
@@ -919,15 +919,15 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_cybersecurity_free_savings_plan_preferred_policy_finding
+        entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_free_savings_plan_preferred_policy_finding
         state: opportunity
       card:
         type: tile
-        entity: sensor.portfolio_architect_cybersecurity_free_savings_plan_preferred_policy_finding
+        entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_free_savings_plan_preferred_policy_finding
         name: Cybersecurity · fee 1.5% → 0%
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_cybersecurity_free_savings_plan_preferred_policy_decision
+          entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_free_savings_plan_preferred_policy_decision
         color: blue
         icon: mdi:cash-remove
         hide_state: true
@@ -972,19 +972,19 @@ views:
       show_state: false
       state_color: true
       entities:
-      - entity: binary_sensor.portfolio_architect_world_target_position_held
+      - entity: binary_sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_target_position_held
         name: MSCI World
-      - entity: binary_sensor.portfolio_architect_emerging_markets_target_position_held
+      - entity: binary_sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_target_position_held
         name: Emerging Markets
-      - entity: binary_sensor.portfolio_architect_world_small_cap_target_position_held
+      - entity: binary_sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_target_position_held
         name: World Small Cap
-      - entity: binary_sensor.portfolio_architect_healthcare_target_position_held
+      - entity: binary_sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_target_position_held
         name: Healthcare
-      - entity: binary_sensor.portfolio_architect_ai_big_data_target_position_held
+      - entity: binary_sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_target_position_held
         name: AI & Big Data
-      - entity: binary_sensor.portfolio_architect_cybersecurity_target_position_held
+      - entity: binary_sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_target_position_held
         name: Cybersecurity
-      - entity: binary_sensor.portfolio_architect_robotics_target_position_held
+      - entity: binary_sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_target_position_held
         name: Robotics
       grid_options:
         columns: full
@@ -992,11 +992,11 @@ views:
     - type: conditional
       conditions:
       - condition: numeric_state
-        entity: sensor.portfolio_architect_world_position_sources
+        entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_position_sources
         above: 1
       card:
         type: tile
-        entity: sensor.portfolio_architect_world_position_sources
+        entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_position_sources
         name: MSCI World sources
         state_content: source_summary
         tap_action:
@@ -1009,11 +1009,11 @@ views:
     - type: conditional
       conditions:
       - condition: numeric_state
-        entity: sensor.portfolio_architect_emerging_markets_position_sources
+        entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_position_sources
         above: 1
       card:
         type: tile
-        entity: sensor.portfolio_architect_emerging_markets_position_sources
+        entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_position_sources
         name: Emerging Markets sources
         state_content: source_summary
         tap_action:
@@ -1026,11 +1026,11 @@ views:
     - type: conditional
       conditions:
       - condition: numeric_state
-        entity: sensor.portfolio_architect_world_small_cap_position_sources
+        entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_position_sources
         above: 1
       card:
         type: tile
-        entity: sensor.portfolio_architect_world_small_cap_position_sources
+        entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_position_sources
         name: World Small Cap sources
         state_content: source_summary
         tap_action:
@@ -1043,11 +1043,11 @@ views:
     - type: conditional
       conditions:
       - condition: numeric_state
-        entity: sensor.portfolio_architect_healthcare_position_sources
+        entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_position_sources
         above: 1
       card:
         type: tile
-        entity: sensor.portfolio_architect_healthcare_position_sources
+        entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_position_sources
         name: Healthcare sources
         state_content: source_summary
         tap_action:
@@ -1060,11 +1060,11 @@ views:
     - type: conditional
       conditions:
       - condition: numeric_state
-        entity: sensor.portfolio_architect_ai_big_data_position_sources
+        entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_position_sources
         above: 1
       card:
         type: tile
-        entity: sensor.portfolio_architect_ai_big_data_position_sources
+        entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_position_sources
         name: AI & Big Data sources
         state_content: source_summary
         tap_action:
@@ -1077,11 +1077,11 @@ views:
     - type: conditional
       conditions:
       - condition: numeric_state
-        entity: sensor.portfolio_architect_cybersecurity_position_sources
+        entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_position_sources
         above: 1
       card:
         type: tile
-        entity: sensor.portfolio_architect_cybersecurity_position_sources
+        entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_position_sources
         name: Cybersecurity sources
         state_content: source_summary
         tap_action:
@@ -1094,11 +1094,11 @@ views:
     - type: conditional
       conditions:
       - condition: numeric_state
-        entity: sensor.portfolio_architect_robotics_position_sources
+        entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_position_sources
         above: 1
       card:
         type: tile
-        entity: sensor.portfolio_architect_robotics_position_sources
+        entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_position_sources
         name: Robotics sources
         state_content: source_summary
         tap_action:
@@ -1868,25 +1868,25 @@ views:
     - type: distribution
       title: Whole-portfolio distribution
       entities:
-      - entity: sensor.portfolio_architect_world_whole_portfolio_allocation
+      - entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_whole_portfolio_allocation
         name: MSCI World
         color: '#1e88e5'
-      - entity: sensor.portfolio_architect_emerging_markets_whole_portfolio_allocation
+      - entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_whole_portfolio_allocation
         name: Emerging Markets
         color: '#00897b'
-      - entity: sensor.portfolio_architect_world_small_cap_whole_portfolio_allocation
+      - entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_whole_portfolio_allocation
         name: World Small Cap
         color: '#43a047'
-      - entity: sensor.portfolio_architect_healthcare_whole_portfolio_allocation
+      - entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_whole_portfolio_allocation
         name: Healthcare Innovation
         color: '#e53935'
-      - entity: sensor.portfolio_architect_ai_big_data_whole_portfolio_allocation
+      - entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_whole_portfolio_allocation
         name: AI & Big Data
         color: '#8e24aa'
-      - entity: sensor.portfolio_architect_cybersecurity_whole_portfolio_allocation
+      - entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_whole_portfolio_allocation
         name: Cybersecurity
         color: '#fb8c00'
-      - entity: sensor.portfolio_architect_robotics_whole_portfolio_allocation
+      - entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_whole_portfolio_allocation
         name: Robotics
         color: '#00acc1'
       - entity: sensor.portfolio_architect_holding_ie00bywz0333_whole_portfolio_allocation
@@ -2053,25 +2053,25 @@ views:
     - type: distribution
       title: Current plan allocation
       entities:
-      - entity: sensor.portfolio_architect_world_current_allocation
+      - entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_current_allocation
         name: MSCI World
         color: '#1e88e5'
-      - entity: sensor.portfolio_architect_emerging_markets_current_allocation
+      - entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_current_allocation
         name: Emerging Markets
         color: '#00897b'
-      - entity: sensor.portfolio_architect_world_small_cap_current_allocation
+      - entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_current_allocation
         name: World Small Cap
         color: '#43a047'
-      - entity: sensor.portfolio_architect_healthcare_current_allocation
+      - entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_current_allocation
         name: Healthcare Innovation
         color: '#e53935'
-      - entity: sensor.portfolio_architect_ai_big_data_current_allocation
+      - entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_current_allocation
         name: AI & Big Data
         color: '#8e24aa'
-      - entity: sensor.portfolio_architect_cybersecurity_current_allocation
+      - entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_current_allocation
         name: Cybersecurity
         color: '#fb8c00'
-      - entity: sensor.portfolio_architect_robotics_current_allocation
+      - entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_current_allocation
         name: Robotics
         color: '#00acc1'
       grid_options:
@@ -2087,25 +2087,25 @@ views:
     - type: distribution
       title: Plan target allocation
       entities:
-      - entity: sensor.portfolio_architect_world_target_allocation
+      - entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_target_allocation
         name: MSCI World
         color: '#1e88e5'
-      - entity: sensor.portfolio_architect_emerging_markets_target_allocation
+      - entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_target_allocation
         name: Emerging Markets
         color: '#00897b'
-      - entity: sensor.portfolio_architect_world_small_cap_target_allocation
+      - entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_target_allocation
         name: World Small Cap
         color: '#43a047'
-      - entity: sensor.portfolio_architect_healthcare_target_allocation
+      - entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_target_allocation
         name: Healthcare Innovation
         color: '#e53935'
-      - entity: sensor.portfolio_architect_ai_big_data_target_allocation
+      - entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_target_allocation
         name: AI & Big Data
         color: '#8e24aa'
-      - entity: sensor.portfolio_architect_cybersecurity_target_allocation
+      - entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_target_allocation
         name: Cybersecurity
         color: '#fb8c00'
-      - entity: sensor.portfolio_architect_robotics_target_allocation
+      - entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_target_allocation
         name: Robotics
         color: '#00acc1'
       grid_options:
@@ -2194,15 +2194,15 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_world_allocation_status
+        entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_allocation_status
         state: underweight
       card:
         type: tile
-        entity: sensor.portfolio_architect_world_allocation_drift
+        entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_allocation_drift
         name: MSCI World
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_world_allocation_explanation
+          entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_allocation_explanation
         color: amber
         icon: mdi:chart-timeline-variant
         features:
@@ -2215,15 +2215,15 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_world_allocation_status
+        entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_allocation_status
         state: on_target
       card:
         type: tile
-        entity: sensor.portfolio_architect_world_allocation_drift
+        entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_allocation_drift
         name: MSCI World
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_world_allocation_explanation
+          entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_allocation_explanation
         color: green
         icon: mdi:chart-timeline-variant
         features:
@@ -2236,15 +2236,15 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_world_allocation_status
+        entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_allocation_status
         state: overweight
       card:
         type: tile
-        entity: sensor.portfolio_architect_world_allocation_drift
+        entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_allocation_drift
         name: MSCI World
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_world_allocation_explanation
+          entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_allocation_explanation
         color: red
         icon: mdi:chart-timeline-variant
         features:
@@ -2257,15 +2257,15 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_emerging_markets_allocation_status
+        entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_allocation_status
         state: underweight
       card:
         type: tile
-        entity: sensor.portfolio_architect_emerging_markets_allocation_drift
+        entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_allocation_drift
         name: Emerging Markets
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_emerging_markets_allocation_explanation
+          entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_allocation_explanation
         color: amber
         icon: mdi:chart-timeline-variant
         features:
@@ -2278,15 +2278,15 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_emerging_markets_allocation_status
+        entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_allocation_status
         state: on_target
       card:
         type: tile
-        entity: sensor.portfolio_architect_emerging_markets_allocation_drift
+        entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_allocation_drift
         name: Emerging Markets
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_emerging_markets_allocation_explanation
+          entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_allocation_explanation
         color: green
         icon: mdi:chart-timeline-variant
         features:
@@ -2299,15 +2299,15 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_emerging_markets_allocation_status
+        entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_allocation_status
         state: overweight
       card:
         type: tile
-        entity: sensor.portfolio_architect_emerging_markets_allocation_drift
+        entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_allocation_drift
         name: Emerging Markets
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_emerging_markets_allocation_explanation
+          entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_allocation_explanation
         color: red
         icon: mdi:chart-timeline-variant
         features:
@@ -2320,15 +2320,15 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_world_small_cap_allocation_status
+        entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_allocation_status
         state: underweight
       card:
         type: tile
-        entity: sensor.portfolio_architect_world_small_cap_allocation_drift
+        entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_allocation_drift
         name: World Small Cap
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_world_small_cap_allocation_explanation
+          entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_allocation_explanation
         color: amber
         icon: mdi:chart-timeline-variant
         features:
@@ -2341,15 +2341,15 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_world_small_cap_allocation_status
+        entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_allocation_status
         state: on_target
       card:
         type: tile
-        entity: sensor.portfolio_architect_world_small_cap_allocation_drift
+        entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_allocation_drift
         name: World Small Cap
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_world_small_cap_allocation_explanation
+          entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_allocation_explanation
         color: green
         icon: mdi:chart-timeline-variant
         features:
@@ -2362,15 +2362,15 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_world_small_cap_allocation_status
+        entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_allocation_status
         state: overweight
       card:
         type: tile
-        entity: sensor.portfolio_architect_world_small_cap_allocation_drift
+        entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_allocation_drift
         name: World Small Cap
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_world_small_cap_allocation_explanation
+          entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_allocation_explanation
         color: red
         icon: mdi:chart-timeline-variant
         features:
@@ -2383,15 +2383,15 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_healthcare_allocation_status
+        entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_allocation_status
         state: underweight
       card:
         type: tile
-        entity: sensor.portfolio_architect_healthcare_allocation_drift
+        entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_allocation_drift
         name: Healthcare
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_healthcare_allocation_explanation
+          entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_allocation_explanation
         color: amber
         icon: mdi:chart-timeline-variant
         features:
@@ -2404,15 +2404,15 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_healthcare_allocation_status
+        entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_allocation_status
         state: on_target
       card:
         type: tile
-        entity: sensor.portfolio_architect_healthcare_allocation_drift
+        entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_allocation_drift
         name: Healthcare
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_healthcare_allocation_explanation
+          entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_allocation_explanation
         color: green
         icon: mdi:chart-timeline-variant
         features:
@@ -2425,15 +2425,15 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_healthcare_allocation_status
+        entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_allocation_status
         state: overweight
       card:
         type: tile
-        entity: sensor.portfolio_architect_healthcare_allocation_drift
+        entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_allocation_drift
         name: Healthcare
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_healthcare_allocation_explanation
+          entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_allocation_explanation
         color: red
         icon: mdi:chart-timeline-variant
         features:
@@ -2446,15 +2446,15 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_ai_big_data_allocation_status
+        entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_allocation_status
         state: underweight
       card:
         type: tile
-        entity: sensor.portfolio_architect_ai_big_data_allocation_drift
+        entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_allocation_drift
         name: AI & Big Data
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_ai_big_data_allocation_explanation
+          entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_allocation_explanation
         color: amber
         icon: mdi:chart-timeline-variant
         features:
@@ -2467,15 +2467,15 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_ai_big_data_allocation_status
+        entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_allocation_status
         state: on_target
       card:
         type: tile
-        entity: sensor.portfolio_architect_ai_big_data_allocation_drift
+        entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_allocation_drift
         name: AI & Big Data
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_ai_big_data_allocation_explanation
+          entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_allocation_explanation
         color: green
         icon: mdi:chart-timeline-variant
         features:
@@ -2488,15 +2488,15 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_ai_big_data_allocation_status
+        entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_allocation_status
         state: overweight
       card:
         type: tile
-        entity: sensor.portfolio_architect_ai_big_data_allocation_drift
+        entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_allocation_drift
         name: AI & Big Data
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_ai_big_data_allocation_explanation
+          entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_allocation_explanation
         color: red
         icon: mdi:chart-timeline-variant
         features:
@@ -2509,15 +2509,15 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_cybersecurity_allocation_status
+        entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_allocation_status
         state: underweight
       card:
         type: tile
-        entity: sensor.portfolio_architect_cybersecurity_allocation_drift
+        entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_allocation_drift
         name: Cybersecurity
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_cybersecurity_allocation_explanation
+          entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_allocation_explanation
         color: amber
         icon: mdi:chart-timeline-variant
         features:
@@ -2530,15 +2530,15 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_cybersecurity_allocation_status
+        entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_allocation_status
         state: on_target
       card:
         type: tile
-        entity: sensor.portfolio_architect_cybersecurity_allocation_drift
+        entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_allocation_drift
         name: Cybersecurity
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_cybersecurity_allocation_explanation
+          entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_allocation_explanation
         color: green
         icon: mdi:chart-timeline-variant
         features:
@@ -2551,15 +2551,15 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_cybersecurity_allocation_status
+        entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_allocation_status
         state: overweight
       card:
         type: tile
-        entity: sensor.portfolio_architect_cybersecurity_allocation_drift
+        entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_allocation_drift
         name: Cybersecurity
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_cybersecurity_allocation_explanation
+          entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_allocation_explanation
         color: red
         icon: mdi:chart-timeline-variant
         features:
@@ -2572,15 +2572,15 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_robotics_allocation_status
+        entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_allocation_status
         state: underweight
       card:
         type: tile
-        entity: sensor.portfolio_architect_robotics_allocation_drift
+        entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_allocation_drift
         name: Robotics
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_robotics_allocation_explanation
+          entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_allocation_explanation
         color: amber
         icon: mdi:chart-timeline-variant
         features:
@@ -2593,15 +2593,15 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_robotics_allocation_status
+        entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_allocation_status
         state: on_target
       card:
         type: tile
-        entity: sensor.portfolio_architect_robotics_allocation_drift
+        entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_allocation_drift
         name: Robotics
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_robotics_allocation_explanation
+          entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_allocation_explanation
         color: green
         icon: mdi:chart-timeline-variant
         features:
@@ -2614,15 +2614,15 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_robotics_allocation_status
+        entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_allocation_status
         state: overweight
       card:
         type: tile
-        entity: sensor.portfolio_architect_robotics_allocation_drift
+        entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_allocation_drift
         name: Robotics
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_robotics_allocation_explanation
+          entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_allocation_explanation
         color: red
         icon: mdi:chart-timeline-variant
         features:
@@ -3021,20 +3021,20 @@ views:
     - type: conditional
       conditions:
       - condition: numeric_state
-        entity: sensor.portfolio_architect_world_proposed_buy
+        entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_proposed_buy
         above: 0
       card:
         type: tile
-        entity: sensor.portfolio_architect_world_proposed_buy
+        entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_proposed_buy
         name: MSCI World
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_world_purchase_explanation
+          entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_purchase_explanation
         color: green
         icon: mdi:cart-arrow-down
         hold_action:
           action: more-info
-          entity: sensor.portfolio_architect_world_isin
+          entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_isin
         state_content:
         - state
         - execution_provider_name
@@ -3044,17 +3044,17 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_world_purchase_explanation
+        entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_purchase_explanation
         state: deferred
       card:
         type: tile
-        entity: sensor.portfolio_architect_world_purchase_explanation
+        entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_purchase_explanation
         name: MSCI World wartet
         tap_action:
           action: more-info
         hold_action:
           action: more-info
-          entity: sensor.portfolio_architect_world_isin
+          entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_isin
         color: amber
         icon: mdi:cash-clock
         hide_state: true
@@ -3064,20 +3064,20 @@ views:
     - type: conditional
       conditions:
       - condition: numeric_state
-        entity: sensor.portfolio_architect_emerging_markets_proposed_buy
+        entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_proposed_buy
         above: 0
       card:
         type: tile
-        entity: sensor.portfolio_architect_emerging_markets_proposed_buy
+        entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_proposed_buy
         name: Emerging Markets
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_emerging_markets_purchase_explanation
+          entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_purchase_explanation
         color: green
         icon: mdi:cart-arrow-down
         hold_action:
           action: more-info
-          entity: sensor.portfolio_architect_emerging_markets_isin
+          entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_isin
         state_content:
         - state
         - execution_provider_name
@@ -3087,17 +3087,17 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_emerging_markets_purchase_explanation
+        entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_purchase_explanation
         state: deferred
       card:
         type: tile
-        entity: sensor.portfolio_architect_emerging_markets_purchase_explanation
+        entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_purchase_explanation
         name: EM wartet
         tap_action:
           action: more-info
         hold_action:
           action: more-info
-          entity: sensor.portfolio_architect_emerging_markets_isin
+          entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_isin
         color: amber
         icon: mdi:cash-clock
         hide_state: true
@@ -3107,20 +3107,20 @@ views:
     - type: conditional
       conditions:
       - condition: numeric_state
-        entity: sensor.portfolio_architect_world_small_cap_proposed_buy
+        entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_proposed_buy
         above: 0
       card:
         type: tile
-        entity: sensor.portfolio_architect_world_small_cap_proposed_buy
+        entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_proposed_buy
         name: World Small Cap
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_world_small_cap_purchase_explanation
+          entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_purchase_explanation
         color: green
         icon: mdi:cart-arrow-down
         hold_action:
           action: more-info
-          entity: sensor.portfolio_architect_world_small_cap_isin
+          entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_isin
         state_content:
         - state
         - execution_provider_name
@@ -3130,17 +3130,17 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_world_small_cap_purchase_explanation
+        entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_purchase_explanation
         state: deferred
       card:
         type: tile
-        entity: sensor.portfolio_architect_world_small_cap_purchase_explanation
+        entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_purchase_explanation
         name: Small Cap wartet
         tap_action:
           action: more-info
         hold_action:
           action: more-info
-          entity: sensor.portfolio_architect_world_small_cap_isin
+          entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_isin
         color: amber
         icon: mdi:cash-clock
         hide_state: true
@@ -3150,20 +3150,20 @@ views:
     - type: conditional
       conditions:
       - condition: numeric_state
-        entity: sensor.portfolio_architect_healthcare_proposed_buy
+        entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_proposed_buy
         above: 0
       card:
         type: tile
-        entity: sensor.portfolio_architect_healthcare_proposed_buy
+        entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_proposed_buy
         name: Gesundheit
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_healthcare_purchase_explanation
+          entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_purchase_explanation
         color: green
         icon: mdi:cart-arrow-down
         hold_action:
           action: more-info
-          entity: sensor.portfolio_architect_healthcare_isin
+          entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_isin
         state_content:
         - state
         - execution_provider_name
@@ -3173,17 +3173,17 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_healthcare_purchase_explanation
+        entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_purchase_explanation
         state: deferred
       card:
         type: tile
-        entity: sensor.portfolio_architect_healthcare_purchase_explanation
+        entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_purchase_explanation
         name: Gesundheit wartet
         tap_action:
           action: more-info
         hold_action:
           action: more-info
-          entity: sensor.portfolio_architect_healthcare_isin
+          entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_isin
         color: amber
         icon: mdi:cash-clock
         hide_state: true
@@ -3193,20 +3193,20 @@ views:
     - type: conditional
       conditions:
       - condition: numeric_state
-        entity: sensor.portfolio_architect_ai_big_data_proposed_buy
+        entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_proposed_buy
         above: 0
       card:
         type: tile
-        entity: sensor.portfolio_architect_ai_big_data_proposed_buy
+        entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_proposed_buy
         name: AI & Big Data
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_ai_big_data_purchase_explanation
+          entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_purchase_explanation
         color: green
         icon: mdi:cart-arrow-down
         hold_action:
           action: more-info
-          entity: sensor.portfolio_architect_ai_big_data_isin
+          entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_isin
         state_content:
         - state
         - execution_provider_name
@@ -3216,17 +3216,17 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_ai_big_data_purchase_explanation
+        entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_purchase_explanation
         state: deferred
       card:
         type: tile
-        entity: sensor.portfolio_architect_ai_big_data_purchase_explanation
+        entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_purchase_explanation
         name: AI & Data wartet
         tap_action:
           action: more-info
         hold_action:
           action: more-info
-          entity: sensor.portfolio_architect_ai_big_data_isin
+          entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_isin
         color: amber
         icon: mdi:cash-clock
         hide_state: true
@@ -3236,20 +3236,20 @@ views:
     - type: conditional
       conditions:
       - condition: numeric_state
-        entity: sensor.portfolio_architect_cybersecurity_proposed_buy
+        entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_proposed_buy
         above: 0
       card:
         type: tile
-        entity: sensor.portfolio_architect_cybersecurity_proposed_buy
+        entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_proposed_buy
         name: Cybersecurity
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_cybersecurity_purchase_explanation
+          entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_purchase_explanation
         color: green
         icon: mdi:cart-arrow-down
         hold_action:
           action: more-info
-          entity: sensor.portfolio_architect_cybersecurity_isin
+          entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_isin
         state_content:
         - state
         - execution_provider_name
@@ -3259,17 +3259,17 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_cybersecurity_purchase_explanation
+        entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_purchase_explanation
         state: deferred
       card:
         type: tile
-        entity: sensor.portfolio_architect_cybersecurity_purchase_explanation
+        entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_purchase_explanation
         name: Cyber wartet
         tap_action:
           action: more-info
         hold_action:
           action: more-info
-          entity: sensor.portfolio_architect_cybersecurity_isin
+          entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_isin
         color: amber
         icon: mdi:cash-clock
         hide_state: true
@@ -3279,20 +3279,20 @@ views:
     - type: conditional
       conditions:
       - condition: numeric_state
-        entity: sensor.portfolio_architect_robotics_proposed_buy
+        entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_proposed_buy
         above: 0
       card:
         type: tile
-        entity: sensor.portfolio_architect_robotics_proposed_buy
+        entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_proposed_buy
         name: Robotik
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_robotics_purchase_explanation
+          entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_purchase_explanation
         color: green
         icon: mdi:cart-arrow-down
         hold_action:
           action: more-info
-          entity: sensor.portfolio_architect_robotics_isin
+          entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_isin
         state_content:
         - state
         - execution_provider_name
@@ -3302,17 +3302,17 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_robotics_purchase_explanation
+        entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_purchase_explanation
         state: deferred
       card:
         type: tile
-        entity: sensor.portfolio_architect_robotics_purchase_explanation
+        entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_purchase_explanation
         name: Robotik wartet
         tap_action:
           action: more-info
         hold_action:
           action: more-info
-          entity: sensor.portfolio_architect_robotics_isin
+          entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_isin
         color: amber
         icon: mdi:cash-clock
         hide_state: true
@@ -3405,11 +3405,11 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_robotics_accumulating_preferred_policy_exception
+        entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_accumulating_preferred_policy_exception
         state: accepted_exception
       card:
         type: tile
-        entity: sensor.portfolio_architect_robotics_accumulating_preferred_policy_exception
+        entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_accumulating_preferred_policy_exception
         name: Robotik-Ausnahme
         tap_action:
           action: more-info
@@ -3422,11 +3422,11 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_robotics_accumulating_preferred_policy_exception
+        entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_accumulating_preferred_policy_exception
         state: review_required
       card:
         type: tile
-        entity: sensor.portfolio_architect_robotics_accumulating_preferred_policy_exception
+        entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_accumulating_preferred_policy_exception
         name: Robotik prüfen
         tap_action:
           action: more-info
@@ -3477,7 +3477,7 @@ views:
       card:
         type: tile
         entity: date.portfolio_architect_next_exception_review
-        name: Nächste Prüfung
+        name: Ausnahmeprüfung
         tap_action:
           action: more-info
           entity: sensor.portfolio_architect_next_exception_review
@@ -3509,15 +3509,15 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_world_free_savings_plan_preferred_policy_finding
+        entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_free_savings_plan_preferred_policy_finding
         state: opportunity
       card:
         type: tile
-        entity: sensor.portfolio_architect_world_free_savings_plan_preferred_policy_finding
+        entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_free_savings_plan_preferred_policy_finding
         name: MSCI World · Gebühr 1,5 % → 0 %
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_world_free_savings_plan_preferred_policy_decision
+          entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_free_savings_plan_preferred_policy_decision
         color: blue
         icon: mdi:cash-remove
         hide_state: true
@@ -3527,15 +3527,15 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_emerging_markets_free_savings_plan_preferred_policy_finding
+        entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_free_savings_plan_preferred_policy_finding
         state: opportunity
       card:
         type: tile
-        entity: sensor.portfolio_architect_emerging_markets_free_savings_plan_preferred_policy_finding
+        entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_free_savings_plan_preferred_policy_finding
         name: Emerging Markets · Gebühr 1,5 % → 0 %
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_emerging_markets_free_savings_plan_preferred_policy_decision
+          entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_free_savings_plan_preferred_policy_decision
         color: blue
         icon: mdi:cash-remove
         hide_state: true
@@ -3545,15 +3545,15 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_healthcare_free_savings_plan_preferred_policy_finding
+        entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_free_savings_plan_preferred_policy_finding
         state: opportunity
       card:
         type: tile
-        entity: sensor.portfolio_architect_healthcare_free_savings_plan_preferred_policy_finding
+        entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_free_savings_plan_preferred_policy_finding
         name: Gesundheit · Gebühr 1,5 % → 0 %
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_healthcare_free_savings_plan_preferred_policy_decision
+          entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_free_savings_plan_preferred_policy_decision
         color: blue
         icon: mdi:cash-remove
         hide_state: true
@@ -3563,15 +3563,15 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_cybersecurity_free_savings_plan_preferred_policy_finding
+        entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_free_savings_plan_preferred_policy_finding
         state: opportunity
       card:
         type: tile
-        entity: sensor.portfolio_architect_cybersecurity_free_savings_plan_preferred_policy_finding
+        entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_free_savings_plan_preferred_policy_finding
         name: Cybersecurity · Gebühr 1,5 % → 0 %
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_cybersecurity_free_savings_plan_preferred_policy_decision
+          entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_free_savings_plan_preferred_policy_decision
         color: blue
         icon: mdi:cash-remove
         hide_state: true
@@ -3616,19 +3616,19 @@ views:
       show_state: false
       state_color: true
       entities:
-      - entity: binary_sensor.portfolio_architect_world_target_position_held
+      - entity: binary_sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_target_position_held
         name: MSCI World
-      - entity: binary_sensor.portfolio_architect_emerging_markets_target_position_held
+      - entity: binary_sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_target_position_held
         name: Emerging Markets
-      - entity: binary_sensor.portfolio_architect_world_small_cap_target_position_held
+      - entity: binary_sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_target_position_held
         name: World Small Cap
-      - entity: binary_sensor.portfolio_architect_healthcare_target_position_held
+      - entity: binary_sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_target_position_held
         name: Gesundheit
-      - entity: binary_sensor.portfolio_architect_ai_big_data_target_position_held
+      - entity: binary_sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_target_position_held
         name: AI & Big Data
-      - entity: binary_sensor.portfolio_architect_cybersecurity_target_position_held
+      - entity: binary_sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_target_position_held
         name: Cybersecurity
-      - entity: binary_sensor.portfolio_architect_robotics_target_position_held
+      - entity: binary_sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_target_position_held
         name: Robotik
       grid_options:
         columns: full
@@ -3636,11 +3636,11 @@ views:
     - type: conditional
       conditions:
       - condition: numeric_state
-        entity: sensor.portfolio_architect_world_position_sources
+        entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_position_sources
         above: 1
       card:
         type: tile
-        entity: sensor.portfolio_architect_world_position_sources
+        entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_position_sources
         name: Quellen MSCI World
         state_content: source_summary
         tap_action:
@@ -3653,11 +3653,11 @@ views:
     - type: conditional
       conditions:
       - condition: numeric_state
-        entity: sensor.portfolio_architect_emerging_markets_position_sources
+        entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_position_sources
         above: 1
       card:
         type: tile
-        entity: sensor.portfolio_architect_emerging_markets_position_sources
+        entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_position_sources
         name: Quellen Emerging Markets
         state_content: source_summary
         tap_action:
@@ -3670,11 +3670,11 @@ views:
     - type: conditional
       conditions:
       - condition: numeric_state
-        entity: sensor.portfolio_architect_world_small_cap_position_sources
+        entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_position_sources
         above: 1
       card:
         type: tile
-        entity: sensor.portfolio_architect_world_small_cap_position_sources
+        entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_position_sources
         name: Quellen World Small Cap
         state_content: source_summary
         tap_action:
@@ -3687,11 +3687,11 @@ views:
     - type: conditional
       conditions:
       - condition: numeric_state
-        entity: sensor.portfolio_architect_healthcare_position_sources
+        entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_position_sources
         above: 1
       card:
         type: tile
-        entity: sensor.portfolio_architect_healthcare_position_sources
+        entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_position_sources
         name: Quellen Gesundheit
         state_content: source_summary
         tap_action:
@@ -3704,11 +3704,11 @@ views:
     - type: conditional
       conditions:
       - condition: numeric_state
-        entity: sensor.portfolio_architect_ai_big_data_position_sources
+        entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_position_sources
         above: 1
       card:
         type: tile
-        entity: sensor.portfolio_architect_ai_big_data_position_sources
+        entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_position_sources
         name: Quellen KI & Big Data
         state_content: source_summary
         tap_action:
@@ -3721,11 +3721,11 @@ views:
     - type: conditional
       conditions:
       - condition: numeric_state
-        entity: sensor.portfolio_architect_cybersecurity_position_sources
+        entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_position_sources
         above: 1
       card:
         type: tile
-        entity: sensor.portfolio_architect_cybersecurity_position_sources
+        entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_position_sources
         name: Quellen Cybersicherheit
         state_content: source_summary
         tap_action:
@@ -3738,11 +3738,11 @@ views:
     - type: conditional
       conditions:
       - condition: numeric_state
-        entity: sensor.portfolio_architect_robotics_position_sources
+        entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_position_sources
         above: 1
       card:
         type: tile
-        entity: sensor.portfolio_architect_robotics_position_sources
+        entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_position_sources
         name: Quellen Robotik
         state_content: source_summary
         tap_action:
@@ -4525,25 +4525,25 @@ views:
     - type: distribution
       title: Verteilung des Gesamtportfolios
       entities:
-      - entity: sensor.portfolio_architect_world_whole_portfolio_allocation
+      - entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_whole_portfolio_allocation
         name: MSCI World
         color: '#1e88e5'
-      - entity: sensor.portfolio_architect_emerging_markets_whole_portfolio_allocation
+      - entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_whole_portfolio_allocation
         name: Emerging Markets
         color: '#00897b'
-      - entity: sensor.portfolio_architect_world_small_cap_whole_portfolio_allocation
+      - entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_whole_portfolio_allocation
         name: World Small Cap
         color: '#43a047'
-      - entity: sensor.portfolio_architect_healthcare_whole_portfolio_allocation
+      - entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_whole_portfolio_allocation
         name: Healthcare Innovation
         color: '#e53935'
-      - entity: sensor.portfolio_architect_ai_big_data_whole_portfolio_allocation
+      - entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_whole_portfolio_allocation
         name: AI & Big Data
         color: '#8e24aa'
-      - entity: sensor.portfolio_architect_cybersecurity_whole_portfolio_allocation
+      - entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_whole_portfolio_allocation
         name: Cybersecurity
         color: '#fb8c00'
-      - entity: sensor.portfolio_architect_robotics_whole_portfolio_allocation
+      - entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_whole_portfolio_allocation
         name: Robotik
         color: '#00acc1'
       - entity: sensor.portfolio_architect_holding_ie00bywz0333_whole_portfolio_allocation
@@ -4710,25 +4710,25 @@ views:
     - type: distribution
       title: Aktuelle Planallokation
       entities:
-      - entity: sensor.portfolio_architect_world_current_allocation
+      - entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_current_allocation
         name: MSCI World
         color: '#1e88e5'
-      - entity: sensor.portfolio_architect_emerging_markets_current_allocation
+      - entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_current_allocation
         name: Emerging Markets
         color: '#00897b'
-      - entity: sensor.portfolio_architect_world_small_cap_current_allocation
+      - entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_current_allocation
         name: World Small Cap
         color: '#43a047'
-      - entity: sensor.portfolio_architect_healthcare_current_allocation
+      - entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_current_allocation
         name: Healthcare Innovation
         color: '#e53935'
-      - entity: sensor.portfolio_architect_ai_big_data_current_allocation
+      - entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_current_allocation
         name: AI & Big Data
         color: '#8e24aa'
-      - entity: sensor.portfolio_architect_cybersecurity_current_allocation
+      - entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_current_allocation
         name: Cybersecurity
         color: '#fb8c00'
-      - entity: sensor.portfolio_architect_robotics_current_allocation
+      - entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_current_allocation
         name: Robotics
         color: '#00acc1'
       grid_options:
@@ -4744,25 +4744,25 @@ views:
     - type: distribution
       title: Zielallokation des Plans
       entities:
-      - entity: sensor.portfolio_architect_world_target_allocation
+      - entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_target_allocation
         name: MSCI World
         color: '#1e88e5'
-      - entity: sensor.portfolio_architect_emerging_markets_target_allocation
+      - entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_target_allocation
         name: Emerging Markets
         color: '#00897b'
-      - entity: sensor.portfolio_architect_world_small_cap_target_allocation
+      - entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_target_allocation
         name: World Small Cap
         color: '#43a047'
-      - entity: sensor.portfolio_architect_healthcare_target_allocation
+      - entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_target_allocation
         name: Healthcare Innovation
         color: '#e53935'
-      - entity: sensor.portfolio_architect_ai_big_data_target_allocation
+      - entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_target_allocation
         name: AI & Big Data
         color: '#8e24aa'
-      - entity: sensor.portfolio_architect_cybersecurity_target_allocation
+      - entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_target_allocation
         name: Cybersecurity
         color: '#fb8c00'
-      - entity: sensor.portfolio_architect_robotics_target_allocation
+      - entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_target_allocation
         name: Robotics
         color: '#00acc1'
       grid_options:
@@ -4851,15 +4851,15 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_world_allocation_status
+        entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_allocation_status
         state: underweight
       card:
         type: tile
-        entity: sensor.portfolio_architect_world_allocation_drift
+        entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_allocation_drift
         name: MSCI World
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_world_allocation_explanation
+          entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_allocation_explanation
         color: amber
         icon: mdi:chart-timeline-variant
         features:
@@ -4872,15 +4872,15 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_world_allocation_status
+        entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_allocation_status
         state: on_target
       card:
         type: tile
-        entity: sensor.portfolio_architect_world_allocation_drift
+        entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_allocation_drift
         name: MSCI World
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_world_allocation_explanation
+          entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_allocation_explanation
         color: green
         icon: mdi:chart-timeline-variant
         features:
@@ -4893,15 +4893,15 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_world_allocation_status
+        entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_allocation_status
         state: overweight
       card:
         type: tile
-        entity: sensor.portfolio_architect_world_allocation_drift
+        entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_allocation_drift
         name: MSCI World
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_world_allocation_explanation
+          entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_allocation_explanation
         color: red
         icon: mdi:chart-timeline-variant
         features:
@@ -4914,15 +4914,15 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_emerging_markets_allocation_status
+        entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_allocation_status
         state: underweight
       card:
         type: tile
-        entity: sensor.portfolio_architect_emerging_markets_allocation_drift
+        entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_allocation_drift
         name: Emerging Markets
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_emerging_markets_allocation_explanation
+          entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_allocation_explanation
         color: amber
         icon: mdi:chart-timeline-variant
         features:
@@ -4935,15 +4935,15 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_emerging_markets_allocation_status
+        entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_allocation_status
         state: on_target
       card:
         type: tile
-        entity: sensor.portfolio_architect_emerging_markets_allocation_drift
+        entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_allocation_drift
         name: Emerging Markets
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_emerging_markets_allocation_explanation
+          entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_allocation_explanation
         color: green
         icon: mdi:chart-timeline-variant
         features:
@@ -4956,15 +4956,15 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_emerging_markets_allocation_status
+        entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_allocation_status
         state: overweight
       card:
         type: tile
-        entity: sensor.portfolio_architect_emerging_markets_allocation_drift
+        entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_allocation_drift
         name: Emerging Markets
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_emerging_markets_allocation_explanation
+          entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_allocation_explanation
         color: red
         icon: mdi:chart-timeline-variant
         features:
@@ -4977,15 +4977,15 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_world_small_cap_allocation_status
+        entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_allocation_status
         state: underweight
       card:
         type: tile
-        entity: sensor.portfolio_architect_world_small_cap_allocation_drift
+        entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_allocation_drift
         name: World Small Cap
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_world_small_cap_allocation_explanation
+          entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_allocation_explanation
         color: amber
         icon: mdi:chart-timeline-variant
         features:
@@ -4998,15 +4998,15 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_world_small_cap_allocation_status
+        entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_allocation_status
         state: on_target
       card:
         type: tile
-        entity: sensor.portfolio_architect_world_small_cap_allocation_drift
+        entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_allocation_drift
         name: World Small Cap
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_world_small_cap_allocation_explanation
+          entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_allocation_explanation
         color: green
         icon: mdi:chart-timeline-variant
         features:
@@ -5019,15 +5019,15 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_world_small_cap_allocation_status
+        entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_allocation_status
         state: overweight
       card:
         type: tile
-        entity: sensor.portfolio_architect_world_small_cap_allocation_drift
+        entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_allocation_drift
         name: World Small Cap
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_world_small_cap_allocation_explanation
+          entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_allocation_explanation
         color: red
         icon: mdi:chart-timeline-variant
         features:
@@ -5040,15 +5040,15 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_healthcare_allocation_status
+        entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_allocation_status
         state: underweight
       card:
         type: tile
-        entity: sensor.portfolio_architect_healthcare_allocation_drift
+        entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_allocation_drift
         name: Gesundheit
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_healthcare_allocation_explanation
+          entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_allocation_explanation
         color: amber
         icon: mdi:chart-timeline-variant
         features:
@@ -5061,15 +5061,15 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_healthcare_allocation_status
+        entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_allocation_status
         state: on_target
       card:
         type: tile
-        entity: sensor.portfolio_architect_healthcare_allocation_drift
+        entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_allocation_drift
         name: Gesundheit
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_healthcare_allocation_explanation
+          entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_allocation_explanation
         color: green
         icon: mdi:chart-timeline-variant
         features:
@@ -5082,15 +5082,15 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_healthcare_allocation_status
+        entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_allocation_status
         state: overweight
       card:
         type: tile
-        entity: sensor.portfolio_architect_healthcare_allocation_drift
+        entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_allocation_drift
         name: Gesundheit
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_healthcare_allocation_explanation
+          entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_allocation_explanation
         color: red
         icon: mdi:chart-timeline-variant
         features:
@@ -5103,15 +5103,15 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_ai_big_data_allocation_status
+        entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_allocation_status
         state: underweight
       card:
         type: tile
-        entity: sensor.portfolio_architect_ai_big_data_allocation_drift
+        entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_allocation_drift
         name: AI & Big Data
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_ai_big_data_allocation_explanation
+          entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_allocation_explanation
         color: amber
         icon: mdi:chart-timeline-variant
         features:
@@ -5124,15 +5124,15 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_ai_big_data_allocation_status
+        entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_allocation_status
         state: on_target
       card:
         type: tile
-        entity: sensor.portfolio_architect_ai_big_data_allocation_drift
+        entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_allocation_drift
         name: AI & Big Data
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_ai_big_data_allocation_explanation
+          entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_allocation_explanation
         color: green
         icon: mdi:chart-timeline-variant
         features:
@@ -5145,15 +5145,15 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_ai_big_data_allocation_status
+        entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_allocation_status
         state: overweight
       card:
         type: tile
-        entity: sensor.portfolio_architect_ai_big_data_allocation_drift
+        entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_allocation_drift
         name: AI & Big Data
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_ai_big_data_allocation_explanation
+          entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_allocation_explanation
         color: red
         icon: mdi:chart-timeline-variant
         features:
@@ -5166,15 +5166,15 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_cybersecurity_allocation_status
+        entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_allocation_status
         state: underweight
       card:
         type: tile
-        entity: sensor.portfolio_architect_cybersecurity_allocation_drift
+        entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_allocation_drift
         name: Cybersecurity
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_cybersecurity_allocation_explanation
+          entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_allocation_explanation
         color: amber
         icon: mdi:chart-timeline-variant
         features:
@@ -5187,15 +5187,15 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_cybersecurity_allocation_status
+        entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_allocation_status
         state: on_target
       card:
         type: tile
-        entity: sensor.portfolio_architect_cybersecurity_allocation_drift
+        entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_allocation_drift
         name: Cybersecurity
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_cybersecurity_allocation_explanation
+          entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_allocation_explanation
         color: green
         icon: mdi:chart-timeline-variant
         features:
@@ -5208,15 +5208,15 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_cybersecurity_allocation_status
+        entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_allocation_status
         state: overweight
       card:
         type: tile
-        entity: sensor.portfolio_architect_cybersecurity_allocation_drift
+        entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_allocation_drift
         name: Cybersecurity
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_cybersecurity_allocation_explanation
+          entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_allocation_explanation
         color: red
         icon: mdi:chart-timeline-variant
         features:
@@ -5229,15 +5229,15 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_robotics_allocation_status
+        entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_allocation_status
         state: underweight
       card:
         type: tile
-        entity: sensor.portfolio_architect_robotics_allocation_drift
+        entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_allocation_drift
         name: Robotik
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_robotics_allocation_explanation
+          entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_allocation_explanation
         color: amber
         icon: mdi:chart-timeline-variant
         features:
@@ -5250,15 +5250,15 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_robotics_allocation_status
+        entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_allocation_status
         state: on_target
       card:
         type: tile
-        entity: sensor.portfolio_architect_robotics_allocation_drift
+        entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_allocation_drift
         name: Robotik
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_robotics_allocation_explanation
+          entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_allocation_explanation
         color: green
         icon: mdi:chart-timeline-variant
         features:
@@ -5271,15 +5271,15 @@ views:
     - type: conditional
       conditions:
       - condition: state
-        entity: sensor.portfolio_architect_robotics_allocation_status
+        entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_allocation_status
         state: overweight
       card:
         type: tile
-        entity: sensor.portfolio_architect_robotics_allocation_drift
+        entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_allocation_drift
         name: Robotik
         tap_action:
           action: more-info
-          entity: sensor.portfolio_architect_robotics_allocation_explanation
+          entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_allocation_explanation
         color: red
         icon: mdi:chart-timeline-variant
         features:

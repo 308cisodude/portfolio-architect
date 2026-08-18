@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from datetime import date
 from decimal import Decimal, ROUND_HALF_UP
-import re
 from typing import Any
 
 from .execution import (
@@ -16,10 +15,10 @@ from .execution import (
 )
 from .identity import build_position_identity_index, match_position_for_target
 from .models import Position, Recommendation
+from .targets import MAX_TARGETS, canonicalize_target, portfolio_schema_version
 
 D = Decimal
-_MAX_FUNDS = 32
-_FUND_ID_RE = re.compile(r"^[a-z0-9_]{1,64}$")
+_MAX_FUNDS = MAX_TARGETS
 
 
 def round_to_step(amount: Decimal, step: Decimal) -> Decimal:
@@ -43,7 +42,9 @@ def _allocation_status(deviation_pp: Decimal, corridor_pp: Decimal) -> str:
     return "on_target"
 
 
-def _validate_funds(funds: Any) -> list[dict[str, Any]]:
+def _validate_funds(
+    funds: Any, *, schema_version: int = 1
+) -> list[dict[str, Any]]:
     """Validate configured plan positions and return positive-weight targets.
 
     Zero-weight entries from older configurations are accepted for backward
@@ -63,13 +64,13 @@ def _validate_funds(funds: Any) -> list[dict[str, Any]]:
     for index, raw_fund in enumerate(funds):
         if not isinstance(raw_fund, dict):
             raise ValueError(f"portfolio.allocation[{index}] must be a mapping")
-        fund = dict(raw_fund)
-        fund_id = fund.get("id")
-        if not isinstance(fund_id, str) or not _FUND_ID_RE.fullmatch(fund_id):
-            raise ValueError(f"portfolio.allocation[{index}].id must match {_FUND_ID_RE.pattern}")
-        if fund_id in seen_ids:
-            raise ValueError(f"Duplicate fund id: {fund_id}")
-        seen_ids.add(fund_id)
+        fund = canonicalize_target(
+            raw_fund, index=index, schema_version=schema_version
+        )
+        target_id = fund["target_id"]
+        if target_id in seen_ids:
+            raise ValueError(f"Duplicate target_id: {target_id}")
+        seen_ids.add(target_id)
 
         for key, seen, maximum in (("wkn", seen_wkns, 16), ("isin", seen_isins, 32)):
             value = fund.get(key)
@@ -109,8 +110,11 @@ def _validate_funds(funds: Any) -> list[dict[str, Any]]:
 
 
 def target_funds(document: dict[str, Any]) -> list[dict[str, Any]]:
-    """Return validated positive-weight positions in the current plan scope."""
-    return _validate_funds(document["portfolio"]["allocation"])
+    """Return validated positive-weight targets in the current plan scope."""
+    return _validate_funds(
+        document["portfolio"]["allocation"],
+        schema_version=portfolio_schema_version(document),
+    )
 
 
 def _legacy_proposals(
@@ -182,7 +186,7 @@ def allocate_buys(
     """
     portfolio = document["portfolio"]
     rules = document["rebalancing"]
-    funds = _validate_funds(portfolio["allocation"])
+    funds = target_funds(document)
     monthly = D(str(portfolio["monthly_contribution"]))
     corridor = D(str(rules.get("corridor_pp", 1)))
     minimum = D(str(rules.get("minimum_trade", 20)))

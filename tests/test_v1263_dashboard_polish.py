@@ -13,9 +13,12 @@ sys.path.insert(0, str(COMPONENT))
 CHECKS = "sensor.portfolio_architect_policy_checks_evaluated"
 OPPORTUNITIES = "sensor.portfolio_architect_optimisation_opportunity_count"
 EXCEPTIONS = "sensor.portfolio_architect_accepted_exception_count"
-ROBOTICS_EXCEPTION = (
-    "sensor.portfolio_architect_robotics_accumulating_preferred_policy_exception"
+_PLAN = yaml.safe_load((ROOT / "examples/current-plan/portfolio.yaml").read_text(encoding="utf-8"))
+_ROBOTICS_TARGET_ID = next(
+    item["target_id"] for item in _PLAN["portfolio"]["allocation"]
+    if item["isin"] == "IE00BYZK4552"
 )
+ROBOTICS_EXCEPTION = f"sensor.portfolio_architect_{_ROBOTICS_TARGET_ID}_accumulating_preferred_policy_exception"
 LAST_EXCEPTION_DECISION = "date.portfolio_architect_last_exception_decision"
 NEXT_EXCEPTION_REVIEW = "date.portfolio_architect_next_exception_review"
 OVERDUE_EXCEPTION_REVIEW = "date.portfolio_architect_oldest_overdue_exception_review"
@@ -151,12 +154,12 @@ def test_policy_exception_lifecycle_labels_are_precise_in_both_languages() -> No
     expected = {
         "EN": {
             LAST_EXCEPTION_DECISION: "Last decision",
-            NEXT_EXCEPTION_REVIEW: "Next review",
+            NEXT_EXCEPTION_REVIEW: "Exception review",
             OVERDUE_EXCEPTION_REVIEW: "Overdue review",
         },
         "DE": {
             LAST_EXCEPTION_DECISION: "Letzte Entscheidung",
-            NEXT_EXCEPTION_REVIEW: "Nächste Prüfung",
+            NEXT_EXCEPTION_REVIEW: "Ausnahmeprüfung",
             OVERDUE_EXCEPTION_REVIEW: "Überfällige Prüfung",
         },
     }

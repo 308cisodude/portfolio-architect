@@ -196,6 +196,11 @@ class PositionData:
     source_values_eur: tuple[tuple[str, float], ...] = ()
 
     @property
+    def target_id(self) -> str:
+        """Return the explicit user-owned target identity."""
+        return self.fund_id
+
+    @property
     def is_target_position(self) -> bool:
         """Return whether the position belongs to the target architecture."""
         return self.target_pct > 0
@@ -209,6 +214,7 @@ class PositionData:
     def attributes(self) -> dict[str, Any]:
         """Return stable Home Assistant state attributes."""
         return {
+            "target_id": self.target_id,
             "fund_id": self.fund_id,
             "wkn": self.wkn,
             "isin": self.isin,
@@ -290,6 +296,11 @@ class HoldingData:
     source_values_eur: tuple[tuple[str, float], ...] = ()
 
     @property
+    def plan_target_id(self) -> str | None:
+        """Return the explicit target identity for an in-plan holding."""
+        return self.plan_fund_id
+
+    @property
     def in_current_plan(self) -> bool:
         return self.strategy_scope == "current_plan"
 
@@ -306,6 +317,7 @@ class HoldingData:
             "quantity": self.quantity,
             "whole_portfolio_pct": self.whole_portfolio_pct,
             "strategy_scope": self.strategy_scope,
+            "plan_target_id": self.plan_target_id,
             "plan_fund_id": self.plan_fund_id,
             "plan_current_pct": self.plan_current_pct,
             "source_count": len(self.source_ids),
@@ -343,6 +355,7 @@ class TargetCoverageData:
             "total_count": self.total,
             "missing_count": self.missing,
             "coverage_summary": self.summary,
+            "missing_target_ids": list(self.missing_fund_ids),
             "missing_fund_ids": list(self.missing_fund_ids),
             "missing_names": list(self.missing_names),
         }
@@ -447,6 +460,7 @@ class PolicyFindingData:
     def attributes(self) -> dict[str, Any]:
         """Return bounded, language-neutral Home Assistant attributes."""
         attributes: dict[str, Any] = {
+            "target_id": self.fund_id,
             "fund_id": self.fund_id,
             "fund_name": self.fund_name,
             "instrument_id": self.instrument_id,
@@ -722,6 +736,16 @@ def parse_recommendations(value: Any) -> dict[str, PositionData]:
             raise PortfolioArchitectDataError(
                 f"Duplicate fund_id in recommendations: {fund_id}"
             )
+        raw_target_id = raw_item.get("target_id")
+        if raw_target_id is not None:
+            if (
+                not isinstance(raw_target_id, str)
+                or _FUND_ID_RE.fullmatch(raw_target_id) is None
+                or raw_target_id != fund_id
+            ):
+                raise PortfolioArchitectDataError(
+                    f"recommendations[{index}].target_id is inconsistent with fund_id"
+                )
 
         wkn = _required_text(raw_item, "wkn", index, maximum=16)
         isin = _required_text(raw_item, "isin", index, maximum=32)
@@ -988,6 +1012,11 @@ def parse_holdings(value: Any, positions: dict[str, PositionData]) -> dict[str, 
                 raise PortfolioArchitectDataError(f"holdings[{index}].quantity is invalid")
         whole_pct = _required_float(raw, "whole_portfolio_pct", index, minimum=0, maximum=100)
         plan_fund_id = raw.get("plan_fund_id")
+        plan_target_id = raw.get("plan_target_id")
+        if plan_target_id is not None and plan_target_id != plan_fund_id:
+            raise PortfolioArchitectDataError(
+                f"holdings[{index}].plan_target_id is inconsistent with plan_fund_id"
+            )
         plan_current_pct_raw = raw.get("plan_current_pct")
         if scope == "current_plan":
             if (
@@ -1005,7 +1034,11 @@ def parse_holdings(value: Any, positions: dict[str, PositionData]) -> dict[str, 
             if not math.isclose(plan_current_pct, positions[plan_fund_id].current_pct, rel_tol=0, abs_tol=1e-6):
                 raise PortfolioArchitectDataError(f"holdings[{index}].plan_current_pct is inconsistent")
         else:
-            if plan_fund_id is not None or plan_current_pct_raw is not None:
+            if (
+                plan_fund_id is not None
+                or plan_target_id is not None
+                or plan_current_pct_raw is not None
+            ):
                 raise PortfolioArchitectDataError(f"holdings[{index}] outside-scope metadata is inconsistent")
             plan_current_pct = None
 
@@ -1210,6 +1243,14 @@ def _validate_source_coverage(
             raise PortfolioArchitectDataError(
                 f"summary.{key} is inconsistent with recommendations"
             )
+
+    if (
+        "missing_target_ids" in summary
+        and summary.get("missing_target_ids") != list(coverage.missing_fund_ids)
+    ):
+        raise PortfolioArchitectDataError(
+            "summary.missing_target_ids is inconsistent with recommendations"
+        )
 
     source_pct = _summary_float(
         summary, "target_position_coverage_pct", minimum=0, maximum=100

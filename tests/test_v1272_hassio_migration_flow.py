@@ -1,4 +1,4 @@
-"""Regression contracts for v1.33.1 Supervisor HTTPS migration flow eligibility."""
+"""Regression contracts for v1.34.0 Supervisor HTTPS migration flow eligibility."""
 
 from __future__ import annotations
 

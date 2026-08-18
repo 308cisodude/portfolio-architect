@@ -232,20 +232,20 @@ cards:
 - type: conditional
   conditions:
   - condition: numeric_state
-    entity: sensor.portfolio_architect_world_proposed_buy
+    entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_proposed_buy
     above: 0
   card:
     type: tile
-    entity: sensor.portfolio_architect_world_proposed_buy
+    entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_proposed_buy
     name: MSCI World
     tap_action:
       action: more-info
-      entity: sensor.portfolio_architect_world_isin
+      entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_isin
     color: green
     icon: mdi:cart-arrow-down
     hold_action:
       action: more-info
-      entity: sensor.portfolio_architect_world_proposed_buy
+      entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_proposed_buy
     state_content:
     - state
     - execution_provider_name
@@ -255,20 +255,20 @@ cards:
 - type: conditional
   conditions:
   - condition: numeric_state
-    entity: sensor.portfolio_architect_emerging_markets_proposed_buy
+    entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_proposed_buy
     above: 0
   card:
     type: tile
-    entity: sensor.portfolio_architect_emerging_markets_proposed_buy
+    entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_proposed_buy
     name: Emerging Markets
     tap_action:
       action: more-info
-      entity: sensor.portfolio_architect_emerging_markets_isin
+      entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_isin
     color: green
     icon: mdi:cart-arrow-down
     hold_action:
       action: more-info
-      entity: sensor.portfolio_architect_emerging_markets_proposed_buy
+      entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_proposed_buy
     state_content:
     - state
     - execution_provider_name
@@ -278,20 +278,20 @@ cards:
 - type: conditional
   conditions:
   - condition: numeric_state
-    entity: sensor.portfolio_architect_world_small_cap_proposed_buy
+    entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_proposed_buy
     above: 0
   card:
     type: tile
-    entity: sensor.portfolio_architect_world_small_cap_proposed_buy
+    entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_proposed_buy
     name: World Small Cap
     tap_action:
       action: more-info
-      entity: sensor.portfolio_architect_world_small_cap_isin
+      entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_isin
     color: green
     icon: mdi:cart-arrow-down
     hold_action:
       action: more-info
-      entity: sensor.portfolio_architect_world_small_cap_proposed_buy
+      entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_proposed_buy
     state_content:
     - state
     - execution_provider_name
@@ -301,20 +301,20 @@ cards:
 - type: conditional
   conditions:
   - condition: numeric_state
-    entity: sensor.portfolio_architect_healthcare_proposed_buy
+    entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_proposed_buy
     above: 0
   card:
     type: tile
-    entity: sensor.portfolio_architect_healthcare_proposed_buy
+    entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_proposed_buy
     name: Healthcare
     tap_action:
       action: more-info
-      entity: sensor.portfolio_architect_healthcare_isin
+      entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_isin
     color: green
     icon: mdi:cart-arrow-down
     hold_action:
       action: more-info
-      entity: sensor.portfolio_architect_healthcare_proposed_buy
+      entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_proposed_buy
     state_content:
     - state
     - execution_provider_name
@@ -324,20 +324,20 @@ cards:
 - type: conditional
   conditions:
   - condition: numeric_state
-    entity: sensor.portfolio_architect_ai_big_data_proposed_buy
+    entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_proposed_buy
     above: 0
   card:
     type: tile
-    entity: sensor.portfolio_architect_ai_big_data_proposed_buy
+    entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_proposed_buy
     name: AI & Big Data
     tap_action:
       action: more-info
-      entity: sensor.portfolio_architect_ai_big_data_isin
+      entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_isin
     color: green
     icon: mdi:cart-arrow-down
     hold_action:
       action: more-info
-      entity: sensor.portfolio_architect_ai_big_data_proposed_buy
+      entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_proposed_buy
     state_content:
     - state
     - execution_provider_name
@@ -347,20 +347,20 @@ cards:
 - type: conditional
   conditions:
   - condition: numeric_state
-    entity: sensor.portfolio_architect_cybersecurity_proposed_buy
+    entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_proposed_buy
     above: 0
   card:
     type: tile
-    entity: sensor.portfolio_architect_cybersecurity_proposed_buy
+    entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_proposed_buy
     name: Cybersecurity
     tap_action:
       action: more-info
-      entity: sensor.portfolio_architect_cybersecurity_isin
+      entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_isin
     color: green
     icon: mdi:cart-arrow-down
     hold_action:
       action: more-info
-      entity: sensor.portfolio_architect_cybersecurity_proposed_buy
+      entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_proposed_buy
     state_content:
     - state
     - execution_provider_name
@@ -370,20 +370,20 @@ cards:
 - type: conditional
   conditions:
   - condition: numeric_state
-    entity: sensor.portfolio_architect_robotics_proposed_buy
+    entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_proposed_buy
     above: 0
   card:
     type: tile
-    entity: sensor.portfolio_architect_robotics_proposed_buy
+    entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_proposed_buy
     name: Robotics
     tap_action:
       action: more-info
-      entity: sensor.portfolio_architect_robotics_isin
+      entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_isin
     color: green
     icon: mdi:cart-arrow-down
     hold_action:
       action: more-info
-      entity: sensor.portfolio_architect_robotics_proposed_buy
+      entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_proposed_buy
     state_content:
     - state
     - execution_provider_name

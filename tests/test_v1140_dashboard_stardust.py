@@ -8,8 +8,14 @@ import yaml
 
 ROOT = Path(__file__).parents[1]
 DASHBOARD = ROOT / "dashboard"
+_PLAN = yaml.safe_load((ROOT / "examples/current-plan/portfolio.yaml").read_text(encoding="utf-8"))
+_ROBOTICS_TARGET_ID = next(
+    item["target_id"]
+    for item in _PLAN["portfolio"]["allocation"]
+    if item["isin"] == "IE00BYZK4552"
+)
 EXCEPTION_ENTITY = (
-    "sensor.portfolio_architect_robotics_accumulating_preferred_policy_exception"
+    f"sensor.portfolio_architect_{_ROBOTICS_TARGET_ID}_accumulating_preferred_policy_exception"
 )
 
 

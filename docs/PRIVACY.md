@@ -89,3 +89,15 @@ source material, and import documents remain inside that provider App's private
 storage or transient processing. The common Portfolio Architect REST and health
 contracts receive only validated provider-neutral portfolio data plus the bounded
 provider identifier needed for operational provenance.
+
+## v1.34 target and presentation metadata
+
+Stable `target_id` values identify user-defined portfolio roles. They are bounded application
+identifiers, not bank-side account/depot/customer identifiers. The structural presentation model
+is built only from already validated Portfolio Architect data and exposes target/holding identity,
+source provenance IDs and bounded policy/actionability state.
+
+The presentation model intentionally omits monetary values, quantities, proposed purchases,
+account identifiers, source file paths, bearer tokens, OAuth/session material, DKB registration
+material and raw provider documents. Existing dedicated entities remain authoritative for
+monetary/action information under their established recorder/privacy boundaries.

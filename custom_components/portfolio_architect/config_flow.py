@@ -143,6 +143,7 @@ from .engine.importers import (
     select_latest_dkb_exports,
 )
 from .engine.rest import PROVIDER_LOCAL_REST_JSON
+from .engine.targets import generate_target_id
 from .model import PortfolioArchitectDataError, parse_portfolio_data
 from .plan_editor import (
     PlanCandidate,
@@ -883,7 +884,8 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
     """Manage native plan configuration and runtime behaviour."""
 
     _context: PlanEditorContext | None = None
-    _selected_wkns: list[str]
+    _selected_isins: list[str]
+    _selected_target_ids: dict[str, str]
     _draft: dict[str, Any]
     _draft_instruments: list[dict[str, Any]]
     _instrument_index: int
@@ -1421,7 +1423,7 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
             return self.async_abort(reason="plan_source_unavailable")
 
         options = self.config_entry.options
-        selected_defaults = [item.wkn for item in context.candidates if item.selected]
+        selected_defaults = [item.isin for item in context.candidates if item.selected]
         suggested = {
             CONF_PLAN_NAME: options.get(CONF_PLAN_NAME, context.plan_name),
             CONF_PLAN_BUDGET_AMOUNT: options.get(
@@ -1449,7 +1451,7 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
                     ),
                     errors={"selected_instruments": "invalid_instrument_count"},
                 )
-            known = {item.wkn for item in context.candidates}
+            known = {item.isin for item in context.candidates}
             if any(value not in known for value in selected):
                 return self.async_show_form(
                     step_id="plan",
@@ -1459,7 +1461,21 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
                     errors={"selected_instruments": "invalid_instrument"},
                 )
 
-            self._selected_wkns = selected
+            self._selected_isins = selected
+            by_isin = {item.isin: item for item in context.candidates}
+            used_target_ids = {
+                item.target_id
+                for item in context.candidates
+                if item.target_id is not None
+            }
+            self._selected_target_ids = {}
+            for isin in selected:
+                candidate = by_isin[isin]
+                target_id = candidate.target_id
+                if target_id is None:
+                    target_id = generate_target_id(used_target_ids)
+                    used_target_ids.add(target_id)
+                self._selected_target_ids[isin] = target_id
             self._draft = {
                 CONF_PLAN_NAME: str(user_input[CONF_PLAN_NAME]).strip(),
                 CONF_PLAN_BUDGET_AMOUNT: float(user_input[CONF_PLAN_BUDGET_AMOUNT]),
@@ -1553,8 +1569,9 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
     ) -> ConfigFlowResult:
         """Configure one selected instrument at a time."""
         context = await self._async_plan_context()
-        by_wkn = {item.wkn: item for item in context.candidates}
-        candidate = by_wkn[self._selected_wkns[self._instrument_index]]
+        by_isin = {item.isin: item for item in context.candidates}
+        candidate = by_isin[self._selected_isins[self._instrument_index]]
+        target_id = self._selected_target_ids[candidate.isin]
         suggested = {
             "target_pct": float(candidate.target_pct),
             "buy_enabled": candidate.buy_enabled,
@@ -1569,11 +1586,11 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
                         _instrument_schema(), suggested
                     ),
                     errors={"target_pct": "invalid_target"},
-                    description_placeholders=_candidate_placeholders(candidate),
+                    description_placeholders=_candidate_placeholders(candidate, target_id),
                 )
             self._draft_instruments.append(
                 {
-                    "id": candidate.id,
+                    "target_id": target_id,
                     "wkn": candidate.wkn,
                     "isin": candidate.isin,
                     "name": candidate.name,
@@ -1582,7 +1599,7 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
                 }
             )
             self._instrument_index += 1
-            if self._instrument_index < len(self._selected_wkns):
+            if self._instrument_index < len(self._selected_isins):
                 return await self.async_step_plan_instrument()
             return await self._async_finish_plan()
 
@@ -1591,7 +1608,7 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
             data_schema=self.add_suggested_values_to_schema(
                 _instrument_schema(), suggested
             ),
-            description_placeholders=_candidate_placeholders(candidate),
+            description_placeholders=_candidate_placeholders(candidate, target_id),
         )
 
     async def async_step_plan_review(
@@ -2162,11 +2179,12 @@ def _instrument_schema() -> vol.Schema:
     )
 
 
-def _candidate_placeholders(candidate: PlanCandidate) -> dict[str, str]:
+def _candidate_placeholders(candidate: PlanCandidate, target_id: str) -> dict[str, str]:
     return {
         "instrument_name": candidate.name,
-        "wkn": candidate.wkn,
         "isin": candidate.isin,
+        "wkn": candidate.wkn or "—",
+        "target_id": target_id,
     }
 
 

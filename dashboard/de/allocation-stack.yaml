@@ -66,25 +66,25 @@ cards:
 - type: distribution
   title: Verteilung des Gesamtportfolios
   entities:
-  - entity: sensor.portfolio_architect_world_whole_portfolio_allocation
+  - entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_whole_portfolio_allocation
     name: MSCI World
     color: '#1e88e5'
-  - entity: sensor.portfolio_architect_emerging_markets_whole_portfolio_allocation
+  - entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_whole_portfolio_allocation
     name: Emerging Markets
     color: '#00897b'
-  - entity: sensor.portfolio_architect_world_small_cap_whole_portfolio_allocation
+  - entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_whole_portfolio_allocation
     name: World Small Cap
     color: '#43a047'
-  - entity: sensor.portfolio_architect_healthcare_whole_portfolio_allocation
+  - entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_whole_portfolio_allocation
     name: Healthcare Innovation
     color: '#e53935'
-  - entity: sensor.portfolio_architect_ai_big_data_whole_portfolio_allocation
+  - entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_whole_portfolio_allocation
     name: AI & Big Data
     color: '#8e24aa'
-  - entity: sensor.portfolio_architect_cybersecurity_whole_portfolio_allocation
+  - entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_whole_portfolio_allocation
     name: Cybersecurity
     color: '#fb8c00'
-  - entity: sensor.portfolio_architect_robotics_whole_portfolio_allocation
+  - entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_whole_portfolio_allocation
     name: Robotik
     color: '#00acc1'
   - entity: sensor.portfolio_architect_holding_ie00bywz0333_whole_portfolio_allocation
@@ -222,25 +222,25 @@ cards:
 - type: distribution
   title: Aktuelle Planallokation
   entities:
-  - entity: sensor.portfolio_architect_world_current_allocation
+  - entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_current_allocation
     name: MSCI World
     color: '#1e88e5'
-  - entity: sensor.portfolio_architect_emerging_markets_current_allocation
+  - entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_current_allocation
     name: Emerging Markets
     color: '#00897b'
-  - entity: sensor.portfolio_architect_world_small_cap_current_allocation
+  - entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_current_allocation
     name: World Small Cap
     color: '#43a047'
-  - entity: sensor.portfolio_architect_healthcare_current_allocation
+  - entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_current_allocation
     name: Healthcare Innovation
     color: '#e53935'
-  - entity: sensor.portfolio_architect_ai_big_data_current_allocation
+  - entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_current_allocation
     name: AI & Big Data
     color: '#8e24aa'
-  - entity: sensor.portfolio_architect_cybersecurity_current_allocation
+  - entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_current_allocation
     name: Cybersecurity
     color: '#fb8c00'
-  - entity: sensor.portfolio_architect_robotics_current_allocation
+  - entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_current_allocation
     name: Robotik
     color: '#00acc1'
   grid_options:
@@ -249,25 +249,25 @@ cards:
 - type: distribution
   title: Zielallokation des Plans
   entities:
-  - entity: sensor.portfolio_architect_world_target_allocation
+  - entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_target_allocation
     name: MSCI World
     color: '#1e88e5'
-  - entity: sensor.portfolio_architect_emerging_markets_target_allocation
+  - entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_target_allocation
     name: Emerging Markets
     color: '#00897b'
-  - entity: sensor.portfolio_architect_world_small_cap_target_allocation
+  - entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_target_allocation
     name: World Small Cap
     color: '#43a047'
-  - entity: sensor.portfolio_architect_healthcare_target_allocation
+  - entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_target_allocation
     name: Healthcare Innovation
     color: '#e53935'
-  - entity: sensor.portfolio_architect_ai_big_data_target_allocation
+  - entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_target_allocation
     name: AI & Big Data
     color: '#8e24aa'
-  - entity: sensor.portfolio_architect_cybersecurity_target_allocation
+  - entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_target_allocation
     name: Cybersecurity
     color: '#fb8c00'
-  - entity: sensor.portfolio_architect_robotics_target_allocation
+  - entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_target_allocation
     name: Robotik
     color: '#00acc1'
   grid_options:
@@ -349,11 +349,11 @@ cards:
 - type: conditional
   conditions:
   - condition: state
-    entity: sensor.portfolio_architect_world_allocation_status
+    entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_allocation_status
     state: underweight
   card:
     type: tile
-    entity: sensor.portfolio_architect_world_allocation_drift
+    entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_allocation_drift
     name: MSCI World
     tap_action:
       action: more-info
@@ -369,11 +369,11 @@ cards:
 - type: conditional
   conditions:
   - condition: state
-    entity: sensor.portfolio_architect_world_allocation_status
+    entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_allocation_status
     state: on_target
   card:
     type: tile
-    entity: sensor.portfolio_architect_world_allocation_drift
+    entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_allocation_drift
     name: MSCI World
     tap_action:
       action: more-info
@@ -389,11 +389,11 @@ cards:
 - type: conditional
   conditions:
   - condition: state
-    entity: sensor.portfolio_architect_world_allocation_status
+    entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_allocation_status
     state: overweight
   card:
     type: tile
-    entity: sensor.portfolio_architect_world_allocation_drift
+    entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_allocation_drift
     name: MSCI World
     tap_action:
       action: more-info
@@ -409,11 +409,11 @@ cards:
 - type: conditional
   conditions:
   - condition: state
-    entity: sensor.portfolio_architect_emerging_markets_allocation_status
+    entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_allocation_status
     state: underweight
   card:
     type: tile
-    entity: sensor.portfolio_architect_emerging_markets_allocation_drift
+    entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_allocation_drift
     name: Emerging Markets
     tap_action:
       action: more-info
@@ -429,11 +429,11 @@ cards:
 - type: conditional
   conditions:
   - condition: state
-    entity: sensor.portfolio_architect_emerging_markets_allocation_status
+    entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_allocation_status
     state: on_target
   card:
     type: tile
-    entity: sensor.portfolio_architect_emerging_markets_allocation_drift
+    entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_allocation_drift
     name: Emerging Markets
     tap_action:
       action: more-info
@@ -449,11 +449,11 @@ cards:
 - type: conditional
   conditions:
   - condition: state
-    entity: sensor.portfolio_architect_emerging_markets_allocation_status
+    entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_allocation_status
     state: overweight
   card:
     type: tile
-    entity: sensor.portfolio_architect_emerging_markets_allocation_drift
+    entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_allocation_drift
     name: Emerging Markets
     tap_action:
       action: more-info
@@ -469,11 +469,11 @@ cards:
 - type: conditional
   conditions:
   - condition: state
-    entity: sensor.portfolio_architect_world_small_cap_allocation_status
+    entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_allocation_status
     state: underweight
   card:
     type: tile
-    entity: sensor.portfolio_architect_world_small_cap_allocation_drift
+    entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_allocation_drift
     name: World Small Cap
     tap_action:
       action: more-info
@@ -489,11 +489,11 @@ cards:
 - type: conditional
   conditions:
   - condition: state
-    entity: sensor.portfolio_architect_world_small_cap_allocation_status
+    entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_allocation_status
     state: on_target
   card:
     type: tile
-    entity: sensor.portfolio_architect_world_small_cap_allocation_drift
+    entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_allocation_drift
     name: World Small Cap
     tap_action:
       action: more-info
@@ -509,11 +509,11 @@ cards:
 - type: conditional
   conditions:
   - condition: state
-    entity: sensor.portfolio_architect_world_small_cap_allocation_status
+    entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_allocation_status
     state: overweight
   card:
     type: tile
-    entity: sensor.portfolio_architect_world_small_cap_allocation_drift
+    entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_allocation_drift
     name: World Small Cap
     tap_action:
       action: more-info
@@ -529,11 +529,11 @@ cards:
 - type: conditional
   conditions:
   - condition: state
-    entity: sensor.portfolio_architect_healthcare_allocation_status
+    entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_allocation_status
     state: underweight
   card:
     type: tile
-    entity: sensor.portfolio_architect_healthcare_allocation_drift
+    entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_allocation_drift
     name: Gesundheit
     tap_action:
       action: more-info
@@ -549,11 +549,11 @@ cards:
 - type: conditional
   conditions:
   - condition: state
-    entity: sensor.portfolio_architect_healthcare_allocation_status
+    entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_allocation_status
     state: on_target
   card:
     type: tile
-    entity: sensor.portfolio_architect_healthcare_allocation_drift
+    entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_allocation_drift
     name: Gesundheit
     tap_action:
       action: more-info
@@ -569,11 +569,11 @@ cards:
 - type: conditional
   conditions:
   - condition: state
-    entity: sensor.portfolio_architect_healthcare_allocation_status
+    entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_allocation_status
     state: overweight
   card:
     type: tile
-    entity: sensor.portfolio_architect_healthcare_allocation_drift
+    entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_allocation_drift
     name: Gesundheit
     tap_action:
       action: more-info
@@ -589,11 +589,11 @@ cards:
 - type: conditional
   conditions:
   - condition: state
-    entity: sensor.portfolio_architect_ai_big_data_allocation_status
+    entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_allocation_status
     state: underweight
   card:
     type: tile
-    entity: sensor.portfolio_architect_ai_big_data_allocation_drift
+    entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_allocation_drift
     name: AI & Big Data
     tap_action:
       action: more-info
@@ -609,11 +609,11 @@ cards:
 - type: conditional
   conditions:
   - condition: state
-    entity: sensor.portfolio_architect_ai_big_data_allocation_status
+    entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_allocation_status
     state: on_target
   card:
     type: tile
-    entity: sensor.portfolio_architect_ai_big_data_allocation_drift
+    entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_allocation_drift
     name: AI & Big Data
     tap_action:
       action: more-info
@@ -629,11 +629,11 @@ cards:
 - type: conditional
   conditions:
   - condition: state
-    entity: sensor.portfolio_architect_ai_big_data_allocation_status
+    entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_allocation_status
     state: overweight
   card:
     type: tile
-    entity: sensor.portfolio_architect_ai_big_data_allocation_drift
+    entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_allocation_drift
     name: AI & Big Data
     tap_action:
       action: more-info
@@ -649,11 +649,11 @@ cards:
 - type: conditional
   conditions:
   - condition: state
-    entity: sensor.portfolio_architect_cybersecurity_allocation_status
+    entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_allocation_status
     state: underweight
   card:
     type: tile
-    entity: sensor.portfolio_architect_cybersecurity_allocation_drift
+    entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_allocation_drift
     name: Cybersecurity
     tap_action:
       action: more-info
@@ -669,11 +669,11 @@ cards:
 - type: conditional
   conditions:
   - condition: state
-    entity: sensor.portfolio_architect_cybersecurity_allocation_status
+    entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_allocation_status
     state: on_target
   card:
     type: tile
-    entity: sensor.portfolio_architect_cybersecurity_allocation_drift
+    entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_allocation_drift
     name: Cybersecurity
     tap_action:
       action: more-info
@@ -689,11 +689,11 @@ cards:
 - type: conditional
   conditions:
   - condition: state
-    entity: sensor.portfolio_architect_cybersecurity_allocation_status
+    entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_allocation_status
     state: overweight
   card:
     type: tile
-    entity: sensor.portfolio_architect_cybersecurity_allocation_drift
+    entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_allocation_drift
     name: Cybersecurity
     tap_action:
       action: more-info
@@ -709,11 +709,11 @@ cards:
 - type: conditional
   conditions:
   - condition: state
-    entity: sensor.portfolio_architect_robotics_allocation_status
+    entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_allocation_status
     state: underweight
   card:
     type: tile
-    entity: sensor.portfolio_architect_robotics_allocation_drift
+    entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_allocation_drift
     name: Robotik
     tap_action:
       action: more-info
@@ -729,11 +729,11 @@ cards:
 - type: conditional
   conditions:
   - condition: state
-    entity: sensor.portfolio_architect_robotics_allocation_status
+    entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_allocation_status
     state: on_target
   card:
     type: tile
-    entity: sensor.portfolio_architect_robotics_allocation_drift
+    entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_allocation_drift
     name: Robotik
     tap_action:
       action: more-info
@@ -749,11 +749,11 @@ cards:
 - type: conditional
   conditions:
   - condition: state
-    entity: sensor.portfolio_architect_robotics_allocation_status
+    entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_allocation_status
     state: overweight
   card:
     type: tile
-    entity: sensor.portfolio_architect_robotics_allocation_drift
+    entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_allocation_drift
     name: Robotik
     tap_action:
       action: more-info

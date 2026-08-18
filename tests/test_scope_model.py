@@ -31,9 +31,10 @@ def test_current_reference_depot_scope_contract():
     assert float(round(summary['whole_portfolio_value_eur'],2))==14053.01
     assert float(round(summary['current_plan_value_eur'],2))==10550.00
     assert float(round(summary['outside_scope_value_eur'],2))==3503.01
-    assert [x['fund_id'] for x in payload['recommendations']]==[
-        'world','emerging_markets','world_small_cap','healthcare','ai_big_data','cybersecurity','robotics'
+    assert [x['isin'] for x in payload['recommendations']]==[
+        'IE00BJ0KDQ92','IE00BTJRMP35','IE000F354Q61','IE00BYZK4776','IE00BGV5VN51','IE00BLPK3577','IE00BYZK4552'
     ]
+    assert all(x['target_id']==x['fund_id'] for x in payload['recommendations'])
     it=next(x for x in payload['holdings'] if x['wkn']=='A113FM')
     assert it['strategy_scope']=='outside_scope'
     old_robotics=next(x for x in payload['holdings'] if x['isin']=='IE00BYWZ0333')

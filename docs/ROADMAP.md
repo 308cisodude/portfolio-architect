@@ -378,26 +378,28 @@ from current portfolio value.
 - Keep source timestamps authoritative only for their own v1.33 evidence-age freshness policy.
 - Preserve the v1.33.0 configuration, provider runtime, wire-schema and fail-closed boundaries.
 
-## Future — generic target architecture and first-class presentation model
+## v1.34.0 — generic target architecture and first-class presentation model
 
-Portfolio Architect must evolve from the current reference retirement plan into a reusable
-portfolio engine whose target architecture belongs to each user rather than to the product.
+- Promote current strategic target identity to schema-2 opaque `target_id` values generated from 128 random bits; retain schema-1 `id` and payload `fund_id` only for compatibility.
+- Keep target identity independent from ISIN, WKN, display name, target order and weight; ISIN remains canonical instrument identity and WKN remains secondary fallback/validation metadata.
+- Generate a fresh target ID in the native plan editor only when a genuinely new current target role is created; never derive it from an instrument.
+- Keep PA current-state-only: deleting a target does not create a tombstone/retired-target registry, and later re-adding the same ISIN creates a fresh target identity.
+- Treat outside-current-plan holdings as accepted source evidence only; they disappear automatically when no accepted source reports them and are never stored in an outside-scope history registry.
+- Keep the bounded arbitrary target count at maximum 32 and exact 100% positive-weight validation; the seven-ETF retirement architecture becomes reference configuration only.
+- Add a bounded first-class `presentation_model` sensor containing current configured targets, current-plan holding identities, complete current outside-scope inventory, source provenance and aggregate policy/actionability state.
+- Keep high-churn monetary/action guidance on dedicated entities rather than duplicating it into the structural presentation index.
+- Rename the ambiguous policy-dashboard `Next review` label to `Exception review` while keeping plan-review and exception-review clocks distinct.
+- Add no custom frontend dependency; the reference dashboard remains static until the following dynamic-presentation milestone.
 
-- Make the number of target positions, their stable target IDs, names, instruments, target
-  weights and buy/policy metadata user-configurable within strict bounded validation.
-- Treat the current seven-ETF retirement plan as an example/reference configuration only;
-  no engine, entity or dashboard contract may assume those seven targets exist for another
-  user.
-- Keep stable Home Assistant entity identity anchored to immutable configured target IDs,
-  not list position, display name, WKN or current ISIN, so harmless renames/reordering and
-  deliberate instrument migrations do not churn entity IDs.
-- Build a first-class bounded Portfolio Architect presentation model for configured targets,
-  current-plan holdings, outside-scope holdings, source provenance and policy state.
-- Let native Home Assistant presentation consume that model without hard-coded `holding_*`
-  entity inventories, `auto-entities`, card-mod, custom JavaScript or other frontend
-  dependencies.
-- Require the visible outside-scope inventory to reconcile with Portfolio Architect's
-  `outside_scope_position_count`; the v1.31 Robotics-only outside-scope Tile is the motivating
-  example of why hand-maintained dashboard lists do not scale.
-- Preserve privacy, stable identity, fail-closed parsing, bounded entity creation and the
-  advisory/no-trading boundary while making the portfolio definition genuinely reusable.
+## Future — native dynamic portfolio presentation
+
+- Consume the v1.34 presentation contract so the reference dashboard can render the actual
+  configured target/outside-scope inventory without maintaining instrument-specific YAML lists.
+- Preserve native Home Assistant interaction/more-info behavior and avoid `auto-entities`,
+  card-mod, custom JavaScript or custom-card dependencies.
+- Require the visible target and outside-scope inventory to reconcile exactly with Portfolio
+  Architect counts and stable presentation IDs.
+- Keep user-owned dashboard copies opt-in: HACS/integration updates must never overwrite an
+  imported/personalized Lovelace dashboard.
+
+No holdings acquisition is enabled by this release.

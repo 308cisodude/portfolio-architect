@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.34.0
+
+- Adds portfolio schema 2 with explicit opaque `target_id` values generated from 128 random bits while retaining schema-1 legacy `id` compatibility.
+- Keeps target-role identity independent from ISIN, WKN, display name, list order and weight; the native plan editor generates target IDs automatically and keys instrument candidates by ISIN.
+- Re-adding the same instrument after deleting a target creates a new target identity by default; PA adds no tombstone/retired-target history database.
+- Treats outside-current-plan holdings as current source evidence only: they disappear automatically after accepted source data no longer reports them, with no manual PA deletion step.
+- Supports a bounded generic target architecture of up to 32 targets and adds a first-class structural presentation model for current targets/current-plan/outside-scope holdings.
+- Migrates the repository reference plan to schema 2 using opaque target IDs; this is an explicit one-time target-entity identity migration for the reference plan, and the supplied dashboard is aligned to those IDs.
+- Renames the policy dashboard label to **Exception review** / **Ausnahmeprüfung** to distinguish exception lifecycle from plan review scheduling.
+- Keeps payload schema 8, REST portfolio schema 1, Gateway health schema 6, provider runtimes, freshness/schedule semantics, and the no-trading boundary unchanged.
+
 ## 1.33.1
 
 - Fixes recurring execution/review dates so they are anchored to the latest valid Portfolio Architect evaluation instead of the oldest contributing source timestamp.

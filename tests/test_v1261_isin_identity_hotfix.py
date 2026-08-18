@@ -169,17 +169,16 @@ def test_real_trade_republic_rest_identity_shape_completes_seven_of_seven() -> N
     assert summary["source_count"] == 3
     assert summary["provider_count"] == 3
 
-    recommendations = {item["fund_id"]: item for item in payload["recommendations"]}
-    robotics = recommendations["robotics"]
+    recommendations = {item["isin"]: item for item in payload["recommendations"]}
+    robotics = recommendations["IE00BYZK4552"]
     assert robotics["wkn"] == "A2ANH0"
     assert robotics["isin"] == "IE00BYZK4552"
     assert robotics["current_value_eur"] == Decimal("500")
     assert robotics["source_ids"] == ["trade_republic"]
 
-    holdings = {item["position_id"]: item for item in payload["holdings"]}
-    assert holdings["robotics"]["wkn"] == "A2ANH0"
-    assert holdings["robotics"]["isin"] == "IE00BYZK4552"
-    assert holdings["robotics"]["strategy_scope"] == "current_plan"
+    holdings = {item["isin"]: item for item in payload["holdings"]}
+    assert holdings["IE00BYZK4552"]["wkn"] == "A2ANH0"
+    assert holdings["IE00BYZK4552"]["strategy_scope"] == "current_plan"
 
 
 def test_wkn_is_used_only_when_source_isin_is_unavailable() -> None:
