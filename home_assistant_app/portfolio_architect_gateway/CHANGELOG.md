@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.34.1
+
+- Package/User-Agent alignment for Portfolio Architect v1.34.1 whole-portfolio allocation-presentation hotfix; Comdirect acquisition, OAuth/session maintenance, private-PKI HTTPS and diagnostics remain unchanged.
+
 ## 1.34.0
 
 - Package/User-Agent alignment for Portfolio Architect v1.34.0 generic target/presentation architecture; Comdirect acquisition, OAuth/session maintenance, private-PKI HTTPS and diagnostics remain unchanged.

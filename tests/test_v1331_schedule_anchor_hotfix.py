@@ -1,4 +1,4 @@
-"""v1.34.0 scheduling-anchor hotfix regressions."""
+"""v1.34.1 scheduling-anchor hotfix regressions."""
 
 from __future__ import annotations
 
@@ -30,7 +30,7 @@ def _function_source(path: Path, name: str) -> str:
 
 
 def test_live_august_topology_anchors_schedule_to_evaluation_not_oldest_source() -> None:
-    """Reproduce the v1.34.0 live failure without making source freshness part of scheduling."""
+    """Reproduce the v1.34.1 live failure without making source freshness part of scheduling."""
     evaluation = datetime(2026, 8, 18, 10, 18, tzinfo=timezone.utc)
     old_dkb_csv = datetime(2026, 7, 31, 0, 0, tzinfo=timezone.utc)
     config = schedule_module.validate_schedule_config("monthly", [7])

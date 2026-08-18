@@ -150,7 +150,7 @@ def test_hacs_metadata_and_stable_release_archive(tmp_path: Path) -> None:
         text=True,
     )
     stable = tmp_path / "portfolio_architect.zip"
-    versioned = tmp_path / "portfolio-architect-v1.34.0-ha-dropin.zip"
+    versioned = tmp_path / "portfolio-architect-v1.34.1-ha-dropin.zip"
     assert stable.is_file()
     assert versioned.is_file()
     assert _sha256(stable) != _sha256(versioned)

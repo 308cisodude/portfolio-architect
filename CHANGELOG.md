@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.34.1
+
+- Fixes whole-portfolio distribution after the v1.34 opaque-target migration: every configured target now owns its established whole-portfolio allocation entity even when currently missing, so a missing target renders as 0% rather than an unresolved entity reference.
+- Migrates reference-dashboard outside-scope distribution bindings from obsolete WKN-era holding IDs to the established ISIN-first `holding_<identity>` IDs.
+- Keeps the intentionally static outside-scope detail Tile inventory unchanged pending the later dynamic native-dashboard milestone; the v1.34 presentation model remains the complete current-state inventory.
+- Preserves target IDs, portfolio calculations, source freshness, scheduling, provider runtimes, wire schemas, cash/execution behavior and the advisory/no-trading boundary.
+
 ## 1.34.0
 
 - Adds portfolio schema 2 with explicit opaque `target_id` values generated from 128 random bits while retaining schema-1 legacy `id` compatibility.

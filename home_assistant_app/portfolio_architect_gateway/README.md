@@ -1,7 +1,7 @@
-# Portfolio Architect Gateway — Comdirect v1.34.0
+# Portfolio Architect Gateway — Comdirect v1.34.1
 
-Version 1.34.0 is package/User-Agent alignment for the Home Assistant-side generic target and
-presentation-model milestone. Comdirect runtime behavior and the live-accepted v1.32.0 provider-
+Version 1.34.1 is package/User-Agent alignment for the Home Assistant-side whole-portfolio
+allocation-presentation hotfix; the v1.34.0 generic target/presentation architecture is unchanged. Comdirect runtime behavior and the live-accepted v1.32.0 provider-
 diagnostics foundation are unchanged.
 
 Verified HTTPS/private CA trust, bearer authentication, PhotoTAN bootstrap, account
