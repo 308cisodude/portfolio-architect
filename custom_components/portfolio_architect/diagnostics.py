@@ -198,7 +198,10 @@ async def async_get_config_entry_diagnostics(
         "plan_actionable": coordinator.plan_actionable,
         "plan_actionability_reason": coordinator.plan_actionability_reason,
         "freshness_mode": coordinator.freshness_mode,
+        "freshness_policy": coordinator.freshness_policy,
         "freshness_threshold_hours": coordinator.freshness_hours,
+        "freshness_thresholds": coordinator.effective_freshness_thresholds,
+        "fresh_through": _isoformat(coordinator.data_fresh_through),
         "review_schedule": {
             "configured": coordinator.review_schedule_configured,
             "frequency": coordinator.plan_frequency,

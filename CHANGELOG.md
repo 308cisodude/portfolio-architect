@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.33.0
+
+- Separates provider-evidence freshness from recurring plan review scheduling: future review dates can no longer make old bank evidence fresh, and overdue reviews no longer rewrite source freshness.
+- Adds explicit bounded evidence-kind freshness thresholds for live API/Gateway, imported statement, imported CSV and other evidence, with conservative migration from the existing global threshold.
+- Keeps an existing stale plan stale on upgrade until the operator deliberately saves different provider/evidence-kind limits.
+- Fixes `Restore file-based plan` so it removes only the Home Assistant target-plan override and preserves recurring execution/review schedule options.
+- Adds an independent `Execution & review schedule` configuration flow so schedule timing can be restored or changed while targets continue to come from `portfolio.yaml`.
+- Reuses the v1.32 per-source freshness/dashboard evidence with each source's effective threshold; provider runtimes, wire schemas, diagnostic policy and the advisory/no-trading boundary remain unchanged.
+
 ## 1.32.0
 
 - Adds per-source freshness evidence so stale multi-source actionability can identify the exact blocking source, evidence kind, age and unchanged aggregate freshness threshold.

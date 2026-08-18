@@ -26,6 +26,10 @@ from .const import (
     CONF_CONFIG_DIRECTORY,
     CONF_CSV_PATH,
     CONF_FRESHNESS_HOURS,
+    CONF_FRESHNESS_LIVE_API_HOURS,
+    CONF_FRESHNESS_STATEMENT_HOURS,
+    CONF_FRESHNESS_CSV_HOURS,
+    CONF_FRESHNESS_OTHER_HOURS,
     CONF_PLAN_BUDGET_AMOUNT,
     CONF_PLAN_BUDGET_BASIS,
     CONF_PLAN_EXECUTION_DAYS,
@@ -65,6 +69,7 @@ from .const import (
     MAX_SUPPLEMENTAL_REST_SOURCES,
     DOMAIN,
     MAX_FRESHNESS_HOURS,
+    MAX_DOCUMENT_FRESHNESS_HOURS,
     MAX_REVIEW_LEAD_DAYS,
     MIN_FRESHNESS_HOURS,
     MIN_REVIEW_LEAD_DAYS,
@@ -265,6 +270,47 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
             default=DEFAULT_FRESHNESS_HOURS,
             minimum=MIN_FRESHNESS_HOURS,
             maximum=MAX_FRESHNESS_HOURS,
+        )
+        self.freshness_threshold_hours_by_kind = {
+            "live_api": _bounded_int(
+                entry.options.get(CONF_FRESHNESS_LIVE_API_HOURS),
+                default=self.freshness_hours,
+                minimum=MIN_FRESHNESS_HOURS,
+                maximum=MAX_FRESHNESS_HOURS,
+            ),
+            "gateway_snapshot": _bounded_int(
+                entry.options.get(CONF_FRESHNESS_LIVE_API_HOURS),
+                default=self.freshness_hours,
+                minimum=MIN_FRESHNESS_HOURS,
+                maximum=MAX_FRESHNESS_HOURS,
+            ),
+            "imported_statement": _bounded_int(
+                entry.options.get(CONF_FRESHNESS_STATEMENT_HOURS),
+                default=self.freshness_hours,
+                minimum=MIN_FRESHNESS_HOURS,
+                maximum=MAX_DOCUMENT_FRESHNESS_HOURS,
+            ),
+            "imported_csv": _bounded_int(
+                entry.options.get(CONF_FRESHNESS_CSV_HOURS),
+                default=self.freshness_hours,
+                minimum=MIN_FRESHNESS_HOURS,
+                maximum=MAX_DOCUMENT_FRESHNESS_HOURS,
+            ),
+            "other": _bounded_int(
+                entry.options.get(CONF_FRESHNESS_OTHER_HOURS),
+                default=self.freshness_hours,
+                minimum=MIN_FRESHNESS_HOURS,
+                maximum=MAX_FRESHNESS_HOURS,
+            ),
+        }
+        self._provider_freshness_policy_configured = any(
+            key in entry.options
+            for key in (
+                CONF_FRESHNESS_LIVE_API_HOURS,
+                CONF_FRESHNESS_STATEMENT_HOURS,
+                CONF_FRESHNESS_CSV_HOURS,
+                CONF_FRESHNESS_OTHER_HOURS,
+            )
         )
         self.review_lead_days = _bounded_int(
             entry.options.get(CONF_REVIEW_LEAD_DAYS),
@@ -914,8 +960,22 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
 
     @property
     def freshness_mode(self) -> str:
-        """Return the active freshness policy."""
-        return "review_schedule" if self.review_schedule_configured else "age_threshold"
+        """Return the compatibility freshness-mode token.
+
+        Since v1.33 source evidence age is always evaluated independently of the
+        review schedule.  Keep the established ``age_threshold`` token so existing
+        automations do not need a machine-state migration.
+        """
+        return "age_threshold"
+
+    @property
+    def freshness_policy(self) -> str:
+        """Return whether provider-aware thresholds were explicitly configured."""
+        return (
+            "evidence_kind_thresholds"
+            if self._provider_freshness_policy_configured
+            else "legacy_global_threshold"
+        )
 
     def source_freshness_evidence(
         self, now: datetime | None = None
@@ -936,14 +996,13 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
             summaries,
             now=now or dt_util.utcnow(),
             threshold_hours=self.freshness_hours,
+            threshold_hours_by_kind=self.freshness_threshold_hours_by_kind,
         )
 
     def stale_source_evidence(
         self, now: datetime | None = None
     ) -> tuple[dict[str, Any], ...]:
-        """Return source-specific blockers only for the established age-threshold mode."""
-        if self.freshness_mode != "age_threshold":
-            return ()
+        """Return source-specific evidence-age blockers."""
         return select_stale_rows(self.source_freshness_evidence(now))
 
     @property
@@ -952,12 +1011,33 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
         return tuple(str(item.get("source_id", "unknown")) for item in self.stale_source_evidence())
 
     @property
+    def data_fresh_through(self) -> datetime | None:
+        """Return the earliest evidence-age deadline across contributing sources."""
+        deadlines: list[datetime] = []
+        for item in self.source_freshness_evidence():
+            generated = item.get("generated_at")
+            threshold = item.get("threshold_hours")
+            if not isinstance(generated, str) or isinstance(threshold, bool) or not isinstance(threshold, int):
+                return None
+            try:
+                timestamp = datetime.fromisoformat(generated.replace("Z", "+00:00"))
+            except ValueError:
+                return None
+            if timestamp.tzinfo is None:
+                return None
+            deadlines.append(timestamp.astimezone(timezone.utc) + timedelta(hours=threshold))
+        return min(deadlines) if deadlines else None
+
+    @property
+    def effective_freshness_thresholds(self) -> dict[str, int]:
+        """Return a bounded copy of the active evidence-kind threshold map."""
+        return dict(self.freshness_threshold_hours_by_kind)
+
+    @property
     def stale_source_summary(self) -> str:
         """Return a compact English explanation of the active freshness blocker."""
         if self.is_data_fresh():
             return "None"
-        if self.freshness_mode == "review_schedule":
-            return "Plan review window expired"
         return build_stale_summary(self.stale_source_evidence(), german=False)
 
     @property
@@ -965,8 +1045,6 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
         """Return a compact German explanation of the active freshness blocker."""
         if self.is_data_fresh():
             return "Keine"
-        if self.freshness_mode == "review_schedule":
-            return "Prüffenster des Plans abgelaufen"
         return build_stale_summary(self.stale_source_evidence(), german=True)
 
     @property
@@ -1002,20 +1080,16 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
         }.get(reason, reason)
 
     def is_data_fresh(self, now: datetime | None = None) -> bool:
-        """Return whether the accepted snapshot is within its freshness window."""
-        timestamp = self.oldest_source_generated_at or self.data_timestamp
-        if timestamp is None:
-            return False
-        current = now or dt_util.utcnow()
-        age = current - timestamp
-        if age < timedelta(minutes=-5):
-            return False
+        """Return whether every contributing source satisfies its evidence-age policy.
 
-        schedule = self.plan_review_schedule()
-        if schedule is not None:
-            current_date = dt_util.as_local(current).date()
-            return current_date <= schedule.next_review_on
-        return age <= timedelta(hours=self.freshness_hours)
+        Review cadence is deliberately independent: a future review date cannot make
+        stale provider evidence fresh, and an overdue review cannot make otherwise
+        current provider evidence stale.
+        """
+        rows = self.source_freshness_evidence(now)
+        return bool(rows) and all(
+            item.get("within_age_threshold") is True for item in rows
+        )
 
     @property
     def plan_actionable(self) -> bool:

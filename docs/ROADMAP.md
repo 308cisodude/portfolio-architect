@@ -349,20 +349,26 @@ legitimate FinTS product identity.
 - Preserve the live-accepted v1.31.2 DKB anonymous FinTS diagnostics and non-live research
   boundary unchanged apart from normal package metadata.
 
-## Future — provider-aware source freshness policy
+## v1.33.0 — source freshness and plan-schedule separation
 
-The v1.32.0 observability foundation deliberately does not decide that live APIs, imported
-statements and CSV evidence should share one universal age policy forever. A later design may:
+- Evaluate provider evidence age independently from recurring review scheduling; a future review
+  date cannot make stale bank evidence fresh and an overdue review cannot rewrite source
+  freshness.
+- Add explicit bounded user-owned evidence-kind thresholds for live API/Gateway snapshots,
+  imported statements, imported CSV evidence and other sources.
+- Preserve the pre-v1.33 global threshold for every evidence kind until the operator explicitly
+  saves the new settings, preventing an upgrade from making an existing stale plan actionable.
+- Keep one-stale-source fail-closed actionability and invalid/future timestamp rejection.
+- Correct `Restore file-based plan` so it removes only the target-plan definition override and
+  preserves recurring execution/review schedule options.
+- Add a dedicated schedule options flow so timing can be restored/configured independently of
+  whether targets come from `portfolio.yaml` or a Home Assistant override.
+- Reuse the v1.32 native blocker presentation and provider diagnostic policy without adding a
+  frontend dependency or changing provider runtime/wire contracts.
 
-- allow explicit bounded per-source or per-evidence-kind freshness policy owned by the user;
-- distinguish live operational freshness from document/CSV evidence age without silently
-  weakening investment-actionability safety;
-- show the effective policy and blocking source deterministically in entities/diagnostics; and
-- require conservative migration/defaults so an upgrade cannot make an existing stale plan
-  actionable merely because the software learned new provider categories.
-
-Any materiality-based exception (for example ignoring a small stale contribution) requires a
-separate bounded error model and must not be inferred merely from current portfolio value.
+Any future materiality-based freshness exception (for example ignoring a small stale
+contribution) still requires a separate bounded error model and must not be inferred merely
+from current portfolio value.
 
 ## Future — generic target architecture and first-class presentation model
 

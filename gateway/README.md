@@ -1,10 +1,8 @@
-# Portfolio Architect Gateway runtime v1.32.0
+# Portfolio Architect Gateway runtime v1.33.0
 
-Version 1.32.0 aligns the provider-neutral Gateway package with the provider freshness and
-diagnostics foundation. The common server remains provider-neutral; provider-specific diagnostic
-retention stays inside the corresponding App. Comdirect acquisition/session behavior, DKB FinTS
-research behavior, REST schema 1, health schema 6, private-PKI HTTPS and bearer authentication
-remain unchanged.
+Version 1.33.0 is package/User-Agent alignment for the Home Assistant-side source-freshness and
+plan-schedule separation release. The common server remains provider-neutral and its runtime,
+REST schema 1, health schema 6, private-PKI HTTPS and bearer-authentication behavior are unchanged.
 
 The Gateway is a dedicated, Python-library-dependency-free service that converts one
 provider-specific portfolio source into provider-neutral Portfolio Architect REST
@@ -52,9 +50,9 @@ non-secret and carries no account/depot identity. Health schemas 1 through 5 rem
 available unchanged for older Portfolio Architect versions.
 
 The provider contract and official future App identities are documented in
-`docs/GATEWAY-PROVIDERS.md`. The common runtime remains provider-neutral in v1.32.0;
+`docs/GATEWAY-PROVIDERS.md`. The common runtime remains provider-neutral in v1.33.0;
 provider-specific acquisition continues to live only in the corresponding App package.
-The ISIN-first v1.26.1 hotfix is implemented in Portfolio Architect's Home Assistant calculation layer and does not change Gateway REST schema 1 or health schema 6. Version 1.32.0 retains the private-PKI HTTPS helper and v1.26.7 quantity-bearing cached-snapshot/ETag-precedence guarantees. Comdirect OAuth session maintenance is provider-specific; provider acquisition contracts and REST/health schemas are unchanged.
+The ISIN-first v1.26.1 hotfix is implemented in Portfolio Architect's Home Assistant calculation layer and does not change Gateway REST schema 1 or health schema 6. Version 1.33.0 retains the private-PKI HTTPS helper and v1.26.7 quantity-bearing cached-snapshot/ETag-precedence guarantees. Comdirect OAuth session maintenance is provider-specific; provider acquisition contracts and REST/health schemas are unchanged.
 
 ## Authorized investment cash
 

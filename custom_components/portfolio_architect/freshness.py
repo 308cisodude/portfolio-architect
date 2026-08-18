@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Any, Iterable
+from typing import Any, Iterable, Mapping
 
 _FUTURE_TOLERANCE_SECONDS = 5 * 60
 _MAX_SUMMARY_CHARS = 240
@@ -28,16 +28,23 @@ def source_freshness_rows(
     *,
     now: datetime,
     threshold_hours: int,
+    threshold_hours_by_kind: Mapping[str, int] | None = None,
 ) -> tuple[dict[str, Any], ...]:
     """Build bounded age evidence for each contributing source.
 
-    This helper is observational only.  The caller remains authoritative for whether
-    the active freshness policy is the age threshold or a review schedule.
+    ``threshold_hours`` remains the compatibility fallback used by pre-v1.33
+    configurations.  Explicit evidence-kind thresholds override it only when the
+    user has deliberately configured them.
     """
     if now.tzinfo is None:
         raise ValueError("Freshness evaluation time must include a timezone")
     current = now.astimezone(timezone.utc)
-    threshold_seconds = max(0, int(threshold_hours)) * 3600
+    fallback_threshold = max(0, int(threshold_hours))
+    thresholds = {
+        str(key): max(0, int(value))
+        for key, value in (threshold_hours_by_kind or {}).items()
+        if not isinstance(value, bool)
+    }
     rows: list[dict[str, Any]] = []
     for item in source_summaries:
         if not isinstance(item, dict):
@@ -45,6 +52,9 @@ def source_freshness_rows(
         source_id = _bounded_text(item.get("source_id"), fallback="unknown", maximum=32)
         provider = _bounded_text(item.get("provider"), fallback="unknown", maximum=32)
         label = _bounded_text(item.get("label"), fallback=source_id, maximum=80)
+        kind = evidence_kind(provider)
+        effective_threshold = thresholds.get(kind, fallback_threshold)
+        threshold_seconds = effective_threshold * 3600
         generated_at = _parse_timestamp(item.get("generated_at"))
         if generated_at is None:
             rows.append(
@@ -52,10 +62,10 @@ def source_freshness_rows(
                     "source_id": source_id,
                     "provider": provider,
                     "label": label,
-                    "evidence_kind": evidence_kind(provider),
+                    "evidence_kind": kind,
                     "generated_at": None,
                     "age_seconds": None,
-                    "threshold_hours": int(threshold_hours),
+                    "threshold_hours": effective_threshold,
                     "within_age_threshold": False,
                     "timestamp_status": "invalid",
                 }
@@ -73,10 +83,10 @@ def source_freshness_rows(
                 "source_id": source_id,
                 "provider": provider,
                 "label": label,
-                "evidence_kind": evidence_kind(provider),
+                "evidence_kind": kind,
                 "generated_at": generated_at.isoformat(),
                 "age_seconds": age_seconds,
-                "threshold_hours": int(threshold_hours),
+                "threshold_hours": effective_threshold,
                 "within_age_threshold": within,
                 "timestamp_status": timestamp_status,
             }

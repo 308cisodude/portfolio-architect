@@ -781,13 +781,12 @@ class PortfolioDataFresh(
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        schedule = self.coordinator.plan_review_schedule()
         return {
             "freshness_mode": self.coordinator.freshness_mode,
+            "freshness_policy": self.coordinator.freshness_policy,
             "freshness_threshold_hours": self.coordinator.freshness_hours,
-            "fresh_through": (
-                schedule.next_review_on.isoformat() if schedule else None
-            ),
+            "freshness_thresholds": self.coordinator.effective_freshness_thresholds,
+            "fresh_through": _isoformat(self.coordinator.data_fresh_through),
             "source_freshness": list(self.coordinator.source_freshness_evidence()),
             "display_state_de": display_binary_state_de(
                 "data_fresh", self.is_on
@@ -886,6 +885,9 @@ def _source_attributes(coordinator: PortfolioArchitectCoordinator) -> dict[str, 
         "source_last_updated": _isoformat(coordinator.source_last_updated),
         "last_successful_refresh": _isoformat(coordinator.data_timestamp),
         "data_fresh": coordinator.is_data_fresh(),
+        "freshness_policy": coordinator.freshness_policy,
+        "freshness_thresholds": coordinator.effective_freshness_thresholds,
+        "fresh_through": _isoformat(coordinator.data_fresh_through),
         "stale_source_count": len(coordinator.stale_source_ids),
         "stale_source_ids": list(coordinator.stale_source_ids),
         "stale_source_summary": coordinator.stale_source_summary,

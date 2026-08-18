@@ -7,7 +7,7 @@ from homeassistant.const import Platform
 DOMAIN: Final = "portfolio_architect"
 INSTANCE_UNIQUE_ID: Final = "portfolio_architect"
 NAME: Final = "Portfolio Architect"
-VERSION: Final = "1.32.0"
+VERSION: Final = "1.33.0"
 
 CONF_SOURCE_TYPE: Final = "source_type"
 
@@ -28,7 +28,11 @@ CONF_REST_API_TOKEN: Final = "rest_api_token"
 CONF_REST_TLS_CA_CERTIFICATE: Final = "rest_tls_ca_certificate"
 CONF_CONFIG_DIRECTORY: Final = "config_directory"
 CONF_SOURCE_ENTITY_ID: Final = "source_entity_id"  # v1.0 compatibility only
-CONF_FRESHNESS_HOURS: Final = "freshness_hours"
+CONF_FRESHNESS_HOURS: Final = "freshness_hours"  # pre-v1.33 compatibility fallback
+CONF_FRESHNESS_LIVE_API_HOURS: Final = "freshness_live_api_hours"
+CONF_FRESHNESS_STATEMENT_HOURS: Final = "freshness_statement_hours"
+CONF_FRESHNESS_CSV_HOURS: Final = "freshness_csv_hours"
+CONF_FRESHNESS_OTHER_HOURS: Final = "freshness_other_hours"
 CONF_PLAN_EXECUTION_DAY: Final = "plan_execution_day"  # v1.0-v1.1 migration only
 CONF_REVIEW_LEAD_DAYS: Final = "review_lead_days"
 CONF_SUPPLEMENTAL_DKB_CSV_PATHS: Final = "supplemental_dkb_csv_paths"
@@ -72,6 +76,7 @@ DEFAULT_SOURCE_ENTITY_ID: Final = "sensor.portfolio_architect"
 DEFAULT_FRESHNESS_HOURS: Final = 24
 MIN_FRESHNESS_HOURS: Final = 1
 MAX_FRESHNESS_HOURS: Final = 168
+MAX_DOCUMENT_FRESHNESS_HOURS: Final = 31 * 24
 DEFAULT_REVIEW_LEAD_DAYS: Final = 2
 MIN_REVIEW_LEAD_DAYS: Final = 1
 MAX_REVIEW_LEAD_DAYS: Final = 7

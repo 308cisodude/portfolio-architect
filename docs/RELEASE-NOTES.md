@@ -1,125 +1,99 @@
-# Portfolio Architect 1.32.0
+# Portfolio Architect 1.33.0
 
-Version 1.32.0 is the **provider freshness and diagnostics foundation** prepared from the
-exact immutable v1.31.2 source baseline. It improves the explanation and provider-specific
-handling of stale or rejected evidence without relaxing Portfolio Architect's existing
-fail-closed investment-actionability rules.
+Version 1.33.0 is the **source-freshness and plan-schedule separation** release prepared from
+the exact live-accepted v1.32.0 tracked-source baseline.
 
-## Per-source freshness evidence
+The release follows two live observations: v1.32 finally exposed that a DKB CSV source was the
+freshness blocker, and comparison with the earlier v1.30 dashboard proved that the same old CSV
+had previously remained "fresh" only because a configured review date replaced the source-age
+gate. The v1.31 `Restore file-based plan` operation had also removed that schedule together
+with the target-plan override.
 
-Portfolio Architect already makes a multi-source plan non-actionable when the oldest
-contributing source lies outside the configured freshness window. Version 1.32.0 keeps that
-rule unchanged and exposes bounded evidence explaining it.
+## Evidence freshness is no longer review cadence
 
-The Portfolio sources and Snapshot freshness entities now include per-source evidence with:
+Provider evidence age and recurring review dates are now separate controls.
 
-- source ID, provider and bounded label;
-- provider evidence kind (`live_api`, `imported_statement`, `imported_csv`, bounded Gateway
-  snapshot or other);
-- source `generated_at` timestamp and locally derived age;
-- the currently applicable aggregate age threshold; and
-- whether that source is inside the age threshold.
+`is_data_fresh()` evaluates every contributing source against its effective evidence-age
+threshold. It no longer asks whether `next_review_on` lies in the future. Therefore:
 
-When age-threshold freshness is the active gate, additive attributes identify only the
-sources currently blocking actionability and provide bounded English/German summaries.
-For the live acceptance topology that motivated this release, the DKB CSV source is the only
-stale source while the newer Comdirect and Trade Republic evidence remains inside the same
-168-hour window.
+- a future review date cannot authorize old provider evidence;
+- an overdue plan review does not rewrite source freshness;
+- one stale contributing source still makes the aggregate plan non-actionable; and
+- invalid/materially future source timestamps remain fail-closed.
 
-This is **observability, not a policy change**. The engine still evaluates freshness from the
-oldest contributing source, and one stale source can still make the complete investment plan
-non-actionable. Version 1.32.0 does not introduce per-provider freshness limits and does not
-ignore a stale source because its monetary contribution is small.
+The existing `freshness_mode: age_threshold` token is retained for machine-state compatibility.
+New diagnostics expose an explicit freshness-policy token, the effective threshold map and the
+earliest evidence-age `fresh_through` deadline.
 
-## Native dashboard blocker explanation
+## User-owned evidence-kind thresholds
 
-The English/German reference dashboard now uses built-in Tile `state_content` attributes to
-show the actual stale-source/actionability detail instead of only a generic unavailable or
-outside-freshness state. No custom card, frontend template, JavaScript or CSS dependency is
-introduced.
+v1.33 can apply separate bounded thresholds to:
 
-The dashboard YAML therefore changes in this release. Existing dashboards remain runtime
-compatible, but replacing the supplied reference dashboard is required to display the new
-freshness/actionability explanation.
+- `live_api` and provider `gateway_snapshot` evidence;
+- `imported_statement` evidence;
+- `imported_csv` evidence; and
+- `other` evidence.
 
-## Provider diagnostic policy
+Live/other limits are bounded to 1–168 hours. Imported statement/CSV limits are bounded to
+1–744 hours (31 days).
 
-`docs/PROVIDER-DIAGNOSTICS.md` defines a shared security boundary for provider-specific
-operator diagnostics:
+Migration is intentionally conservative. Existing installations do not receive a longer
+provider-specific lifetime automatically. When none of the new options has been saved, every
+category inherits the pre-v1.33 global `freshness_hours` value. A stale v1.32 plan therefore
+stays stale immediately after upgrading to v1.33.
 
-- retain only explicitly classified and bounded evidence;
-- keep persistent diagnostic state App-private and mode `0600`;
-- never persist raw upstream response bodies merely for troubleshooting;
-- never expose credentials, tokens, cookies, PIN/TAN material, account/depot identifiers or
-  private holdings/monetary values through diagnostics;
-- keep provider App Ingress actions/navigation inside the App namespace; and
-- replace obsolete failure evidence after a successful operation rather than growing an
-  accidental diagnostic archive.
+Only an explicit operator save under **Runtime safeguards** activates different evidence-kind
+values.
 
-The policy deliberately permits provider-specific retention decisions rather than forcing one
-mechanism onto every provider.
+## File-plan restoration no longer destroys scheduling
 
-### Trade Republic
+The reset boundary is corrected. **Restore file-based plan** now removes only the Home
+Assistant target-plan definition override. It preserves:
 
-The Trade Republic App now persists only its **latest bounded statement-import outcome** next
-to the existing private provider snapshot. Accepted, rejected and internal-error outcomes use
-a strict allowlist/genericization contract. Unexpected parser text cannot be persisted or
-echoed back after reopening the App, even if a diagnostic state file is malformed or tampered
-with. A later successful import replaces the previous failure evidence.
+- recurring schedule enabled/disabled state;
+- plan frequency used by the schedule;
+- execution days/month/quarter offset;
+- review lead time;
+- provider/source configuration;
+- execution/cost policy; and
+- runtime safeguards.
 
-The uploaded `DEPOTAUSZUG` PDF is still parsed in memory and is not stored. Version 1.32.0
-also deliberately does **not** persist a PDF SHA-256: a private financial document's stable
-fingerprint is unnecessary diagnostic identity and would weaken data minimization. This
-release does not move PDF parsing into Portfolio Architect.
+A dedicated **Execution & review schedule** options flow is added so a schedule can be restored
+or changed while the target architecture continues to come from `portfolio.yaml`. This is
+particularly useful for installations whose schedule was already lost during the v1.31 plan
+migration.
 
-### Comdirect
+## v1.32 observability remains the presentation layer
 
-The established Comdirect runtime is audited and regression-protected against the same
-policy. Its authenticated upstream path continues to expose only bounded failure classes and
-approved OAuth/session rejection reasons; remote response bodies, credentials, qSession
-state and private account material are not retained for diagnostics. Ingress navigation
-continues to use the App-relative root. No new authenticated-response fingerprint or free-text
-persistence is added.
+The existing v1.32 per-source `source_freshness` rows and native dashboard blocker summary are
+reused. Each row now carries the source's effective evidence-kind threshold, so the dashboard
+can naturally render, for example, a DKB CSV blocker against a 31-day policy without new custom
+frontend code.
 
-### DKB
+The bilingual reference dashboard itself is unchanged from v1.32.0.
 
-The live-accepted v1.31.2 registered anonymous FinTS diagnostic contract is unchanged apart
-from normal package/version metadata. Its anonymous bounded `HIRMG`/`HIRMS` return evidence
-and decoded-response fingerprint remain appropriate to that deliberately non-authenticated
-probe. DKB remains experimental, manual-only and non-live. The current `9078` product-not-
-registered result is capability-inconclusive while the issued product identity propagates.
+## Provider runtimes preserved
 
-A positive future `HIWPDS` BPD result would still be only bank-level evidence. Authenticated
-user capability/UPD validation and DKB-App decoupled authentication remain later gates. DKB
-live Gateway acquisition remains a later authenticated milestone; v1.32.0 adds no holdings
-request.
+Comdirect acquisition/OAuth/session/PhotoTAN/cash behavior is unchanged. Trade Republic
+statement import/private diagnostic behavior is unchanged, and this release does not move PDF parsing into Portfolio Architect. DKB keeps the live-accepted v1.31.2
+registered anonymous FinTS diagnostic contract and remains experimental/manual-only/non-live.
+The current `9078` registration-propagation evidence is not re-probed by this release. DKB live Gateway acquisition remains a later authenticated milestone after the bank-level and authenticated user-capability gates.
 
 ## Preserved contracts
 
-- payload schema 8: unchanged
-- REST portfolio schema 1: unchanged
-- Gateway health schema 6: unchanged; schemas 1–5 remain supported
-- the oldest-contributing-source freshness/actionability rule: unchanged
-- configured freshness threshold semantics: unchanged
-- v1.31 canonical accumulating Robotics target: unchanged
-- v1.31.1 ISIN-only outside-scope holding validation: unchanged
-- v1.31.2 DKB registered FinTS probe semantics: unchanged
-- DKB live Gateway acquisition remains a later authenticated milestone
-- Comdirect acquisition, OAuth/session maintenance, PhotoTAN and authorized cash: unchanged
-- Trade Republic accepted provider snapshot and REST serving semantics: unchanged
-- verified private-PKI HTTPS, bearer authentication, Supervisor trust discovery, DNS pinning
-  and no-plaintext fallback: unchanged
-- LKG behavior and investment actionability fail-closed behavior: unchanged
+- portfolio payload schema 8: unchanged;
+- REST portfolio schema 1: unchanged;
+- Gateway health schema 6: unchanged; schemas 1–5 remain supported where previously supported;
+- multi-source atomicity and no-partial-live-aggregate behavior: unchanged;
+- one stale source remains sufficient to make a recommendation non-actionable;
+- v1.31 canonical accumulating Robotics target and outside-scope distributing holding: unchanged;
+- provider-aware execution policy/broker schema 2: unchanged;
+- private-PKI HTTPS, bearer authentication, Supervisor trust discovery, DNS pinning and
+  no-plaintext fallback: unchanged;
+- provider diagnostic evidence policy from v1.32: unchanged; and
+- the historical `v1.19.0-rc2` brokerage probe remains excluded and is not promoted by this release; and
+- advisory/no-trading boundary: unchanged.
 
-No trading, order, transfer, payment, or transaction-history capability is added. No automatic
-sell capability is added. The historical `v1.19.0-rc2` experimental brokerage diagnostic
-branch remains excluded and is not promoted by this release.
+No trading, order, transfer, payment, or transaction-history capability is added. No automatic sell capability is added.
 
-## Upgrade
-
-The integration and all three official Gateway Apps are version-aligned to 1.32.0. No
-portfolio/configuration migration, Comdirect reauthentication, Trade Republic statement
-re-import or DKB registration re-entry/probe is required merely because of this upgrade.
-Replace the supplied bilingual dashboard YAML if you want the new visible blocker detail.
-
-See `docs/UPGRADE-1.32.0.md`.
+See `docs/UPGRADE-1.33.0.md` for the conservative migration and live-acceptance sequence.

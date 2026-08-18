@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway — Comdirect v1.32.0
+# Portfolio Architect Gateway — Comdirect v1.33.0
 
-Version 1.32.0 is package alignment plus a diagnostic-policy audit. Comdirect runtime behavior
+Version 1.33.0 is package alignment plus a diagnostic-policy audit. Comdirect runtime behavior
 is unchanged: authenticated upstream failures remain reduced to bounded failure classes and
 approved OAuth/session rejection reasons; remote response bodies, credentials, qSession state
 and private account material are not retained for diagnostics. App POST navigation remains

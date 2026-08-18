@@ -2046,6 +2046,12 @@
           },
           "stale_source_summary_de": {
             "name": "Freshness blocker (German)"
+          },
+          "freshness_policy": {
+            "name": "Freshness policy"
+          },
+          "freshness_thresholds": {
+            "name": "Effective freshness thresholds"
           }
         }
       },
@@ -2270,7 +2276,8 @@
           "runtime": "Runtime safeguards",
           "reset_plan": "Restore file-based plan",
           "sources": "Portfolio sources",
-          "execution": "Execution and transaction costs"
+          "execution": "Execution and transaction costs",
+          "plan_schedule": "Execution & review schedule"
         }
       },
       "plan": {
@@ -2286,7 +2293,7 @@
         },
         "data_description": {
           "plan_budget_amount": "The amount is either split across all executions in the period or applied to every execution.",
-          "plan_schedule_enabled": "Enable this to calculate planned executions, review dates, and schedule-aware freshness.",
+          "plan_schedule_enabled": "Enable this to calculate planned executions and review dates. Source freshness is evaluated independently.",
           "selected_instruments": "Select between 1 and 32 instruments. Every selected instrument receives a target weight in the next steps."
         }
       },
@@ -2321,17 +2328,23 @@
       },
       "runtime": {
         "title": "Runtime safeguards",
-        "description": "The age threshold is used only when no review schedule is configured. With a schedule, data remains fresh through the planned review date.",
+        "description": "Source evidence age is evaluated independently from the plan review schedule. Existing installations keep their previous global threshold for every evidence kind until these values are deliberately saved.",
         "data": {
-          "freshness_hours": "Fallback freshness threshold"
+          "freshness_live_api_hours": "Live API / Gateway snapshot freshness",
+          "freshness_statement_hours": "Imported statement freshness",
+          "freshness_csv_hours": "Imported CSV freshness",
+          "freshness_other_hours": "Other source freshness"
         },
         "data_description": {
-          "freshness_hours": "Allowed data age when no recurring review schedule is configured (1–168 hours)."
+          "freshness_live_api_hours": "Maximum age for live API and provider Gateway snapshots (1–168 hours).",
+          "freshness_statement_hours": "Maximum age for imported provider statements such as Trade Republic DEPOTAUSZUG evidence (1–744 hours).",
+          "freshness_csv_hours": "Maximum age for imported CSV evidence such as DKB CSV supplements (1–744 hours).",
+          "freshness_other_hours": "Maximum age for source types not covered by another evidence category (1–168 hours)."
         }
       },
       "reset_plan": {
         "title": "Restore file-based plan",
-        "description": "Discard the Home Assistant plan override and use the plan defined in portfolio.yaml again. Runtime safeguards are preserved.",
+        "description": "Discard only the Home Assistant target-plan override and use the plan defined in portfolio.yaml again. Recurring execution/review scheduling, source configuration, execution policy and runtime safeguards are preserved.",
         "data": {
           "confirm_reset": "Restore portfolio.yaml plan"
         }
@@ -2425,6 +2438,32 @@
         "description": "Stop consuming one additional Gateway. The Gateway App and its private data are not changed.",
         "data": {
           "provider_id": "Provider"
+        }
+      },
+      "plan_schedule": {
+        "title": "Configure execution & review schedule",
+        "description": "Configure recurring plan timing independently of the target-plan source. Changing or restoring portfolio.yaml does not remove this schedule.",
+        "data": {
+          "plan_schedule_enabled": "Enable recurring schedule",
+          "plan_frequency": "Plan frequency"
+        },
+        "data_description": {
+          "plan_schedule_enabled": "When disabled, planned execution and next-review dates are unavailable; source freshness remains age-based.",
+          "plan_frequency": "Select the cadence used for execution and review dates."
+        }
+      },
+      "plan_schedule_details": {
+        "title": "Configure recurring execution dates",
+        "description": "Set execution dates and the review lead time. These dates do not override provider-evidence freshness.",
+        "data": {
+          "review_lead_days": "Review lead time",
+          "plan_execution_days": "Execution days",
+          "plan_execution_month": "Execution month",
+          "plan_execution_month_offset": "Month within quarter"
+        },
+        "data_description": {
+          "review_lead_days": "Number of days before the execution for which the next review is due.",
+          "plan_execution_days": "Weekly plans use weekdays; all other plans use days of month from 1 to 28."
         }
       }
     },
