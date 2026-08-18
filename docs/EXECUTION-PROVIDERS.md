@@ -79,7 +79,7 @@ particular bank or broker tariff.
 
 ### Required evidence
 
-Every schema-2 provider requires:
+Every schema-2 or schema-3 provider requires:
 
 - a stable lowercase provider ID;
 - a human-readable name;
@@ -87,7 +87,7 @@ Every schema-2 provider requires:
 - an `as_of` date; and
 - the common `fee_data_max_age_days` validity window.
 
-A provider whose evidence is older than the configured validity window remains known
+A schema-2/schema-3 provider whose evidence is older than the configured validity window remains known
 but is **ineligible** for route selection and fee-policy compliance. A future-dated
 `as_of` value is rejected.
 
@@ -114,6 +114,75 @@ The selected provider is exposed with the recommendation as bounded metadata:
 
 The provider is planning/explainability data. Portfolio Architect remains advisory and
 does not place orders.
+
+## Schema 3 provider-scoped funding topology
+
+Schema 3 keeps the schema-2 execution-provider model and adds explicit **directed**
+funding relationships. Cash remains owned by the Gateway/provider that reported it;
+Portfolio Architect never treats cash from several institutions as one fungible pool.
+
+```yaml
+schema_version: 3
+fee_data_max_age_days: 30
+providers:
+  broker_a:
+    name: Broker A
+    source: user-verified tariff dated 2026-08-18
+    as_of: 2026-08-18
+    priority: 20
+    savings_plans:
+      IE0000000001:
+        available: true
+        fee_pct: 1.5
+  broker_b:
+    name: Broker B
+    source: user-verified tariff dated 2026-08-18
+    as_of: 2026-08-18
+    priority: 10
+    savings_plans:
+      IE0000000001:
+        available: true
+        fee_pct: 0
+
+funding_transfers:
+  - from_provider: broker_a
+    to_provider: broker_b
+    fee_eur: 1.50
+    settlement_business_days: 2
+```
+
+The values are synthetic examples. Transfer cost and conservative settlement delay are
+operator-owned configuration evidence; Portfolio Architect does not infer them from a
+bank name or assume that a standard transfer is free.
+
+Same-provider funding is implicit and has no transfer fee or delay. Cross-provider
+funding is eligible only when the exact directed edge exists. An edge from `broker_a`
+to `broker_b` never authorizes the reverse direction. Unknown providers, duplicate
+edges, self-edges, negative/oversized fees, and invalid settlement delays fail closed.
+
+For a planned purchase, Portfolio Architect evaluates **execution provider + funding
+provider** together. Its cost ratio includes both the execution fee and any funding
+transfer fee. Settlement business days are a deterministic tie-breaker after economic
+cost, so locally available cash wins an otherwise equal route. A fixed transfer fee is
+counted once per source/destination edge within one allocation run.
+
+When a cross-provider route wins, the advisory payload records:
+
+- the execution provider and execution fee;
+- the funding provider;
+- whether a transfer is required;
+- the configured transfer fee and conservative settlement delay; and
+- an aggregate transfer plan containing source, destination, amount required at the
+  destination, fee and settlement business days.
+
+Provider-scoped cash output also records both the authorized amount initially available
+and the amount remaining after the current recommendations. Existing Gateway
+`all_available` and `capped` authorization semantics remain authoritative per cash
+source.
+
+This is still planning only. Portfolio Architect never initiates the transfer, moves
+money, places the resulting order, records transaction history, or assumes that a
+recommended transfer/trade actually occurred.
 
 ## Route-scoped accepted exceptions
 

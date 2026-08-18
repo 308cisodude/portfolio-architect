@@ -1,4 +1,4 @@
-# Portfolio Architect v1.34.1
+# Portfolio Architect v1.35.0
 
 Portfolio Architect is a Home Assistant-native portfolio overview, policy-check,
 and deterministic investment-planning system. It supports provider-specific CSV
@@ -17,6 +17,7 @@ transfer, payment, or account-transaction capability.
 - Live Comdirect data through the credential-isolated **Portfolio Architect Gateway — Comdirect** App.
 - Provider-neutral consolidation across Comdirect/Trade Republic Gateway REST snapshots plus established DKB and generic CSV sources.
 - Provider-owned authorized investment cash with conservative eligibility and optional Gateway caps.
+- Explicit provider-scoped funding topology that keeps cash pools separate and combines funding source with execution-route economics without moving money.
 - Bounded graceful degradation: trusted LKG holdings stay informationally available while stale bank cash and new investment actions fail closed.
 - Evidence-based Gateway refresh diagnostics and locally time-derived snapshot freshness.
 - Provider-aware Gateway health schema 6 with bounded provider identity and backward-compatible health negotiation.
@@ -35,12 +36,13 @@ transfer, payment, or account-transaction capability.
 
 ## Provider Gateway Apps
 
-Version 1.34.1 is a presentation-correctness hotfix for the v1.34.0 generic target architecture.
-Every configured target now owns its whole-portfolio allocation entity even when currently
-missing, and the reference dashboard uses the established ISIN-first IDs for outside-scope
-distribution entries. The opaque 128-bit target architecture, first-class presentation model,
-provider Gateway acquisition and wire/diagnostic contracts remain unchanged apart from normal
-package/User-Agent alignment.
+Version 1.35.0 adds provider-scoped authorized cash and explicit directed funding topology to
+the advisory planner. Cash from independently authenticated Gateways remains owned by its source
+provider; cross-provider funding is considered only after the operator opts into broker schema 3
+and configures the exact directed transfer relationship. Transfer cost participates in route
+economics, while settlement business days break otherwise equal choices. Portfolio Architect
+still performs no transfer or trade, and REST portfolio schema 1 / Gateway health schema 6 remain
+unchanged.
 
 ## Installation channels
 
@@ -71,7 +73,7 @@ See `docs/PUBLICATION-SETUP.md` and `docs/PUBLISHING.md`.
 
 - Home Assistant 2026.7.0 or newer
 - Python 3.14 for source validation and Gateway builds
-- Gateway App 1.16.1 or newer for the established live Comdirect protocol; Gateway App 1.19.0 or newer for configurable cash authorization; 1.19.1 or newer includes the corrected capped-to-all-available transition; 1.20.1 or newer includes the LKG entity-propagation fix; 1.21.0 adds execution/actionability semantics; 1.22.0 adds publication/privacy hardening; 1.24.1 includes the distinct-provider shell startup hotfix; 1.25.0 adds private local Trade Republic `DEPOTAUSZUG` statement import; 1.26.0 adds simultaneous provider Gateway aggregation; 1.26.1 makes instrument identity ISIN-first without changing REST schema 1 or health schema 6; 1.26.2 adds localized dashboard presentation and privacy-safe unavailable-source diagnostics; 1.26.3 closes the remaining German unavailable-state dashboard edge case and polishes policy-compliance layout without changing machine-readable entity states; 1.26.4 attempts native Tile short-date rendering without changing entity states; 1.26.5 moves only dashboard date presentation to additive read-only native `date.*` counterparts after live acceptance showed the v1.26.4 Tile formatter is ineffective for `sensor` DATE states; 1.26.6 fixes non-live REST Gateway source identification without changing acquisition or authentication behavior; 1.26.7 preserves persisted quantities and corrects conditional-request precedence so Gateway cold restarts cannot create a false snapshot-fingerprint change; 1.27.0/1.27.1 introduce per-Gateway private-PKI verified HTTPS; 1.27.2 fixes existing-entry Supervisor discovery eligibility; 1.27.3 fixes DKB Gateway-vs-CSV discovery identity suppression; 1.27.4 decouples Comdirect OAuth session maintenance from portfolio polling while retaining fail-closed migration; 1.28.0 adds only a registration-gated anonymous DKB FinTS capability probe and keeps live DKB acquisition disabled; 1.28.1 refreshes immutable GitHub Actions to Node.js 24-capable major versions without changing runtime behavior; 1.28.2 groups GitHub Actions Dependabot version updates without changing runtime behavior; 1.29.0 adds native policy-dashboard hierarchy without changing entity or runtime contracts; 1.30.0 adds provider-aware local execution routing and route-scoped exception review without changing Gateway wire schemas; 1.31.0 retargets Robotics to the accumulating share class and retires the old distributing exception into audit history; 1.31.1 restores ISIN-only outside-scope holding validation without changing Gateway runtime; 1.31.2 hardens only the DKB registered capability-probe diagnostics/navigation while live DKB acquisition remains disabled; 1.32.0 adds provider freshness observability and cross-provider diagnostic hardening; 1.33.0 separates evidence-age freshness from plan scheduling and adds explicit user-owned evidence-kind thresholds; 1.33.1 corrects the remaining oldest-source schedule anchor without changing Gateway wire schemas; 1.34.0 adds opaque PA-generated 128-bit target IDs and a first-class current-state presentation contract while retaining schema-1 plan compatibility; 1.34.1 fixes whole-portfolio allocation presentation and ISIN-first outside-scope dashboard bindings
+- Gateway App 1.16.1 or newer for the established live Comdirect protocol; Gateway App 1.19.0 or newer for configurable cash authorization; 1.19.1 or newer includes the corrected capped-to-all-available transition; 1.20.1 or newer includes the LKG entity-propagation fix; 1.21.0 adds execution/actionability semantics; 1.22.0 adds publication/privacy hardening; 1.24.1 includes the distinct-provider shell startup hotfix; 1.25.0 adds private local Trade Republic `DEPOTAUSZUG` statement import; 1.26.0 adds simultaneous provider Gateway aggregation; 1.26.1 makes instrument identity ISIN-first without changing REST schema 1 or health schema 6; 1.26.2 adds localized dashboard presentation and privacy-safe unavailable-source diagnostics; 1.26.3 closes the remaining German unavailable-state dashboard edge case and polishes policy-compliance layout without changing machine-readable entity states; 1.26.4 attempts native Tile short-date rendering without changing entity states; 1.26.5 moves only dashboard date presentation to additive read-only native `date.*` counterparts after live acceptance showed the v1.26.4 Tile formatter is ineffective for `sensor` DATE states; 1.26.6 fixes non-live REST Gateway source identification without changing acquisition or authentication behavior; 1.26.7 preserves persisted quantities and corrects conditional-request precedence so Gateway cold restarts cannot create a false snapshot-fingerprint change; 1.27.0/1.27.1 introduce per-Gateway private-PKI verified HTTPS; 1.27.2 fixes existing-entry Supervisor discovery eligibility; 1.27.3 fixes DKB Gateway-vs-CSV discovery identity suppression; 1.27.4 decouples Comdirect OAuth session maintenance from portfolio polling while retaining fail-closed migration; 1.28.0 adds only a registration-gated anonymous DKB FinTS capability probe and keeps live DKB acquisition disabled; 1.28.1 refreshes immutable GitHub Actions to Node.js 24-capable major versions without changing runtime behavior; 1.28.2 groups GitHub Actions Dependabot version updates without changing runtime behavior; 1.29.0 adds native policy-dashboard hierarchy without changing entity or runtime contracts; 1.30.0 adds provider-aware local execution routing and route-scoped exception review without changing Gateway wire schemas; 1.31.0 retargets Robotics to the accumulating share class and retires the old distributing exception into audit history; 1.31.1 restores ISIN-only outside-scope holding validation without changing Gateway runtime; 1.31.2 hardens only the DKB registered capability-probe diagnostics/navigation while live DKB acquisition remains disabled; 1.32.0 adds provider freshness observability and cross-provider diagnostic hardening; 1.33.0 separates evidence-age freshness from plan scheduling and adds explicit user-owned evidence-kind thresholds; 1.33.1 corrects the remaining oldest-source schedule anchor without changing Gateway wire schemas; 1.34.0 adds opaque PA-generated 128-bit target IDs and a first-class current-state presentation contract while retaining schema-1 plan compatibility; 1.34.1 fixes whole-portfolio allocation presentation and ISIN-first outside-scope dashboard bindings; 1.35.0 adds provider-scoped cash and explicit advisory funding-transfer topology without changing Gateway wire schemas
 
 The current stable Portfolio Architect release and the immediately preceding
 stable release receive security and correctness fixes while a documented upgrade
@@ -85,7 +87,7 @@ The selected investment account identifier, IBAN, account holder, transaction
 history, OAuth material, qSession cookie, and bank credentials are not included
 in the public portfolio snapshot or diagnostics.
 
-Official v1.34.1 Gateway Apps use verified HTTPS on the private Home Assistant App network and retain bearer authentication. Never expose the Gateway REST port to an untrusted network.
+Official v1.35.0 Gateway Apps use verified HTTPS on the private Home Assistant App network and retain bearer authentication. Never expose the Gateway REST port to an untrusted network.
 
 ## AI-assisted development
 
@@ -136,6 +138,7 @@ and built release contents before publication.
 - `docs/QUALITY.md`
 - `docs/DECISION-TRACE.md`
 - `AI_POLICY.md`
+- `docs/UPGRADE-1.35.0.md`
 - `docs/UPGRADE-1.34.1.md`
 - `docs/UPGRADE-1.34.0.md`
 - `docs/UPGRADE-1.33.1.md`

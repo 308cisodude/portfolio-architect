@@ -10,6 +10,7 @@ from .execution import (
     POLICY_EFFICIENCY_FIRST,
     ROUTE_MANUAL_ORDER,
     ROUTE_UNAVAILABLE,
+    choose_funded_route_for_cash,
     choose_route_for_cash,
     efficient_manual_cash_required_for_broker,
 )
@@ -175,6 +176,8 @@ def allocate_buys(
     broker: dict[str, Any] | None = None,
     execution: dict[str, Any] | None = None,
     available_reserve_eur: Decimal | None = None,
+    available_reserve_by_provider: dict[str, Decimal] | None = None,
+    funding_provider_names: dict[str, str] | None = None,
     evaluated_on: date | None = None,
 ) -> list[Recommendation]:
     """Calculate allocation and cost-aware buy recommendations.
@@ -223,14 +226,29 @@ def allocate_buys(
     if not buyable_funds:
         raise ValueError("At least one fund must have buy_enabled=true")
 
+    provider_reserve: dict[str, Decimal] | None = None
+    if available_reserve_by_provider is not None:
+        provider_reserve = {}
+        for provider_id, raw_value in available_reserve_by_provider.items():
+            if not isinstance(provider_id, str) or not provider_id:
+                raise ValueError("provider investment reserve identity is invalid")
+            value = D(str(raw_value))
+            if not value.is_finite() or value < 0:
+                raise ValueError("provider investment reserve must be finite and non-negative")
+            provider_reserve[provider_id] = value.quantize(D("0.01"), rounding=ROUND_HALF_UP)
+
     reserve_unavailable = (
         execution_config.enabled
         and execution_config.reserve_mode == "gateway_balance"
+        and provider_reserve is None
         and available_reserve_eur is None
     )
     reserve = monthly
     if execution_config.enabled and execution_config.reserve_mode == "gateway_balance":
-        reserve = D("0") if available_reserve_eur is None else D(str(available_reserve_eur))
+        if provider_reserve is not None:
+            reserve = sum(provider_reserve.values(), D("0"))
+        else:
+            reserve = D("0") if available_reserve_eur is None else D(str(available_reserve_eur))
     if not reserve.is_finite() or reserve < 0:
         raise ValueError("available investment reserve must be finite and non-negative")
 
@@ -272,6 +290,11 @@ def allocate_buys(
     execution_providers = {fund["wkn"]: None for fund in funds}
     execution_provider_names = {fund["wkn"]: None for fund in funds}
     execution_fee_data_as_of = {fund["wkn"]: None for fund in funds}
+    funding_providers = {fund["wkn"]: None for fund in funds}
+    funding_provider_display_names = {fund["wkn"]: None for fund in funds}
+    funding_transfer_required = {fund["wkn"]: False for fund in funds}
+    funding_transfer_fees = {fund["wkn"]: D("0") for fund in funds}
+    funding_transfer_business_days = {fund["wkn"]: 0 for fund in funds}
     fees = {fund["wkn"]: D("0") for fund in funds}
     cash_outlays = {fund["wkn"]: D("0") for fund in funds}
     ratios = {fund["wkn"]: D("0") for fund in funds}
@@ -312,8 +335,11 @@ def allocate_buys(
             reasons[wkn] = "investment_reserve_unavailable"
         else:
             remaining_reserve = reserve
+            remaining_reserve_by_provider = (dict(provider_reserve) if provider_reserve is not None else None)
+            provider_names = dict(funding_provider_names or {})
             remaining_periodic_budget = min(monthly, reserve)
             remaining_funds = list(ranked)
+            charged_transfer_edges: set[tuple[str, str]] = set()
             completed_orders = 0
 
             while (
@@ -327,17 +353,32 @@ def allocate_buys(
                     desired = min(remaining_reserve, execution_need[wkn])
                     if desired <= 0:
                         continue
-                    route = choose_route_for_cash(
-                        isin=fund["isin"],
-                        desired_amount_eur=desired,
-                        periodic_cash_budget_eur=remaining_periodic_budget,
-                        reserve_cash_budget_eur=remaining_reserve,
-                        minimum_order_eur=minimum,
-                        rounding_step_eur=step,
-                        broker=broker_document,
-                        config=execution_config,
-                        evaluated_on=evaluated_on,
-                    )
+                    if remaining_reserve_by_provider is not None:
+                        route = choose_funded_route_for_cash(
+                            isin=fund["isin"],
+                            desired_amount_eur=desired,
+                            periodic_cash_budget_eur=remaining_periodic_budget,
+                            minimum_order_eur=minimum,
+                            rounding_step_eur=step,
+                            broker=broker_document,
+                            config=execution_config,
+                            funding_cash_by_provider=remaining_reserve_by_provider,
+                            funding_provider_names=provider_names,
+                            charged_transfer_edges=frozenset(charged_transfer_edges),
+                            evaluated_on=evaluated_on,
+                        )
+                    else:
+                        route = choose_route_for_cash(
+                            isin=fund["isin"],
+                            desired_amount_eur=desired,
+                            periodic_cash_budget_eur=remaining_periodic_budget,
+                            reserve_cash_budget_eur=remaining_reserve,
+                            minimum_order_eur=minimum,
+                            rounding_step_eur=step,
+                            broker=broker_document,
+                            config=execution_config,
+                            evaluated_on=evaluated_on,
+                        )
                     if route.route != ROUTE_UNAVAILABLE:
                         candidates.append((fund, route))
 
@@ -370,6 +411,11 @@ def allocate_buys(
                     execution_providers[wkn] = selected_route.provider_id
                     execution_provider_names[wkn] = selected_route.provider_name
                     execution_fee_data_as_of[wkn] = selected_route.fee_data_as_of
+                    funding_providers[wkn] = selected_route.funding_provider_id
+                    funding_provider_display_names[wkn] = selected_route.funding_provider_name
+                    funding_transfer_required[wkn] = selected_route.funding_transfer_required
+                    funding_transfer_fees[wkn] = selected_route.funding_transfer_fee_eur
+                    funding_transfer_business_days[wkn] = selected_route.funding_transfer_business_days
                     fees[wkn] = selected_route.fee_eur
                     cash_outlays[wkn] = selected_route.cash_outlay_eur
                     ratios[wkn] = selected_route.cost_ratio_pct
@@ -390,6 +436,11 @@ def allocate_buys(
                 execution_providers[wkn] = selected_route.provider_id
                 execution_provider_names[wkn] = selected_route.provider_name
                 execution_fee_data_as_of[wkn] = selected_route.fee_data_as_of
+                funding_providers[wkn] = selected_route.funding_provider_id
+                funding_provider_display_names[wkn] = selected_route.funding_provider_name
+                funding_transfer_required[wkn] = selected_route.funding_transfer_required
+                funding_transfer_fees[wkn] = selected_route.funding_transfer_fee_eur
+                funding_transfer_business_days[wkn] = selected_route.funding_transfer_business_days
                 fees[wkn] = selected_route.fee_eur
                 cash_outlays[wkn] = selected_route.cash_outlay_eur
                 ratios[wkn] = selected_route.cost_ratio_pct
@@ -399,7 +450,21 @@ def allocate_buys(
                     and selected_route.cost_ratio_pct > execution_config.max_cost_ratio_pct
                     else "most_underweight_cost_efficient"
                 )
-                remaining_reserve -= selected_route.cash_outlay_eur
+                if remaining_reserve_by_provider is not None:
+                    funding_provider = selected_route.funding_provider_id
+                    if funding_provider is None or funding_provider not in remaining_reserve_by_provider:
+                        raise ValueError("funded route lacks its provider-scoped cash source")
+                    remaining_reserve_by_provider[funding_provider] -= selected_route.cash_outlay_eur
+                    if remaining_reserve_by_provider[funding_provider] < D("-0.01"):
+                        raise ValueError("funded route overdraws provider-scoped investment cash")
+                    remaining_reserve_by_provider[funding_provider] = max(
+                        D("0"), remaining_reserve_by_provider[funding_provider]
+                    )
+                    if selected_route.funding_transfer_required and selected_route.provider_id is not None:
+                        charged_transfer_edges.add((funding_provider, selected_route.provider_id))
+                    remaining_reserve = sum(remaining_reserve_by_provider.values(), D("0"))
+                else:
+                    remaining_reserve -= selected_route.cash_outlay_eur
                 if selected_route.route != ROUTE_MANUAL_ORDER:
                     remaining_periodic_budget = max(
                         D("0"),
@@ -428,6 +493,11 @@ def allocate_buys(
             execution_provider=execution_providers[fund["wkn"]],
             execution_provider_name=execution_provider_names[fund["wkn"]],
             execution_fee_data_as_of=execution_fee_data_as_of[fund["wkn"]],
+            funding_provider=funding_providers[fund["wkn"]],
+            funding_provider_name=funding_provider_display_names[fund["wkn"]],
+            funding_transfer_required=funding_transfer_required[fund["wkn"]],
+            funding_transfer_fee_eur=funding_transfer_fees[fund["wkn"]],
+            funding_transfer_business_days=funding_transfer_business_days[fund["wkn"]],
             estimated_fee_eur=fees[fund["wkn"]],
             estimated_cash_outlay_eur=cash_outlays[fund["wkn"]],
             estimated_cost_ratio_pct=ratios[fund["wkn"]],

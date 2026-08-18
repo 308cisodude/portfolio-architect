@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.35.0
+
+- Aligns the Trade Republic App package with Portfolio Architect v1.35.0 provider-scoped funding; statement import, accepted snapshots, diagnostics and REST schema 1 remain unchanged.
+- No transfer, trading or new provider-authentication behavior is introduced.
+
 ## 1.34.1
 
 - Package/User-Agent alignment for Portfolio Architect v1.34.1 whole-portfolio allocation-presentation hotfix; Trade Republic statement import, private diagnostics, accepted snapshot and Gateway wire behavior remain unchanged.

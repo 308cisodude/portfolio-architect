@@ -385,7 +385,7 @@ cards:
   card:
     type: tile
     entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_proposed_buy
-    name: Robotik
+    name: Robotik · Thes.
     tap_action:
       action: more-info
       entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_isin

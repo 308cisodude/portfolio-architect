@@ -8,6 +8,8 @@ from decimal import Decimal, ROUND_HALF_UP
 import re
 from typing import Any, Final
 
+from .funding import funding_transfers, transfer_for
+
 D = Decimal
 
 POLICY_MONTHLY_CONTINUITY: Final = "monthly_continuity"
@@ -205,6 +207,11 @@ class RouteEstimate:
     provider_name: str | None = None
     fee_data_as_of: str | None = None
     provider_priority: int = 100
+    funding_provider_id: str | None = None
+    funding_provider_name: str | None = None
+    funding_transfer_required: bool = False
+    funding_transfer_fee_eur: Decimal = D("0")
+    funding_transfer_business_days: int = 0
 
 
 def _bounded_text(value: Any, *, field: str, maximum: int) -> str:
@@ -259,13 +266,15 @@ def execution_providers(
     *,
     evaluated_on: date | None = None,
 ) -> tuple[ExecutionProvider, ...]:
-    """Return validated execution providers from broker schema 1 or 2.
+    """Return validated execution providers from broker schemas 1 through 3.
 
     Schema 1 remains a compatibility contract: its single broker is usable
-    without freshness enforcement, exactly as before v1.30. Schema 2 opts into
-    provider-aware routing and requires explicit provider provenance plus a
-    bounded fee-data freshness window. Stale schema-2 providers remain known but
-    are never eligible for route selection or fee-policy compliance.
+    without freshness enforcement, exactly as before v1.30. Schemas 2 and 3 opt
+    into provider-aware routing and require explicit provider provenance plus a
+    bounded fee-data freshness window. Schema 3 additionally validates its full
+    directed funding topology even if no current recommendation needs an edge.
+    Stale providers remain known but are never eligible for route selection or
+    fee-policy compliance.
     """
 
     if not isinstance(broker, dict):
@@ -303,8 +312,12 @@ def execution_providers(
             ),
         )
 
-    if schema_version != 2:
+    if schema_version not in {2, 3}:
         raise ValueError("broker schema_version is unsupported")
+    if schema_version == 3:
+        # Validate the complete topology up front; an invalid unused edge must not
+        # survive merely because today's allocation happens to use local cash.
+        funding_transfers(broker)
     max_age = broker.get("fee_data_max_age_days")
     if isinstance(max_age, bool) or not isinstance(max_age, int):
         raise ValueError("broker fee_data_max_age_days is invalid")
@@ -313,7 +326,7 @@ def execution_providers(
         raise ValueError("broker fee_data_max_age_days is invalid")
     raw_providers = broker.get("providers")
     if not isinstance(raw_providers, dict) or not raw_providers or len(raw_providers) > _MAX_PROVIDERS:
-        raise ValueError("broker schema 2 requires a bounded providers map")
+        raise ValueError(f"broker schema {schema_version} requires a bounded providers map")
 
     today = evaluated_on or date.today()
     result: list[ExecutionProvider] = []
@@ -641,6 +654,7 @@ def choose_route_for_cash(
     broker: dict[str, Any],
     config: ExecutionConfig,
     evaluated_on: date | None = None,
+    execution_provider_id: str | None = None,
 ) -> RouteEstimate:
     """Choose a provider-aware route while respecting the real cash budgets."""
 
@@ -652,6 +666,8 @@ def choose_route_for_cash(
     }
     for provider in providers:
         if not provider.fresh:
+            continue
+        if execution_provider_id is not None and provider.provider_id != execution_provider_id:
             continue
         as_of = provider.as_of.isoformat() if provider.as_of else None
         savings = savings_by_provider.get(provider.provider_id)
@@ -709,6 +725,134 @@ def choose_route_for_cash(
             item.fee_eur,
             item.route,
             item.provider_id or "",
+        ),
+    )
+
+
+def _route_with_funding(
+    route: RouteEstimate,
+    *,
+    funding_provider_id: str,
+    funding_provider_name: str,
+    transfer_required: bool,
+    transfer_fee_eur: Decimal,
+    transfer_days: int,
+) -> RouteEstimate:
+    """Attach one funding source and include transfer cost in route economics."""
+
+    if route.route == ROUTE_UNAVAILABLE or route.order_amount_eur <= 0:
+        return route
+    total_fee = route.fee_eur + transfer_fee_eur
+    total_outlay = route.cash_outlay_eur + transfer_fee_eur
+    ratio = (total_fee / route.order_amount_eur * D("100")).quantize(
+        D("0.0001"), rounding=ROUND_HALF_UP
+    )
+    return RouteEstimate(
+        route=route.route,
+        order_amount_eur=route.order_amount_eur,
+        fee_eur=route.fee_eur,
+        cash_outlay_eur=total_outlay,
+        cost_ratio_pct=ratio,
+        provider_id=route.provider_id,
+        provider_name=route.provider_name,
+        fee_data_as_of=route.fee_data_as_of,
+        provider_priority=route.provider_priority,
+        funding_provider_id=funding_provider_id,
+        funding_provider_name=funding_provider_name,
+        funding_transfer_required=transfer_required,
+        funding_transfer_fee_eur=transfer_fee_eur,
+        funding_transfer_business_days=transfer_days,
+    )
+
+
+def choose_funded_route_for_cash(
+    *,
+    isin: str,
+    desired_amount_eur: Decimal,
+    periodic_cash_budget_eur: Decimal,
+    minimum_order_eur: Decimal,
+    rounding_step_eur: Decimal,
+    broker: dict[str, Any],
+    config: ExecutionConfig,
+    funding_cash_by_provider: dict[str, Decimal],
+    funding_provider_names: dict[str, str],
+    charged_transfer_edges: frozenset[tuple[str, str]] = frozenset(),
+    evaluated_on: date | None = None,
+) -> RouteEstimate:
+    """Choose execution provider and provider-scoped funding source together.
+
+    Same-provider funding is implicit and free. Cross-provider funding is eligible
+    only when broker schema 3 contains the exact directed edge. A configured fixed
+    transfer fee is charged once per source/destination edge in one allocation run;
+    subsequent purchases funded through the same edge reuse that planned transfer.
+    """
+
+    candidates: list[RouteEstimate] = []
+    providers = execution_providers(broker, evaluated_on=evaluated_on)
+    for execution_provider in providers:
+        if not execution_provider.fresh:
+            continue
+        for funding_provider_id, raw_cash in sorted(funding_cash_by_provider.items()):
+            cash = D(str(raw_cash))
+            if not cash.is_finite() or cash <= 0:
+                continue
+            transfer = transfer_for(
+                broker,
+                from_provider=funding_provider_id,
+                to_provider=execution_provider.provider_id,
+            )
+            if transfer is None:
+                continue
+            edge = (funding_provider_id, execution_provider.provider_id)
+            transfer_required = funding_provider_id != execution_provider.provider_id
+            transfer_fee = (
+                D("0")
+                if not transfer_required or edge in charged_transfer_edges
+                else transfer.fee_eur
+            )
+            if cash <= transfer_fee:
+                continue
+            usable_cash = cash - transfer_fee
+            periodic_budget = max(D("0"), periodic_cash_budget_eur - transfer_fee)
+            route = choose_route_for_cash(
+                isin=isin,
+                desired_amount_eur=desired_amount_eur,
+                periodic_cash_budget_eur=periodic_budget,
+                reserve_cash_budget_eur=usable_cash,
+                minimum_order_eur=minimum_order_eur,
+                rounding_step_eur=rounding_step_eur,
+                broker=broker,
+                config=config,
+                evaluated_on=evaluated_on,
+                execution_provider_id=execution_provider.provider_id,
+            )
+            if route.route == ROUTE_UNAVAILABLE:
+                continue
+            candidates.append(
+                _route_with_funding(
+                    route,
+                    funding_provider_id=funding_provider_id,
+                    funding_provider_name=funding_provider_names.get(
+                        funding_provider_id, funding_provider_id.replace("_", " ").title()
+                    ),
+                    transfer_required=transfer_required,
+                    transfer_fee_eur=transfer_fee,
+                    transfer_days=transfer.settlement_business_days if transfer_required else 0,
+                )
+            )
+    if not candidates:
+        return RouteEstimate(ROUTE_UNAVAILABLE, D("0"), D("0"), D("0"), D("0"))
+    return min(
+        candidates,
+        key=lambda item: (
+            item.cost_ratio_pct,
+            item.funding_transfer_business_days,
+            item.provider_priority,
+            -item.order_amount_eur,
+            item.fee_eur + item.funding_transfer_fee_eur,
+            item.route,
+            item.provider_id or "",
+            item.funding_provider_id or "",
         ),
     )
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.35.0
+
+- Fingerprints the exact bounded anonymous FinTS HTTP response body before normalization/base64 decoding and persists only its SHA-256 plus byte count alongside the existing decoded-response fingerprint.
+- Keeps exact raw/decoded response bytes ephemeral, preserves legacy probe-state readability, and leaves DKB experimental/manual-only/non-live with no authenticated holdings or transaction capability.
+
 ## 1.34.1
 
 - Package/User-Agent alignment for Portfolio Architect v1.34.1 whole-portfolio allocation-presentation hotfix; DKB FinTS probe behavior remains unchanged and experimental/manual-only/non-live.

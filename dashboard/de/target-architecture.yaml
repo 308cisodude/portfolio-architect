@@ -44,7 +44,7 @@ cards:
   - entity: binary_sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_target_position_held
     name: Cybersecurity
   - entity: binary_sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_target_position_held
-    name: Robotik
+    name: Robotik · Thes.
   grid_options:
     columns: full
     rows: auto
@@ -158,7 +158,7 @@ cards:
   card:
     type: tile
     entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_position_sources
-    name: Quellen Robotik
+    name: Quellen Robotik · Thes.
     state_content: source_summary
     tap_action:
       action: more-info

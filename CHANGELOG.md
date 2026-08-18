@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.35.0
+
+- Preserves authorized investment cash as provider-scoped evidence across all accepted REST Gateways instead of collapsing supplemental-provider cash into a global reserve.
+- Adds opt-in broker schema 3 with explicit directed funding-transfer edges, bounded transfer fees and settlement business days; reverse transferability is never inferred.
+- Chooses funding source and execution route together, includes transfer fees in route economics, debits only the cash pool actually used, and emits a bounded advisory aggregate transfer plan.
+- Keeps schemas 1/2 behavior, REST portfolio schema 1, Gateway health schema 6, private-PKI transport and the no-transfer/no-trading boundary unchanged.
+- Disambiguates accumulating Robotics as `Robotics · Acc` / `Robotik · Thes.` and adds exact raw DKB capability-probe response-body SHA-256/byte evidence without retaining response bytes.
+
 ## 1.34.1
 
 - Fixes whole-portfolio distribution after the v1.34 opaque-target migration: every configured target now owns its established whole-portfolio allocation entity even when currently missing, so a missing target renders as 0% rather than an unresolved entity reference.

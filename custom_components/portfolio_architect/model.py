@@ -100,6 +100,14 @@ _EXECUTION_UX_KEYS = {
     "execution_state",
     "additional_investment_cash_required_eur",
 }
+_FUNDING_SUMMARY_KEYS = {
+    "provider_investment_cash",
+    "provider_investment_cash_source_count",
+    "funding_transfers",
+    "estimated_funding_transfer_fees_eur",
+    "estimated_total_execution_costs_eur",
+    "funding_transfer_count",
+}
 _CASH_AUTHORIZATION_KEYS = {
     "investment_account_balance_eur",
     "eligible_investment_cash_eur",
@@ -184,6 +192,11 @@ class PositionData:
     execution_provider: str | None = None
     execution_provider_name: str | None = None
     execution_fee_data_as_of: date | None = None
+    funding_provider: str | None = None
+    funding_provider_name: str | None = None
+    funding_transfer_required: bool = False
+    funding_transfer_fee_eur: float = 0.0
+    funding_transfer_business_days: int = 0
     estimated_fee_eur: float = 0.0
     estimated_cash_outlay_eur: float = 0.0
     execution_state: str = "ready"
@@ -239,6 +252,11 @@ class PositionData:
                 if self.execution_fee_data_as_of is not None
                 else None
             ),
+            "funding_provider": self.funding_provider,
+            "funding_provider_name": self.funding_provider_name,
+            "funding_transfer_required": self.funding_transfer_required,
+            "funding_transfer_fee_eur": self.funding_transfer_fee_eur,
+            "funding_transfer_business_days": self.funding_transfer_business_days,
             "estimated_fee_eur": self.estimated_fee_eur,
             "estimated_cash_outlay_eur": self.estimated_cash_outlay_eur,
             "estimated_cost_ratio_pct": self.estimated_cost_ratio_pct,
@@ -362,6 +380,35 @@ class TargetCoverageData:
 
 
 @dataclass(frozen=True, slots=True)
+class ProviderInvestmentCashData:
+    """Validated provider-scoped authorized investment cash."""
+
+    provider_id: str
+    provider_name: str
+    available_eur: float
+    remaining_eur: float
+    as_of: datetime | None = None
+    account_balance_eur: float | None = None
+    eligible_eur: float | None = None
+    authorized_eur: float | None = None
+    authorization_policy: str | None = None
+    authorization_cap_eur: float | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class FundingTransferData:
+    """Validated advisory transfer needed to fund planned purchases."""
+
+    from_provider: str
+    from_provider_name: str
+    to_provider: str
+    to_provider_name: str
+    amount_eur: float
+    fee_eur: float
+    settlement_business_days: int
+
+
+@dataclass(frozen=True, slots=True)
 class MonthlyPlanData:
     """Validated recurring investment-plan summary."""
 
@@ -396,6 +443,11 @@ class MonthlyPlanData:
     estimated_cash_outlay_eur: float = 0.0
     execution_state: str = "ready"
     additional_investment_cash_required_eur: float = 0.0
+    provider_investment_cash: tuple[ProviderInvestmentCashData, ...] = ()
+    funding_transfers: tuple[FundingTransferData, ...] = ()
+    estimated_funding_transfer_fees_eur: float = 0.0
+    estimated_total_execution_costs_eur: float = 0.0
+    funding_transfer_count: int = 0
 
 
 @dataclass(frozen=True, slots=True)
@@ -807,6 +859,59 @@ def parse_recommendations(value: Any) -> dict[str, PositionData]:
                 raise PortfolioArchitectDataError(
                     f"recommendations[{index}].execution_fee_data_as_of is invalid"
                 ) from err
+        funding_provider = raw_item.get("funding_provider")
+        if funding_provider is not None and (
+            not isinstance(funding_provider, str)
+            or _EXECUTION_PROVIDER_RE.fullmatch(funding_provider) is None
+        ):
+            raise PortfolioArchitectDataError(
+                f"recommendations[{index}].funding_provider is invalid"
+            )
+        funding_provider_name = raw_item.get("funding_provider_name")
+        if funding_provider_name is not None:
+            if (
+                not isinstance(funding_provider_name, str)
+                or not funding_provider_name.strip()
+                or len(funding_provider_name.strip()) > 80
+                or any(ord(char) < 32 for char in funding_provider_name)
+            ):
+                raise PortfolioArchitectDataError(
+                    f"recommendations[{index}].funding_provider_name is invalid"
+                )
+            funding_provider_name = funding_provider_name.strip()
+        funding_transfer_required = _optional_bool(
+            raw_item, "funding_transfer_required", index, default=False
+        )
+        funding_transfer_fee_eur = _optional_float(
+            raw_item, "funding_transfer_fee_eur", index, default=0.0, minimum=0, maximum=MAX_MONEY_EUR
+        )
+        funding_transfer_business_days = raw_item.get("funding_transfer_business_days", 0)
+        if (
+            isinstance(funding_transfer_business_days, bool)
+            or not isinstance(funding_transfer_business_days, int)
+            or not 0 <= funding_transfer_business_days <= 30
+        ):
+            raise PortfolioArchitectDataError(
+                f"recommendations[{index}].funding_transfer_business_days is invalid"
+            )
+        if funding_provider is None:
+            if funding_provider_name is not None or funding_transfer_required or funding_transfer_fee_eur or funding_transfer_business_days:
+                raise PortfolioArchitectDataError(
+                    f"recommendations[{index}] contains funding metadata without a funding provider"
+                )
+        else:
+            if execution_provider is None:
+                raise PortfolioArchitectDataError(
+                    f"recommendations[{index}] funding provider requires an execution provider"
+                )
+            if funding_transfer_required != (funding_provider != execution_provider):
+                raise PortfolioArchitectDataError(
+                    f"recommendations[{index}] funding-transfer relationship is inconsistent"
+                )
+            if not funding_transfer_required and (funding_transfer_fee_eur or funding_transfer_business_days):
+                raise PortfolioArchitectDataError(
+                    f"recommendations[{index}] same-provider funding must not contain transfer cost or delay"
+                )
         positions[fund_id] = PositionData(
             fund_id=fund_id,
             wkn=wkn,
@@ -868,6 +973,11 @@ def parse_recommendations(value: Any) -> dict[str, PositionData]:
             execution_provider=execution_provider,
             execution_provider_name=execution_provider_name,
             execution_fee_data_as_of=execution_fee_data_as_of,
+            funding_provider=funding_provider,
+            funding_provider_name=funding_provider_name,
+            funding_transfer_required=funding_transfer_required,
+            funding_transfer_fee_eur=funding_transfer_fee_eur,
+            funding_transfer_business_days=funding_transfer_business_days,
             estimated_fee_eur=_optional_float(raw_item, "estimated_fee_eur", index, default=0.0, minimum=0, maximum=MAX_MONEY_EUR),
             estimated_cash_outlay_eur=_optional_float(raw_item, "estimated_cash_outlay_eur", index, default=0.0, minimum=0, maximum=MAX_MONEY_EUR),
             estimated_cost_ratio_pct=_optional_float(raw_item, "estimated_cost_ratio_pct", index, default=0.0, minimum=0, maximum=100),
@@ -890,7 +1000,11 @@ def parse_recommendations(value: Any) -> dict[str, PositionData]:
                 "A deferred recommendation cannot contain a proposed purchase"
             )
         if position.proposed_buy_eur > 0 and position.execution_route != "legacy":
-            expected_outlay = position.proposed_buy_eur + position.estimated_fee_eur
+            expected_outlay = (
+                position.proposed_buy_eur
+                + position.estimated_fee_eur
+                + position.funding_transfer_fee_eur
+            )
             if not math.isclose(
                 position.estimated_cash_outlay_eur,
                 expected_outlay,
@@ -1263,6 +1377,183 @@ def _validate_source_coverage(
         )
 
 
+def _parse_provider_investment_cash(raw: Any) -> tuple[ProviderInvestmentCashData, ...]:
+    """Validate bounded provider-scoped investment-cash summary metadata."""
+
+    if not isinstance(raw, list) or len(raw) > 16:
+        raise PortfolioArchitectDataError("summary.provider_investment_cash must be a bounded list")
+    seen: set[str] = set()
+    result: list[ProviderInvestmentCashData] = []
+
+    def number(item: dict[str, Any], key: str, *, minimum: float = 0.0) -> float | None:
+        value = item.get(key)
+        if value is None:
+            return None
+        if isinstance(value, bool):
+            raise PortfolioArchitectDataError(f"summary.provider_investment_cash.{key} is invalid")
+        try:
+            parsed = float(value)
+        except (TypeError, ValueError) as err:
+            raise PortfolioArchitectDataError(f"summary.provider_investment_cash.{key} is invalid") from err
+        if not math.isfinite(parsed) or parsed < minimum or parsed > MAX_MONEY_EUR:
+            raise PortfolioArchitectDataError(f"summary.provider_investment_cash.{key} is invalid")
+        return parsed
+
+    for index, item in enumerate(raw):
+        if not isinstance(item, dict):
+            raise PortfolioArchitectDataError(f"summary.provider_investment_cash[{index}] is invalid")
+        allowed = {
+            "provider_id", "provider_name", "available_eur", "remaining_eur", "as_of",
+            "account_balance_eur", "eligible_eur", "authorized_eur",
+            "authorization_policy", "authorization_cap_eur",
+        }
+        if not set(item).issubset(allowed) or not {
+            "provider_id", "provider_name", "available_eur", "remaining_eur"
+        }.issubset(item):
+            raise PortfolioArchitectDataError(f"summary.provider_investment_cash[{index}] has unexpected fields")
+        provider_id = item.get("provider_id")
+        if not isinstance(provider_id, str) or _EXECUTION_PROVIDER_RE.fullmatch(provider_id) is None or provider_id in seen:
+            raise PortfolioArchitectDataError(f"summary.provider_investment_cash[{index}].provider_id is invalid")
+        seen.add(provider_id)
+        provider_name = item.get("provider_name")
+        if (
+            not isinstance(provider_name, str) or not provider_name.strip()
+            or len(provider_name.strip()) > 80 or any(ord(char) < 32 for char in provider_name)
+        ):
+            raise PortfolioArchitectDataError(f"summary.provider_investment_cash[{index}].provider_name is invalid")
+        available = number(item, "available_eur")
+        remaining = number(item, "remaining_eur")
+        assert available is not None
+        assert remaining is not None
+        if remaining > available + 0.01:
+            raise PortfolioArchitectDataError(
+                f"summary.provider_investment_cash[{index}].remaining_eur exceeds available cash"
+            )
+        as_of = None
+        raw_as_of = item.get("as_of")
+        if raw_as_of is not None:
+            if not isinstance(raw_as_of, str) or len(raw_as_of) > 64:
+                raise PortfolioArchitectDataError(f"summary.provider_investment_cash[{index}].as_of is invalid")
+            try:
+                as_of = datetime.fromisoformat(raw_as_of.replace("Z", "+00:00"))
+            except ValueError as err:
+                raise PortfolioArchitectDataError(f"summary.provider_investment_cash[{index}].as_of is invalid") from err
+            if as_of.tzinfo is None or as_of.utcoffset() is None:
+                raise PortfolioArchitectDataError(f"summary.provider_investment_cash[{index}].as_of must include timezone")
+        account = number(item, "account_balance_eur", minimum=-MAX_MONEY_EUR)
+        eligible = number(item, "eligible_eur")
+        authorized = number(item, "authorized_eur")
+        policy = item.get("authorization_policy")
+        cap = number(item, "authorization_cap_eur")
+        rich = any(value is not None for value in (account, eligible, authorized, policy, cap))
+        if rich:
+            if account is None or eligible is None or authorized is None or policy not in {"all_available", "capped"}:
+                raise PortfolioArchitectDataError(f"summary.provider_investment_cash[{index}] authorization metadata is incomplete")
+            if authorized > eligible + 0.01 or not math.isclose(authorized, available, rel_tol=0, abs_tol=0.01):
+                raise PortfolioArchitectDataError(f"summary.provider_investment_cash[{index}] authorization values are inconsistent")
+            if policy == "all_available":
+                if cap is not None or not math.isclose(authorized, eligible, rel_tol=0, abs_tol=0.01):
+                    raise PortfolioArchitectDataError(f"summary.provider_investment_cash[{index}] all-available authorization is inconsistent")
+            elif cap is None or not math.isclose(authorized, min(eligible, cap), rel_tol=0, abs_tol=0.01):
+                raise PortfolioArchitectDataError(f"summary.provider_investment_cash[{index}] capped authorization is inconsistent")
+        result.append(ProviderInvestmentCashData(
+            provider_id=provider_id,
+            provider_name=provider_name.strip(),
+            available_eur=available,
+            remaining_eur=remaining,
+            as_of=as_of,
+            account_balance_eur=account,
+            eligible_eur=eligible,
+            authorized_eur=authorized,
+            authorization_policy=policy,
+            authorization_cap_eur=cap,
+        ))
+    return tuple(sorted(result, key=lambda item: item.provider_id))
+
+
+def _parse_funding_transfers(raw: Any) -> tuple[FundingTransferData, ...]:
+    """Validate the bounded advisory funding-transfer plan."""
+
+    if not isinstance(raw, list) or len(raw) > 32:
+        raise PortfolioArchitectDataError("summary.funding_transfers must be a bounded list")
+    seen: set[tuple[str, str]] = set()
+    result: list[FundingTransferData] = []
+    required = {
+        "from_provider",
+        "from_provider_name",
+        "to_provider",
+        "to_provider_name",
+        "amount_eur",
+        "fee_eur",
+        "settlement_business_days",
+    }
+    for index, item in enumerate(raw):
+        if not isinstance(item, dict) or set(item) != required:
+            raise PortfolioArchitectDataError(f"summary.funding_transfers[{index}] is invalid")
+        source = item.get("from_provider")
+        destination = item.get("to_provider")
+        if (
+            not isinstance(source, str)
+            or _EXECUTION_PROVIDER_RE.fullmatch(source) is None
+            or not isinstance(destination, str)
+            or _EXECUTION_PROVIDER_RE.fullmatch(destination) is None
+            or source == destination
+            or (source, destination) in seen
+        ):
+            raise PortfolioArchitectDataError(
+                f"summary.funding_transfers[{index}] provider relationship is invalid"
+            )
+        seen.add((source, destination))
+        names: list[str] = []
+        for key in ("from_provider_name", "to_provider_name"):
+            value = item.get(key)
+            if (
+                not isinstance(value, str)
+                or not value.strip()
+                or len(value.strip()) > 80
+                or any(ord(char) < 32 for char in value)
+            ):
+                raise PortfolioArchitectDataError(
+                    f"summary.funding_transfers[{index}].{key} is invalid"
+                )
+            names.append(value.strip())
+        amount = item.get("amount_eur")
+        fee = item.get("fee_eur")
+        try:
+            amount_value = float(amount)
+            fee_value = float(fee)
+        except (TypeError, ValueError) as err:
+            raise PortfolioArchitectDataError(
+                f"summary.funding_transfers[{index}] money value is invalid"
+            ) from err
+        if (
+            not math.isfinite(amount_value)
+            or not 0 < amount_value <= MAX_MONEY_EUR
+            or not math.isfinite(fee_value)
+            or not 0 <= fee_value <= MAX_MONEY_EUR
+        ):
+            raise PortfolioArchitectDataError(
+                f"summary.funding_transfers[{index}] money value is invalid"
+            )
+        days = item.get("settlement_business_days")
+        if isinstance(days, bool) or not isinstance(days, int) or not 0 <= days <= 30:
+            raise PortfolioArchitectDataError(
+                f"summary.funding_transfers[{index}].settlement_business_days is invalid"
+            )
+        result.append(
+            FundingTransferData(
+                from_provider=source,
+                from_provider_name=names[0],
+                to_provider=destination,
+                to_provider_name=names[1],
+                amount_eur=amount_value,
+                fee_eur=fee_value,
+                settlement_business_days=days,
+            )
+        )
+    return tuple(sorted(result, key=lambda item: (item.from_provider, item.to_provider)))
+
+
 def _parse_monthly_plan(
     summary: dict[str, Any],
     positions: dict[str, PositionData],
@@ -1287,6 +1578,29 @@ def _parse_monthly_plan(
         _summary_float(summary, "available_investment_reserve_eur", minimum=0, maximum=MAX_MONEY_EUR)
         if execution_present else contribution
     )
+    funding_present = _FUNDING_SUMMARY_KEYS.intersection(summary)
+    if funding_present and funding_present != _FUNDING_SUMMARY_KEYS:
+        raise PortfolioArchitectDataError("summary contains an incomplete funding topology contract")
+    provider_investment_cash: tuple[ProviderInvestmentCashData, ...] = ()
+    funding_transfers: tuple[FundingTransferData, ...] = ()
+    estimated_funding_transfer_fees = 0.0
+    estimated_total_execution_costs = 0.0
+    funding_transfer_count = 0
+    if funding_present:
+        if not execution_present:
+            raise PortfolioArchitectDataError("summary funding topology requires execution metadata")
+        provider_investment_cash = _parse_provider_investment_cash(summary.get("provider_investment_cash"))
+        funding_transfers = _parse_funding_transfers(summary.get("funding_transfers"))
+        source_count = summary.get("provider_investment_cash_source_count")
+        if isinstance(source_count, bool) or not isinstance(source_count, int) or source_count != len(provider_investment_cash):
+            raise PortfolioArchitectDataError("summary.provider_investment_cash_source_count is inconsistent")
+        estimated_funding_transfer_fees = _summary_float(summary, "estimated_funding_transfer_fees_eur", minimum=0, maximum=MAX_MONEY_EUR)
+        estimated_total_execution_costs = _summary_float(summary, "estimated_total_execution_costs_eur", minimum=0, maximum=MAX_MONEY_EUR)
+        funding_transfer_count = summary.get("funding_transfer_count")
+        if isinstance(funding_transfer_count, bool) or not isinstance(funding_transfer_count, int) or not 0 <= funding_transfer_count <= 32:
+            raise PortfolioArchitectDataError("summary.funding_transfer_count is invalid")
+        if funding_transfer_count != len(funding_transfers):
+            raise PortfolioArchitectDataError("summary.funding_transfer_count is inconsistent")
     cash_authorization_present = _CASH_AUTHORIZATION_KEYS.intersection(summary)
     if cash_authorization_present and cash_authorization_present != _CASH_AUTHORIZATION_KEYS:
         raise PortfolioArchitectDataError("summary contains an incomplete investment cash authorization contract")
@@ -1484,10 +1798,14 @@ def _parse_monthly_plan(
         reserve_source = summary.get("investment_reserve_source")
         if reserve_source not in {"contribution", "gateway_balance", "unavailable"}:
             raise PortfolioArchitectDataError("summary.investment_reserve_source is invalid")
-        if cash_authorization_present and reserve_source == "gateway_balance" and not math.isclose(
+        if cash_authorization_present and not funding_present and reserve_source == "gateway_balance" and not math.isclose(
             available_reserve, authorized_investment_cash or 0.0, rel_tol=0, abs_tol=0.01
         ):
             raise PortfolioArchitectDataError("summary available investment reserve disagrees with authorized cash")
+        if funding_present and reserve_source == "gateway_balance":
+            scoped_total = sum(item.available_eur for item in provider_investment_cash)
+            if not math.isclose(available_reserve, scoped_total, rel_tol=0, abs_tol=0.01):
+                raise PortfolioArchitectDataError("summary available investment reserve disagrees with provider-scoped cash")
         reserve_as_of_raw = summary.get("investment_reserve_as_of")
         reserve_as_of = None
         if reserve_as_of_raw is not None:
@@ -1520,14 +1838,80 @@ def _parse_monthly_plan(
             )
         deferred_contribution = _summary_float(summary, "deferred_contribution_eur", minimum=0, maximum=MAX_MONEY_EUR)
         fees = _summary_float(summary, "estimated_transaction_fees_eur", minimum=0, maximum=MAX_MONEY_EUR)
+        if funding_present:
+            calculated_transfer_fees = sum(
+                position.funding_transfer_fee_eur
+                for position in positions.values()
+                if position.proposed_buy_eur > 0
+            )
+            if not math.isclose(estimated_funding_transfer_fees, calculated_transfer_fees, rel_tol=0, abs_tol=0.01):
+                raise PortfolioArchitectDataError("summary funding-transfer fees are inconsistent with recommendations")
+            expected_edges = {
+                (position.funding_provider, position.execution_provider)
+                for position in positions.values()
+                if position.proposed_buy_eur > 0 and position.funding_transfer_required
+            }
+            if funding_transfer_count != len(expected_edges):
+                raise PortfolioArchitectDataError("summary.funding_transfer_count is inconsistent with recommendations")
+            transfer_by_edge = {
+                (item.from_provider, item.to_provider): item for item in funding_transfers
+            }
+            if set(transfer_by_edge) != expected_edges:
+                raise PortfolioArchitectDataError(
+                    "summary funding-transfer plan is inconsistent with recommendations"
+                )
+            for edge, transfer in transfer_by_edge.items():
+                related = [
+                    position
+                    for position in positions.values()
+                    if position.proposed_buy_eur > 0
+                    and position.funding_transfer_required
+                    and (position.funding_provider, position.execution_provider) == edge
+                ]
+                expected_amount = sum(
+                    position.proposed_buy_eur + position.estimated_fee_eur
+                    for position in related
+                )
+                expected_fee = sum(position.funding_transfer_fee_eur for position in related)
+                expected_days = max(
+                    (position.funding_transfer_business_days for position in related),
+                    default=0,
+                )
+                if not math.isclose(transfer.amount_eur, expected_amount, rel_tol=0, abs_tol=0.01):
+                    raise PortfolioArchitectDataError(
+                        "summary funding-transfer amount is inconsistent with recommendations"
+                    )
+                if not math.isclose(transfer.fee_eur, expected_fee, rel_tol=0, abs_tol=0.01):
+                    raise PortfolioArchitectDataError(
+                        "summary funding-transfer fee is inconsistent with recommendations"
+                    )
+                if transfer.settlement_business_days != expected_days:
+                    raise PortfolioArchitectDataError(
+                        "summary funding-transfer delay is inconsistent with recommendations"
+                    )
+            if not math.isclose(estimated_total_execution_costs, fees + estimated_funding_transfer_fees, rel_tol=0, abs_tol=0.01):
+                raise PortfolioArchitectDataError("summary total execution costs are inconsistent")
+            consumed_by_provider: dict[str, float] = {}
+            for position in positions.values():
+                if position.proposed_buy_eur > 0 and position.funding_provider is not None:
+                    consumed_by_provider[position.funding_provider] = (
+                        consumed_by_provider.get(position.funding_provider, 0.0)
+                        + position.estimated_cash_outlay_eur
+                    )
+            for item in provider_investment_cash:
+                expected_remaining = item.available_eur - consumed_by_provider.get(item.provider_id, 0.0)
+                if not math.isclose(item.remaining_eur, expected_remaining, rel_tol=0, abs_tol=0.01):
+                    raise PortfolioArchitectDataError(
+                        "summary provider-scoped remaining cash is inconsistent with recommendations"
+                    )
         cash_outlay = _summary_float(summary, "estimated_cash_outlay_eur", minimum=0, maximum=MAX_MONEY_EUR)
         if not math.isclose(cash_outlay, calculated_cash_outlay, rel_tol=0, abs_tol=0.01):
             raise PortfolioArchitectDataError(
                 "summary.estimated_cash_outlay_eur is inconsistent with recommendations"
             )
-        if not math.isclose(cash_outlay, recommended + fees, rel_tol=0, abs_tol=0.01):
+        if not math.isclose(cash_outlay, recommended + fees + estimated_funding_transfer_fees, rel_tol=0, abs_tol=0.01):
             raise PortfolioArchitectDataError(
-                "summary estimated cash outlay is inconsistent with principal and fees"
+                "summary estimated cash outlay is inconsistent with principal and execution/funding fees"
             )
 
         execution_ux_present = _EXECUTION_UX_KEYS.intersection(summary)
@@ -1569,6 +1953,11 @@ def _parse_monthly_plan(
         cash_outlay = recommended
         execution_state = "ready" if ready else "no_eligible_purchase"
         additional_cash_required = 0.0
+        provider_investment_cash = ()
+        funding_transfers = ()
+        estimated_funding_transfer_fees = 0.0
+        estimated_total_execution_costs = 0.0
+        funding_transfer_count = 0
 
     return MonthlyPlanData(
         monthly_contribution_eur=contribution,
@@ -1602,6 +1991,11 @@ def _parse_monthly_plan(
         estimated_cash_outlay_eur=cash_outlay,
         execution_state=execution_state,
         additional_investment_cash_required_eur=additional_cash_required,
+        provider_investment_cash=provider_investment_cash,
+        funding_transfers=funding_transfers,
+        estimated_funding_transfer_fees_eur=estimated_funding_transfer_fees,
+        estimated_total_execution_costs_eur=estimated_total_execution_costs,
+        funding_transfer_count=funding_transfer_count,
     )
 
 

@@ -1,15 +1,13 @@
-# Portfolio Architect Gateway — DKB v1.34.1
+# Portfolio Architect Gateway — DKB v1.35.0
 
-Version 1.34.1 is package alignment for the Home Assistant-side allocation-presentation hotfix
-and preserves the v1.34.0 generic target/presentation architecture, the live-accepted v1.31.2
-registration-gated anonymous FinTS 3.0 BPD capability probe, and the shared provider-diagnostics
-policy. The current live probe has reached DKB and returned bounded product-registration
-rejection evidence; no DKB acquisition capability is added. The DKB App remains **experimental**, **manual-only** and non-live
-as a Portfolio Architect source.
+Version 1.35.0 keeps the DKB Gateway **experimental**, **manual-only** and non-live.
+Its registration-gated anonymous FinTS 3.0 BPD probe now records a privacy-safe fingerprint of the
+exact bounded HTTP response body (SHA-256 plus byte count) before normalization/base64 decoding,
+alongside the existing decoded-response fingerprint. Exact raw and decoded response bytes are still
+discarded and never persisted. No DKB acquisition or authenticated banking capability is added.
 
-The probe stays fixed to DKB's documented FinTS endpoint and bank code. It sends only
-anonymous dialog-initialization segments and persists only bounded, non-private evidence.
-Raw FinTS response content is discarded after bounded diagnostic extraction and correlation fingerprinting.
+The probe stays fixed to DKB's documented FinTS endpoint and bank code. It sends only anonymous
+dialog-initialization segments and persists only bounded, non-private evidence.
 
 ## Registration gate
 
@@ -34,14 +32,14 @@ iframe to Home Assistant's absolute `/` dashboard.
 
 Successful BPD evidence contains only BPD version, observed parameter-segment identifiers,
 bounded four-digit return codes, bounded sanitized `HIRMG`/`HIRMS` return-message text,
-decoded-response SHA-256/byte count, timestamp and whether `HIWPDS` is advertised.
+exact raw-response-body SHA-256/byte count, decoded-response SHA-256/byte count, timestamp and whether `HIWPDS` is advertised.
 
 Expected unsuccessful attempts also persist a bounded outcome so reopening the Web UI does
 not falsely return to `ready / not probed`. A valid FinTS response with `HIRMG`/`HIRMS`
 return codes but no BPD is shown as `bank_rejected`; its recognized return codes and bounded
 sanitized operator-message text survive. The configured product ID is redacted if echoed,
-arbitrary/unknown segment payload is not persisted, and a decoded-response SHA-256/byte count
-allows correlation without retaining the raw response. HTTP, transport and strict-protocol
+arbitrary/unknown segment payload is not persisted, and the raw/decoded SHA-256 plus byte counts
+allow correlation without retaining either response representation. HTTP, transport and strict-protocol
 failures use separate bounded states.
 
 A newly issued product registration that has not yet propagated to an institute is only one
@@ -55,7 +53,7 @@ live DKB holdings and does not prove that an authenticated user's UPD advertises
 capability. Authenticated user-capability validation and DKB-App decoupled authentication
 remain later gates.
 
-The v1.34.1 DKB App requests no DKB login name, PIN or TAN and sends no holdings, balance,
+The v1.35.0 DKB App requests no DKB login name, PIN or TAN and sends no holdings, balance,
 transaction, order, transfer, payment, debit or transaction-history business transaction.
 Its provider REST source remains fail-closed and cannot publish a DKB portfolio snapshot.
 
