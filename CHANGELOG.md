@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.32.0
+
+- Adds per-source freshness evidence so stale multi-source actionability can identify the exact blocking source, evidence kind, age and unchanged aggregate freshness threshold.
+- Adds bounded English/German freshness and actionability summaries to native Home Assistant entities and reference dashboards while preserving the existing oldest-source fail-closed rule.
+- Introduces a provider-diagnostics evidence policy covering App-private persistence, allowlisted/sanitized operator text, Ingress safety, raw-response/document exclusion and secret-leak regression requirements.
+- Persists only the latest bounded Trade Republic statement-import outcome with allowlisted diagnostic text in mode-`0600` App-private state; the private PDF remains memory-only and is deliberately not fingerprinted.
+- Audits Comdirect diagnostics/Ingress behavior against the same policy without changing its authenticated acquisition, OAuth/session or wire contracts; DKB v1.31.2 probe diagnostics remain unchanged.
+- Keeps payload schema 8, REST portfolio schema 1, Gateway health schema 6, portfolio actionability semantics, provider acquisition and the advisory/no-trading boundary unchanged.
+
 ## 1.31.2
 
 - Hardens the DKB anonymous FinTS BPD probe after the first live registered attempt reached the fixed endpoint but exposed Ingress-navigation and diagnostic-state defects.

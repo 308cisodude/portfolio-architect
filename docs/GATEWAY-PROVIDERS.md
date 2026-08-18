@@ -19,7 +19,7 @@ provider-neutral runtime code. `GatewayState` and `create_server()` consume
 
 ## Official App identities
 
-| Provider | Display name | App slug | v1.31.2 state |
+| Provider | Display name | App slug | v1.32.0 state |
 | --- | --- | --- | --- |
 | Comdirect | Portfolio Architect Gateway — Comdirect | `portfolio_architect_gateway` | stable live provider, auto-start |
 | DKB | Portfolio Architect Gateway — DKB | `portfolio_architect_gateway_dkb` | experimental manual-only anonymous FinTS capability probe; no live portfolio acquisition |
@@ -142,3 +142,17 @@ DKB live holdings remain a later provider-specific gate after the v1.28 anonymou
 BPD probe and authenticated user-capability validation. The established DKB CSV
 supplement can coexist with independent Comdirect and Trade Republic Gateway REST
 snapshots in the aggregate while the DKB Gateway itself remains non-live.
+
+## v1.32 provider freshness and diagnostic foundation
+
+Version 1.32.0 leaves provider acquisition and wire schemas unchanged while formalizing
+`docs/PROVIDER-DIAGNOSTICS.md`. Provider diagnostics share one security policy but not one
+retention mechanism: DKB's anonymous FinTS probe may retain its bounded response fingerprint,
+Comdirect's authenticated traffic remains limited to bounded classifications/reasons, and
+Trade Republic retains only the latest allowlisted statement-import outcome without storing
+or fingerprinting the private PDF.
+
+On the Home Assistant side, per-source freshness evidence is additive observability only.
+The oldest contributing source remains the authoritative aggregate freshness gate; provider
+classification does not introduce a different age limit or make a stale plan actionable in
+v1.32.0.

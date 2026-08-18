@@ -331,6 +331,39 @@ legitimate FinTS product identity.
 - Keep DKB experimental, manual-only and non-live; authenticated user-capability/UPD and
   DKB-App decoupled authentication remain later gates before any holdings implementation.
 
+## v1.32.0 — provider freshness and diagnostics foundation
+
+- Preserve the established oldest-contributing-source fail-closed freshness/actionability
+  rule and the configured aggregate freshness threshold unchanged.
+- Expose bounded per-source evidence kind, timestamp, age, threshold status and explicit
+  stale-source/actionability blocker summaries so operators can see which source is actually
+  making a plan non-actionable.
+- Surface the new blocker detail through native English/German Home Assistant Tile
+  `state_content` only; add no custom frontend dependency.
+- Define a common provider-diagnostics security policy based on classified bounded evidence,
+  App-private persistence, provider-specific redaction and no generic raw-upstream retention.
+- Persist only the latest allowlisted Trade Republic import outcome; never persist the private
+  PDF or add a stable PDF fingerprint merely for troubleshooting.
+- Audit/regression-protect Comdirect's existing bounded authenticated error model without
+  adding upstream free-text or response fingerprint persistence.
+- Preserve the live-accepted v1.31.2 DKB anonymous FinTS diagnostics and non-live research
+  boundary unchanged apart from normal package metadata.
+
+## Future — provider-aware source freshness policy
+
+The v1.32.0 observability foundation deliberately does not decide that live APIs, imported
+statements and CSV evidence should share one universal age policy forever. A later design may:
+
+- allow explicit bounded per-source or per-evidence-kind freshness policy owned by the user;
+- distinguish live operational freshness from document/CSV evidence age without silently
+  weakening investment-actionability safety;
+- show the effective policy and blocking source deterministically in entities/diagnostics; and
+- require conservative migration/defaults so an upgrade cannot make an existing stale plan
+  actionable merely because the software learned new provider categories.
+
+Any materiality-based exception (for example ignoring a small stale contribution) requires a
+separate bounded error model and must not be inferred merely from current portfolio value.
+
 ## Future — generic target architecture and first-class presentation model
 
 Portfolio Architect must evolve from the current reference retirement plan into a reusable

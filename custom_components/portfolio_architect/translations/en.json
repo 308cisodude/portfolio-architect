@@ -1809,6 +1809,15 @@
           },
           "reserve_source": {
             "name": "Investment cash source"
+          },
+          "plan_actionability_reason": {
+            "name": "Actionability reason"
+          },
+          "plan_actionability_detail": {
+            "name": "Actionability detail"
+          },
+          "plan_actionability_detail_de": {
+            "name": "Actionability detail (German)"
           }
         }
       },
@@ -2025,6 +2034,18 @@
           },
           "fresh_through": {
             "name": "Within window through"
+          },
+          "stale_source_count": {
+            "name": "Stale source count"
+          },
+          "stale_source_summary": {
+            "name": "Freshness blocker"
+          },
+          "source_freshness": {
+            "name": "Per-source freshness evidence"
+          },
+          "stale_source_summary_de": {
+            "name": "Freshness blocker (German)"
           }
         }
       },

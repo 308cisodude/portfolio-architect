@@ -111,7 +111,7 @@ sections:
         action: more-info
       color: red
       icon: mdi:clipboard-remove-outline
-      hide_state: true
+      state_content: plan_actionability_detail
     grid_options:
       columns: full
       rows: auto
@@ -898,6 +898,7 @@ sections:
     card:
       type: tile
       entity: binary_sensor.portfolio_architect_data_fresh
+      state_content: stale_source_summary
       name: Snapshot freshness
       tap_action:
         action: more-info

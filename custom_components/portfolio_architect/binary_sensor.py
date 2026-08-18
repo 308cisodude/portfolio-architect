@@ -788,6 +788,7 @@ class PortfolioDataFresh(
             "fresh_through": (
                 schedule.next_review_on.isoformat() if schedule else None
             ),
+            "source_freshness": list(self.coordinator.source_freshness_evidence()),
             "display_state_de": display_binary_state_de(
                 "data_fresh", self.is_on
             ),
@@ -885,8 +886,14 @@ def _source_attributes(coordinator: PortfolioArchitectCoordinator) -> dict[str, 
         "source_last_updated": _isoformat(coordinator.source_last_updated),
         "last_successful_refresh": _isoformat(coordinator.data_timestamp),
         "data_fresh": coordinator.is_data_fresh(),
+        "stale_source_count": len(coordinator.stale_source_ids),
+        "stale_source_ids": list(coordinator.stale_source_ids),
+        "stale_source_summary": coordinator.stale_source_summary,
+        "stale_source_summary_de": coordinator.stale_source_summary_de,
         "plan_actionable": coordinator.plan_actionable,
         "plan_actionability_reason": coordinator.plan_actionability_reason,
+        "plan_actionability_detail": coordinator.plan_actionability_detail,
+        "plan_actionability_detail_de": coordinator.plan_actionability_detail_de,
     }
     if coordinator.source_entity_id is not None:
         attributes["source_entity_id"] = coordinator.source_entity_id

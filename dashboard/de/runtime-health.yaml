@@ -60,7 +60,7 @@ cards:
   card:
     type: tile
     entity: binary_sensor.portfolio_architect_data_fresh
-    state_content: display_state_de
+    state_content: stale_source_summary_de
     name: Snapshot-Aktualität
     tap_action:
       action: more-info

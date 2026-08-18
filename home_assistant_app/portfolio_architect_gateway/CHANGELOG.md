@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.32.0
+
+- Package/version alignment for Portfolio Architect v1.32.0 provider freshness/diagnostics foundation.
+- Adds regression-backed documentation of the existing bounded Comdirect refresh/OAuth diagnostic and Ingress-navigation contracts; acquisition, OAuth/session maintenance, private-PKI HTTPS and Gateway wire behavior are unchanged.
+
 ## 1.31.2
 
 - Package/version alignment for the v1.31.2 DKB FinTS capability-probe hardening release; Comdirect acquisition, OAuth/session maintenance, private-PKI HTTPS and Gateway wire behavior are unchanged.

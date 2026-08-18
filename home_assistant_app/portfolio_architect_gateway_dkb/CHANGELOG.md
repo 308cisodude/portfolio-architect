@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.32.0
+
+- Package/version alignment for Portfolio Architect v1.32.0.
+- The live-accepted v1.31.2 DKB FinTS registration, Ingress and persisted sanitized probe-diagnostic behavior is unchanged; DKB remains experimental, manual-only and non-live.
+
 ## 1.31.2
 
 - Requires the project's issued FinTS product registration ID to be exactly 25 alphanumeric characters and transmits it only in `HKVVB`'s product-designation field.

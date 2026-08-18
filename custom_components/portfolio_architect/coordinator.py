@@ -102,6 +102,11 @@ from .engine.importers import (
 from .engine.models import Position
 from .engine.rest import PROVIDER_LOCAL_REST_JSON, RestInvestmentCash
 from .last_known_good import RestLastKnownGoodStore, configuration_fingerprint
+from .freshness import (
+    source_freshness_rows as build_source_freshness_rows,
+    stale_rows as select_stale_rows,
+    stale_summary as build_stale_summary,
+)
 from .model import PortfolioArchitectDataError, PortfolioData, parse_portfolio_data
 from .presentation import unavailable_source_summary
 from .resilience import (
@@ -911,6 +916,90 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
     def freshness_mode(self) -> str:
         """Return the active freshness policy."""
         return "review_schedule" if self.review_schedule_configured else "age_threshold"
+
+    def source_freshness_evidence(
+        self, now: datetime | None = None
+    ) -> tuple[dict[str, Any], ...]:
+        """Return bounded per-source age evidence without changing freshness semantics."""
+        summaries = self.source_summaries
+        if not summaries:
+            timestamp = self.oldest_source_generated_at or self.data_timestamp
+            summaries = (
+                {
+                    "source_id": "primary",
+                    "provider": self.source_provider,
+                    "label": self.source_label,
+                    "generated_at": timestamp.isoformat() if timestamp is not None else None,
+                },
+            )
+        return build_source_freshness_rows(
+            summaries,
+            now=now or dt_util.utcnow(),
+            threshold_hours=self.freshness_hours,
+        )
+
+    def stale_source_evidence(
+        self, now: datetime | None = None
+    ) -> tuple[dict[str, Any], ...]:
+        """Return source-specific blockers only for the established age-threshold mode."""
+        if self.freshness_mode != "age_threshold":
+            return ()
+        return select_stale_rows(self.source_freshness_evidence(now))
+
+    @property
+    def stale_source_ids(self) -> tuple[str, ...]:
+        """Return bounded IDs of source evidence currently blocking age freshness."""
+        return tuple(str(item.get("source_id", "unknown")) for item in self.stale_source_evidence())
+
+    @property
+    def stale_source_summary(self) -> str:
+        """Return a compact English explanation of the active freshness blocker."""
+        if self.is_data_fresh():
+            return "None"
+        if self.freshness_mode == "review_schedule":
+            return "Plan review window expired"
+        return build_stale_summary(self.stale_source_evidence(), german=False)
+
+    @property
+    def stale_source_summary_de(self) -> str:
+        """Return a compact German explanation of the active freshness blocker."""
+        if self.is_data_fresh():
+            return "Keine"
+        if self.freshness_mode == "review_schedule":
+            return "Prüffenster des Plans abgelaufen"
+        return build_stale_summary(self.stale_source_evidence(), german=True)
+
+    @property
+    def plan_actionability_detail(self) -> str:
+        """Return one compact operator-facing English actionability explanation."""
+        reason = self.plan_actionability_reason
+        if reason == "data_stale":
+            return self.stale_source_summary
+        return {
+            "data_unavailable": "Portfolio data unavailable",
+            "integrity_failure": "Snapshot integrity failure",
+            "last_known_good": "Home Assistant last-known-good mode",
+            "health_unavailable": "Gateway health unavailable",
+            "reauthentication_required": "Gateway reauthentication required",
+            "source_degraded": "One or more portfolio sources are degraded",
+            "actionable": "Actionable",
+        }.get(reason, reason)
+
+    @property
+    def plan_actionability_detail_de(self) -> str:
+        """Return one compact operator-facing German actionability explanation."""
+        reason = self.plan_actionability_reason
+        if reason == "data_stale":
+            return self.stale_source_summary_de
+        return {
+            "data_unavailable": "Portfoliodaten nicht verfügbar",
+            "integrity_failure": "Integritätsprüfung des Snapshots fehlgeschlagen",
+            "last_known_good": "Home-Assistant-Letzter-Gutstand aktiv",
+            "health_unavailable": "Gateway-Status nicht verfügbar",
+            "reauthentication_required": "Gateway-Neuanmeldung erforderlich",
+            "source_degraded": "Mindestens eine Portfolioquelle ist beeinträchtigt",
+            "actionable": "Ausführbar",
+        }.get(reason, reason)
 
     def is_data_fresh(self, now: datetime | None = None) -> bool:
         """Return whether the accepted snapshot is within its freshness window."""

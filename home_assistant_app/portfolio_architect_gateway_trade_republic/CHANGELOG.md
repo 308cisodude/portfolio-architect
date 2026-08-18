@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.32.0
+
+- Persists the latest bounded Trade Republic statement-import outcome (`accepted`, `rejected`, or `internal_error`) in App-private mode-`0600` state so operator diagnostics survive Web UI reopen/App restart.
+- Retains only allowlisted parser/form error text; unexpected exception text is replaced with a generic bounded message so document-derived private content cannot enter diagnostic state.
+- Keeps uploaded PDFs memory-only and deliberately does not retain a PDF fingerprint; accepted provider-neutral snapshot behavior, verified HTTPS and Gateway wire contracts are unchanged.
+
 ## 1.31.2
 
 - Package/version alignment for the v1.31.2 DKB FinTS capability-probe hardening release; Trade Republic statement import, private snapshot storage and Gateway wire behavior are unchanged.

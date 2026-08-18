@@ -98,7 +98,7 @@ cards:
       action: more-info
     color: red
     icon: mdi:clipboard-remove-outline
-    hide_state: true
+    state_content: plan_actionability_detail
   grid_options:
     columns: full
     rows: auto

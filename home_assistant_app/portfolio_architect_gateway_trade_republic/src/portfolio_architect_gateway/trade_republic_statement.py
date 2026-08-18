@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
 from io import BytesIO
+from pathlib import Path
 import re
 from typing import Final
 
@@ -93,6 +94,11 @@ class TradeRepublicStatementProvider:
     @property
     def snapshot(self) -> PortfolioSnapshot | None:
         return self._snapshot
+
+    @property
+    def snapshot_file(self) -> Path:
+        """Return the App-private normalized-snapshot path for sibling state files."""
+        return Path(self._snapshot_file)
 
 
 def parse_statement_pdf(data: bytes, *, now: datetime | None = None) -> PortfolioSnapshot:

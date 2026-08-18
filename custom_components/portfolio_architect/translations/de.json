@@ -1809,6 +1809,15 @@
           },
           "reserve_source": {
             "name": "Quelle des Anlageguthabens"
+          },
+          "plan_actionability_reason": {
+            "name": "Grund der Ausführbarkeit"
+          },
+          "plan_actionability_detail_de": {
+            "name": "Detail zur Ausführbarkeit"
+          },
+          "plan_actionability_detail": {
+            "name": "Detail zur Ausführbarkeit (Englisch)"
           }
         }
       },
@@ -2025,6 +2034,18 @@
           },
           "fresh_through": {
             "name": "Im Aktualitätsfenster bis einschließlich"
+          },
+          "stale_source_count": {
+            "name": "Anzahl veralteter Quellen"
+          },
+          "stale_source_summary_de": {
+            "name": "Aktualitätsblocker"
+          },
+          "source_freshness": {
+            "name": "Aktualität je Quelle"
+          },
+          "stale_source_summary": {
+            "name": "Aktualitätsblocker (Englisch)"
           }
         }
       },
