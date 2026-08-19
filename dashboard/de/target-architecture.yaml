@@ -24,146 +24,96 @@ cards:
   color: state
   icon: mdi:vector-arrange-below
   state_content: coverage_summary
-- type: glance
-  title: Zielpositionen · ✓ Vorhanden · ○ Fehlt
-  columns: 2
-  show_name: true
-  show_state: false
-  state_color: true
+- type: entity-filter
   entities:
-  - entity: binary_sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_target_position_held
-    name: MSCI World
-  - entity: binary_sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_target_position_held
-    name: Emerging Markets
-  - entity: binary_sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_target_position_held
-    name: World Small Cap
-  - entity: binary_sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_target_position_held
-    name: Gesundheit
-  - entity: binary_sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_target_position_held
-    name: AI & Big Data
-  - entity: binary_sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_target_position_held
-    name: Cybersecurity
-  - entity: binary_sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_target_position_held
-    name: Robotik · Thes.
+  - binary_sensor.portfolio_architect_presentation_target_01_held
+  - binary_sensor.portfolio_architect_presentation_target_02_held
+  - binary_sensor.portfolio_architect_presentation_target_03_held
+  - binary_sensor.portfolio_architect_presentation_target_04_held
+  - binary_sensor.portfolio_architect_presentation_target_05_held
+  - binary_sensor.portfolio_architect_presentation_target_06_held
+  - binary_sensor.portfolio_architect_presentation_target_07_held
+  - binary_sensor.portfolio_architect_presentation_target_08_held
+  - binary_sensor.portfolio_architect_presentation_target_09_held
+  - binary_sensor.portfolio_architect_presentation_target_10_held
+  - binary_sensor.portfolio_architect_presentation_target_11_held
+  - binary_sensor.portfolio_architect_presentation_target_12_held
+  - binary_sensor.portfolio_architect_presentation_target_13_held
+  - binary_sensor.portfolio_architect_presentation_target_14_held
+  - binary_sensor.portfolio_architect_presentation_target_15_held
+  - binary_sensor.portfolio_architect_presentation_target_16_held
+  - binary_sensor.portfolio_architect_presentation_target_17_held
+  - binary_sensor.portfolio_architect_presentation_target_18_held
+  - binary_sensor.portfolio_architect_presentation_target_19_held
+  - binary_sensor.portfolio_architect_presentation_target_20_held
+  - binary_sensor.portfolio_architect_presentation_target_21_held
+  - binary_sensor.portfolio_architect_presentation_target_22_held
+  - binary_sensor.portfolio_architect_presentation_target_23_held
+  - binary_sensor.portfolio_architect_presentation_target_24_held
+  - binary_sensor.portfolio_architect_presentation_target_25_held
+  - binary_sensor.portfolio_architect_presentation_target_26_held
+  - binary_sensor.portfolio_architect_presentation_target_27_held
+  - binary_sensor.portfolio_architect_presentation_target_28_held
+  - binary_sensor.portfolio_architect_presentation_target_29_held
+  - binary_sensor.portfolio_architect_presentation_target_30_held
+  - binary_sensor.portfolio_architect_presentation_target_31_held
+  - binary_sensor.portfolio_architect_presentation_target_32_held
+  conditions:
+  - condition: state
+    state_not: unavailable
+  card:
+    type: glance
+    title: Zielpositionen · ✓ Vorhanden · ○ Fehlend
+    columns: 2
+    show_name: true
+    show_state: false
+    state_color: true
+  show_empty: false
   grid_options:
     columns: full
     rows: auto
-- type: conditional
+- type: entity-filter
+  entities:
+  - sensor.portfolio_architect_presentation_target_01_position_sources
+  - sensor.portfolio_architect_presentation_target_02_position_sources
+  - sensor.portfolio_architect_presentation_target_03_position_sources
+  - sensor.portfolio_architect_presentation_target_04_position_sources
+  - sensor.portfolio_architect_presentation_target_05_position_sources
+  - sensor.portfolio_architect_presentation_target_06_position_sources
+  - sensor.portfolio_architect_presentation_target_07_position_sources
+  - sensor.portfolio_architect_presentation_target_08_position_sources
+  - sensor.portfolio_architect_presentation_target_09_position_sources
+  - sensor.portfolio_architect_presentation_target_10_position_sources
+  - sensor.portfolio_architect_presentation_target_11_position_sources
+  - sensor.portfolio_architect_presentation_target_12_position_sources
+  - sensor.portfolio_architect_presentation_target_13_position_sources
+  - sensor.portfolio_architect_presentation_target_14_position_sources
+  - sensor.portfolio_architect_presentation_target_15_position_sources
+  - sensor.portfolio_architect_presentation_target_16_position_sources
+  - sensor.portfolio_architect_presentation_target_17_position_sources
+  - sensor.portfolio_architect_presentation_target_18_position_sources
+  - sensor.portfolio_architect_presentation_target_19_position_sources
+  - sensor.portfolio_architect_presentation_target_20_position_sources
+  - sensor.portfolio_architect_presentation_target_21_position_sources
+  - sensor.portfolio_architect_presentation_target_22_position_sources
+  - sensor.portfolio_architect_presentation_target_23_position_sources
+  - sensor.portfolio_architect_presentation_target_24_position_sources
+  - sensor.portfolio_architect_presentation_target_25_position_sources
+  - sensor.portfolio_architect_presentation_target_26_position_sources
+  - sensor.portfolio_architect_presentation_target_27_position_sources
+  - sensor.portfolio_architect_presentation_target_28_position_sources
+  - sensor.portfolio_architect_presentation_target_29_position_sources
+  - sensor.portfolio_architect_presentation_target_30_position_sources
+  - sensor.portfolio_architect_presentation_target_31_position_sources
+  - sensor.portfolio_architect_presentation_target_32_position_sources
   conditions:
   - condition: numeric_state
-    entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_position_sources
     above: 1
   card:
-    type: tile
-    entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_position_sources
-    name: Quellen MSCI World
-    state_content: source_summary
-    tap_action:
-      action: more-info
-    icon: mdi:source-branch
-    color: blue
-  grid_options:
-    columns: full
-    rows: auto
-- type: conditional
-  conditions:
-  - condition: numeric_state
-    entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_position_sources
-    above: 1
-  card:
-    type: tile
-    entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_position_sources
-    name: Quellen Emerging Markets
-    state_content: source_summary
-    tap_action:
-      action: more-info
-    icon: mdi:source-branch
-    color: blue
-  grid_options:
-    columns: full
-    rows: auto
-- type: conditional
-  conditions:
-  - condition: numeric_state
-    entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_position_sources
-    above: 1
-  card:
-    type: tile
-    entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_position_sources
-    name: Quellen World Small Cap
-    state_content: source_summary
-    tap_action:
-      action: more-info
-    icon: mdi:source-branch
-    color: blue
-  grid_options:
-    columns: full
-    rows: auto
-- type: conditional
-  conditions:
-  - condition: numeric_state
-    entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_position_sources
-    above: 1
-  card:
-    type: tile
-    entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_position_sources
-    name: Quellen Gesundheit
-    state_content: source_summary
-    tap_action:
-      action: more-info
-    icon: mdi:source-branch
-    color: blue
-  grid_options:
-    columns: full
-    rows: auto
-- type: conditional
-  conditions:
-  - condition: numeric_state
-    entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_position_sources
-    above: 1
-  card:
-    type: tile
-    entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_position_sources
-    name: Quellen KI & Big Data
-    state_content: source_summary
-    tap_action:
-      action: more-info
-    icon: mdi:source-branch
-    color: blue
-  grid_options:
-    columns: full
-    rows: auto
-- type: conditional
-  conditions:
-  - condition: numeric_state
-    entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_position_sources
-    above: 1
-  card:
-    type: tile
-    entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_position_sources
-    name: Quellen Cybersicherheit
-    state_content: source_summary
-    tap_action:
-      action: more-info
-    icon: mdi:source-branch
-    color: blue
-  grid_options:
-    columns: full
-    rows: auto
-- type: conditional
-  conditions:
-  - condition: numeric_state
-    entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_position_sources
-    above: 1
-  card:
-    type: tile
-    entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_position_sources
-    name: Quellen Robotik · Thes.
-    state_content: source_summary
-    tap_action:
-      action: more-info
-    icon: mdi:source-branch
-    color: blue
+    type: entities
+    title: Zielpositionen mit mehreren Quellen
+    show_header_toggle: false
+  show_empty: false
   grid_options:
     columns: full
     rows: auto

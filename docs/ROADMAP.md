@@ -454,15 +454,13 @@ from current portfolio value.
 - Preserve cash-policy mathematics, provider-scoped funding, broker semantics, Gateway schemas/transport and all no-trading boundaries.
 - Preserve broker schemas, route economics, retained-cash authorization, provider behavior, wire schemas and the advisory/no-trading boundary unchanged.
 
-## Future — native dynamic portfolio presentation
+## v1.36.0 — native dynamic portfolio presentation
 
-- Consume the v1.34 presentation contract so the reference dashboard can render the actual
-  configured target/outside-scope inventory without maintaining instrument-specific YAML lists.
-- Preserve native Home Assistant interaction/more-info behavior and avoid `auto-entities`,
-  card-mod, custom JavaScript or custom-card dependencies.
-- Require the visible target and outside-scope inventory to reconcile exactly with Portfolio
-  Architect counts and stable presentation IDs.
-- Keep user-owned dashboard copies opt-in: HACS/integration updates must never overwrite an
-  imported/personalized Lovelace dashboard.
+- Consume the v1.34 structural presentation contract through bounded diagnostic presentation-slot adapters so the reference dashboard renders the actual configured target, outside-scope and active-policy inventory without instrument-specific YAML lists.
+- Use only native Home Assistant `entity-filter`, Entities, Glance, Distribution, Tile and Conditional cards; add no `auto-entities`, card-mod, custom JavaScript or custom-card dependency.
+- Keep opaque `target_id` and accepted holding `position_id` as stable portfolio identity; presentation slots are explicitly ephemeral UI projections and repeat the stable identity in attributes.
+- Match dashboard candidate ranges to the accepted backend bounds (32 targets, 512 holdings, 256 policy findings) and expose presentation schema 2 slot metadata for exact reconciliation.
+- Keep user-owned dashboard copies opt-in: HACS/integration updates never overwrite an imported or personalized Lovelace dashboard.
+- Preserve all v1.35 execution-policy, funding, retained-cash and Gateway security/runtime contracts.
 
 No holdings acquisition is enabled by this release.

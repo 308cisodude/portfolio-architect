@@ -259,7 +259,14 @@ def test_current_public_exception_retains_v130_provider_assumption_as_history() 
     assert "superseded_by_instrument_id: IE00BYZK4552" in text
 
 
-def test_dashboard_purchase_tiles_expose_provider_using_native_state_content() -> None:
+def test_dashboard_purchase_aliases_preserve_execution_provider_for_native_more_info() -> None:
+    sensor = (COMPONENT / "sensor.py").read_text(encoding="utf-8")
+    slot = sensor.split("class PortfolioTargetPresentationSlotSensor", 1)[1].split(
+        "class PortfolioOutsidePresentationSlotSensor", 1
+    )[0]
+    assert '"execution_provider_name"' in slot or "position.attributes" in slot
+    assert '"stable_identity"' in slot
+
     for relative in (
         "dashboard/en/monthly-investment-plan.yaml",
         "dashboard/de/monthly-investment-plan.yaml",
@@ -268,7 +275,8 @@ def test_dashboard_purchase_tiles_expose_provider_using_native_state_content() -
         "dashboard/bilingual-dashboard.yaml",
     ):
         text = (ROOT / relative).read_text(encoding="utf-8")
-        assert "execution_provider_name" in text, relative
+        assert "presentation_target_01_proposed_buy" in text, relative
+        assert "type: entity-filter" in text, relative
         assert "custom:" not in text, relative
 
 

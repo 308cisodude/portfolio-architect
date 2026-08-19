@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.36.0
+
+- Package/version alignment for Portfolio Architect v1.36.0 native dynamic presentation. Comdirect provider acquisition/runtime behavior is unchanged.
+- Preserves verified HTTPS/private CA trust, bearer authentication, established provider-specific state and the read-only/advisory boundary.
+
 ## 1.35.4
 
 - Accepts common human EUR number formats for cash-cap and retained-cash form input, including German decimal comma and validated grouping separators, then persists only canonical locale-neutral values.

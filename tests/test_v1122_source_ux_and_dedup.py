@@ -52,18 +52,17 @@ def test_provenance_uses_friendly_provider_labels() -> None:
     assert "local-portfolio-architect-gateway/api" not in sensor
 
 
-def test_outside_scope_holding_tiles_are_consistently_half_width() -> None:
+def test_outside_scope_holdings_use_bounded_native_dynamic_list() -> None:
     dashboard = yaml.safe_load((ROOT / "dashboard/allocation-stack.yaml").read_text())
     cards = dashboard["cards"]
-    outside = [
+    outside = next(
         item for item in cards
         if isinstance(item, dict)
-        and item.get("type") == "conditional"
-        and isinstance(item.get("card"), dict)
-        and str(item["card"].get("entity", "")).endswith("_holding_value")
-    ]
-    assert outside
-    assert all(item["grid_options"]["columns"] == 6 for item in outside)
-    names = {item["card"]["name"] for item in outside}
-    assert "MSCI World IT" in names
-    assert "Mosaic ImmunoEng." in names
+        and item.get("type") == "entity-filter"
+        and "sensor.portfolio_architect_presentation_outside_001_holding_value" in item.get("entities", [])
+    )
+    assert len(outside["entities"]) == 512
+    assert outside["entities"][-1] == "sensor.portfolio_architect_presentation_outside_512_holding_value"
+    assert outside["card"]["type"] == "glance"
+    assert outside["grid_options"]["columns"] == "full"
+    assert outside["show_empty"] is False

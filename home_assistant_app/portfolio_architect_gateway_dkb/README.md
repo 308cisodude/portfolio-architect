@@ -1,8 +1,6 @@
-# Portfolio Architect Gateway — DKB v1.35.4
+# Portfolio Architect Gateway — DKB v1.36.0
 
-Version 1.35.4 is package/User-Agent alignment for the Comdirect cash-input localization hotfix.
-DKB Gateway remains **experimental**, **manual-only** and non-live; its v1.35.0 anonymous
-FinTS raw/decoded fingerprint evidence and all acquisition boundaries are unchanged.
+Version 1.36.0 is package alignment for Portfolio Architect's Home Assistant-side native dynamic presentation milestone. DKB remains experimental, manual-only and non-live; the anonymous registered FinTS capability probe is unchanged.
 
 The probe stays fixed to DKB's documented FinTS endpoint and bank code. It sends only anonymous
 dialog-initialization segments and persists only bounded, non-private evidence.
@@ -51,7 +49,7 @@ live DKB holdings and does not prove that an authenticated user's UPD advertises
 capability. Authenticated user-capability validation and DKB-App decoupled authentication
 remain later gates.
 
-The v1.35.4 DKB App requests no DKB login name, PIN or TAN and sends no holdings, balance,
+The v1.36.0 DKB App requests no DKB login name, PIN or TAN and sends no holdings, balance,
 transaction, order, transfer, payment, debit or transaction-history business transaction.
 Its provider REST source remains fail-closed and cannot publish a DKB portfolio snapshot.
 

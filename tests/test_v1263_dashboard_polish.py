@@ -128,7 +128,8 @@ def test_policy_summary_keeps_aggregate_counters_out_of_primary_tiles() -> None:
         # it must not become a competing primary tile.
         assert OPPORTUNITIES not in entities
         assert EXCEPTIONS in entities
-        assert ROBOTICS_EXCEPTION in entities
+        policy_filters = [card for card in cards if card.get("type") == "entity-filter"]
+        assert any("sensor.portfolio_architect_presentation_policy_001_finding" in card.get("entities", []) for card in policy_filters)
 
 
 def test_policy_exception_lifecycle_tiles_are_coherently_ordered() -> None:
@@ -136,18 +137,20 @@ def test_policy_exception_lifecycle_tiles_are_coherently_ordered() -> None:
         cards = _policy_cards(_view(language))
         entities = [_inner_entity(card) for card in cards]
         exception_index = entities.index(EXCEPTIONS)
-        robotics_index = entities.index(ROBOTICS_EXCEPTION)
         last_index = entities.index(LAST_EXCEPTION_DECISION)
         next_index = entities.index(NEXT_EXCEPTION_REVIEW)
         overdue_index = entities.index(OVERDUE_EXCEPTION_REVIEW)
+        policy_index = next(
+            index for index, card in enumerate(cards)
+            if card.get("type") == "entity-filter"
+            and "sensor.portfolio_architect_presentation_policy_001_finding" in card.get("entities", [])
+        )
 
-        assert exception_index < robotics_index < last_index
+        assert exception_index < last_index
         assert last_index < next_index
         assert last_index < overdue_index
-        assert abs(exception_index - robotics_index) == 1
-        # The mutually exclusive review tiles share the same logical slot after
-        # the last decision; either one may render at runtime.
         assert {next_index, overdue_index} == {last_index + 1, last_index + 2}
+        assert policy_index > max(next_index, overdue_index)
 
 
 def test_policy_exception_lifecycle_labels_are_precise_in_both_languages() -> None:
@@ -170,13 +173,14 @@ def test_policy_exception_lifecycle_labels_are_precise_in_both_languages() -> No
             assert by_entity[entity]["name"] == label
 
 
-def test_concrete_policy_opportunity_tiles_remain_visible_contracts() -> None:
+def test_concrete_policy_findings_remain_visible_through_generic_slot_contract() -> None:
     for language in ("EN", "DE"):
         cards = _policy_cards(_view(language))
-        opportunity_cards = [
-            _inner_card(card)
-            for card in cards
-            if (_inner_entity(card) or "").endswith("free_savings_plan_preferred_policy_finding")
-        ]
-        assert len(opportunity_cards) == 4
-        assert all(card.get("grid_options", {}).get("columns") == "full" for card in cards if (_inner_entity(card) or "").endswith("free_savings_plan_preferred_policy_finding"))
+        policy = next(
+            card for card in cards
+            if card.get("type") == "entity-filter"
+            and "sensor.portfolio_architect_presentation_policy_001_finding" in card.get("entities", [])
+        )
+        assert len(policy["entities"]) == 256
+        assert policy["card"]["type"] == "entities"
+        assert policy["grid_options"]["columns"] == "full"

@@ -47,11 +47,11 @@ def test_sections_use_native_responsive_cards():
         cards=list(_walk(view))
         types={card.get('type') for card in cards if isinstance(card,dict)}
         assert 'markdown' not in types
-        assert 'entities' not in types
-        assert 'entity-filter' not in types
+        assert 'entities' in types
+        assert 'entity-filter' in types
         # No nested fixed-column grid cards; only Sections themselves use grid.
         assert not any(card.get('type')=='grid' and 'columns' in card for card in cards)
-        assert {'tile','conditional','glance','distribution','heading'} <= types
+        assert {'tile','conditional','glance','distribution','heading','entities','entity-filter'} <= types
 
 
 def test_half_width_tile_labels_are_narrow_screen_safe():
@@ -72,8 +72,9 @@ def test_complete_portfolio_and_scope_entities_are_visible():
     assert 'portfolio_architect_portfolio_value' in source
     assert 'portfolio_architect_current_plan_share' in source
     assert 'portfolio_architect_outside_scope_share' in source
-    assert 'holding_ie00bm67ht60_whole_portfolio_allocation' in source
-    assert 'holding_de0005557508_holding_value' in source
+    assert 'presentation_outside_001_whole_portfolio_allocation' in source
+    assert 'presentation_outside_001_holding_value' in source
+    assert 'portfolio_architect_holding_' not in source
     assert 'legacy' not in source.casefold()
 
 

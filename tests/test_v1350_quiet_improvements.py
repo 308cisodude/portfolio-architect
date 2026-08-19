@@ -115,21 +115,15 @@ def test_dkb_probe_fingerprints_exact_raw_http_body_before_decode(
     assert reopened.result.raw_response_bytes == len(encoded_body)
 
 
-def test_dashboard_distinguishes_accumulating_and_distributing_robotics() -> None:
+def test_dynamic_dashboard_does_not_hardcode_robotics_share_class_labels() -> None:
     en = (ROOT / "dashboard" / "en" / "view.yaml").read_text(encoding="utf-8")
     de = (ROOT / "dashboard" / "de" / "view.yaml").read_text(encoding="utf-8")
     bilingual = (ROOT / "dashboard" / "bilingual-dashboard.yaml").read_text(encoding="utf-8")
 
-    assert "name: Robotics · Acc" in en
-    assert "name: Robotics · Dist" in en
-    assert "name: Robotik · Thes." in de
-    assert "name: Robotik · Aussch." in de
-    assert "name: Robotics · Acc" in bilingual
-    assert "name: Robotik · Thes." in bilingual
-
-    for source in (en, bilingual):
-        assert "name: Robotics\n" not in source
-        assert "name: Robotics sources\n" not in source
-    for source in (de, bilingual):
-        assert "name: Robotik\n" not in source
-        assert "name: Quellen Robotik\n" not in source
+    for source in (en, de, bilingual):
+        assert "Robotics · Acc" not in source
+        assert "Robotics · Dist" not in source
+        assert "Robotik · Thes." not in source
+        assert "Robotik · Aussch." not in source
+        assert "presentation_target_01_current_allocation" in source
+        assert "presentation_outside_001_holding_value" in source

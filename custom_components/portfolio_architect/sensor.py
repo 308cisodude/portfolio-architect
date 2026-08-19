@@ -40,6 +40,14 @@ from .portfolio_presentation import (
     PRESENTATION_SCHEMA_VERSION,
     build_portfolio_presentation,
 )
+from .presentation_slots import (
+    ordered_non_pass_findings,
+    ordered_outside_holdings,
+    ordered_target_positions,
+    outside_holding_for_slot,
+    policy_finding_for_slot,
+    target_position_for_slot,
+)
 from .presentation import (
     display_count_de,
     display_datetime_de,
@@ -152,6 +160,9 @@ async def async_setup_entry(
     known_policy_findings: set[str] = set()
     known_policy_exception_details: set[str] = set()
     known_policy_decision_details: set[str] = set()
+    known_target_presentation_slots: set[int] = set()
+    known_outside_presentation_slots: set[int] = set()
+    known_policy_presentation_slots: set[int] = set()
 
     @callback
     def _add_missing_entities() -> None:
@@ -280,11 +291,344 @@ async def async_setup_entry(
                         rule=finding.rule,
                     )
                 )
+
+        for slot, _position in enumerate(ordered_target_positions(coordinator.data), start=1):
+            if slot in known_target_presentation_slots:
+                continue
+            known_target_presentation_slots.add(slot)
+            for kind in TARGET_PRESENTATION_SENSOR_KINDS:
+                entities.append(
+                    PortfolioTargetPresentationSlotSensor(
+                        coordinator=coordinator, entry=entry, slot=slot, kind=kind
+                    )
+                )
+
+        for slot, _holding in enumerate(ordered_outside_holdings(coordinator.data), start=1):
+            if slot in known_outside_presentation_slots:
+                continue
+            known_outside_presentation_slots.add(slot)
+            for kind in OUTSIDE_PRESENTATION_SENSOR_KINDS:
+                entities.append(
+                    PortfolioOutsidePresentationSlotSensor(
+                        coordinator=coordinator, entry=entry, slot=slot, kind=kind
+                    )
+                )
+
+        for slot, _finding in enumerate(ordered_non_pass_findings(coordinator.data), start=1):
+            if slot in known_policy_presentation_slots:
+                continue
+            known_policy_presentation_slots.add(slot)
+            entities.append(
+                PortfolioPolicyPresentationSlotSensor(
+                    coordinator=coordinator, entry=entry, slot=slot
+                )
+            )
+
         if entities:
             async_add_entities(entities)
 
     _add_missing_entities()
     entry.async_on_unload(coordinator.async_add_listener(_add_missing_entities))
+
+
+TARGET_PRESENTATION_SENSOR_KINDS = (
+    "proposed_buy",
+    "purchase_explanation",
+    "instrument_isin",
+    "current_allocation",
+    "target_allocation",
+    "whole_portfolio_allocation",
+    "allocation_status",
+    "allocation_drift",
+    "allocation_explanation",
+    "position_sources",
+)
+OUTSIDE_PRESENTATION_SENSOR_KINDS = (
+    "holding_value",
+    "whole_portfolio_allocation",
+)
+
+
+class PortfolioTargetPresentationSlotSensor(
+    CoordinatorEntity[PortfolioArchitectCoordinator], SensorEntity
+):
+    """Ephemeral native-dashboard projection for one target presentation slot.
+
+    Slot entities deliberately use generic IDs. Stable portfolio identity remains on
+    the target-ID entities and is repeated in attributes for reconciliation.
+    """
+
+    _attr_has_entity_name = False
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    def __init__(
+        self,
+        coordinator: PortfolioArchitectCoordinator,
+        entry: ConfigEntry,
+        slot: int,
+        kind: str,
+    ) -> None:
+        if kind not in TARGET_PRESENTATION_SENSOR_KINDS:
+            raise ValueError("unsupported target presentation sensor kind")
+        super().__init__(coordinator, context=f"presentation:target:{slot}:{kind}")
+        self._slot = slot
+        self._kind = kind
+        source_key = entry.unique_id or entry.entry_id
+        self._attr_unique_id = f"{source_key}_presentation_target_{slot:02d}_{kind}"
+        self._attr_device_info = _device_info(source_key)
+        if kind == "proposed_buy":
+            self._attr_device_class = SensorDeviceClass.MONETARY
+            self._attr_native_unit_of_measurement = CURRENCY_EUR
+            self._attr_suggested_display_precision = 2
+        elif kind in {"current_allocation", "target_allocation", "whole_portfolio_allocation"}:
+            self._attr_native_unit_of_measurement = PERCENTAGE
+            self._attr_suggested_display_precision = 2
+        elif kind == "allocation_drift":
+            self._attr_native_unit_of_measurement = "pp"
+            self._attr_suggested_display_precision = 2
+        elif kind in {"purchase_explanation", "allocation_status", "allocation_explanation"}:
+            self._attr_device_class = SensorDeviceClass.ENUM
+            if kind == "purchase_explanation":
+                self._attr_options = ["recommended", "deferred", "not_recommended", "disabled"]
+            else:
+                self._attr_options = ["underweight", "on_target", "overweight"]
+
+    @property
+    def suggested_object_id(self) -> str:
+        return f"presentation_target_{self._slot:02d}_{self._kind}"
+
+    @property
+    def _position(self) -> PositionData | None:
+        data = self.coordinator.data
+        return target_position_for_slot(data, self._slot) if data is not None else None
+
+    @property
+    def name(self) -> str:
+        position = self._position
+        return position.name if position is not None else f"Target slot {self._slot:02d}"
+
+    @property
+    def available(self) -> bool:
+        position = self._position
+        if not super().available or position is None:
+            return False
+        if self._kind in {"proposed_buy", "purchase_explanation"}:
+            return self.coordinator.plan_actionable
+        if self._kind == "instrument_isin":
+            return bool(position.isin)
+        return True
+
+    @property
+    def native_value(self) -> float | int | str | None:
+        if not self.available:
+            return None
+        position = self._position
+        assert position is not None
+        if self._kind == "proposed_buy":
+            return position.proposed_buy_eur
+        if self._kind == "purchase_explanation":
+            if not position.buy_enabled:
+                return "disabled"
+            if position.deferred:
+                return "deferred"
+            return "recommended" if position.proposed_buy_eur > 0 else "not_recommended"
+        if self._kind == "instrument_isin":
+            return position.isin
+        if self._kind == "current_allocation":
+            return position.current_pct
+        if self._kind == "target_allocation":
+            return position.target_pct
+        if self._kind == "whole_portfolio_allocation":
+            return position.whole_portfolio_pct
+        if self._kind in {"allocation_status", "allocation_explanation"}:
+            return position.allocation_status
+        if self._kind == "allocation_drift":
+            return position.deviation_pp
+        if self._kind == "position_sources":
+            return len(position.source_ids)
+        raise RuntimeError("unreachable target presentation sensor kind")
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        base = _source_attributes(self.coordinator)
+        position = self._position
+        if position is None:
+            return {
+                "presentation_slot": self._slot,
+                "presentation_kind": self._kind,
+                "stable_identity": None,
+                **base,
+            }
+        attrs: dict[str, Any] = {
+            **position.attributes,
+            "presentation_slot": self._slot,
+            "presentation_slot_key": f"target_{self._slot:02d}",
+            "presentation_kind": self._kind,
+            "stable_identity": position.target_id,
+        }
+        contributions = _position_source_contributions(self.coordinator, position)
+        attrs["source_summary"] = _compact_source_summary(contributions)
+        attrs["source_contributions"] = contributions
+        if self._kind == "allocation_explanation":
+            corridor = self.coordinator.data.allocation.corridor_pp
+            attrs.update(
+                {
+                    "corridor_lower_pct": position.target_pct - corridor,
+                    "corridor_upper_pct": position.target_pct + corridor,
+                    "reason_code": f"allocation_{position.allocation_status}",
+                }
+            )
+        elif self._kind == "purchase_explanation":
+            attrs["reason_code"] = position.recommendation_reason
+        return {**attrs, **base}
+
+
+class PortfolioOutsidePresentationSlotSensor(
+    CoordinatorEntity[PortfolioArchitectCoordinator], SensorEntity
+):
+    """Ephemeral native-dashboard projection for one outside-scope holding slot."""
+
+    _attr_has_entity_name = False
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    def __init__(
+        self,
+        coordinator: PortfolioArchitectCoordinator,
+        entry: ConfigEntry,
+        slot: int,
+        kind: str,
+    ) -> None:
+        if kind not in OUTSIDE_PRESENTATION_SENSOR_KINDS:
+            raise ValueError("unsupported outside presentation sensor kind")
+        super().__init__(coordinator, context=f"presentation:outside:{slot}:{kind}")
+        self._slot = slot
+        self._kind = kind
+        source_key = entry.unique_id or entry.entry_id
+        self._attr_unique_id = f"{source_key}_presentation_outside_{slot:03d}_{kind}"
+        self._attr_device_info = _device_info(source_key)
+        if kind == "holding_value":
+            self._attr_device_class = SensorDeviceClass.MONETARY
+            self._attr_native_unit_of_measurement = CURRENCY_EUR
+            self._attr_suggested_display_precision = 2
+        else:
+            self._attr_native_unit_of_measurement = PERCENTAGE
+            self._attr_suggested_display_precision = 2
+
+    @property
+    def suggested_object_id(self) -> str:
+        return f"presentation_outside_{self._slot:03d}_{self._kind}"
+
+    @property
+    def _holding(self) -> HoldingData | None:
+        data = self.coordinator.data
+        return outside_holding_for_slot(data, self._slot) if data is not None else None
+
+    @property
+    def name(self) -> str:
+        holding = self._holding
+        return holding.name if holding is not None else f"Outside slot {self._slot:03d}"
+
+    @property
+    def available(self) -> bool:
+        return super().available and self._holding is not None
+
+    @property
+    def native_value(self) -> float | None:
+        if not self.available:
+            return None
+        holding = self._holding
+        assert holding is not None
+        return (
+            holding.current_value_eur
+            if self._kind == "holding_value"
+            else holding.whole_portfolio_pct
+        )
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        base = _source_attributes(self.coordinator)
+        holding = self._holding
+        if holding is None:
+            return {
+                "presentation_slot": self._slot,
+                "presentation_kind": self._kind,
+                "stable_identity": None,
+                **base,
+            }
+        return {
+            **holding.attributes,
+            "presentation_slot": self._slot,
+            "presentation_slot_key": f"outside_{self._slot:03d}",
+            "presentation_kind": self._kind,
+            "stable_identity": holding.position_id,
+            **base,
+        }
+
+
+class PortfolioPolicyPresentationSlotSensor(
+    CoordinatorEntity[PortfolioArchitectCoordinator], SensorEntity
+):
+    """Ephemeral native-dashboard projection for one active policy finding."""
+
+    _attr_has_entity_name = False
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_options = ["error", "warning", "accepted_exception", "review_required", "opportunity"]
+
+    def __init__(
+        self,
+        coordinator: PortfolioArchitectCoordinator,
+        entry: ConfigEntry,
+        slot: int,
+    ) -> None:
+        super().__init__(coordinator, context=f"presentation:policy:{slot}")
+        self._slot = slot
+        source_key = entry.unique_id or entry.entry_id
+        self._attr_unique_id = f"{source_key}_presentation_policy_{slot:03d}_finding"
+        self._attr_device_info = _device_info(source_key)
+
+    @property
+    def suggested_object_id(self) -> str:
+        return f"presentation_policy_{self._slot:03d}_finding"
+
+    @property
+    def _finding(self) -> PolicyFindingData | None:
+        data = self.coordinator.data
+        return policy_finding_for_slot(data, self._slot) if data is not None else None
+
+    @property
+    def name(self) -> str:
+        finding = self._finding
+        return finding.fund_name if finding is not None else f"Policy slot {self._slot:03d}"
+
+    @property
+    def available(self) -> bool:
+        return super().available and self._finding is not None
+
+    @property
+    def native_value(self) -> str | None:
+        finding = self._finding
+        return finding.entity_state if self.available and finding is not None else None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        base = _source_attributes(self.coordinator)
+        finding = self._finding
+        if finding is None:
+            return {
+                "presentation_slot": self._slot,
+                "stable_identity": None,
+                **base,
+            }
+        return {
+            **finding.attributes,
+            **finding.exception_detail_attributes,
+            "presentation_slot": self._slot,
+            "presentation_slot_key": f"policy_{self._slot:03d}",
+            "stable_identity": finding.key,
+            "finding_key": finding.key,
+            **base,
+        }
 
 
 class PortfolioPresentationModelSensor(

@@ -17,6 +17,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import DOMAIN, NAME, SOURCE_TYPE_REST_API, VERSION
 from .coordinator import PortfolioArchitectCoordinator
 from .model import PositionData
+from .presentation_slots import ordered_target_positions, target_position_for_slot
 from .presentation import display_binary_state_de
 
 FRESHNESS_TICK = timedelta(minutes=5)
@@ -54,6 +55,7 @@ async def async_setup_entry(
     async_add_entities(static_entities)
 
     known: set[str] = set()
+    known_presentation_slots: set[int] = set()
 
     @callback
     def _add_missing_entities() -> None:
@@ -69,6 +71,15 @@ async def async_setup_entry(
                     coordinator=coordinator,
                     entry=entry,
                     fund_id=fund_id,
+                )
+            )
+        for slot, _position in enumerate(ordered_target_positions(coordinator.data), start=1):
+            if slot in known_presentation_slots:
+                continue
+            known_presentation_slots.add(slot)
+            entities.append(
+                PortfolioTargetPresentationSlotHeld(
+                    coordinator=coordinator, entry=entry, slot=slot
                 )
             )
         if entities:
@@ -792,6 +803,68 @@ class PortfolioDataFresh(
                 "data_fresh", self.is_on
             ),
             **_source_attributes(self.coordinator),
+        }
+
+
+class PortfolioTargetPresentationSlotHeld(
+    CoordinatorEntity[PortfolioArchitectCoordinator], BinarySensorEntity
+):
+    """Ephemeral native-dashboard held projection for one target slot."""
+
+    _attr_has_entity_name = False
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    def __init__(
+        self,
+        coordinator: PortfolioArchitectCoordinator,
+        entry: ConfigEntry,
+        slot: int,
+    ) -> None:
+        super().__init__(coordinator, context=f"presentation:target:{slot}:held")
+        self._slot = slot
+        source_key = entry.unique_id or entry.entry_id
+        self._attr_unique_id = f"{source_key}_presentation_target_{slot:02d}_held"
+        self._attr_device_info = _device_info(source_key)
+
+    @property
+    def suggested_object_id(self) -> str:
+        return f"presentation_target_{self._slot:02d}_held"
+
+    @property
+    def _position(self) -> PositionData | None:
+        data = self.coordinator.data
+        return target_position_for_slot(data, self._slot) if data is not None else None
+
+    @property
+    def name(self) -> str:
+        position = self._position
+        return position.name if position is not None else f"Target slot {self._slot:02d}"
+
+    @property
+    def available(self) -> bool:
+        return super().available and self._position is not None
+
+    @property
+    def is_on(self) -> bool | None:
+        position = self._position
+        return position.is_held if self.available and position is not None else None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        base = _source_attributes(self.coordinator)
+        position = self._position
+        if position is None:
+            return {
+                "presentation_slot": self._slot,
+                "stable_identity": None,
+                **base,
+            }
+        return {
+            **position.attributes,
+            "presentation_slot": self._slot,
+            "presentation_slot_key": f"target_{self._slot:02d}",
+            "stable_identity": position.target_id,
+            **base,
         }
 
 

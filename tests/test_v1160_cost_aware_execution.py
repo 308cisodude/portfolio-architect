@@ -252,22 +252,15 @@ def test_v1160_dashboard_keeps_native_cost_aware_interaction_contract() -> None:
     ):
         assert dashboard.count(entity) >= 2
 
-    plan = yaml.safe_load((ROOT / "examples/current-plan/portfolio.yaml").read_text())
-    world_id = next(
-        item["target_id"] for item in plan["portfolio"]["allocation"]
-        if item["isin"] == "IE00BJ0KDQ92"
-    )
-    expected_en = f"""entity: sensor.portfolio_architect_{world_id}_proposed_buy
-        name: MSCI World
-        tap_action:
-          action: more-info
-          entity: sensor.portfolio_architect_{world_id}_purchase_explanation
-        color: green
-        icon: mdi:cart-arrow-down
-        hold_action:
-          action: more-info
-          entity: sensor.portfolio_architect_{world_id}_isin"""
-    assert dashboard.count(expected_en) == 2
+    # v1.36 deliberately replaces instrument-specific purchase tiles with bounded
+    # generic aliases. entity-filter keeps native HA interaction/more-info while
+    # the stable target identity remains an attribute of each alias.
+    assert dashboard.count("type: entity-filter") >= 2
+    assert "sensor.portfolio_architect_presentation_target_01_proposed_buy" in dashboard
+    assert "sensor.portfolio_architect_presentation_target_32_proposed_buy" in dashboard
+    assert "sensor.portfolio_architect_presentation_target_01_purchase_explanation" in dashboard
+    assert "sensor.portfolio_architect_presentation_target_32_purchase_explanation" in dashboard
+    assert "sensor.portfolio_architect_presentation_target_01_instrument_isin" not in dashboard
 
 
 def test_v1160_gateway_public_snapshot_does_not_publish_account_identity() -> None:

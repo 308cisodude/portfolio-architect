@@ -79,40 +79,6 @@ cards:
 - type: conditional
   conditions:
   - condition: state
-    entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_accumulating_preferred_policy_exception
-    state: accepted_exception
-  card:
-    type: tile
-    entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_accumulating_preferred_policy_exception
-    name: Robotik-Ausnahme
-    tap_action:
-      action: more-info
-    color: amber
-    icon: mdi:shield-half-full
-    hide_state: true
-  grid_options:
-    columns: 6
-    rows: auto
-- type: conditional
-  conditions:
-  - condition: state
-    entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_accumulating_preferred_policy_exception
-    state: review_required
-  card:
-    type: tile
-    entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_accumulating_preferred_policy_exception
-    name: Robotik prüfen
-    tap_action:
-      action: more-info
-    color: amber
-    icon: mdi:shield-sync-outline
-    hide_state: true
-  grid_options:
-    columns: 6
-    rows: auto
-- type: conditional
-  conditions:
-  - condition: state
     entity: sensor.portfolio_architect_last_exception_decision
     state_not: unavailable
   card:
@@ -180,71 +146,272 @@ cards:
   grid_options:
     columns: full
     rows: auto
-- type: conditional
+- type: entity-filter
+  entities:
+  - sensor.portfolio_architect_presentation_policy_001_finding
+  - sensor.portfolio_architect_presentation_policy_002_finding
+  - sensor.portfolio_architect_presentation_policy_003_finding
+  - sensor.portfolio_architect_presentation_policy_004_finding
+  - sensor.portfolio_architect_presentation_policy_005_finding
+  - sensor.portfolio_architect_presentation_policy_006_finding
+  - sensor.portfolio_architect_presentation_policy_007_finding
+  - sensor.portfolio_architect_presentation_policy_008_finding
+  - sensor.portfolio_architect_presentation_policy_009_finding
+  - sensor.portfolio_architect_presentation_policy_010_finding
+  - sensor.portfolio_architect_presentation_policy_011_finding
+  - sensor.portfolio_architect_presentation_policy_012_finding
+  - sensor.portfolio_architect_presentation_policy_013_finding
+  - sensor.portfolio_architect_presentation_policy_014_finding
+  - sensor.portfolio_architect_presentation_policy_015_finding
+  - sensor.portfolio_architect_presentation_policy_016_finding
+  - sensor.portfolio_architect_presentation_policy_017_finding
+  - sensor.portfolio_architect_presentation_policy_018_finding
+  - sensor.portfolio_architect_presentation_policy_019_finding
+  - sensor.portfolio_architect_presentation_policy_020_finding
+  - sensor.portfolio_architect_presentation_policy_021_finding
+  - sensor.portfolio_architect_presentation_policy_022_finding
+  - sensor.portfolio_architect_presentation_policy_023_finding
+  - sensor.portfolio_architect_presentation_policy_024_finding
+  - sensor.portfolio_architect_presentation_policy_025_finding
+  - sensor.portfolio_architect_presentation_policy_026_finding
+  - sensor.portfolio_architect_presentation_policy_027_finding
+  - sensor.portfolio_architect_presentation_policy_028_finding
+  - sensor.portfolio_architect_presentation_policy_029_finding
+  - sensor.portfolio_architect_presentation_policy_030_finding
+  - sensor.portfolio_architect_presentation_policy_031_finding
+  - sensor.portfolio_architect_presentation_policy_032_finding
+  - sensor.portfolio_architect_presentation_policy_033_finding
+  - sensor.portfolio_architect_presentation_policy_034_finding
+  - sensor.portfolio_architect_presentation_policy_035_finding
+  - sensor.portfolio_architect_presentation_policy_036_finding
+  - sensor.portfolio_architect_presentation_policy_037_finding
+  - sensor.portfolio_architect_presentation_policy_038_finding
+  - sensor.portfolio_architect_presentation_policy_039_finding
+  - sensor.portfolio_architect_presentation_policy_040_finding
+  - sensor.portfolio_architect_presentation_policy_041_finding
+  - sensor.portfolio_architect_presentation_policy_042_finding
+  - sensor.portfolio_architect_presentation_policy_043_finding
+  - sensor.portfolio_architect_presentation_policy_044_finding
+  - sensor.portfolio_architect_presentation_policy_045_finding
+  - sensor.portfolio_architect_presentation_policy_046_finding
+  - sensor.portfolio_architect_presentation_policy_047_finding
+  - sensor.portfolio_architect_presentation_policy_048_finding
+  - sensor.portfolio_architect_presentation_policy_049_finding
+  - sensor.portfolio_architect_presentation_policy_050_finding
+  - sensor.portfolio_architect_presentation_policy_051_finding
+  - sensor.portfolio_architect_presentation_policy_052_finding
+  - sensor.portfolio_architect_presentation_policy_053_finding
+  - sensor.portfolio_architect_presentation_policy_054_finding
+  - sensor.portfolio_architect_presentation_policy_055_finding
+  - sensor.portfolio_architect_presentation_policy_056_finding
+  - sensor.portfolio_architect_presentation_policy_057_finding
+  - sensor.portfolio_architect_presentation_policy_058_finding
+  - sensor.portfolio_architect_presentation_policy_059_finding
+  - sensor.portfolio_architect_presentation_policy_060_finding
+  - sensor.portfolio_architect_presentation_policy_061_finding
+  - sensor.portfolio_architect_presentation_policy_062_finding
+  - sensor.portfolio_architect_presentation_policy_063_finding
+  - sensor.portfolio_architect_presentation_policy_064_finding
+  - sensor.portfolio_architect_presentation_policy_065_finding
+  - sensor.portfolio_architect_presentation_policy_066_finding
+  - sensor.portfolio_architect_presentation_policy_067_finding
+  - sensor.portfolio_architect_presentation_policy_068_finding
+  - sensor.portfolio_architect_presentation_policy_069_finding
+  - sensor.portfolio_architect_presentation_policy_070_finding
+  - sensor.portfolio_architect_presentation_policy_071_finding
+  - sensor.portfolio_architect_presentation_policy_072_finding
+  - sensor.portfolio_architect_presentation_policy_073_finding
+  - sensor.portfolio_architect_presentation_policy_074_finding
+  - sensor.portfolio_architect_presentation_policy_075_finding
+  - sensor.portfolio_architect_presentation_policy_076_finding
+  - sensor.portfolio_architect_presentation_policy_077_finding
+  - sensor.portfolio_architect_presentation_policy_078_finding
+  - sensor.portfolio_architect_presentation_policy_079_finding
+  - sensor.portfolio_architect_presentation_policy_080_finding
+  - sensor.portfolio_architect_presentation_policy_081_finding
+  - sensor.portfolio_architect_presentation_policy_082_finding
+  - sensor.portfolio_architect_presentation_policy_083_finding
+  - sensor.portfolio_architect_presentation_policy_084_finding
+  - sensor.portfolio_architect_presentation_policy_085_finding
+  - sensor.portfolio_architect_presentation_policy_086_finding
+  - sensor.portfolio_architect_presentation_policy_087_finding
+  - sensor.portfolio_architect_presentation_policy_088_finding
+  - sensor.portfolio_architect_presentation_policy_089_finding
+  - sensor.portfolio_architect_presentation_policy_090_finding
+  - sensor.portfolio_architect_presentation_policy_091_finding
+  - sensor.portfolio_architect_presentation_policy_092_finding
+  - sensor.portfolio_architect_presentation_policy_093_finding
+  - sensor.portfolio_architect_presentation_policy_094_finding
+  - sensor.portfolio_architect_presentation_policy_095_finding
+  - sensor.portfolio_architect_presentation_policy_096_finding
+  - sensor.portfolio_architect_presentation_policy_097_finding
+  - sensor.portfolio_architect_presentation_policy_098_finding
+  - sensor.portfolio_architect_presentation_policy_099_finding
+  - sensor.portfolio_architect_presentation_policy_100_finding
+  - sensor.portfolio_architect_presentation_policy_101_finding
+  - sensor.portfolio_architect_presentation_policy_102_finding
+  - sensor.portfolio_architect_presentation_policy_103_finding
+  - sensor.portfolio_architect_presentation_policy_104_finding
+  - sensor.portfolio_architect_presentation_policy_105_finding
+  - sensor.portfolio_architect_presentation_policy_106_finding
+  - sensor.portfolio_architect_presentation_policy_107_finding
+  - sensor.portfolio_architect_presentation_policy_108_finding
+  - sensor.portfolio_architect_presentation_policy_109_finding
+  - sensor.portfolio_architect_presentation_policy_110_finding
+  - sensor.portfolio_architect_presentation_policy_111_finding
+  - sensor.portfolio_architect_presentation_policy_112_finding
+  - sensor.portfolio_architect_presentation_policy_113_finding
+  - sensor.portfolio_architect_presentation_policy_114_finding
+  - sensor.portfolio_architect_presentation_policy_115_finding
+  - sensor.portfolio_architect_presentation_policy_116_finding
+  - sensor.portfolio_architect_presentation_policy_117_finding
+  - sensor.portfolio_architect_presentation_policy_118_finding
+  - sensor.portfolio_architect_presentation_policy_119_finding
+  - sensor.portfolio_architect_presentation_policy_120_finding
+  - sensor.portfolio_architect_presentation_policy_121_finding
+  - sensor.portfolio_architect_presentation_policy_122_finding
+  - sensor.portfolio_architect_presentation_policy_123_finding
+  - sensor.portfolio_architect_presentation_policy_124_finding
+  - sensor.portfolio_architect_presentation_policy_125_finding
+  - sensor.portfolio_architect_presentation_policy_126_finding
+  - sensor.portfolio_architect_presentation_policy_127_finding
+  - sensor.portfolio_architect_presentation_policy_128_finding
+  - sensor.portfolio_architect_presentation_policy_129_finding
+  - sensor.portfolio_architect_presentation_policy_130_finding
+  - sensor.portfolio_architect_presentation_policy_131_finding
+  - sensor.portfolio_architect_presentation_policy_132_finding
+  - sensor.portfolio_architect_presentation_policy_133_finding
+  - sensor.portfolio_architect_presentation_policy_134_finding
+  - sensor.portfolio_architect_presentation_policy_135_finding
+  - sensor.portfolio_architect_presentation_policy_136_finding
+  - sensor.portfolio_architect_presentation_policy_137_finding
+  - sensor.portfolio_architect_presentation_policy_138_finding
+  - sensor.portfolio_architect_presentation_policy_139_finding
+  - sensor.portfolio_architect_presentation_policy_140_finding
+  - sensor.portfolio_architect_presentation_policy_141_finding
+  - sensor.portfolio_architect_presentation_policy_142_finding
+  - sensor.portfolio_architect_presentation_policy_143_finding
+  - sensor.portfolio_architect_presentation_policy_144_finding
+  - sensor.portfolio_architect_presentation_policy_145_finding
+  - sensor.portfolio_architect_presentation_policy_146_finding
+  - sensor.portfolio_architect_presentation_policy_147_finding
+  - sensor.portfolio_architect_presentation_policy_148_finding
+  - sensor.portfolio_architect_presentation_policy_149_finding
+  - sensor.portfolio_architect_presentation_policy_150_finding
+  - sensor.portfolio_architect_presentation_policy_151_finding
+  - sensor.portfolio_architect_presentation_policy_152_finding
+  - sensor.portfolio_architect_presentation_policy_153_finding
+  - sensor.portfolio_architect_presentation_policy_154_finding
+  - sensor.portfolio_architect_presentation_policy_155_finding
+  - sensor.portfolio_architect_presentation_policy_156_finding
+  - sensor.portfolio_architect_presentation_policy_157_finding
+  - sensor.portfolio_architect_presentation_policy_158_finding
+  - sensor.portfolio_architect_presentation_policy_159_finding
+  - sensor.portfolio_architect_presentation_policy_160_finding
+  - sensor.portfolio_architect_presentation_policy_161_finding
+  - sensor.portfolio_architect_presentation_policy_162_finding
+  - sensor.portfolio_architect_presentation_policy_163_finding
+  - sensor.portfolio_architect_presentation_policy_164_finding
+  - sensor.portfolio_architect_presentation_policy_165_finding
+  - sensor.portfolio_architect_presentation_policy_166_finding
+  - sensor.portfolio_architect_presentation_policy_167_finding
+  - sensor.portfolio_architect_presentation_policy_168_finding
+  - sensor.portfolio_architect_presentation_policy_169_finding
+  - sensor.portfolio_architect_presentation_policy_170_finding
+  - sensor.portfolio_architect_presentation_policy_171_finding
+  - sensor.portfolio_architect_presentation_policy_172_finding
+  - sensor.portfolio_architect_presentation_policy_173_finding
+  - sensor.portfolio_architect_presentation_policy_174_finding
+  - sensor.portfolio_architect_presentation_policy_175_finding
+  - sensor.portfolio_architect_presentation_policy_176_finding
+  - sensor.portfolio_architect_presentation_policy_177_finding
+  - sensor.portfolio_architect_presentation_policy_178_finding
+  - sensor.portfolio_architect_presentation_policy_179_finding
+  - sensor.portfolio_architect_presentation_policy_180_finding
+  - sensor.portfolio_architect_presentation_policy_181_finding
+  - sensor.portfolio_architect_presentation_policy_182_finding
+  - sensor.portfolio_architect_presentation_policy_183_finding
+  - sensor.portfolio_architect_presentation_policy_184_finding
+  - sensor.portfolio_architect_presentation_policy_185_finding
+  - sensor.portfolio_architect_presentation_policy_186_finding
+  - sensor.portfolio_architect_presentation_policy_187_finding
+  - sensor.portfolio_architect_presentation_policy_188_finding
+  - sensor.portfolio_architect_presentation_policy_189_finding
+  - sensor.portfolio_architect_presentation_policy_190_finding
+  - sensor.portfolio_architect_presentation_policy_191_finding
+  - sensor.portfolio_architect_presentation_policy_192_finding
+  - sensor.portfolio_architect_presentation_policy_193_finding
+  - sensor.portfolio_architect_presentation_policy_194_finding
+  - sensor.portfolio_architect_presentation_policy_195_finding
+  - sensor.portfolio_architect_presentation_policy_196_finding
+  - sensor.portfolio_architect_presentation_policy_197_finding
+  - sensor.portfolio_architect_presentation_policy_198_finding
+  - sensor.portfolio_architect_presentation_policy_199_finding
+  - sensor.portfolio_architect_presentation_policy_200_finding
+  - sensor.portfolio_architect_presentation_policy_201_finding
+  - sensor.portfolio_architect_presentation_policy_202_finding
+  - sensor.portfolio_architect_presentation_policy_203_finding
+  - sensor.portfolio_architect_presentation_policy_204_finding
+  - sensor.portfolio_architect_presentation_policy_205_finding
+  - sensor.portfolio_architect_presentation_policy_206_finding
+  - sensor.portfolio_architect_presentation_policy_207_finding
+  - sensor.portfolio_architect_presentation_policy_208_finding
+  - sensor.portfolio_architect_presentation_policy_209_finding
+  - sensor.portfolio_architect_presentation_policy_210_finding
+  - sensor.portfolio_architect_presentation_policy_211_finding
+  - sensor.portfolio_architect_presentation_policy_212_finding
+  - sensor.portfolio_architect_presentation_policy_213_finding
+  - sensor.portfolio_architect_presentation_policy_214_finding
+  - sensor.portfolio_architect_presentation_policy_215_finding
+  - sensor.portfolio_architect_presentation_policy_216_finding
+  - sensor.portfolio_architect_presentation_policy_217_finding
+  - sensor.portfolio_architect_presentation_policy_218_finding
+  - sensor.portfolio_architect_presentation_policy_219_finding
+  - sensor.portfolio_architect_presentation_policy_220_finding
+  - sensor.portfolio_architect_presentation_policy_221_finding
+  - sensor.portfolio_architect_presentation_policy_222_finding
+  - sensor.portfolio_architect_presentation_policy_223_finding
+  - sensor.portfolio_architect_presentation_policy_224_finding
+  - sensor.portfolio_architect_presentation_policy_225_finding
+  - sensor.portfolio_architect_presentation_policy_226_finding
+  - sensor.portfolio_architect_presentation_policy_227_finding
+  - sensor.portfolio_architect_presentation_policy_228_finding
+  - sensor.portfolio_architect_presentation_policy_229_finding
+  - sensor.portfolio_architect_presentation_policy_230_finding
+  - sensor.portfolio_architect_presentation_policy_231_finding
+  - sensor.portfolio_architect_presentation_policy_232_finding
+  - sensor.portfolio_architect_presentation_policy_233_finding
+  - sensor.portfolio_architect_presentation_policy_234_finding
+  - sensor.portfolio_architect_presentation_policy_235_finding
+  - sensor.portfolio_architect_presentation_policy_236_finding
+  - sensor.portfolio_architect_presentation_policy_237_finding
+  - sensor.portfolio_architect_presentation_policy_238_finding
+  - sensor.portfolio_architect_presentation_policy_239_finding
+  - sensor.portfolio_architect_presentation_policy_240_finding
+  - sensor.portfolio_architect_presentation_policy_241_finding
+  - sensor.portfolio_architect_presentation_policy_242_finding
+  - sensor.portfolio_architect_presentation_policy_243_finding
+  - sensor.portfolio_architect_presentation_policy_244_finding
+  - sensor.portfolio_architect_presentation_policy_245_finding
+  - sensor.portfolio_architect_presentation_policy_246_finding
+  - sensor.portfolio_architect_presentation_policy_247_finding
+  - sensor.portfolio_architect_presentation_policy_248_finding
+  - sensor.portfolio_architect_presentation_policy_249_finding
+  - sensor.portfolio_architect_presentation_policy_250_finding
+  - sensor.portfolio_architect_presentation_policy_251_finding
+  - sensor.portfolio_architect_presentation_policy_252_finding
+  - sensor.portfolio_architect_presentation_policy_253_finding
+  - sensor.portfolio_architect_presentation_policy_254_finding
+  - sensor.portfolio_architect_presentation_policy_255_finding
+  - sensor.portfolio_architect_presentation_policy_256_finding
   conditions:
   - condition: state
-    entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_free_savings_plan_preferred_policy_finding
-    state: opportunity
+    state_not: unavailable
   card:
-    type: tile
-    entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_free_savings_plan_preferred_policy_finding
-    name: MSCI World · Gebühr 1,5 % → 0 %
-    tap_action:
-      action: more-info
-    color: blue
-    icon: mdi:cash-remove
-    hide_state: true
-  grid_options:
-    columns: full
-    rows: auto
-- type: conditional
-  conditions:
-  - condition: state
-    entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_free_savings_plan_preferred_policy_finding
-    state: opportunity
-  card:
-    type: tile
-    entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_free_savings_plan_preferred_policy_finding
-    name: Emerging Markets · Gebühr 1,5 % → 0 %
-    tap_action:
-      action: more-info
-    color: blue
-    icon: mdi:cash-remove
-    hide_state: true
-  grid_options:
-    columns: full
-    rows: auto
-- type: conditional
-  conditions:
-  - condition: state
-    entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_free_savings_plan_preferred_policy_finding
-    state: opportunity
-  card:
-    type: tile
-    entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_free_savings_plan_preferred_policy_finding
-    name: Gesundheit · Gebühr 1,5 % → 0 %
-    tap_action:
-      action: more-info
-    color: blue
-    icon: mdi:cash-remove
-    hide_state: true
-  grid_options:
-    columns: full
-    rows: auto
-- type: conditional
-  conditions:
-  - condition: state
-    entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_free_savings_plan_preferred_policy_finding
-    state: opportunity
-  card:
-    type: tile
-    entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_free_savings_plan_preferred_policy_finding
-    name: Cybersecurity · Gebühr 1,5 % → 0 %
-    tap_action:
-      action: more-info
-    color: blue
-    icon: mdi:cash-remove
-    hide_state: true
+    type: entities
+    title: Aktive Richtlinienfeststellungen
+    show_header_toggle: false
+  show_empty: false
   grid_options:
     columns: full
     rows: auto

@@ -1,4 +1,4 @@
-"""v1.35.4 whole-portfolio allocation presentation regressions."""
+"""v1.34.1 whole-portfolio allocation presentation regressions."""
 
 from __future__ import annotations
 
@@ -80,32 +80,24 @@ def test_target_whole_allocation_entity_is_created_from_target_state_not_holding
     assert "known_whole_allocations.add(fund_id)" in setup
 
 
-def test_reference_distribution_uses_current_isin_first_outside_holding_ids() -> None:
+def test_reference_distribution_uses_dynamic_outside_presentation_slots() -> None:
     paths = (
         ROOT / "dashboard" / "allocation-stack.yaml",
         ROOT / "dashboard" / "en" / "allocation-stack.yaml",
         ROOT / "dashboard" / "de" / "allocation-stack.yaml",
-        ROOT / "dashboard" / ".tmp_en.yaml",
-        ROOT / "dashboard" / ".tmp_de.yaml",
-        ROOT / "dashboard" / "en" / "view.yaml",
-        ROOT / "dashboard" / "de" / "view.yaml",
         ROOT / "dashboard" / "bilingual-dashboard.yaml",
     )
     for path in paths:
         text = path.read_text(encoding="utf-8")
+        assert "sensor.portfolio_architect_presentation_outside_001_whole_portfolio_allocation" in text
         for position_id in OUTSIDE_ALLOCATION_IDS:
-            assert f"sensor.portfolio_architect_{position_id}_whole_portfolio_allocation" in text, path
-        for obsolete in OBSOLETE_WKN_ALLOCATION_IDS:
-            assert f"sensor.portfolio_architect_{obsolete}_whole_portfolio_allocation" not in text, path
+            assert f"sensor.portfolio_architect_{position_id}_whole_portfolio_allocation" not in text
 
 
-def test_v1341_does_not_make_outside_scope_tile_inventory_dynamic_yet() -> None:
+def test_v1360_makes_outside_scope_tile_inventory_dynamic() -> None:
     presentation = yaml.safe_load((CURRENT_PLAN / "portfolio.yaml").read_text(encoding="utf-8"))
     assert presentation["schema_version"] == 2
     dashboard = (ROOT / "dashboard" / "bilingual-dashboard.yaml").read_text(encoding="utf-8")
-    # The hard-coded outside-scope detail inventory is deliberately retained until the
-    # later dynamic native-dashboard milestone. v1.35.4 fixes its ISIN-first bindings
-    # plus distribution correctness and the missing-target 0% entity.
-    assert "sensor.portfolio_architect_holding_ie00bywz0333_holding_value" in dashboard
-    assert "auto-entities" not in dashboard.casefold()
-    assert "custom:" not in dashboard.casefold()
+    assert "sensor.portfolio_architect_presentation_outside_001_holding_value" in dashboard
+    assert "sensor.portfolio_architect_holding_ie00bywz0333_holding_value" not in dashboard
+    assert "type: entity-filter" in dashboard

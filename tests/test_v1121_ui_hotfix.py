@@ -50,24 +50,19 @@ def test_position_source_provenance_is_a_native_translated_entity() -> None:
         assert "source_contributions" in item["state_attributes"]
 
 
-def test_dashboard_exposes_overlapping_target_position_sources() -> None:
-    plan = yaml.safe_load((ROOT / "examples/current-plan/portfolio.yaml").read_text())
-    world_id = next(
-        item["target_id"]
-        for item in plan["portfolio"]["allocation"]
-        if item["isin"] == "IE00BJ0KDQ92"
-    )
-    entity_id = f"sensor.portfolio_architect_{world_id}_position_sources"
+def test_dashboard_exposes_overlapping_target_position_sources_dynamically() -> None:
     dashboard = yaml.safe_load((ROOT / "dashboard/target-architecture.yaml").read_text())
     cards = [item for item in _walk(dashboard) if isinstance(item, dict)]
-    world = next(
+    source_filter = next(
         item for item in cards
-        if item.get("type") == "tile" and item.get("entity") == entity_id
+        if item.get("type") == "entity-filter"
+        and "sensor.portfolio_architect_presentation_target_01_position_sources" in item.get("entities", [])
     )
-    assert world["name"] == "MSCI World sources"
-    assert world["state_content"] == "source_summary"
-    assert world["color"] == "blue"
+    assert len(source_filter["entities"]) == 32
+    assert source_filter["conditions"] == [{"condition": "numeric_state", "above": 1}]
+    assert source_filter["card"]["type"] == "entities"
+    assert source_filter["card"]["title"] == "Multi-source target positions"
+    assert source_filter["grid_options"]["columns"] == "full"
     source = (ROOT / "dashboard/bilingual-dashboard.yaml").read_text()
-    assert entity_id in source
-    assert "name: MSCI World sources" in source
-    assert "name: Quellen MSCI World" in source
+    assert "presentation_target_01_position_sources" in source
+    assert "MSCI World sources" not in source

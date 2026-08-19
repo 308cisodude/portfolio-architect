@@ -43,14 +43,7 @@ the always-available actionability entity. Their more-info actions still target 
 original monetary/count entities, whose fail-closed availability semantics remain
 unchanged.
 
-The complete-portfolio Distribution card and per-instrument plan cards still explicitly
-reference the current sample configuration. v1.34 adds a first-class structural
-`sensor.portfolio_architect_presentation_model` that inventories actual configured
-targets, current-plan holdings and outside-scope holdings with stable entity keys.
-The reference dashboard does not yet consume that model dynamically; v1.34 deliberately
-avoids adding more hard-coded holdings as a temporary workaround. A later native
-presentation milestone will remove those static inventories without adding custom
-frontend dependencies.
+v1.36 consumes the first-class `sensor.portfolio_architect_presentation_model` through bounded diagnostic presentation-slot entities. The reference dashboard enumerates only generic bounded slot candidates and lets native Home Assistant `entity-filter` cards select the currently available target, outside-scope and active-policy inventory. Stable target/holding identity remains on the target-ID/position-ID entities and is repeated in slot attributes. No `auto-entities`, card-mod, custom JavaScript or custom-card dependency is required. User-owned dashboard copies remain opt-in and are never overwritten by HACS.
 
 ## Allocation overview contract
 
