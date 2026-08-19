@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.35.1
+
+- Package/User-Agent alignment for Portfolio Architect v1.35.1; the v1.35.0 raw/decoded anonymous FinTS probe fingerprinting remains unchanged.
+- DKB remains experimental, manual-only and non-live with no authenticated acquisition or transaction capability.
+
 ## 1.35.0
 
 - Fingerprints the exact bounded anonymous FinTS HTTP response body before normalization/base64 decoding and persists only its SHA-256 plus byte count alongside the existing decoded-response fingerprint.

@@ -1,10 +1,10 @@
-# Portfolio Architect Gateway — Comdirect v1.35.0
+# Portfolio Architect Gateway — Comdirect v1.35.1
 
-Version 1.35.0 is package/User-Agent alignment for provider-scoped funding. The Comdirect
-Gateway continues to publish only its own provider-owned authorized investment cash through the
-unchanged REST schema 1 contract; the Home Assistant integration is responsible for keeping that
-cash separate from other providers and for advisory funding-route planning. Comdirect acquisition,
-OAuth/session maintenance and provider diagnostics are unchanged.
+Version 1.35.1 fixes the live-observed Comdirect session-maintenance resilience edge case. A direct
+connection reset during OAuth refresh is now classified as a bounded retryable transport failure,
+and an unexpected single maintenance-iteration exception is contained without logging exception
+text or terminating the long-lived worker. Conclusive OAuth rejection semantics and interactive
+PhotoTAN reauthentication remain unchanged.
 
 Verified HTTPS/private CA trust, bearer authentication, PhotoTAN bootstrap, account
 selection, authorized cash, request-timeout behavior, REST schema 1, health schema 6,

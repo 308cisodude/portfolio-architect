@@ -1,10 +1,8 @@
-# Portfolio Architect Gateway — Trade Republic v1.35.0
+# Portfolio Architect Gateway — Trade Republic v1.35.1
 
-Version 1.35.0 is package alignment for Portfolio Architect's provider-scoped funding
-milestone. The Trade Republic App keeps its established local statement-import/snapshot boundary;
-any authorized cash it may expose through the provider-neutral REST contract remains provider-owned
-and is never merged with another institution inside the Gateway. Statement parsing and diagnostics
-are otherwise unchanged.
+Version 1.35.1 is package alignment for the Comdirect session-maintenance resilience hotfix.
+Trade Republic statement import, accepted snapshots, provider-owned cash, diagnostics, REST schema
+1 and verified private-PKI transport are unchanged.
 
 The App may persist only an allowlisted/genericized `accepted`, `rejected` or
 `internal_error` outcome next to its private snapshot. Unexpected parser/document text is
