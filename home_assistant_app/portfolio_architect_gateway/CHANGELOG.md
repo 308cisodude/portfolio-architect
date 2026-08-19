@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.35.4
+
+- Accepts common human EUR number formats for cash-cap and retained-cash form input, including German decimal comma and validated grouping separators, then persists only canonical locale-neutral values.
+- Replaces the generic HTTP 400 amount-validation failure with a bounded Ingress return message; rejected input leaves the previous valid cash policy untouched.
+- Preserves v1.35.2 cash-policy mathematics, v1.35.1 session-maintenance resilience, verified HTTPS and the read-only boundary.
+
 ## 1.35.3
 
 - Package/User-Agent alignment for Portfolio Architect v1.35.3; the Home Assistant-only broker-editor menu-label fix does not change Comdirect acquisition or cash-policy behavior.

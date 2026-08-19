@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.35.4
+
+- Package/User-Agent alignment for the Comdirect cash-input localization hotfix; DKB probe behavior and evidence handling are unchanged.
+- DKB remains experimental, manual-only and non-live with no authenticated holdings, transfer, payment or trading capability.
+
 ## 1.35.3
 
 - Package/User-Agent alignment for Portfolio Architect v1.35.3; the Home Assistant-only broker-editor menu-label fix does not change DKB probe behavior.

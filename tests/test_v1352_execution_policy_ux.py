@@ -1,4 +1,4 @@
-"""Regression coverage for v1.35.3 execution-policy UX and semantics."""
+"""Regression coverage for v1.35.4 execution-policy UX and semantics."""
 from __future__ import annotations
 
 from datetime import date

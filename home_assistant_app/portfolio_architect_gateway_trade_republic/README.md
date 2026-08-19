@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway — Trade Republic v1.35.3
+# Portfolio Architect Gateway — Trade Republic v1.35.4
 
-Version 1.35.3 is package alignment for the Home Assistant broker-editor menu-label hotfix.
+Version 1.35.4 is package/common-runtime alignment for the Comdirect cash-input localization hotfix.
 Trade Republic statement import, accepted-snapshot behavior and the v1.35.2 common retained-cash
 contract remain unchanged; this release does not add Trade Republic cash acquisition or authorization.
 Trade Republic statement import, accepted snapshots, diagnostics, REST schema 1 and verified

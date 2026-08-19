@@ -1,9 +1,10 @@
-# Portfolio Architect Gateway runtime v1.35.3
+# Portfolio Architect Gateway runtime v1.35.4
 
-Version 1.35.3 aligns the provider-neutral Gateway package with the Home Assistant broker-editor
-menu-label hotfix. Gateway runtime behavior is unchanged from v1.35.2: retained-cash metadata,
-v1.35.1 Comdirect session-maintenance resilience, health schema 6, private-PKI HTTPS and bearer
-authentication remain unchanged.
+Version 1.35.4 aligns the provider-neutral Gateway package with the Comdirect cash-input localization
+hotfix. The common cash-policy parser now accepts common human EUR number formats at the Ingress
+boundary while persisted state remains canonical. Retained-cash mathematics, v1.35.1 Comdirect
+session-maintenance resilience, health schema 6, private-PKI HTTPS and bearer authentication remain
+unchanged.
 
 The Gateway is a dedicated, Python-library-dependency-free service that converts one
 provider-specific portfolio source into provider-neutral Portfolio Architect REST
@@ -51,9 +52,9 @@ non-secret and carries no account/depot identity. Health schemas 1 through 5 rem
 available unchanged for older Portfolio Architect versions.
 
 The provider contract and official future App identities are documented in
-`docs/GATEWAY-PROVIDERS.md`. The common runtime remains provider-neutral in v1.35.3;
+`docs/GATEWAY-PROVIDERS.md`. The common runtime remains provider-neutral in v1.35.4;
 provider-specific acquisition continues to live only in the corresponding App package.
-The ISIN-first v1.26.1 hotfix is implemented in Portfolio Architect's Home Assistant calculation layer and does not change Gateway REST schema 1 or health schema 6. Version 1.35.3 retains the private-PKI HTTPS helper and v1.26.7 quantity-bearing cached-snapshot/ETag-precedence guarantees. Comdirect OAuth session maintenance is provider-specific; provider acquisition contracts and REST/health schemas are unchanged.
+The ISIN-first v1.26.1 hotfix is implemented in Portfolio Architect's Home Assistant calculation layer and does not change Gateway REST schema 1 or health schema 6. Version 1.35.4 retains the private-PKI HTTPS helper and v1.26.7 quantity-bearing cached-snapshot/ETag-precedence guarantees. Comdirect OAuth session maintenance is provider-specific; provider acquisition contracts and REST/health schemas are unchanged.
 
 ## Authorized investment cash
 
@@ -69,6 +70,11 @@ The Gateway then applies one authorization policy:
 - `capped`: authorize no more than a configured EUR cap;
 - `retain`: keep a configured EUR cash reserve untouched and authorize only
   `max(eligible - retain_eur, 0)`. The Ingress UI labels this **Keep cash reserve**.
+
+Human cash-policy form input accepts common EUR decimal/grouping styles such as `1024,00`,
+`1024.00`, `1.024,00` and `1,024.00`, plus validated space/apostrophe grouping. Accepted values are
+normalized before persistence; malformed input returns bounded fixed guidance without replacing the
+last valid private policy.
 
 The public snapshot retains the compatibility object and adds bounded metadata:
 

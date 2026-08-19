@@ -1,4 +1,4 @@
-"""v1.35.3 whole-portfolio allocation presentation regressions."""
+"""v1.35.4 whole-portfolio allocation presentation regressions."""
 
 from __future__ import annotations
 
@@ -104,7 +104,7 @@ def test_v1341_does_not_make_outside_scope_tile_inventory_dynamic_yet() -> None:
     assert presentation["schema_version"] == 2
     dashboard = (ROOT / "dashboard" / "bilingual-dashboard.yaml").read_text(encoding="utf-8")
     # The hard-coded outside-scope detail inventory is deliberately retained until the
-    # later dynamic native-dashboard milestone. v1.35.3 fixes its ISIN-first bindings
+    # later dynamic native-dashboard milestone. v1.35.4 fixes its ISIN-first bindings
     # plus distribution correctness and the missing-target 0% entity.
     assert "sensor.portfolio_architect_holding_ie00bywz0333_holding_value" in dashboard
     assert "auto-entities" not in dashboard.casefold()
