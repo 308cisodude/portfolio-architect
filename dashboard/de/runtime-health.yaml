@@ -131,8 +131,34 @@ cards:
     rows: auto
   icon: mdi:clock-check-outline
   state_content:
-  - state
+  - display_state_de
   - engine_version
+- type: tile
+  entity: sensor.portfolio_architect_source_count
+  name: Portfolioquellen
+  tap_action:
+    action: more-info
+  icon: mdi:source-branch
+  color: green
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_source_conflict_count
+    state_not: '0'
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_source_conflict_count
+    name: Quellenkonflikte
+    tap_action:
+      action: more-info
+    icon: mdi:source-branch-alert
+    color: amber
+  grid_options:
+    columns: 6
+    rows: auto
 - type: conditional
   conditions:
   - condition: state
@@ -157,7 +183,7 @@ cards:
   conditions:
   - condition: state
     entity: sensor.portfolio_architect_gateway_status
-    state_not: unavailable
+    state: ok
   card:
     type: tile
     entity: sensor.portfolio_architect_gateway_status
@@ -166,6 +192,24 @@ cards:
     tap_action:
       action: more-info
     icon: mdi:lan-check
+    color: green
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_gateway_status
+    state: degraded
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_gateway_status
+    state_content: display_state_de
+    name: Gateway-Status
+    tap_action:
+      action: more-info
+    icon: mdi:lan-check
+    color: amber
   grid_options:
     columns: 6
     rows: auto
@@ -191,8 +235,8 @@ cards:
 - type: conditional
   conditions:
   - condition: state
-    entity: sensor.portfolio_architect_gateway_status
-    state_not: unavailable
+    entity: sensor.portfolio_architect_gateway_operating_mode
+    state: live
   card:
     type: tile
     entity: sensor.portfolio_architect_gateway_operating_mode
@@ -201,6 +245,41 @@ cards:
     tap_action:
       action: more-info
     icon: mdi:database-sync-outline
+    color: green
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_gateway_operating_mode
+    state: last_known_good
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_gateway_operating_mode
+    state_content: display_state_de
+    name: Betriebsmodus
+    tap_action:
+      action: more-info
+    icon: mdi:database-sync-outline
+    color: amber
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_gateway_operating_mode
+    state: reauthentication_required
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_gateway_operating_mode
+    state_content: display_state_de
+    name: Betriebsmodus
+    tap_action:
+      action: more-info
+    icon: mdi:database-sync-outline
+    color: red
   grid_options:
     columns: 6
     rows: auto
@@ -491,8 +570,8 @@ cards:
 - type: conditional
   conditions:
   - condition: state
-    entity: sensor.portfolio_architect_source_provider
-    state: local_rest_json
+    entity: sensor.portfolio_architect_gateway_status
+    state_not: unavailable
   - condition: state
     entity: binary_sensor.portfolio_architect_gateway_snapshot_integrity_verified
     state: 'on'
@@ -511,8 +590,8 @@ cards:
 - type: conditional
   conditions:
   - condition: state
-    entity: sensor.portfolio_architect_source_provider
-    state: local_rest_json
+    entity: sensor.portfolio_architect_gateway_status
+    state_not: unavailable
   - condition: state
     entity: binary_sensor.portfolio_architect_gateway_snapshot_integrity_verified
     state: 'off'
@@ -531,8 +610,8 @@ cards:
 - type: conditional
   conditions:
   - condition: state
-    entity: sensor.portfolio_architect_source_provider
-    state: local_rest_json
+    entity: sensor.portfolio_architect_gateway_status
+    state_not: unavailable
   - condition: state
     entity: binary_sensor.portfolio_architect_gateway_snapshot_integrity_verified
     state: unavailable
@@ -551,8 +630,8 @@ cards:
 - type: conditional
   conditions:
   - condition: state
-    entity: sensor.portfolio_architect_source_provider
-    state: local_rest_json
+    entity: sensor.portfolio_architect_gateway_status
+    state_not: unavailable
   - condition: state
     entity: sensor.portfolio_architect_gateway_snapshot_generated
     state_not: unavailable

@@ -88,15 +88,12 @@ def test_maintenance_loop_contains_unexpected_iteration_failure(
     )
 
 
-def test_german_allocation_charts_use_accumulating_robotics_label() -> None:
+def test_german_dynamic_allocation_charts_use_generic_presentation_slots() -> None:
     standalone = (ROOT / "dashboard" / ".tmp_de.yaml").read_text(encoding="utf-8")
     bilingual = (ROOT / "dashboard" / "bilingual-dashboard.yaml").read_text(encoding="utf-8")
 
-    assert "name: Robotics · Acc" not in standalone
-    assert standalone.count("name: Robotik · Thes.") == 8
-
-    start = bilingual.index("heading: Aktuelle Planallokation", len(bilingual) // 2)
-    end = bilingual.index("heading: Aktuelle Portfolioallokation", start)
-    german_allocation = bilingual[start:end]
-    assert "name: Robotics · Acc" not in german_allocation
-    assert german_allocation.count("name: Robotik · Thes.") == 2
+    for source in (standalone, bilingual):
+        assert "name: Robotics · Acc" not in source
+        assert "name: Robotik · Thes." not in source
+        assert "presentation_target_01_current_allocation" in source
+        assert "presentation_target_01_target_allocation" in source

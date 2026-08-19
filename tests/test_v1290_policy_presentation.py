@@ -67,41 +67,35 @@ def _assert_opportunity_heading(cards: list[dict], expected_heading: str) -> Non
     heading = _inner(wrapper)
 
     assert wrapper.get("type") == "conditional"
-    assert wrapper.get("conditions") == [
-        {
-            "condition": "numeric_state",
-            "entity": OPPORTUNITY_COUNT,
-            "above": 0,
-        }
-    ]
+    assert wrapper.get("conditions") == [{
+        "condition": "numeric_state",
+        "entity": OPPORTUNITY_COUNT,
+        "above": 0,
+    }]
     assert wrapper.get("grid_options") == {"columns": "full", "rows": "auto"}
     assert heading.get("heading_style") == "subtitle"
     assert heading.get("icon") == "mdi:lightbulb-on-outline"
-    assert heading.get("badges") == [
-        {
-            "type": "entity",
-            "entity": OPPORTUNITY_COUNT,
-            "show_icon": False,
-            "show_state": True,
-            "tap_action": {"action": "more-info"},
-        }
-    ]
+    assert heading.get("badges") == [{
+        "type": "entity",
+        "entity": OPPORTUNITY_COUNT,
+        "show_icon": False,
+        "show_state": True,
+        "tap_action": {"action": "more-info"},
+    }]
 
     review_indexes = [index for index, card in enumerate(cards) if _entity(card) in REVIEW_ENTITIES]
-    opportunity_indexes = [
-        index
-        for index, card in enumerate(cards)
-        if (_entity(card) or "").endswith("free_savings_plan_preferred_policy_finding")
+    policy_indexes = [
+        index for index, card in enumerate(cards)
+        if card.get("type") == "entity-filter"
+        and "sensor.portfolio_architect_presentation_policy_001_finding" in card.get("entities", [])
     ]
     assert len(review_indexes) == 2
-    assert len(opportunity_indexes) == 4
-    assert max(review_indexes) < heading_index < min(opportunity_indexes)
-
-    # The existing opportunity tiles remain the primary actionable details.
-    world = next(card for card in cards if _entity(card) == WORLD_OPPORTUNITY)
-    assert _inner(world)["type"] == "tile"
-    assert _inner(world)["color"] == "blue"
-    assert world["grid_options"]["columns"] == "full"
+    assert len(policy_indexes) == 1
+    assert max(review_indexes) < heading_index < policy_indexes[0]
+    policy = cards[policy_indexes[0]]
+    assert len(policy["entities"]) == 256
+    assert policy["card"]["type"] == "entities"
+    assert policy["grid_options"]["columns"] == "full"
 
 
 def test_policy_opportunity_hierarchy_is_native_localised_and_consistent() -> None:

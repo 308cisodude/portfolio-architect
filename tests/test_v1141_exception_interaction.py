@@ -28,54 +28,40 @@ def _walk(value):
             yield from _walk(child)
 
 
-def _exception_cards(path: Path) -> list[dict]:
+def _policy_slot_filters(path: Path) -> list[dict]:
     document = yaml.safe_load(path.read_text(encoding="utf-8"))
     return [
-        node
-        for node in _walk(document)
+        node for node in _walk(document)
         if isinstance(node, dict)
-        and node.get("type") == "conditional"
-        and node.get("card", {}).get("entity") == DETAIL_ENTITY
+        and node.get("type") == "entity-filter"
+        and "sensor.portfolio_architect_presentation_policy_001_finding" in node.get("entities", [])
     ]
 
 
-def test_exception_tile_is_compact_clickable_and_bounded() -> None:
-    expected_names = {
-        "en": ("Robotics exception", "Robotics review"),
-        "de": ("Robotik-Ausnahme", "Robotik prüfen"),
-    }
-    for locale, (accepted_name, review_name) in expected_names.items():
-        cards = _exception_cards(DASHBOARD / locale / "policy-compliance.yaml")
-        assert len(cards) == 2
-        by_state = {wrapper["conditions"][0]["state"]: wrapper for wrapper in cards}
-        assert set(by_state) == {"accepted_exception", "review_required"}
-        for state, expected_name in (
-            ("accepted_exception", accepted_name),
-            ("review_required", review_name),
-        ):
-            wrapper = by_state[state]
-            tile = wrapper["card"]
-            assert wrapper["grid_options"]["columns"] == 6
-            assert tile["name"] == expected_name
-            assert tile["tap_action"] == {"action": "more-info"}
-            assert tile["hide_state"] is True
-            assert tile["color"] == "amber"
-            assert wrapper["conditions"][0]["entity"] == DETAIL_ENTITY
+def test_exception_presentation_is_clickable_bounded_native_list() -> None:
+    for locale in ("en", "de"):
+        cards = _policy_slot_filters(DASHBOARD / locale / "policy-compliance.yaml")
+        assert len(cards) == 1
+        wrapper = cards[0]
+        assert len(wrapper["entities"]) == 256
+        assert wrapper["card"]["type"] == "entities"
+        assert wrapper["show_empty"] is False
+        assert wrapper["grid_options"]["columns"] == "full"
 
 
-def test_complete_views_use_the_bounded_detail_entity() -> None:
+def test_complete_views_use_generic_bounded_policy_detail_aliases() -> None:
     for path in [
         DASHBOARD / "en" / "view.yaml",
         DASHBOARD / "de" / "view.yaml",
         DASHBOARD / "bilingual-dashboard.yaml",
     ]:
-        cards = _exception_cards(path)
-        expected = 4 if path.name == "bilingual-dashboard.yaml" else 2
+        cards = _policy_slot_filters(path)
+        expected = 2 if path.name == "bilingual-dashboard.yaml" else 1
         assert len(cards) == expected
-        for wrapper in cards:
-            assert wrapper["card"]["tap_action"] == {"action": "more-info"}
         source = path.read_text(encoding="utf-8")
         assert ORIGINAL_ENTITY not in source
+        assert DETAIL_ENTITY not in source
+        assert "presentation_policy_001_finding" in source
 
 
 def test_bounded_detail_entity_omits_long_rationale() -> None:

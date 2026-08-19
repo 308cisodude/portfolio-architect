@@ -29,48 +29,42 @@ def _walk(value):
             yield from _walk(child)
 
 
-def _exception_cards(path: Path) -> list[dict]:
+def _policy_slot_filters(path: Path) -> list[dict]:
     document = yaml.safe_load(path.read_text(encoding="utf-8"))
     return [
-        node
-        for node in _walk(document)
+        node for node in _walk(document)
         if isinstance(node, dict)
-        and node.get("type") == "conditional"
-        and node.get("card", {}).get("entity") == EXCEPTION_ENTITY
+        and node.get("type") == "entity-filter"
+        and any(
+            str(entity).startswith("sensor.portfolio_architect_presentation_policy_")
+            for entity in node.get("entities", [])
+        )
     ]
 
 
-def test_localised_exception_tiles_remain_compact() -> None:
-    expected_names = {
-        "en": {"Robotics exception", "Robotics review"},
-        "de": {"Robotik-Ausnahme", "Robotik prüfen"},
-    }
-    for locale, names in expected_names.items():
-        path = DASHBOARD / locale / "policy-compliance.yaml"
-        cards = _exception_cards(path)
-        assert len(cards) == 2
-        assert {card["card"]["name"] for card in cards} == names
-        for wrapper in cards:
-            tile = wrapper["card"]
-            assert wrapper["grid_options"]["columns"] == 6
-            assert len(tile["name"]) <= 20
-            assert tile["hide_state"] is True
-            assert tile["color"] == "amber"
+def test_localised_exception_presentation_is_bounded_native_list() -> None:
+    for locale in ("en", "de"):
+        cards = _policy_slot_filters(DASHBOARD / locale / "policy-compliance.yaml")
+        assert len(cards) == 1
+        card = cards[0]
+        assert len(card["entities"]) == 256
+        assert card["entities"][0] == "sensor.portfolio_architect_presentation_policy_001_finding"
+        assert card["entities"][-1] == "sensor.portfolio_architect_presentation_policy_256_finding"
+        assert card["card"]["type"] == "entities"
+        assert card["grid_options"]["columns"] == "full"
+        assert card["show_empty"] is False
 
 
-def test_complete_views_preserve_the_compact_exception_layout() -> None:
+def test_complete_views_preserve_bounded_native_policy_presentation() -> None:
     for path in [
         DASHBOARD / "en" / "view.yaml",
         DASHBOARD / "de" / "view.yaml",
         DASHBOARD / "bilingual-dashboard.yaml",
     ]:
-        cards = _exception_cards(path)
-        expected = 4 if path.name == "bilingual-dashboard.yaml" else 2
+        cards = _policy_slot_filters(path)
+        expected = 2 if path.name == "bilingual-dashboard.yaml" else 1
         assert len(cards) == expected
-        for wrapper in cards:
-            tile = wrapper["card"]
-            assert wrapper["grid_options"]["columns"] == 6
-            assert "·" not in tile["name"]
+        assert all(card["card"]["type"] == "entities" for card in cards)
 
 
 def test_stardust_does_not_add_parallel_presentation() -> None:

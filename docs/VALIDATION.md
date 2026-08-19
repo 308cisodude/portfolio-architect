@@ -1,33 +1,19 @@
-# v1.35.4 validation
+# v1.36.0 validation
 
-Portfolio Architect v1.35.4 is prepared from the exact published v1.35.3 tracked-source baseline.
-It is a narrow Comdirect Ingress amount-parsing and validation-UX hotfix. Cash-policy mathematics,
-provider funding semantics, broker behavior, wire schemas and transport contracts are unchanged.
+Portfolio Architect v1.36.0 is prepared from the exact published/live-accepted v1.35.4 source baseline. It completes the Home Assistant-native dynamic portfolio-presentation milestone without changing provider acquisition, execution/funding mathematics or Gateway wire/security contracts.
 
-Required evidence:
+Release-specific validation must prove:
 
-- all integration/common Gateway/provider App version markers align at `1.35.4`;
-- common Gateway and Comdirect App source mirrors remain byte-identical for `cash_policy.py` and
-  `app.py`;
-- both capped and retained cash forms accept decimal comma and decimal point;
-- German/English grouped forms and supported space/apostrophe groupings normalize to the same
-  canonical `Decimal` value;
-- malformed/mixed separators, signs, exponent notation, extra fractional precision and other unsafe
-  syntax fail closed before persistence;
-- invalid cash amount input returns via the bounded relative Ingress error path rather than a generic
-  browser HTTP 400 and does not reflect the rejected token;
-- the previous valid private cash policy remains unchanged after rejected input;
-- persisted schema-1/schema-2 cash-policy state remains strict/canonical and existing authorization
-  math remains exact;
-- the complete v1.35.2 retained-cash and v1.35.3 broker-menu regression sets remain green;
-- the full regression suite remains green;
-- Python compilation and all tracked JSON/YAML parsing pass;
-- strict publication-readiness and source-privacy checks pass;
-- three independent release builds are byte-identical;
-- release verification, internal `SHA256SUMS` verification and artifact-privacy checks pass;
-- the Git overlay and independent binary patch each reproduce the final tracked tree from the exact
-  v1.35.3 baseline, including executable-bit semantics.
+- presentation schema 2 preserves stable target-ID/position-ID identity while adding bounded one-based slot metadata;
+- target, outside-scope and active-policy slot order comes from the same validated current-state collections used by the presentation model;
+- slot aliases are diagnostic UI projections, expose the underlying stable identity and do not claim measurement state classes/history identity;
+- the reference dashboard contains no instrument-specific opaque target IDs or holding position IDs;
+- the dashboard enumerates the complete accepted backend bounds of 32 target, 512 outside-holding and 256 policy candidates;
+- only Home Assistant core cards are used (`entity-filter`, Entities, Glance, Distribution, Tile, Conditional and headings); no `auto-entities`, card-mod, custom JavaScript or custom cards are introduced;
+- English and German views use the same entity inventory and remain parseable native Sections views;
+- user-owned dashboard copies remain opt-in and are never overwritten by HACS/integration updates;
+- payload schema 8, REST portfolio schema 1, Gateway health schema 6, broker schemas 1/2/3, v1.35 cash/funding behavior, v1.35.1 Comdirect resilience and v1.35.4 cash-input normalization remain unchanged;
+- all three provider Apps are package/version-aligned to 1.36.0 without provider-runtime semantic changes;
+- publication/privacy, reproducible release, ZIP safety and immutable workflow contracts remain green.
 
-Local Docker availability is environment-dependent. Protected GitHub **Validate release** remains
-authoritative for actual provider-App Docker/private-PKI smoke execution when local Docker is
-unavailable.
+Local Docker availability is not assumed; protected GitHub **Validate release** remains authoritative for provider-App Docker/private-PKI smoke execution.

@@ -164,7 +164,7 @@ def test_superseded_exception_audit_fields_fail_closed() -> None:
         )
 
 
-def test_reference_dashboard_surfaces_legacy_robotics_as_outside_scope() -> None:
+def test_reference_dashboard_surfaces_legacy_robotics_through_generic_outside_slots() -> None:
     distribution_files = (
         ROOT / "dashboard" / "allocation-stack.yaml",
         ROOT / "dashboard" / "en" / "allocation-stack.yaml",
@@ -181,11 +181,13 @@ def test_reference_dashboard_surfaces_legacy_robotics_as_outside_scope() -> None
     )
     for path in distribution_files:
         text = path.read_text(encoding="utf-8")
-        assert f"sensor.portfolio_architect_{robotics_id}_whole_portfolio_allocation" in text, path
-        assert "sensor.portfolio_architect_holding_ie00bywz0333_whole_portfolio_allocation" in text, path
+        assert f"sensor.portfolio_architect_{robotics_id}_whole_portfolio_allocation" not in text, path
+        assert "sensor.portfolio_architect_holding_ie00bywz0333" not in text, path
+        assert "presentation_target_01_whole_portfolio_allocation" in text, path
+        assert "presentation_outside_001_whole_portfolio_allocation" in text, path
 
     for relative in (".tmp_en.yaml", ".tmp_de.yaml", "en/view.yaml", "de/view.yaml"):
         text = (ROOT / "dashboard" / relative).read_text(encoding="utf-8")
-        assert "sensor.portfolio_architect_holding_ie00bywz0333_holding_value" in text
+        assert "presentation_outside_001_holding_value" in text
     bilingual = (ROOT / "dashboard" / "bilingual-dashboard.yaml").read_text(encoding="utf-8")
-    assert bilingual.count("sensor.portfolio_architect_holding_ie00bywz0333_holding_value") == 4
+    assert "presentation_outside_512_holding_value" in bilingual

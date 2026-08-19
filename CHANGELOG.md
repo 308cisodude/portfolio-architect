@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.36.0
+
+- Completes the native dynamic portfolio-presentation milestone with bounded diagnostic presentation-slot adapters for configured targets, outside-scope holdings and active policy findings.
+- Upgrades the structural presentation model to schema 2 with explicit one-based slot metadata while preserving opaque target IDs and accepted holding position IDs as stable portfolio identity.
+- Replaces instrument-specific reference-dashboard inventories with native Home Assistant `entity-filter` cards feeding core Entities, Glance and Distribution cards; no `auto-entities`, card-mod, JavaScript or custom-card dependency is added.
+- Keeps dashboard ownership opt-in: HACS/integration updates never overwrite imported or personalized Lovelace YAML.
+- Preserves payload schema 8, REST portfolio schema 1, Gateway health schema 6, broker schemas 1/2/3, provider-scoped funding/cash, v1.35.4 cash-input normalization, provider acquisition, verified HTTPS and advisory/no-trading boundaries.
+
 ## 1.35.4
 
 - Accepts common human EUR amount formats in the Comdirect cash-authorization form, including decimal comma/dot and validated dot/comma/space/apostrophe thousands grouping, while keeping private persisted state canonical and locale-neutral.

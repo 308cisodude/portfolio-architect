@@ -1,10 +1,6 @@
-# Portfolio Architect Gateway — Comdirect v1.35.4
+# Portfolio Architect Gateway — Comdirect v1.36.0
 
-Version 1.35.4 fixes human EUR amount entry in **Investment cash authorization**. Both **Cap
-authorized cash** and **Keep cash reserve** now accept common decimal comma/dot and validated
-thousands-grouping forms, normalize them to canonical private state, and show bounded validation
-guidance instead of a generic HTTP 400 for invalid amount syntax. The v1.35.2 policy mathematics
-and v1.35.1 connection-error/maintenance-worker resilience remain intact.
+Version 1.36.0 is package alignment for Portfolio Architect's Home Assistant-side native dynamic presentation milestone. Comdirect acquisition, OAuth/session maintenance, PhotoTAN and retained-cash behavior are unchanged, including the v1.35.4 locale-tolerant cash-policy parser.
 
 Verified HTTPS/private CA trust, bearer authentication, PhotoTAN bootstrap, account
 selection, request-timeout behavior, REST schema 1, health schema 6, portfolio normalization,

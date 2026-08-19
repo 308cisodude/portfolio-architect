@@ -1,4 +1,4 @@
-"""Regression contracts for v1.35.4 verified Gateway HTTPS transport."""
+"""Regression contracts for v1.27.0 verified Gateway HTTPS transport."""
 
 from __future__ import annotations
 
@@ -286,7 +286,7 @@ def test_gateway_server_retains_tls_minimum_and_wire_schemas_are_unchanged() -> 
     health = (GATEWAY / "server.py").read_text(encoding="utf-8")
     assert "health_schema_version" in health
     release = (ROOT / "docs" / "RELEASE-NOTES.md").read_text(encoding="utf-8")
-    # These release-note strings are updated to 1.35.4 later in release preparation.
+    # These release-note strings are updated to 1.36.0 later in release preparation.
     assert "REST portfolio schema 1" in release
     assert "Gateway health schema 6" in release
     assert "payload schema 8" in release.lower()

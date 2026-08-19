@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.36.0
+
+- Package/version alignment for Portfolio Architect v1.36.0 native dynamic presentation. DKB provider acquisition/runtime behavior is unchanged.
+- Preserves verified HTTPS/private CA trust, bearer authentication, established provider-specific state and the read-only/advisory boundary.
+
 ## 1.35.4
 
 - Package/User-Agent alignment for the Comdirect cash-input localization hotfix; DKB probe behavior and evidence handling are unchanged.

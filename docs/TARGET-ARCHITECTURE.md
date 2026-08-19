@@ -102,7 +102,7 @@ The distinction is deliberate:
 
 ## First-class presentation model
 
-`sensor.portfolio_architect_presentation_model` exposes bounded presentation schema 1. It is a
+`sensor.portfolio_architect_presentation_model` exposes bounded presentation schema 2. It is a
 structural index rather than another monetary snapshot. Its attributes include:
 
 - ordered current target IDs and bounded target metadata;
@@ -117,10 +117,7 @@ Each target row uses `target_id` as its `entity_key`; each outside holding uses 
 ISIN-first `position_id`. Live values, quantities, drift, proposed purchases and other
 high-churn/actionable data remain on the existing dedicated native entities.
 
-The reference dashboard in v1.34 still contains static sample cards. The presentation contract
-is the backend prerequisite for removing those hard-coded inventories in a later native-
-dashboard milestone. v1.34 adds no `auto-entities`, card-mod, custom JavaScript, or other custom
-frontend dependency.
+v1.36 consumes the structural contract with bounded presentation-slot adapter entities and native `entity-filter` cards, removing instrument-specific inventory lists from the reference dashboard. Slots are UI projections only and repeat the stable target/holding identity in attributes. No `auto-entities`, card-mod, custom JavaScript, or other custom frontend dependency is added.
 
 ## Security and privacy boundaries
 

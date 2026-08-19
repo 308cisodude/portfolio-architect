@@ -1,4 +1,4 @@
-"""v1.35.4 generic target identity and presentation-model regressions."""
+"""v1.34.0 generic target identity and presentation-model regressions."""
 
 from __future__ import annotations
 
@@ -248,7 +248,7 @@ def test_payload_parser_and_presentation_model_expose_explicit_target_identity()
     assert all(key == position.target_id for key, position in data.positions.items())
 
     blocked = presentation.build_portfolio_presentation(data, plan_actionable=False, actionability_reason="data_stale")
-    assert blocked["presentation_schema_version"] == 1
+    assert blocked["presentation_schema_version"] == 2
     assert blocked["target_count"] == 7
     assert blocked["current_plan_holding_count"] == data.allocation.current_plan_held_position_count == 6
     assert set(blocked["current_plan_holding_ids"]) == {item.position_id for item in data.holdings.values() if item.in_current_plan}
@@ -309,7 +309,9 @@ def test_presentation_contract_is_first_class_and_dashboard_remains_native_only(
         assert "custom:" not in lowered
         assert "javascript" not in lowered
         for target_id in target_ids:
-            assert f"portfolio_architect_{target_id}_" in text
+            assert f"portfolio_architect_{target_id}_" not in text
+        assert "portfolio_architect_presentation_target_01_" in text
+        assert "type: entity-filter" in text
 
     bilingual = (ROOT / "dashboard" / "bilingual-dashboard.yaml").read_text(encoding="utf-8")
     assert "name: Exception review" in bilingual

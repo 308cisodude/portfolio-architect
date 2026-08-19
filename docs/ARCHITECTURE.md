@@ -393,13 +393,10 @@ The target architecture is generic but bounded: at most 32 positive-weight targe
 and duplicate target IDs or instrument identities fail closed. The current seven-ETF retirement
 plan is reference configuration only.
 
-A diagnostic `presentation_model` entity exposes presentation schema 1 as a bounded structural
+A diagnostic `presentation_model` entity exposes presentation schema 2 as a bounded structural
 index: configured targets, current-plan holding identities, complete outside-current-plan
 holding inventory, source provenance IDs and aggregate policy/actionability state. It does not
 replace the dedicated monetary/action entities and deliberately omits quantities, values and
 purchase amounts so recorder churn and data exposure stay bounded.
 
-The presentation model is a backend contract, not a frontend plugin. v1.34 keeps the reference
-dashboard native and does not add `auto-entities`, card-mod, JavaScript or custom cards. A later
-presentation milestone may consume this contract to remove the remaining static sample tile
-lists.
+The presentation model remains a backend contract, not a frontend plugin. v1.36 consumes it through bounded diagnostic presentation-slot adapters whose predictable IDs are filtered by native Home Assistant cards. Stable target/holding identity remains on the target-ID/position-ID entities; slot identity is deliberately ephemeral. The reference dashboard uses no `auto-entities`, card-mod, JavaScript or custom cards.

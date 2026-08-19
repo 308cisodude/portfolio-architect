@@ -35,40 +35,31 @@ def test_bounded_explanation_entities_exist() -> None:
     assert '"reason_code"' in source
 
 
-def test_dashboard_routes_native_interactions_to_bounded_details() -> None:
+def test_dashboard_routes_dynamic_inventory_through_native_more_info() -> None:
     data = yaml.safe_load(DASHBOARD.read_text(encoding="utf-8"))
     cards = list(_walk(data))
 
-    drift_cards = [c for c in cards if str(c.get("entity", "")).endswith("_allocation_drift")]
-    assert drift_cards
-    for card in drift_cards:
-        entity = card["entity"]
-        assert card["tap_action"] == {
-            "action": "more-info",
-            "entity": entity.removesuffix("_allocation_drift") + "_allocation_explanation",
-        }
+    dynamic_filters = [card for card in cards if card.get("type") == "entity-filter"]
+    assert dynamic_filters
+    assert any("sensor.portfolio_architect_presentation_target_01_proposed_buy" in card.get("entities", []) for card in dynamic_filters)
+    assert any(
+        any(
+            (entity == "sensor.portfolio_architect_presentation_target_01_allocation_drift")
+            or (isinstance(entity, dict) and entity.get("entity") == "sensor.portfolio_architect_presentation_target_01_allocation_drift")
+            for entity in card.get("entities", [])
+        )
+        for card in dynamic_filters
+    )
+    assert any("sensor.portfolio_architect_presentation_policy_001_finding" in card.get("entities", []) for card in dynamic_filters)
+    assert all(card.get("card", {}).get("type") in {"entities", "glance", "distribution"} for card in dynamic_filters if isinstance(card.get("card"), dict))
 
-    purchase_cards = [c for c in cards if c.get("type") == "tile" and str(c.get("entity", "")).endswith("_proposed_buy")]
-    assert purchase_cards
-    for card in purchase_cards:
-        entity = card["entity"]
-        assert card["tap_action"] == {
-            "action": "more-info",
-            "entity": entity.removesuffix("_proposed_buy") + "_purchase_explanation",
-        }
-        assert card["hold_action"] == {
-            "action": "more-info",
-            "entity": entity.removesuffix("_proposed_buy") + "_isin",
-        }
-
-    policy_cards = [c for c in cards if c.get("type") == "tile" and str(c.get("entity", "")).endswith("_policy_finding")]
-    assert policy_cards
-    for card in policy_cards:
-        entity = card["entity"]
-        assert card["tap_action"] == {
-            "action": "more-info",
-            "entity": entity.removesuffix("_policy_finding") + "_policy_decision",
-        }
+    sensor = (ROOT / "custom_components/portfolio_architect/sensor.py").read_text(encoding="utf-8")
+    target_slot = sensor.split("class PortfolioTargetPresentationSlotSensor", 1)[1].split(
+        "class PortfolioOutsidePresentationSlotSensor", 1
+    )[0]
+    policy_slot = sensor.split("class PortfolioPolicyPresentationSlotSensor", 1)[1]
+    assert '"stable_identity"' in target_slot
+    assert '"stable_identity"' in policy_slot
 
 
 def test_explanation_translations_are_bilingual_and_bounded() -> None:

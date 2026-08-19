@@ -1,4 +1,4 @@
-"""Regression contracts for v1.35.4 Gateway cold-restart snapshot integrity."""
+"""Regression contracts for v1.26.7 Gateway cold-restart snapshot integrity."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ def test_release_version_and_wire_contracts_remain_aligned() -> None:
     manifest = json.loads(
         (ROOT / "custom_components" / "portfolio_architect" / "manifest.json").read_text()
     )
-    assert manifest["version"] == "1.35.4"
+    assert manifest["version"] == "1.36.0"
     notes = (ROOT / "docs" / "RELEASE-NOTES.md").read_text(encoding="utf-8")
     assert "payload schema 8: unchanged" in notes
     assert "REST portfolio schema 1: unchanged" in notes

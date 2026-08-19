@@ -1,4 +1,4 @@
-"""Regression coverage for v1.35.4 Dependabot GitHub Actions grouping."""
+"""Regression coverage for v1.28.2 Dependabot GitHub Actions grouping."""
 from __future__ import annotations
 
 import re

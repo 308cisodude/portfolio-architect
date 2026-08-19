@@ -1,69 +1,34 @@
-# Portfolio Architect 1.35.4
+# Portfolio Architect 1.36.0
 
-Version 1.35.4 is a narrow Comdirect Ingress usability and validation hotfix prepared on top of the
-published v1.35.3 release.
+Portfolio Architect 1.36.0 completes the native dynamic portfolio-presentation milestone. The v1.34 structural presentation model is now consumed through bounded diagnostic presentation-slot adapter entities, allowing the supplied English/German reference dashboard to show the actual current target architecture, complete outside-current-plan inventory and active policy findings without maintaining instrument-specific YAML lists.
 
-## Human EUR cash-policy input
+## Native dynamic presentation
 
-Live acceptance of **Keep cash reserve** exposed that the v1.35.2 form parser accepted only the
-canonical machine representation with `.` as decimal separator. A German operator entering
-`1024,00` therefore received a generic HTTP 400 and the previous `all_available` policy correctly
-remained unchanged.
+The canonical stable entities are unchanged. Opaque target-ID entities remain the identity contract for configured target roles; accepted holding `position_id` entities remain the identity contract for current holdings. v1.36.0 adds predictable generic presentation aliases such as `presentation_target_01_current_allocation` and `presentation_outside_001_holding_value` solely as an ephemeral UI projection. Every available slot repeats the underlying stable identity in attributes.
 
-Version 1.35.4 keeps private policy state and REST payloads canonical, but makes the human-facing
-Ingress boundary locale-tolerant. Both **Cap authorized cash** and **Keep cash reserve** accept common
-EUR representations such as:
+`sensor.portfolio_architect_presentation_model` advances from presentation schema 1 to schema 2. Target and outside-scope rows now include one-based `presentation_slot` and `slot_key` metadata, and the model adds a bounded active-policy-finding slot index. The accepted portfolio payload remains schema 8; this is a Home Assistant presentation contract only.
 
-- `1024`, `1024.00`, `1024,00`;
-- `1.024,00` and `1,024.00`;
-- grouped forms using ordinary space, non-breaking space, narrow no-break space, straight apostrophe
-  or typographic apostrophe.
+The dashboard candidate ranges exactly match backend bounds: 32 target slots, 512 outside-holding slots and 256 policy-finding slots. Slot entities are created only as current accepted data requires them; stale slots become unavailable when their current mapping disappears. They deliberately have no measurement state class, because slot numbers are not long-term instrument identity.
 
-The parser validates grouping strictly, permits at most two fractional digits, rejects signs,
-exponent notation, mixed/malformed separators and non-finite/out-of-range values, and normalizes the
-accepted value to a `Decimal` before the existing canonical private persistence boundary.
+## Native dashboard only
 
-A single `.` or `,` followed by exactly three digits is treated as thousands grouping rather than as
-a decimal separator because cash-policy amounts support at most two decimal places. Persisted policy
-files remain locale-neutral and retain the existing strict canonical loader.
+The v1.36.0 reference dashboard uses core Home Assistant `entity-filter` cards to filter generic bounded candidates and pass current entities to native Entities, Glance and Distribution cards. Existing Tile and Conditional cards remain for static aggregate/runtime presentation. There is no `auto-entities`, card-mod, custom JavaScript or custom-card dependency.
 
-## Bounded validation UX
+The dashboard no longer contains hard-coded opaque target IDs, ISIN-derived holding IDs or sample-instrument names for portfolio inventory. Native more-info interaction remains available on the filtered entities.
 
-A malformed cash amount no longer drops the Ingress frame onto a browser-generated HTTP 400 page.
-The cash-policy POST instead returns through a bounded relative redirect and displays fixed,
-non-sensitive guidance on the App page. The rejected token is never reflected into the response, and
-an invalid submission cannot overwrite the last valid private cash policy.
-
-Structural form errors, CSRF failures, unsupported methods/content types and other security-relevant
-request failures retain their established fail-closed HTTP handling.
-
-## Long-running compatibility contracts
-
-- v1.33.0 source-freshness and plan-schedule separation remains preserved; v1.35.4 does not change any configured freshness threshold.
-- Recurring scheduling remains anchored to the latest valid Portfolio Architect evaluation.
-- DKB live Gateway acquisition remains a later provider-specific milestone; DKB remains experimental, manual-only and non-live.
-- v1.35.1 Comdirect session-maintenance resilience remains unchanged.
-- This release does not move PDF parsing into Portfolio Architect; Trade Republic statement import/private diagnostics remain provider-side and unchanged.
+The supplied dashboard is still a reference artifact, not integration-owned configuration. HACS never overwrites a user's imported or customized Lovelace dashboard. Users who want the v1.36.0 dynamic presentation must deliberately replace/update their copied dashboard YAML.
 
 ## Preserved contracts
 
-- `all_available`: unchanged;
-- `capped`: still `min(eligible, cap)`;
-- `retain`: still `max(eligible - retain_eur, 0)`;
-- private policy schema 1/2 compatibility: unchanged;
-- Portfolio payload schema 8: unchanged;
-- REST portfolio schema 1: unchanged;
-- Gateway health schema 6: unchanged; schemas 1–5 remain supported;
-- broker schemas 1/2/3 and v1.35 provider-scoped funding semantics: unchanged;
-- v1.35.3 native broker-editor menu-label correction: unchanged;
-- v1.35.1 Comdirect session-maintenance resilience: unchanged;
-- Trade Republic statement import/private diagnostics: unchanged;
-- DKB remains experimental, manual-only and non-live;
-- verified private-PKI HTTPS, bearer authentication, Supervisor trust discovery, DNS pinning and
-  no-plaintext fallback: unchanged;
-- No trading, order, transfer, payment, or transaction-history capability is introduced; no automatic-sell capability is added.
-- no dashboard migration required;
-- native dynamic portfolio presentation remains a separate later milestone.
-- The historical `v1.19.0-rc2` brokerage probe remains excluded and is not promoted by this release.
+- payload schema 8: unchanged.
+- REST portfolio schema 1: unchanged.
+- Gateway health schema 6: unchanged; schemas 1–5 remain supported.
+- Broker schemas 1/2/3 remain runtime-compatible.
 
-See `docs/UPGRADE-1.35.4.md`.
+Historical experimental `v1.19.0-rc2` brokerage-diagnostic work remains excluded and is not promoted by this release. The v1.33.0 source-freshness and plan-schedule separation remains unchanged: the plan schedule is anchored to the latest valid Portfolio Architect evaluation and this release does not change any configured freshness threshold. No trading, order, transfer, payment, or transaction-history capability is added.
+
+## Preserved behavior
+
+Provider acquisition and security are unchanged. DKB live Gateway acquisition remains a later authenticated milestone. Comdirect retains v1.35.1 session-maintenance resilience and v1.35.4 locale-tolerant cash-policy input; Trade Republic statement import remains private/local and this release does not move PDF parsing into Portfolio Architect; DKB remains experimental, manual-only and non-live. Provider-scoped authorized cash, retained reserves, exact directed funding topology, broker schemas 1/2/3, private-PKI verified HTTPS, bearer authentication, Supervisor trust discovery, DNS pinning and no-plaintext fallback are unchanged.
+
+Portfolio Architect remains advisory software: no trading, order placement, transfer execution, payment, transaction-history or automatic-sell capability is added.

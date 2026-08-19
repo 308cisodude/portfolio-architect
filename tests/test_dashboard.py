@@ -27,7 +27,8 @@ def test_allocation_stack_is_native_and_separates_scopes():
         assert 'outside_scope' in source
         assert '_current_allocation' in source and '_target_allocation' in source
         assert 'type: tile' in source
-        assert 'type: entities' not in source
+        assert 'type: entities' in source
+        assert 'type: entity-filter' in source
         assert 'legacy' not in source.casefold()
         assert 'markdown' not in source.casefold()
 
@@ -37,12 +38,12 @@ def test_monthly_plan_uses_conditional_tiles():
         source=(DASHBOARD/locale/'monthly-investment-plan.yaml').read_text()
         config=yaml.safe_load(source)
         assert config['type']=='vertical-stack'
-        assert source.count('_proposed_buy')==21  # condition, tile entity, and hold target for seven funds
-        assert source.count('_isin')==7  # tap target for seven funds
+        assert source.count('_proposed_buy')==32
+        assert 'presentation_target_01_purchase_explanation' in source
         assert 'type: conditional' in source
         assert 'type: tile' in source
-        assert 'type: entities' not in source
-        assert 'entity-filter' not in source
+        assert 'type: entities' in source
+        assert 'entity-filter' in source
 
 
 def test_target_and_runtime_cards_are_compact_native_cards():
@@ -53,7 +54,9 @@ def test_target_and_runtime_cards_are_compact_native_cards():
         assert 'type: bar-gauge' in target
         assert 'type: tile' in runtime
         assert 'last_successful_refresh' in runtime and 'portfolio_architect_version' in runtime
-        assert 'type: entities' not in target+runtime
+        assert 'type: entities' in target
+        assert 'type: entity-filter' in target
+        assert 'type: entities' not in runtime
         assert 'markdown' not in target.casefold()+runtime.casefold()
 
 
@@ -67,8 +70,8 @@ def test_policy_is_native_cards_only():
         assert 'type: conditional' in source
         assert 'type: tile' in source
         assert 'type: heading' in source
-        assert 'type: entities' not in source
-        assert 'entity-filter' not in source
+        assert 'type: entities' in source
+        assert 'entity-filter' in source
         assert 'markdown' not in source.casefold()
 
 

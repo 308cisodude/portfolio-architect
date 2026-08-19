@@ -228,6 +228,9 @@ cards:
   - condition: numeric_state
     entity: sensor.portfolio_architect_unallocated_contribution
     above: 0.01
+  - condition: state
+    entity: sensor.portfolio_architect_investment_reserve_source
+    state: contribution
   card:
     type: tile
     entity: sensor.portfolio_architect_unallocated_contribution
@@ -239,164 +242,222 @@ cards:
   grid_options:
     columns: 6
     rows: auto
+- type: tile
+  entity: sensor.portfolio_architect_execution_policy
+  name: Ausführungsstrategie
+  state_content: display_state_de
+  tap_action:
+    action: more-info
+  icon: mdi:tune-variant
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_investment_reserve_source
+    state: gateway_balance
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_available_investment_reserve
+    name: Freigegebenes Anlageguthaben
+    tap_action:
+      action: more-info
+    icon: mdi:piggy-bank-outline
+    color: blue
+  grid_options:
+    columns: full
+    rows: auto
 - type: conditional
   conditions:
   - condition: numeric_state
-    entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_proposed_buy
+    entity: sensor.portfolio_architect_additional_investment_cash_required
+    above: 0.01
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_additional_investment_cash_required
+    name: Zusätzlich benötigtes Anlageguthaben
+    tap_action:
+      action: more-info
+    icon: mdi:cash-plus
+    color: amber
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_investment_reserve_source
+    state: unavailable
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_investment_reserve_source
+    name: Anlagereserve nicht verfügbar
+    tap_action:
+      action: more-info
+    icon: mdi:bank-off-outline
+    color: red
+    hide_state: true
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: numeric_state
+    entity: sensor.portfolio_architect_estimated_cash_outlay
     above: 0
   card:
     type: tile
-    entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_proposed_buy
-    name: MSCI World
+    entity: sensor.portfolio_architect_estimated_cash_outlay
+    name: Geldbedarf
     tap_action:
       action: more-info
-      entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_isin
-    color: green
-    icon: mdi:cart-arrow-down
-    hold_action:
-      action: more-info
-      entity: sensor.portfolio_architect_target_9df8acc40f7242a16aa729e9e06bc8f0_proposed_buy
-    state_content:
-    - state
-    - execution_provider_name
+    icon: mdi:cash-sync
   grid_options:
     columns: 6
     rows: auto
 - type: conditional
   conditions:
   - condition: numeric_state
-    entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_proposed_buy
+    entity: sensor.portfolio_architect_estimated_transaction_fees
     above: 0
   card:
     type: tile
-    entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_proposed_buy
-    name: Emerging Markets
+    entity: sensor.portfolio_architect_estimated_transaction_fees
+    name: Geschätzte Gebühren
     tap_action:
       action: more-info
-      entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_isin
-    color: green
-    icon: mdi:cart-arrow-down
-    hold_action:
-      action: more-info
-      entity: sensor.portfolio_architect_target_c6e85d42202c7aa278129564921e0d8b_proposed_buy
-    state_content:
-    - state
-    - execution_provider_name
+    icon: mdi:cash-minus
+    color: amber
   grid_options:
     columns: 6
     rows: auto
 - type: conditional
   conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_investment_reserve_source
+    state: gateway_balance
   - condition: numeric_state
-    entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_proposed_buy
-    above: 0
+    entity: sensor.portfolio_architect_remaining_investment_reserve
+    above: 0.01
+  - condition: numeric_state
+    entity: sensor.portfolio_architect_estimated_cash_outlay
+    above: 0.01
   card:
     type: tile
-    entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_proposed_buy
-    name: World Small Cap
+    entity: sensor.portfolio_architect_remaining_investment_reserve
+    name: Guthaben nach empfohlenen Käufen
     tap_action:
       action: more-info
-      entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_isin
-    color: green
-    icon: mdi:cart-arrow-down
-    hold_action:
-      action: more-info
-      entity: sensor.portfolio_architect_target_8c806ecc7fd99b64b4c4d09b78dd7d2e_proposed_buy
-    state_content:
-    - state
-    - execution_provider_name
+    icon: mdi:cash-clock
+    color: blue
   grid_options:
-    columns: 6
+    columns: full
     rows: auto
 - type: conditional
   conditions:
   - condition: numeric_state
-    entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_proposed_buy
+    entity: sensor.portfolio_architect_deferred_purchase_count
     above: 0
   card:
     type: tile
-    entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_proposed_buy
-    name: Gesundheit
+    entity: sensor.portfolio_architect_deferred_contribution
+    name: Kauf aus Kostengründen zurückgestellt
     tap_action:
       action: more-info
-      entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_isin
-    color: green
-    icon: mdi:cart-arrow-down
-    hold_action:
-      action: more-info
-      entity: sensor.portfolio_architect_target_cd1e9c77e550dfb4bfa4498956a224de_proposed_buy
-    state_content:
-    - state
-    - execution_provider_name
+    icon: mdi:timer-sand
+    color: amber
+    hide_state: false
   grid_options:
-    columns: 6
+    columns: full
     rows: auto
-- type: conditional
+- type: entity-filter
+  entities:
+  - sensor.portfolio_architect_presentation_target_01_proposed_buy
+  - sensor.portfolio_architect_presentation_target_02_proposed_buy
+  - sensor.portfolio_architect_presentation_target_03_proposed_buy
+  - sensor.portfolio_architect_presentation_target_04_proposed_buy
+  - sensor.portfolio_architect_presentation_target_05_proposed_buy
+  - sensor.portfolio_architect_presentation_target_06_proposed_buy
+  - sensor.portfolio_architect_presentation_target_07_proposed_buy
+  - sensor.portfolio_architect_presentation_target_08_proposed_buy
+  - sensor.portfolio_architect_presentation_target_09_proposed_buy
+  - sensor.portfolio_architect_presentation_target_10_proposed_buy
+  - sensor.portfolio_architect_presentation_target_11_proposed_buy
+  - sensor.portfolio_architect_presentation_target_12_proposed_buy
+  - sensor.portfolio_architect_presentation_target_13_proposed_buy
+  - sensor.portfolio_architect_presentation_target_14_proposed_buy
+  - sensor.portfolio_architect_presentation_target_15_proposed_buy
+  - sensor.portfolio_architect_presentation_target_16_proposed_buy
+  - sensor.portfolio_architect_presentation_target_17_proposed_buy
+  - sensor.portfolio_architect_presentation_target_18_proposed_buy
+  - sensor.portfolio_architect_presentation_target_19_proposed_buy
+  - sensor.portfolio_architect_presentation_target_20_proposed_buy
+  - sensor.portfolio_architect_presentation_target_21_proposed_buy
+  - sensor.portfolio_architect_presentation_target_22_proposed_buy
+  - sensor.portfolio_architect_presentation_target_23_proposed_buy
+  - sensor.portfolio_architect_presentation_target_24_proposed_buy
+  - sensor.portfolio_architect_presentation_target_25_proposed_buy
+  - sensor.portfolio_architect_presentation_target_26_proposed_buy
+  - sensor.portfolio_architect_presentation_target_27_proposed_buy
+  - sensor.portfolio_architect_presentation_target_28_proposed_buy
+  - sensor.portfolio_architect_presentation_target_29_proposed_buy
+  - sensor.portfolio_architect_presentation_target_30_proposed_buy
+  - sensor.portfolio_architect_presentation_target_31_proposed_buy
+  - sensor.portfolio_architect_presentation_target_32_proposed_buy
   conditions:
   - condition: numeric_state
-    entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_proposed_buy
     above: 0
   card:
-    type: tile
-    entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_proposed_buy
-    name: AI & Big Data
-    tap_action:
-      action: more-info
-      entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_isin
-    color: green
-    icon: mdi:cart-arrow-down
-    hold_action:
-      action: more-info
-      entity: sensor.portfolio_architect_target_169c422c04a5055e983306d5476e01d6_proposed_buy
-    state_content:
-    - state
-    - execution_provider_name
+    type: entities
+    title: Empfohlene Käufe
+    show_header_toggle: false
+  show_empty: false
   grid_options:
-    columns: 6
+    columns: full
     rows: auto
-- type: conditional
+- type: entity-filter
+  entities:
+  - sensor.portfolio_architect_presentation_target_01_purchase_explanation
+  - sensor.portfolio_architect_presentation_target_02_purchase_explanation
+  - sensor.portfolio_architect_presentation_target_03_purchase_explanation
+  - sensor.portfolio_architect_presentation_target_04_purchase_explanation
+  - sensor.portfolio_architect_presentation_target_05_purchase_explanation
+  - sensor.portfolio_architect_presentation_target_06_purchase_explanation
+  - sensor.portfolio_architect_presentation_target_07_purchase_explanation
+  - sensor.portfolio_architect_presentation_target_08_purchase_explanation
+  - sensor.portfolio_architect_presentation_target_09_purchase_explanation
+  - sensor.portfolio_architect_presentation_target_10_purchase_explanation
+  - sensor.portfolio_architect_presentation_target_11_purchase_explanation
+  - sensor.portfolio_architect_presentation_target_12_purchase_explanation
+  - sensor.portfolio_architect_presentation_target_13_purchase_explanation
+  - sensor.portfolio_architect_presentation_target_14_purchase_explanation
+  - sensor.portfolio_architect_presentation_target_15_purchase_explanation
+  - sensor.portfolio_architect_presentation_target_16_purchase_explanation
+  - sensor.portfolio_architect_presentation_target_17_purchase_explanation
+  - sensor.portfolio_architect_presentation_target_18_purchase_explanation
+  - sensor.portfolio_architect_presentation_target_19_purchase_explanation
+  - sensor.portfolio_architect_presentation_target_20_purchase_explanation
+  - sensor.portfolio_architect_presentation_target_21_purchase_explanation
+  - sensor.portfolio_architect_presentation_target_22_purchase_explanation
+  - sensor.portfolio_architect_presentation_target_23_purchase_explanation
+  - sensor.portfolio_architect_presentation_target_24_purchase_explanation
+  - sensor.portfolio_architect_presentation_target_25_purchase_explanation
+  - sensor.portfolio_architect_presentation_target_26_purchase_explanation
+  - sensor.portfolio_architect_presentation_target_27_purchase_explanation
+  - sensor.portfolio_architect_presentation_target_28_purchase_explanation
+  - sensor.portfolio_architect_presentation_target_29_purchase_explanation
+  - sensor.portfolio_architect_presentation_target_30_purchase_explanation
+  - sensor.portfolio_architect_presentation_target_31_purchase_explanation
+  - sensor.portfolio_architect_presentation_target_32_purchase_explanation
   conditions:
-  - condition: numeric_state
-    entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_proposed_buy
-    above: 0
+  - condition: state
+    state: deferred
   card:
-    type: tile
-    entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_proposed_buy
-    name: Cybersecurity
-    tap_action:
-      action: more-info
-      entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_isin
-    color: green
-    icon: mdi:cart-arrow-down
-    hold_action:
-      action: more-info
-      entity: sensor.portfolio_architect_target_2e4d78875e53aca90d7398026a7828fd_proposed_buy
-    state_content:
-    - state
-    - execution_provider_name
+    type: entities
+    title: Zurückgestellte Ziele
+    show_header_toggle: false
+  show_empty: false
   grid_options:
-    columns: 6
-    rows: auto
-- type: conditional
-  conditions:
-  - condition: numeric_state
-    entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_proposed_buy
-    above: 0
-  card:
-    type: tile
-    entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_proposed_buy
-    name: Robotik · Thes.
-    tap_action:
-      action: more-info
-      entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_isin
-    color: green
-    icon: mdi:cart-arrow-down
-    hold_action:
-      action: more-info
-      entity: sensor.portfolio_architect_target_b19e41130f965a283955ac05c68620f8_proposed_buy
-    state_content:
-    - state
-    - execution_provider_name
-  grid_options:
-    columns: 6
+    columns: full
     rows: auto
