@@ -1,40 +1,44 @@
-# v1.35.0 validation
+# v1.35.1 validation
 
-Portfolio Architect v1.35.0 is prepared from the exact v1.34.1 tracked-source baseline and adds
-provider-scoped cash/funding topology plus two narrow presentation/diagnostic corrections.
+Portfolio Architect v1.35.1 is a narrow resilience hotfix prepared from the exact published
+v1.35.0 tracked-source baseline.
 
 ## Required automated evidence
 
-- integration, engine, common Gateway and all three official App versions align at `1.35.0`;
-- complete Python regression suite passes;
-- v1.35 funding regressions prove explicit directed transfer edges, no reverse-edge inference,
-  provider-local cash isolation, transfer-fee route economics, settlement-delay tie-breaking,
-  provider cash debiting and advisory transfer-plan payload validation;
-- broker schemas 1 and 2 retain their established behavior;
-- DKB regressions prove the exact bounded HTTP response body is SHA-256 fingerprinted before decode,
-  only digest/length persist, schema-1/schema-2 probe state remains readable, and live DKB
-  acquisition remains disabled;
-- reference-dashboard regressions prove the accumulating/distributing Robotics labels remain
-  visually distinct in English and German;
-- Python compilation, JSON/YAML parsing, `git diff --check`, strict publication readiness, source
-  privacy, release verification and release-artifact privacy pass;
-- repeated release builds are byte-identical; and
-- the Git overlay and binary patch independently reproduce the final tracked tree from the exact
-  v1.34.1 baseline, including executable-bit semantics.
+- integration, engine, common Gateway and all three official App package versions align at
+  `1.35.1`;
+- a real `ConnectionResetError` injected at the Comdirect HTTPS opener boundary becomes the
+  established bounded retryable `RemoteApiError` with `status == 0` and `operation ==
+  "oauth_refresh"`;
+- an unexpected ordinary exception injected into one session-maintenance iteration cannot
+  terminate the worker; a later iteration still runs successfully;
+- the containment diagnostic does not include arbitrary exception text;
+- existing v1.27.4 five-minute maintenance cadence, conclusive refresh-rejection latch and
+  provider-specific wiring regressions remain green;
+- the two remaining German allocation-chart labels use `Robotik · Thes.` and no English
+  accumulating-Robotics label remains in the German standalone dashboard;
+- all v1.35.0 provider-scoped funding, DKB probe-fingerprint and dashboard regressions remain green;
+- complete Python regression suite, Python compilation, JSON/YAML parsing, `git diff --check`,
+  strict publication readiness, source privacy, release verification and release-artifact privacy
+  pass;
+- three independent release builds are byte-identical; and
+- the Git overlay and binary patch independently reproduce the exact final tracked tree from the
+  v1.35.0 baseline, including executable-bit semantics.
 
 ## Live acceptance
 
-1. Update Portfolio Architect to 1.35.0 and restart Home Assistant.
-2. Confirm existing Comdirect and Trade Republic sources remain healthy on verified HTTPS and the
-   existing target/presentation model is unchanged apart from the Robotics label.
-3. Without changing `broker.yaml`, confirm schema-2 execution behavior is unchanged.
-4. When ready to exercise v1.35 funding topology, migrate `broker.yaml` explicitly to schema 3 with
-   reviewed transfer cost/business-day evidence, then confirm provider-scoped cash and the advisory
-   funding route match that configuration.
-5. Update all three Gateway Apps to 1.35.0 in place and verify their established provider-specific
-   behavior remains unchanged.
-6. A future DKB probe may be used to verify the new raw response-body digest/byte-count evidence;
-   no additional probe is required merely to accept the release.
+1. Start from a healthy live v1.35.0 installation with all three provider Apps aligned.
+2. Update Portfolio Architect to v1.35.1 and restart Home Assistant once.
+3. Keep the real `broker.yaml` on its existing schema unless a separate funding-topology change is
+   deliberately planned; no schema-3 migration is part of this hotfix.
+4. Update Comdirect to v1.35.1 in place and confirm the existing private CA, bearer token,
+   OAuth/session state, selected account and authorized-cash policy survive.
+5. Confirm Comdirect remains `OK / Live` across repeated scheduled portfolio refreshes and
+   maintenance cycles without upgrade-induced PhotoTAN reauthentication.
+6. Align Trade Republic and DKB to v1.35.1 in place; do not re-import or re-probe solely for this
+   release.
+7. A deliberate connection-reset fault injection is not required in production. If a natural
+   transient reset later occurs, confirm the maintenance worker remains active afterward.
 
 Local Docker availability is environment-dependent; protected GitHub workflows remain authoritative
-for actual provider-App Docker build/smoke execution when local Docker is unavailable.
+for actual provider-App Docker/private-PKI smoke execution when local Docker is unavailable.

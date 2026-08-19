@@ -1,10 +1,9 @@
-# Portfolio Architect Gateway — DKB v1.35.0
+# Portfolio Architect Gateway — DKB v1.35.1
 
-Version 1.35.0 keeps the DKB Gateway **experimental**, **manual-only** and non-live.
-Its registration-gated anonymous FinTS 3.0 BPD probe now records a privacy-safe fingerprint of the
-exact bounded HTTP response body (SHA-256 plus byte count) before normalization/base64 decoding,
-alongside the existing decoded-response fingerprint. Exact raw and decoded response bytes are still
-discarded and never persisted. No DKB acquisition or authenticated banking capability is added.
+Version 1.35.1 is package/User-Agent alignment for the Comdirect resilience hotfix. The DKB
+Gateway remains **experimental**, **manual-only** and non-live. Its v1.35.0 anonymous FinTS raw and
+decoded response fingerprint evidence is unchanged, exact response bytes remain ephemeral, and no
+authenticated DKB acquisition capability is added.
 
 The probe stays fixed to DKB's documented FinTS endpoint and bank code. It sends only anonymous
 dialog-initialization segments and persists only bounded, non-private evidence.
@@ -53,7 +52,7 @@ live DKB holdings and does not prove that an authenticated user's UPD advertises
 capability. Authenticated user-capability validation and DKB-App decoupled authentication
 remain later gates.
 
-The v1.35.0 DKB App requests no DKB login name, PIN or TAN and sends no holdings, balance,
+The v1.35.1 DKB App requests no DKB login name, PIN or TAN and sends no holdings, balance,
 transaction, order, transfer, payment, debit or transaction-history business transaction.
 Its provider REST source remains fail-closed and cannot publish a DKB portfolio snapshot.
 

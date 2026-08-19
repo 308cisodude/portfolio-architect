@@ -419,6 +419,19 @@ from current portfolio value.
   distributing outside-scope holding and add raw DKB capability-probe response-body SHA-256/byte
   evidence without persisting the response body itself.
 
+## v1.35.1 — Comdirect session-maintenance resilience hotfix
+
+- Classify direct connection-reset/connection errors from the Comdirect HTTPS stack as bounded
+  retryable remote-API failures rather than allowing a socket exception to escape the provider
+  transport boundary.
+- Contain unexpected ordinary exceptions per maintenance iteration so the provider-specific
+  five-minute OAuth worker cannot be terminated by one transient/unclassified failure.
+- Keep exception diagnostics privacy-bounded to the exception type and preserve conclusive OAuth
+  rejection/PhotoTAN behavior unchanged.
+- Correct the two remaining German accumulating-Robotics allocation-chart labels.
+- Preserve v1.35.0 funding topology, wire schemas, verified HTTPS, provider isolation and the
+  advisory/no-trading boundary.
+
 ## Future — native dynamic portfolio presentation
 
 - Consume the v1.34 presentation contract so the reference dashboard can render the actual

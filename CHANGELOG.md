@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.35.1
+
+- Classifies direct Comdirect `ConnectionError` transport failures, including the live-observed `ConnectionResetError`, as bounded retryable `RemoteApiError` failures instead of allowing them to escape the OAuth/session layer.
+- Adds defense-in-depth containment around each long-lived Comdirect session-maintenance iteration so an unexpected single failure cannot terminate the maintenance worker; unexpected diagnostics log only the exception type.
+- Corrects the two remaining German accumulating-Robotics allocation-chart labels to `Robotik · Thes.`.
+- Preserves v1.35.0 provider-scoped funding, broker schema 3, REST/health/TLS contracts, provider acquisition behavior and the advisory/no-trading boundary.
+
 ## 1.35.0
 
 - Preserves authorized investment cash as provider-scoped evidence across all accepted REST Gateways instead of collapsing supplemental-provider cash into a global reserve.

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.35.1
+
+- Classifies direct connection-reset/connection errors during Comdirect HTTPS/OAuth requests as bounded retryable remote-API failures.
+- Contains unexpected individual session-maintenance iteration failures so the long-lived worker remains alive; diagnostics expose only the exception type.
+- Preserves OAuth rejection semantics, PhotoTAN bootstrap, provider acquisition, authorized cash, verified HTTPS and the read-only boundary.
+
 ## 1.35.0
 
 - Aligns the Comdirect App package with Portfolio Architect v1.35.0 provider-scoped funding; REST schema 1 and provider-owned authorized-cash semantics are unchanged.

@@ -337,6 +337,14 @@ class ComdirectClient:
                 _LOGGER.warning(
                     "Comdirect session maintenance failed: %s", type(err).__name__
                 )
+            except Exception as err:
+                # A long-lived maintenance worker must survive an unexpected single
+                # iteration failure. Keep diagnostics bounded to the exception type;
+                # exception text from provider/transport code is not safe to log here.
+                _LOGGER.error(
+                    "Comdirect session maintenance contained unexpected failure: %s",
+                    type(err).__name__,
+                )
             else:
                 reauthentication_reported = False
                 if refreshed:
