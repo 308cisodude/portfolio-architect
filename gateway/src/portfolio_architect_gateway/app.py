@@ -632,13 +632,17 @@ class IngressRequestHandler(BaseHTTPRequestHandler):
                     {"csrf", "mode", "retain_eur"},
                 ):
                     raise ValueError("Unexpected cash-policy form field")
-                self.ingress_server.controller.set_investment_cash_policy(
-                    mode=_single(values, "mode"),
-                    cap_eur=_single(values, "cap_eur") if "cap_eur" in values else "",
-                    retain_eur=(
-                        _single(values, "retain_eur") if "retain_eur" in values else ""
-                    ),
-                )
+                try:
+                    self.ingress_server.controller.set_investment_cash_policy(
+                        mode=_single(values, "mode"),
+                        cap_eur=_single(values, "cap_eur") if "cap_eur" in values else "",
+                        retain_eur=(
+                            _single(values, "retain_eur") if "retain_eur" in values else ""
+                        ),
+                    )
+                except ValueError:
+                    self._see_other("./?cash_policy_error=invalid_amount")
+                    return
                 accepted = True
             else:
                 if set(values) != {"csrf"}:
@@ -662,6 +666,15 @@ class IngressRequestHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", "0")
         self.end_headers()
 
+    def _see_other(self, location: str) -> None:
+        """Return one bounded relative Ingress redirect."""
+        if location not in {"./", "./?cash_policy_error=invalid_amount"}:
+            raise ValueError("Unsupported Ingress redirect target")
+        self.send_response(HTTPStatus.SEE_OTHER)
+        self.send_header("Location", location)
+        self._security_headers("text/plain; charset=utf-8")
+        self.send_header("Content-Length", "0")
+        self.end_headers()
 
     def _read_form_body(self) -> bytearray | None:
         """Read one bounded form body from a direct or streamed Ingress request."""
@@ -766,6 +779,13 @@ class IngressRequestHandler(BaseHTTPRequestHandler):
         account_message = escape(str(account["message"]))
         selected_label = escape(str(account.get("selected_label") or "None selected"))
         cash_policy = document["investment_cash_policy"]
+        cash_policy_error = urlsplit(self.path).query == "cash_policy_error=invalid_amount"
+        cash_policy_error_html = (
+            '<p class="warn" role="alert">Could not save the authorization policy. '
+            'Enter a non-negative EUR amount, for example 1024,00 or 1024.00.</p>'
+            if cash_policy_error
+            else ""
+        )
         cash_policy_mode = str(cash_policy.get("mode") or MODE_ALL_AVAILABLE)
         cash_policy_cap = str(cash_policy.get("cap_eur") or "")
         cash_policy_retain = str(cash_policy.get("retain_eur") or "")
@@ -813,6 +833,7 @@ class IngressRequestHandler(BaseHTTPRequestHandler):
 {selection_form}{clear_form}
 <p class="small">Only a masked account label, raw EUR balance, eligible non-borrowed cash and timestamp are shown in this admin-only page. The account identifier stays in App-private storage and is never sent to Home Assistant.</p></section>
 <section><h2>Investment cash authorization</h2>
+{cash_policy_error_html}
 <form method="post" action="set-cash-policy" autocomplete="off">
 <input type="hidden" name="csrf" value="{csrf}">
 <label for="cash-policy-mode">Authorization policy</label><select id="cash-policy-mode" name="mode" required>
@@ -822,7 +843,7 @@ class IngressRequestHandler(BaseHTTPRequestHandler):
 <label for="cash-policy-cap">Authorization cap in EUR</label><input id="cash-policy-cap" name="cap_eur" inputmode="decimal" maxlength="16" value="{escape(cash_policy_cap, quote=True)}">
 <label for="cash-policy-retain">Cash reserve to keep unallocated in EUR</label><input id="cash-policy-retain" name="retain_eur" inputmode="decimal" maxlength="16" value="{escape(cash_policy_retain, quote=True)}">
 <button type="submit">Save authorization policy</button></form>
-<p class="small">The Gateway first excludes unavailable, pending or credit-funded cash. All eligible cash authorizes the full eligible amount; Cap authorized cash limits the maximum allocation; Keep cash reserve authorizes only the amount above the retained EUR reserve. If eligible cash is below the retained reserve, authorized cash is zero.</p></section>
+<p class="small">The Gateway first excludes unavailable, pending or credit-funded cash. All eligible cash authorizes the full eligible amount; Cap authorized cash limits the maximum allocation; Keep cash reserve authorizes only the amount above the retained EUR reserve. If eligible cash is below the retained reserve, authorized cash is zero. EUR amount fields accept common decimal/grouping styles such as 1024,00, 1024.00, 1.024,00 and 1,024.00; values are normalized server-side before private persistence.</p></section>
 <section><h2>Comdirect bootstrap / reauthentication</h2><form method="post" action="bootstrap" autocomplete="off">
 <input type="hidden" name="csrf" value="{csrf}">
 <div class="grid"><div><label for="client_id">API client ID</label><input id="client_id" name="client_id" maxlength="512" required></div><div><label for="client_secret">API client secret</label><input id="client_secret" name="client_secret" type="password" maxlength="1024" required></div></div>

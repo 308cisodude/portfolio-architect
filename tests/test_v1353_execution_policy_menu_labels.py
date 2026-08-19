@@ -1,4 +1,4 @@
-"""Regression coverage for the v1.35.3 execution-policy menu-label hotfix."""
+"""Regression coverage for the v1.35.4 execution-policy menu-label hotfix."""
 
 from __future__ import annotations
 

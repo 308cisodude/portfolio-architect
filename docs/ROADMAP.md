@@ -447,6 +447,13 @@ from current portfolio value.
 - Cover every emitted broker-editor menu option in both English and German so unlabeled chevrons cannot regress.
 - Preserve broker schemas, route economics, retained-cash authorization, provider behavior, wire schemas and the advisory/no-trading boundary unchanged.
 
+## v1.35.4 — locale-tolerant cash-policy input hotfix
+
+- Accept common human EUR amount formats for Comdirect cash caps and retained reserves, including German decimal comma and validated dot/comma/space/apostrophe grouping, while keeping private state canonical.
+- Replace the live-observed generic invalid-amount HTTP 400 with bounded non-sensitive Ingress guidance and preserve the previous valid policy on rejected input.
+- Preserve cash-policy mathematics, provider-scoped funding, broker semantics, Gateway schemas/transport and all no-trading boundaries.
+- Preserve broker schemas, route economics, retained-cash authorization, provider behavior, wire schemas and the advisory/no-trading boundary unchanged.
+
 ## Future — native dynamic portfolio presentation
 
 - Consume the v1.34 presentation contract so the reference dashboard can render the actual

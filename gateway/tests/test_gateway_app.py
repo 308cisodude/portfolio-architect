@@ -526,3 +526,81 @@ def test_ingress_updates_investment_cash_authorization_policy(tmp_path: Path) ->
         server.shutdown()
         server.server_close()
         thread.join(timeout=5)
+
+def test_ingress_cash_policy_accepts_german_amount_and_redirects_invalid_input(tmp_path: Path) -> None:
+    controller, client = _controller(tmp_path)
+    server = IngressHttpServer(
+        ("127.0.0.1", 0),
+        controller,
+        allowed_sources=frozenset({"127.0.0.1"}),
+        require_user_header=True,
+    )
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        connection = http.client.HTTPConnection(
+            "127.0.0.1", server.server_address[1], timeout=5
+        )
+        localized = urlencode(
+            {
+                "csrf": controller.csrf_token,
+                "mode": "retain",
+                "retain_eur": "1.024,00",
+            }
+        )
+        connection.request(
+            "POST",
+            "/set-cash-policy",
+            body=localized,
+            headers={
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Content-Length": str(len(localized.encode())),
+                "X-Remote-User-Id": "admin",
+            },
+        )
+        response = connection.getresponse()
+        assert response.status == 303
+        assert response.getheader("Location") == "./"
+        response.read()
+        assert client.investment_cash_policy().mode == "retain"
+        assert client.investment_cash_policy().retain_eur == Decimal("1024.00")
+
+        invalid = urlencode(
+            {
+                "csrf": controller.csrf_token,
+                "mode": "retain",
+                "retain_eur": "12,34,56",
+            }
+        )
+        connection.request(
+            "POST",
+            "/set-cash-policy",
+            body=invalid,
+            headers={
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Content-Length": str(len(invalid.encode())),
+                "X-Remote-User-Id": "admin",
+            },
+        )
+        response = connection.getresponse()
+        assert response.status == 303
+        assert response.getheader("Location") == "./?cash_policy_error=invalid_amount"
+        response.read()
+        # Rejected input cannot overwrite the last valid private policy.
+        assert client.investment_cash_policy().retain_eur == Decimal("1024.00")
+
+        connection.request(
+            "GET",
+            "/?cash_policy_error=invalid_amount",
+            headers={"X-Remote-User-Id": "admin"},
+        )
+        response = connection.getresponse()
+        page = response.read().decode()
+        assert response.status == 200
+        assert "Could not save the authorization policy" in page
+        assert "1024,00 or 1024.00" in page
+        assert "12,34,56" not in page
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=5)

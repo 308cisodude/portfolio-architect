@@ -40,8 +40,9 @@ def test_capped_policy_fails_closed_without_a_valid_cap(tmp_path: Path) -> None:
     with pytest.raises(ProtocolError, match="requires a canonical EUR cap"):
         load_investment_cash_policy(path)
 
-    with pytest.raises(ValueError, match="canonical EUR amount"):
-        parse_policy_input("capped", "100,00")
+    assert parse_policy_input("capped", "100,00") == InvestmentCashPolicy(
+        mode=MODE_CAPPED, cap_eur=Decimal("100.00")
+    )
 
 
 def test_all_available_form_normalizes_stale_cap_away(tmp_path: Path) -> None:
@@ -64,3 +65,33 @@ def test_persisted_all_available_policy_with_cap_still_fails_closed(tmp_path: Pa
     path.chmod(0o600)
     with pytest.raises(ProtocolError, match="must not define a cap"):
         load_investment_cash_policy(path)
+
+@pytest.mark.parametrize(
+    ("token", "expected"),
+    [
+        ("1024", "1024"),
+        ("1024.00", "1024.00"),
+        ("1024,00", "1024.00"),
+        ("1.024,00", "1024.00"),
+        ("1,024.00", "1024.00"),
+        ("1 024,00", "1024.00"),
+        ("1\u00a0024,00", "1024.00"),
+        ("1\u202f024,00", "1024.00"),
+        ("1'024.00", "1024.00"),
+        ("1’024,00", "1024.00"),
+        ("1,234", "1234"),
+        ("1.234", "1234"),
+    ],
+)
+def test_form_amounts_accept_common_human_eur_formats(token: str, expected: str) -> None:
+    retained = parse_policy_input("retain", "", token)
+    assert retained.retain_eur == Decimal(expected)
+
+
+@pytest.mark.parametrize(
+    "token",
+    ("", "12,34,56", "1.23.4", "-100", "+100", "1e3", "1,000,00", "0.123", "01,00"),
+)
+def test_form_amounts_reject_malformed_or_unsafe_number_syntax(token: str) -> None:
+    with pytest.raises(ValueError, match="non-negative EUR amount"):
+        parse_policy_input("retain", "", token)

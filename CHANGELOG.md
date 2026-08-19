@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.35.4
+
+- Accepts common human EUR amount formats in the Comdirect cash-authorization form, including decimal comma/dot and validated dot/comma/space/apostrophe thousands grouping, while keeping private persisted state canonical and locale-neutral.
+- Fixes the live-observed `1024,00` retained-cash submission failure; the same tolerant parser applies to both **Cap authorized cash** and **Keep cash reserve**.
+- Replaces the generic browser HTTP 400 for an invalid cash amount with a bounded relative Ingress redirect and fixed non-sensitive validation guidance; invalid input cannot overwrite the last valid private policy.
+- Preserves all cash-policy mathematics, REST/health schemas, provider-scoped funding, broker semantics, Comdirect OAuth/session behavior, verified HTTPS and the advisory/no-trading boundary.
+
 ## 1.35.3
 
 - Restores visible English/German labels for every list-based menu in the native Execution providers & funding editor introduced in v1.35.2.
