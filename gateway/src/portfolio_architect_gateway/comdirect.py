@@ -617,6 +617,7 @@ class ComdirectClient:
                 authorized_eur=reserve_eur,
                 policy=policy.mode,
                 cap_eur=policy.cap_eur,
+                retain_eur=policy.retain_eur,
                 as_of=selected_account.as_of,
             )
         snapshot = PortfolioSnapshot(

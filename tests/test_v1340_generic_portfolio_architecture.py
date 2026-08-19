@@ -1,4 +1,4 @@
-"""v1.35.1 generic target identity and presentation-model regressions."""
+"""v1.35.2 generic target identity and presentation-model regressions."""
 
 from __future__ import annotations
 

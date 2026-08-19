@@ -39,6 +39,7 @@ class ProviderCash:
     authorized_eur: Decimal | None = None
     authorization_policy: str | None = None
     authorization_cap_eur: Decimal | None = None
+    authorization_retain_eur: Decimal | None = None
 
 
 def _provider_id(value: Any, *, field: str) -> str:
@@ -159,6 +160,7 @@ def provider_cash_from_metadata(raw: Any) -> tuple[ProviderCash, ...]:
             "authorized_eur",
             "authorization_policy",
             "authorization_cap_eur",
+            "authorization_retain_eur",
         }
         if not set(item).issubset(allowed) or not {"provider_id", "provider_name", "available_eur"}.issubset(item):
             raise ValueError("provider investment cash entry has unexpected fields")
@@ -183,9 +185,10 @@ def provider_cash_from_metadata(raw: Any) -> tuple[ProviderCash, ...]:
         authorized = None if item.get("authorized_eur") is None else _money(item["authorized_eur"], field="provider authorized investment cash")
         policy = item.get("authorization_policy")
         cap = None if item.get("authorization_cap_eur") is None else _money(item["authorization_cap_eur"], field="provider investment cash authorization cap")
-        if policy is not None and policy not in {"all_available", "capped"}:
+        retain = None if item.get("authorization_retain_eur") is None else _money(item["authorization_retain_eur"], field="provider investment cash retained amount")
+        if policy is not None and policy not in {"all_available", "capped", "retain"}:
             raise ValueError("provider investment cash authorization policy is invalid")
-        rich = any(value is not None for value in (account, eligible, authorized, policy, cap))
+        rich = any(value is not None for value in (account, eligible, authorized, policy, cap, retain))
         if rich:
             if account is None or eligible is None or authorized is None or policy is None:
                 raise ValueError("provider investment cash authorization metadata is incomplete")
@@ -193,11 +196,14 @@ def provider_cash_from_metadata(raw: Any) -> tuple[ProviderCash, ...]:
                 raise ValueError("provider investment cash available and authorized values differ")
             if eligible > account or authorized > eligible:
                 raise ValueError("provider investment cash authorization values are inconsistent")
-            if policy == "all_available" and cap is not None:
-                raise ValueError("all-available provider cash must not define a cap")
-            if policy == "capped":
-                if cap is None or authorized != min(eligible, cap):
+            if policy == "all_available":
+                if cap is not None or retain is not None or authorized != eligible:
+                    raise ValueError("all-available provider cash authorization is inconsistent")
+            elif policy == "capped":
+                if cap is None or retain is not None or authorized != min(eligible, cap):
                     raise ValueError("capped provider cash authorization is inconsistent")
+            elif retain is None or cap is not None or authorized != max(D("0"), eligible - retain):
+                raise ValueError("retained provider cash authorization is inconsistent")
         result.append(
             ProviderCash(
                 provider_id=provider_id,
@@ -209,6 +215,7 @@ def provider_cash_from_metadata(raw: Any) -> tuple[ProviderCash, ...]:
                 authorized_eur=authorized,
                 authorization_policy=policy,
                 authorization_cap_eur=cap,
+                authorization_retain_eur=retain,
             )
         )
     return tuple(sorted(result, key=lambda item: item.provider_id))

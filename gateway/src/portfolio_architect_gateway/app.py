@@ -16,7 +16,7 @@ import threading
 from typing import Any, Callable, Final
 from urllib.parse import parse_qs, urlsplit
 
-from .cash_policy import MODE_ALL_AVAILABLE, MODE_CAPPED, parse_policy_input
+from .cash_policy import MODE_ALL_AVAILABLE, MODE_CAPPED, MODE_RETAIN, parse_policy_input
 from .comdirect import AccountBalanceCandidate, ComdirectClient
 from .config import ComdirectConfig, GatewayConfig
 from .runtime_config import ServerConfig, atomic_secret, ensure_api_token
@@ -234,6 +234,11 @@ class AppController:
             "investment_cash_policy": {
                 "mode": policy.mode,
                 "cap_eur": format(policy.cap_eur, "f") if policy.cap_eur is not None else None,
+                **(
+                    {"retain_eur": format(policy.retain_eur, "f")}
+                    if policy.retain_eur is not None
+                    else {}
+                ),
             },
             "gateway": self.gateway_state.health_document(version=6),
             "client_credentials_configured": (
@@ -340,9 +345,9 @@ class AppController:
                 (),
             )
 
-    def set_investment_cash_policy(self, *, mode: str, cap_eur: str) -> None:
+    def set_investment_cash_policy(self, *, mode: str, cap_eur: str, retain_eur: str = "") -> None:
         """Persist a validated authorization policy and refresh the live snapshot."""
-        policy = parse_policy_input(mode, cap_eur)
+        policy = parse_policy_input(mode, cap_eur, retain_eur)
         self.client.set_investment_cash_policy(policy)
         refreshed = self.gateway_state.refresh(trigger="manual")
         if not refreshed:
@@ -624,11 +629,15 @@ class IngressRequestHandler(BaseHTTPRequestHandler):
                 if fields not in (
                     {"csrf", "mode"},
                     {"csrf", "mode", "cap_eur"},
+                    {"csrf", "mode", "retain_eur"},
                 ):
                     raise ValueError("Unexpected cash-policy form field")
                 self.ingress_server.controller.set_investment_cash_policy(
                     mode=_single(values, "mode"),
                     cap_eur=_single(values, "cap_eur") if "cap_eur" in values else "",
+                    retain_eur=(
+                        _single(values, "retain_eur") if "retain_eur" in values else ""
+                    ),
                 )
                 accepted = True
             else:
@@ -759,8 +768,10 @@ class IngressRequestHandler(BaseHTTPRequestHandler):
         cash_policy = document["investment_cash_policy"]
         cash_policy_mode = str(cash_policy.get("mode") or MODE_ALL_AVAILABLE)
         cash_policy_cap = str(cash_policy.get("cap_eur") or "")
+        cash_policy_retain = str(cash_policy.get("retain_eur") or "")
         all_available_selected = " selected" if cash_policy_mode == MODE_ALL_AVAILABLE else ""
         capped_selected = " selected" if cash_policy_mode == MODE_CAPPED else ""
+        retain_selected = " selected" if cash_policy_mode == MODE_RETAIN else ""
         candidate_options = "".join(
             "<option value=\"" + escape(str(item["token"]), quote=True) + "\">"
             + escape(str(item["label"]))
@@ -806,10 +817,12 @@ class IngressRequestHandler(BaseHTTPRequestHandler):
 <input type="hidden" name="csrf" value="{csrf}">
 <label for="cash-policy-mode">Authorization policy</label><select id="cash-policy-mode" name="mode" required>
 <option value="all_available"{all_available_selected}>All eligible cash</option>
-<option value="capped"{capped_selected}>Cap eligible cash</option></select>
-<label for="cash-policy-cap">Cap in EUR (required only for capped policy)</label><input id="cash-policy-cap" name="cap_eur" inputmode="decimal" maxlength="16" value="{escape(cash_policy_cap, quote=True)}">
+<option value="capped"{capped_selected}>Cap authorized cash</option>
+<option value="retain"{retain_selected}>Keep cash reserve</option></select>
+<label for="cash-policy-cap">Authorization cap in EUR</label><input id="cash-policy-cap" name="cap_eur" inputmode="decimal" maxlength="16" value="{escape(cash_policy_cap, quote=True)}">
+<label for="cash-policy-retain">Cash reserve to keep unallocated in EUR</label><input id="cash-policy-retain" name="retain_eur" inputmode="decimal" maxlength="16" value="{escape(cash_policy_retain, quote=True)}">
 <button type="submit">Save authorization policy</button></form>
-<p class="small">The Gateway first excludes unavailable, pending or credit-funded cash. This policy then decides how much of the remaining eligible cash Portfolio Architect is authorized to allocate. The default preserves existing behavior: all eligible cash.</p></section>
+<p class="small">The Gateway first excludes unavailable, pending or credit-funded cash. All eligible cash authorizes the full eligible amount; Cap authorized cash limits the maximum allocation; Keep cash reserve authorizes only the amount above the retained EUR reserve. If eligible cash is below the retained reserve, authorized cash is zero.</p></section>
 <section><h2>Comdirect bootstrap / reauthentication</h2><form method="post" action="bootstrap" autocomplete="off">
 <input type="hidden" name="csrf" value="{csrf}">
 <div class="grid"><div><label for="client_id">API client ID</label><input id="client_id" name="client_id" maxlength="512" required></div><div><label for="client_secret">API client secret</label><input id="client_secret" name="client_secret" type="password" maxlength="1024" required></div></div>
@@ -817,7 +830,7 @@ class IngressRequestHandler(BaseHTTPRequestHandler):
 <button type="submit">Start PhotoTAN bootstrap</button></form>
 <p class="small">Username and password are used by the bootstrap thread only and are not written to App options, files, logs, or diagnostics. The API client ID and secret are retained in the App-private data directory because token renewal requires them.</p></section>
 <script>
-function syncCashPolicy(){{const mode=document.getElementById('cash-policy-mode');const cap=document.getElementById('cash-policy-cap');const capped=mode.value==='capped';cap.disabled=!capped;cap.required=capped;if(!capped)cap.value='';}}
+function syncCashPolicy(){{const mode=document.getElementById('cash-policy-mode');const cap=document.getElementById('cash-policy-cap');const retain=document.getElementById('cash-policy-retain');const capped=mode.value==='capped';const retained=mode.value==='retain';cap.disabled=!capped;cap.required=capped;retain.disabled=!retained;retain.required=retained;if(!capped)cap.value='';if(!retained)retain.value='';}}
 function setRuntime(id,text,healthy){{const e=document.getElementById(id);e.textContent=text;e.classList.toggle('ok',healthy===true);e.classList.toggle('warn',healthy===false);}}
 async function update(){{try{{const r=await fetch('status',{{cache:'no-store'}});if(!r.ok)return;const d=await r.json();const g=d.gateway;const gatewayOk=g.status==='ok';const live=g.operating_mode==='live';setRuntime('gateway-status',g.status||'unavailable',gatewayOk);setRuntime('operating-mode',g.operating_mode||'unavailable',live);document.getElementById('bootstrap-state').textContent=d.bootstrap.state;document.getElementById('bootstrap-message').textContent=d.bootstrap.message;document.getElementById('investment-account-state').textContent=d.investment_account.state;document.getElementById('investment-account-message').textContent=d.investment_account.message;document.getElementById('investment-account-selected').textContent=d.investment_account.selected_label||'None selected';document.getElementById('refresh-state').textContent=g.refresh_in_progress?'running':'idle';document.getElementById('refresh-trigger').textContent=g.last_refresh_trigger||'unavailable';document.getElementById('refresh-duration').textContent=g.last_refresh_duration_ms===null?'unavailable':(g.last_refresh_duration_ms/1000).toFixed(3)+' seconds';document.getElementById('next-refresh').textContent=g.next_refresh_due_at||'unavailable';document.getElementById('snapshot-age').textContent=g.snapshot_age_seconds===null?'unavailable':g.snapshot_age_seconds+' seconds';document.getElementById('refresh-failures').textContent=g.consecutive_refresh_failures===null?'unavailable':g.consecutive_refresh_failures;document.getElementById('failure-class').textContent=g.last_refresh_failure_class||'none';document.getElementById('failure-at').textContent=g.last_refresh_failure_at||'unavailable';document.getElementById('recommended-action').textContent=g.recommended_action||'none';document.getElementById('retry-after').textContent=g.retry_after_seconds===null?'unavailable':g.retry_after_seconds+' seconds';const verified=!!g.snapshot_sha256;setRuntime('snapshot-integrity',verified?'verified':'unavailable',verified);document.getElementById('snapshot-count').textContent=g.snapshot_position_count===null?'unavailable':g.snapshot_position_count;document.getElementById('snapshot-fingerprint').textContent=g.snapshot_sha256?g.snapshot_sha256.slice(0,12)+'…':'unavailable';}}catch(e){{}}}}const cashPolicyMode=document.getElementById('cash-policy-mode');cashPolicyMode.addEventListener('change',syncCashPolicy);syncCashPolicy();update();setInterval(update,2000);
 </script></main></body></html>"""

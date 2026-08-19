@@ -1,44 +1,39 @@
-# v1.35.1 validation
+# v1.35.2 validation
 
-Portfolio Architect v1.35.1 is a narrow resilience hotfix prepared from the exact published
-v1.35.0 tracked-source baseline.
+Portfolio Architect v1.35.2 is prepared from the exact published and live-accepted v1.35.1 tracked
+source baseline. Validation must prove the new configuration/cash-policy surface without weakening
+the established funding, transport, provider-isolation or publication boundaries.
 
-## Required automated evidence
+Required evidence:
 
-- integration, engine, common Gateway and all three official App package versions align at
-  `1.35.1`;
-- a real `ConnectionResetError` injected at the Comdirect HTTPS opener boundary becomes the
-  established bounded retryable `RemoteApiError` with `status == 0` and `operation ==
-  "oauth_refresh"`;
-- an unexpected ordinary exception injected into one session-maintenance iteration cannot
-  terminate the worker; a later iteration still runs successfully;
-- the containment diagnostic does not include arbitrary exception text;
-- existing v1.27.4 five-minute maintenance cadence, conclusive refresh-rejection latch and
-  provider-specific wiring regressions remain green;
-- the two remaining German allocation-chart labels use `Robotik · Thes.` and no English
-  accumulating-Robotics label remains in the German standalone dashboard;
-- all v1.35.0 provider-scoped funding, DKB probe-fingerprint and dashboard regressions remain green;
-- complete Python regression suite, Python compilation, JSON/YAML parsing, `git diff --check`,
-  strict publication readiness, source privacy, release verification and release-artifact privacy
-  pass;
-- three independent release builds are byte-identical; and
-- the Git overlay and binary patch independently reproduce the exact final tracked tree from the
-  v1.35.0 baseline, including executable-bit semantics.
+- all integration/common Gateway/provider App version markers align at `1.35.2`;
+- broker schemas 1/2/3 retain established runtime behavior;
+- the native broker editor accepts only schema 2/3, validates the complete document before save and
+  performs an atomic same-file replacement;
+- native editing preserves an existing advanced numeric priority when its preference tier is not changed;
+- adding a funding relationship creates only the exact directed edge and schema-2-to-3 opt-in;
+- `promotional` is boolean when present and cannot make a higher-cost route beat a cheaper route;
+- route economics remain cost first, settlement time second and optional priority only a later tie-break;
+- retained-cash authorization implements `max(eligible - retain, 0)` including the retain-above-eligible case;
+- all three cash policies satisfy `0 <= authorized <= eligible`;
+- private schema-1 cash-policy state remains readable and schema-2 retained state round-trips;
+- Gateway/cache/REST/Home Assistant model validation rejects inconsistent cap/retain combinations;
+- existing v1.35.1 Comdirect session-maintenance resilience regressions remain green;
+- v1.35.0 provider-scoped funding, exact directed topology and DKB probe-fingerprint regressions remain green;
+- Python compilation, tracked JSON/YAML parsing, `git diff --check`, publication-readiness and privacy checks pass;
+- all tests pass;
+- three independent release builds are byte-identical;
+- release verification and release-artifact privacy checks pass for every build;
+- overlay and binary patch independently reproduce the final tracked tree from the exact v1.35.1 baseline.
+
+Local Docker availability is environment-dependent. Protected GitHub **Validate release** remains
+authoritative for actual provider-App Docker/private-PKI smoke execution when Docker is unavailable
+in the preparation environment.
 
 ## Live acceptance
 
-1. Start from a healthy live v1.35.0 installation with all three provider Apps aligned.
-2. Update Portfolio Architect to v1.35.1 and restart Home Assistant once.
-3. Keep the real `broker.yaml` on its existing schema unless a separate funding-topology change is
-   deliberately planned; no schema-3 migration is part of this hotfix.
-4. Update Comdirect to v1.35.1 in place and confirm the existing private CA, bearer token,
-   OAuth/session state, selected account and authorized-cash policy survive.
-5. Confirm Comdirect remains `OK / Live` across repeated scheduled portfolio refreshes and
-   maintenance cycles without upgrade-induced PhotoTAN reauthentication.
-6. Align Trade Republic and DKB to v1.35.1 in place; do not re-import or re-probe solely for this
-   release.
-7. A deliberate connection-reset fault injection is not required in production. If a natural
-   transient reset later occurs, confirm the maintenance worker remains active afterward.
-
-Local Docker availability is environment-dependent; protected GitHub workflows remain authoritative
-for actual provider-App Docker/private-PKI smoke execution when local Docker is unavailable.
+Start from healthy/live v1.35.1 with the already accepted schema-3 funding configuration. Upgrade in
+place without reauthentication or source recreation. Confirm current execution recommendations and
+funding plans remain unchanged, inspect the new native execution-provider/funding editor, and exercise
+the retained-cash policy only with a deliberately chosen amount. No real trade or transfer is required
+for acceptance.

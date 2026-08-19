@@ -64,6 +64,7 @@ class RestInvestmentCash:
     policy: str
     as_of: datetime
     cap_eur: Decimal | None = None
+    retain_eur: Decimal | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -200,29 +201,37 @@ def _parse_investment_cash(value: Any, *, now: datetime | None) -> RestInvestmen
     if not isinstance(value, dict):
         raise ValueError("REST response investment_cash must be an object")
     required = {"account_balance_eur", "eligible_eur", "authorized_eur", "policy", "as_of"}
-    allowed = required | {"cap_eur"}
+    allowed = required | {"cap_eur", "retain_eur"}
     if not required.issubset(value) or set(value) - allowed:
         raise ValueError("REST response investment_cash has an unexpected schema")
     account_balance = _parse_signed_cash_value(value.get("account_balance_eur"), field="account balance")
     eligible = _parse_reserve_value(value.get("eligible_eur"))
     authorized = _parse_reserve_value(value.get("authorized_eur"))
     policy = value.get("policy")
-    if policy not in {"all_available", "capped"}:
+    if policy not in {"all_available", "capped", "retain"}:
         raise ValueError("REST investment cash policy is invalid")
     cap = None
     if "cap_eur" in value:
         cap = _parse_reserve_value(value.get("cap_eur"))
+    retain = None
+    if "retain_eur" in value:
+        retain = _parse_reserve_value(value.get("retain_eur"))
     as_of = _parse_generated_at(value.get("as_of"), now=now)
     if authorized > eligible:
         raise ValueError("REST authorized investment cash exceeds eligible cash")
     if policy == "all_available":
-        if cap is not None or authorized != eligible:
+        if cap is not None or retain is not None or authorized != eligible:
             raise ValueError("REST all-available cash authorization is inconsistent")
-    else:
-        if cap is None:
-            raise ValueError("REST capped cash authorization requires cap_eur")
+    elif policy == "capped":
+        if cap is None or retain is not None:
+            raise ValueError("REST capped cash authorization requires only cap_eur")
         if authorized != min(eligible, cap):
             raise ValueError("REST capped cash authorization is inconsistent")
+    else:
+        if retain is None or cap is not None:
+            raise ValueError("REST retained-cash authorization requires only retain_eur")
+        if authorized != max(D("0"), eligible - retain):
+            raise ValueError("REST retained-cash authorization is inconsistent")
     return RestInvestmentCash(
         account_balance_eur=account_balance,
         eligible_eur=eligible,
@@ -230,6 +239,7 @@ def _parse_investment_cash(value: Any, *, now: datetime | None) -> RestInvestmen
         policy=policy,
         as_of=as_of,
         cap_eur=cap,
+        retain_eur=retain,
     )
 
 

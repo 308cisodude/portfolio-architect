@@ -432,6 +432,15 @@ from current portfolio value.
 - Preserve v1.35.0 funding topology, wire schemas, verified HTTPS, provider isolation and the
   advisory/no-trading boundary.
 
+## v1.35.2 — execution-policy UX and retained cash
+
+- Add a native Home Assistant editor over validated file-backed broker schemas 2 and 3 for provider evidence, savings-plan routes and exact directed funding topology.
+- Present numeric provider priority as an optional tie-break preference; keep cost first and settlement time second.
+- Validate `promotional` as boolean descriptive tariff/provenance metadata and keep it outside route economics.
+- Add provider-owned **Keep cash reserve** authorization with `authorized = max(eligible - retain, 0)` while preserving all-available/capped compatibility.
+- Keep DKB non-live and do not generalize funding topology into arbitrary transit-bank graph nodes.
+- Preserve payload schema 8, REST portfolio schema 1, Gateway health schema 6, private-PKI transport and advisory-only behavior.
+
 ## Future — native dynamic portfolio presentation
 
 - Consume the v1.34 presentation contract so the reference dashboard can render the actual

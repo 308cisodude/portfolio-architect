@@ -1809,6 +1809,7 @@ def _provider_cash_metadata(provider_id: str, snapshot: RestSnapshot) -> dict[st
                 "authorized_eur": cash.authorized_eur,
                 "authorization_policy": cash.policy,
                 "authorization_cap_eur": cash.cap_eur,
+                "authorization_retain_eur": cash.retain_eur,
             }
         )
     return result
@@ -2083,6 +2084,7 @@ def _calculate_rest_payload(
                     "authorized_eur": investment_cash.authorized_eur,
                     "authorization_policy": investment_cash.policy,
                     "authorization_cap_eur": investment_cash.cap_eur,
+                    "authorization_retain_eur": investment_cash.retain_eur,
                 }
             )
         provider_cash[primary_provider_id] = primary_cash
@@ -2113,6 +2115,7 @@ def _calculate_rest_payload(
                     "authorized_investment_cash_eur": investment_cash.authorized_eur,
                     "investment_cash_authorization_policy": investment_cash.policy,
                     "investment_cash_authorization_cap_eur": investment_cash.cap_eur,
+                    "investment_cash_authorization_retain_eur": investment_cash.retain_eur,
                 }
                 if investment_cash is not None
                 else {}

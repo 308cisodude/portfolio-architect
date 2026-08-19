@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import date
 from decimal import Decimal, ROUND_FLOOR
 from urllib.parse import urlsplit
 from typing import Any
@@ -116,12 +117,47 @@ from .const import (
     SOURCE_TYPE_LOCAL_FILES,
     SOURCE_TYPE_REST_API,
 )
+from .broker_editor import (
+    TIE_BREAK_FALLBACK,
+    TIE_BREAK_NEUTRAL,
+    TIE_BREAK_PREFERRED,
+    add_funding_transfer,
+    load_broker_editor_context,
+    remove_funding_transfer,
+    remove_provider,
+    remove_savings_plan,
+    set_general_settings,
+    tie_break_mode,
+    upsert_provider,
+    upsert_savings_plan,
+    write_broker_document_atomic,
+)
 from .engine import calculate_portfolio_payload, calculate_portfolio_payload_from_positions
 from .gateway_provider_ids import (
     GATEWAY_PROVIDER_COMDIRECT,
     gateway_provider_conflicts_with_dkb_csv,
 )
 CONF_MANUAL_VENUE_FEE_BPS = "manual_venue_fee_bps"
+
+# Native broker editor fields intentionally remain local to the options flow. The
+# authoritative runtime format remains broker.yaml schema 2/3.
+CONF_BROKER_FEE_DATA_MAX_AGE_DAYS = "broker_fee_data_max_age_days"
+CONF_BROKER_PROVIDER_ID = "broker_provider_id"
+CONF_BROKER_PROVIDER_NAME = "broker_provider_name"
+CONF_BROKER_PROVIDER_SOURCE = "broker_provider_source"
+CONF_BROKER_PROVIDER_AS_OF = "broker_provider_as_of"
+CONF_BROKER_TIE_BREAK = "broker_tie_break_preference"
+CONF_BROKER_SAVINGS_ROUTE = "broker_savings_route"
+CONF_BROKER_ISIN = "broker_isin"
+CONF_BROKER_AVAILABLE = "broker_available"
+CONF_BROKER_FEE_PCT = "broker_fee_pct"
+CONF_BROKER_PROMOTIONAL = "broker_promotional"
+CONF_BROKER_STATUS = "broker_status"
+CONF_BROKER_FUNDING_EDGE = "broker_funding_edge"
+CONF_BROKER_FROM_PROVIDER = "broker_from_provider"
+CONF_BROKER_TO_PROVIDER = "broker_to_provider"
+CONF_BROKER_TRANSFER_FEE_EUR = "broker_transfer_fee_eur"
+CONF_BROKER_SETTLEMENT_DAYS = "broker_settlement_business_days"
 
 
 from .engine.execution import ExecutionConfig
@@ -891,13 +927,15 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
     _instrument_index: int
     _execution_draft: dict[str, Any] | None = None
     _schedule_settings_draft: dict[str, Any] | None = None
+    _broker_provider_id: str | None = None
+    _broker_route_token: str | None = None
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         """Present native configuration areas."""
         del user_input
-        menu_options = ["plan", "plan_schedule", "execution", "sources", "runtime"]
+        menu_options = ["plan", "plan_schedule", "execution", "execution_providers", "sources", "runtime"]
         if self.config_entry.options.get(CONF_PLAN_OVERRIDE_ENABLED):
             menu_options.append("reset_plan")
         return self.async_show_menu(
@@ -1412,6 +1450,457 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
             errors=errors,
             last_step=True,
         )
+
+    async def async_step_execution_providers(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Manage provider-aware broker.yaml through native validated forms."""
+        del user_input
+        try:
+            context = await self._async_broker_context()
+        except (OSError, ValueError, PortfolioSourcePathError):
+            return self.async_abort(reason="broker_editor_unavailable")
+        providers = context.document.get("providers", {})
+        menu = ["broker_settings", "broker_providers", "broker_savings_plans"]
+        if isinstance(providers, dict) and len(providers) >= 2:
+            menu.append("funding_topology")
+        return self.async_show_menu(step_id="execution_providers", menu_options=menu)
+
+    async def async_step_broker_settings(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Edit the common provider-evidence freshness window."""
+        try:
+            context = await self._async_broker_context()
+        except (OSError, ValueError, PortfolioSourcePathError):
+            return self.async_abort(reason="broker_editor_unavailable")
+        suggested = {
+            CONF_BROKER_FEE_DATA_MAX_AGE_DAYS: int(
+                context.document.get("fee_data_max_age_days", 30)
+            )
+        }
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            suggested.update(user_input)
+            try:
+                updated = set_general_settings(
+                    context.document,
+                    fee_data_max_age_days=int(user_input[CONF_BROKER_FEE_DATA_MAX_AGE_DAYS]),
+                )
+                await self._async_write_broker(context.path, updated)
+            except (OSError, ValueError):
+                errors["base"] = "invalid_broker_config"
+            else:
+                return self.async_create_entry(data=dict(self.config_entry.options))
+        return self.async_show_form(
+            step_id="broker_settings",
+            data_schema=self.add_suggested_values_to_schema(_broker_settings_schema(), suggested),
+            errors=errors,
+            last_step=True,
+        )
+
+    async def async_step_broker_providers(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Choose a provider-management action."""
+        del user_input
+        try:
+            context = await self._async_broker_context()
+        except (OSError, ValueError, PortfolioSourcePathError):
+            return self.async_abort(reason="broker_editor_unavailable")
+        providers = context.document.get("providers", {})
+        menu = ["add_execution_provider"]
+        if isinstance(providers, dict) and providers:
+            menu.extend(["edit_execution_provider", "remove_execution_provider"])
+        return self.async_show_menu(step_id="broker_providers", menu_options=menu)
+
+    async def async_step_add_execution_provider(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Add one provider with explicit evidence and neutral tie-break by default."""
+        errors: dict[str, str] = {}
+        suggested = {
+            CONF_BROKER_PROVIDER_ID: "",
+            CONF_BROKER_PROVIDER_NAME: "",
+            CONF_BROKER_PROVIDER_SOURCE: "",
+            CONF_BROKER_PROVIDER_AS_OF: date.today().isoformat(),
+            CONF_BROKER_TIE_BREAK: TIE_BREAK_NEUTRAL,
+        }
+        if user_input is not None:
+            suggested.update(user_input)
+            try:
+                context = await self._async_broker_context()
+                updated = upsert_provider(
+                    context.document,
+                    provider_id=str(user_input[CONF_BROKER_PROVIDER_ID]),
+                    name=str(user_input[CONF_BROKER_PROVIDER_NAME]),
+                    source=str(user_input[CONF_BROKER_PROVIDER_SOURCE]),
+                    as_of=str(user_input[CONF_BROKER_PROVIDER_AS_OF]),
+                    tie_break=str(user_input[CONF_BROKER_TIE_BREAK]),
+                    create=True,
+                )
+                await self._async_write_broker(context.path, updated)
+            except (OSError, ValueError, PortfolioSourcePathError):
+                errors["base"] = "invalid_broker_config"
+            else:
+                return self.async_create_entry(data=dict(self.config_entry.options))
+        return self.async_show_form(
+            step_id="add_execution_provider",
+            data_schema=self.add_suggested_values_to_schema(_broker_provider_schema(include_id=True), suggested),
+            errors=errors,
+            last_step=True,
+        )
+
+    async def async_step_edit_execution_provider(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Select one provider for editing."""
+        try:
+            context = await self._async_broker_context()
+            options = _broker_provider_select_options(context.document)
+        except (OSError, ValueError, PortfolioSourcePathError):
+            return self.async_abort(reason="broker_editor_unavailable")
+        if user_input is not None:
+            provider_id = str(user_input[CONF_BROKER_PROVIDER_ID])
+            if provider_id not in {item["value"] for item in options}:
+                return self.async_abort(reason="broker_editor_unavailable")
+            self._broker_provider_id = provider_id
+            return await self.async_step_edit_execution_provider_details()
+        return self.async_show_form(
+            step_id="edit_execution_provider",
+            data_schema=_broker_provider_select_schema(options),
+        )
+
+    async def async_step_edit_execution_provider_details(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Edit evidence and tie-break semantics for the selected provider."""
+        provider_id = self._broker_provider_id
+        if provider_id is None:
+            return self.async_abort(reason="broker_editor_unavailable")
+        errors: dict[str, str] = {}
+        try:
+            context = await self._async_broker_context()
+            provider = context.document.get("providers", {}).get(provider_id)
+            if not isinstance(provider, dict):
+                raise ValueError("provider disappeared")
+            suggested = {
+                CONF_BROKER_PROVIDER_NAME: provider.get("name", provider_id),
+                CONF_BROKER_PROVIDER_SOURCE: provider.get("source", ""),
+                CONF_BROKER_PROVIDER_AS_OF: str(provider.get("as_of", "")),
+                CONF_BROKER_TIE_BREAK: tie_break_mode(provider),
+            }
+        except (OSError, ValueError, PortfolioSourcePathError):
+            return self.async_abort(reason="broker_editor_unavailable")
+        if user_input is not None:
+            suggested.update(user_input)
+            try:
+                updated = upsert_provider(
+                    context.document,
+                    provider_id=provider_id,
+                    name=str(user_input[CONF_BROKER_PROVIDER_NAME]),
+                    source=str(user_input[CONF_BROKER_PROVIDER_SOURCE]),
+                    as_of=str(user_input[CONF_BROKER_PROVIDER_AS_OF]),
+                    tie_break=str(user_input[CONF_BROKER_TIE_BREAK]),
+                    create=False,
+                )
+                await self._async_write_broker(context.path, updated)
+            except (OSError, ValueError):
+                errors["base"] = "invalid_broker_config"
+            else:
+                self._broker_provider_id = None
+                return self.async_create_entry(data=dict(self.config_entry.options))
+        return self.async_show_form(
+            step_id="edit_execution_provider_details",
+            data_schema=self.add_suggested_values_to_schema(_broker_provider_schema(include_id=False), suggested),
+            errors=errors,
+            last_step=True,
+        )
+
+    async def async_step_remove_execution_provider(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Remove one provider after its transfer edges have been removed."""
+        errors: dict[str, str] = {}
+        try:
+            context = await self._async_broker_context()
+            options = _broker_provider_select_options(context.document)
+        except (OSError, ValueError, PortfolioSourcePathError):
+            return self.async_abort(reason="broker_editor_unavailable")
+        if user_input is not None:
+            try:
+                updated = remove_provider(
+                    context.document,
+                    provider_id=str(user_input[CONF_BROKER_PROVIDER_ID]),
+                )
+                await self._async_write_broker(context.path, updated)
+            except (OSError, ValueError):
+                errors["base"] = "invalid_broker_config"
+            else:
+                return self.async_create_entry(data=dict(self.config_entry.options))
+        return self.async_show_form(
+            step_id="remove_execution_provider",
+            data_schema=_broker_provider_select_schema(options),
+            errors=errors,
+            last_step=True,
+        )
+
+    async def async_step_broker_savings_plans(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Choose a savings-plan route action."""
+        del user_input
+        try:
+            context = await self._async_broker_context()
+        except (OSError, ValueError, PortfolioSourcePathError):
+            return self.async_abort(reason="broker_editor_unavailable")
+        routes = _broker_savings_route_options(context.document)
+        menu = ["add_savings_plan_route"]
+        if routes:
+            menu.extend(["edit_savings_plan_route", "remove_savings_plan_route"])
+        return self.async_show_menu(step_id="broker_savings_plans", menu_options=menu)
+
+    async def async_step_add_savings_plan_route(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Add one instrument-specific savings-plan route."""
+        errors: dict[str, str] = {}
+        try:
+            context = await self._async_broker_context()
+            providers = _broker_provider_select_options(context.document)
+        except (OSError, ValueError, PortfolioSourcePathError):
+            return self.async_abort(reason="broker_editor_unavailable")
+        suggested = {
+            CONF_BROKER_PROVIDER_ID: providers[0]["value"] if providers else "",
+            CONF_BROKER_ISIN: "",
+            CONF_BROKER_AVAILABLE: True,
+            CONF_BROKER_FEE_PCT: 0.0,
+            CONF_BROKER_PROMOTIONAL: False,
+            CONF_BROKER_STATUS: "",
+        }
+        if user_input is not None:
+            suggested.update(user_input)
+            try:
+                updated = upsert_savings_plan(
+                    context.document,
+                    provider_id=str(user_input[CONF_BROKER_PROVIDER_ID]),
+                    isin=str(user_input[CONF_BROKER_ISIN]),
+                    available=bool(user_input[CONF_BROKER_AVAILABLE]),
+                    fee_pct=float(user_input[CONF_BROKER_FEE_PCT]),
+                    promotional=bool(user_input[CONF_BROKER_PROMOTIONAL]),
+                    status=str(user_input.get(CONF_BROKER_STATUS, "")),
+                    create=True,
+                )
+                await self._async_write_broker(context.path, updated)
+            except (OSError, ValueError):
+                errors["base"] = "invalid_broker_config"
+            else:
+                return self.async_create_entry(data=dict(self.config_entry.options))
+        return self.async_show_form(
+            step_id="add_savings_plan_route",
+            data_schema=self.add_suggested_values_to_schema(_broker_savings_plan_schema(providers, include_identity=True), suggested),
+            errors=errors,
+            last_step=True,
+        )
+
+    async def async_step_edit_savings_plan_route(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Select one existing savings-plan route."""
+        try:
+            context = await self._async_broker_context()
+            routes = _broker_savings_route_options(context.document)
+        except (OSError, ValueError, PortfolioSourcePathError):
+            return self.async_abort(reason="broker_editor_unavailable")
+        if not routes:
+            return self.async_abort(reason="broker_editor_unavailable")
+        if user_input is not None:
+            token = str(user_input[CONF_BROKER_SAVINGS_ROUTE])
+            if token not in {item["value"] for item in routes}:
+                return self.async_abort(reason="broker_editor_unavailable")
+            self._broker_route_token = token
+            return await self.async_step_edit_savings_plan_route_details()
+        return self.async_show_form(
+            step_id="edit_savings_plan_route",
+            data_schema=_broker_route_select_schema(routes),
+        )
+
+    async def async_step_edit_savings_plan_route_details(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Edit fee and promotional provenance for one savings-plan route."""
+        token = self._broker_route_token
+        if token is None or "|" not in token:
+            return self.async_abort(reason="broker_editor_unavailable")
+        provider_id, isin = token.split("|", 1)
+        errors: dict[str, str] = {}
+        try:
+            context = await self._async_broker_context()
+            provider = context.document.get("providers", {}).get(provider_id)
+            route = provider.get("savings_plans", {}).get(isin) if isinstance(provider, dict) else None
+            if not isinstance(route, dict):
+                raise ValueError("route disappeared")
+            providers = _broker_provider_select_options(context.document)
+            suggested = {
+                CONF_BROKER_AVAILABLE: bool(route.get("available")),
+                CONF_BROKER_FEE_PCT: float(route.get("fee_pct", 0.0)),
+                CONF_BROKER_PROMOTIONAL: bool(route.get("promotional", False)),
+                CONF_BROKER_STATUS: str(route.get("status") or ""),
+            }
+        except (OSError, ValueError, PortfolioSourcePathError):
+            return self.async_abort(reason="broker_editor_unavailable")
+        if user_input is not None:
+            suggested.update(user_input)
+            try:
+                updated = upsert_savings_plan(
+                    context.document,
+                    provider_id=provider_id,
+                    isin=isin,
+                    available=bool(user_input[CONF_BROKER_AVAILABLE]),
+                    fee_pct=float(user_input[CONF_BROKER_FEE_PCT]),
+                    promotional=bool(user_input[CONF_BROKER_PROMOTIONAL]),
+                    status=str(user_input.get(CONF_BROKER_STATUS, "")),
+                    create=False,
+                )
+                await self._async_write_broker(context.path, updated)
+            except (OSError, ValueError):
+                errors["base"] = "invalid_broker_config"
+            else:
+                self._broker_route_token = None
+                return self.async_create_entry(data=dict(self.config_entry.options))
+        return self.async_show_form(
+            step_id="edit_savings_plan_route_details",
+            data_schema=self.add_suggested_values_to_schema(_broker_savings_plan_schema(providers, include_identity=False), suggested),
+            description_placeholders={"provider_id": provider_id, "isin": isin},
+            errors=errors,
+            last_step=True,
+        )
+
+    async def async_step_remove_savings_plan_route(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Remove one explicit savings-plan route."""
+        errors: dict[str, str] = {}
+        try:
+            context = await self._async_broker_context()
+            routes = _broker_savings_route_options(context.document)
+        except (OSError, ValueError, PortfolioSourcePathError):
+            return self.async_abort(reason="broker_editor_unavailable")
+        if not routes:
+            return self.async_abort(reason="broker_editor_unavailable")
+        if user_input is not None:
+            token = str(user_input[CONF_BROKER_SAVINGS_ROUTE])
+            try:
+                provider_id, isin = token.split("|", 1)
+                updated = remove_savings_plan(context.document, provider_id=provider_id, isin=isin)
+                await self._async_write_broker(context.path, updated)
+            except (OSError, ValueError):
+                errors["base"] = "invalid_broker_config"
+            else:
+                return self.async_create_entry(data=dict(self.config_entry.options))
+        return self.async_show_form(
+            step_id="remove_savings_plan_route",
+            data_schema=_broker_route_select_schema(routes),
+            errors=errors,
+            last_step=True,
+        )
+
+    async def async_step_funding_topology(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Manage exact directed advisory funding edges."""
+        del user_input
+        try:
+            context = await self._async_broker_context()
+        except (OSError, ValueError, PortfolioSourcePathError):
+            return self.async_abort(reason="broker_editor_unavailable")
+        menu = ["add_funding_transfer"]
+        if _broker_funding_edge_options(context.document):
+            menu.append("remove_funding_transfer")
+        return self.async_show_menu(step_id="funding_topology", menu_options=menu)
+
+    async def async_step_add_funding_transfer(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Add one exact directed transfer edge with explicit cost and delay."""
+        errors: dict[str, str] = {}
+        try:
+            context = await self._async_broker_context()
+            providers = _broker_provider_select_options(context.document)
+        except (OSError, ValueError, PortfolioSourcePathError):
+            return self.async_abort(reason="broker_editor_unavailable")
+        if len(providers) < 2:
+            return self.async_abort(reason="broker_editor_unavailable")
+        suggested = {
+            CONF_BROKER_FROM_PROVIDER: providers[0]["value"],
+            CONF_BROKER_TO_PROVIDER: providers[1]["value"],
+            CONF_BROKER_TRANSFER_FEE_EUR: 0.0,
+            CONF_BROKER_SETTLEMENT_DAYS: 0,
+        }
+        if user_input is not None:
+            suggested.update(user_input)
+            try:
+                updated = add_funding_transfer(
+                    context.document,
+                    from_provider=str(user_input[CONF_BROKER_FROM_PROVIDER]),
+                    to_provider=str(user_input[CONF_BROKER_TO_PROVIDER]),
+                    fee_eur=float(user_input[CONF_BROKER_TRANSFER_FEE_EUR]),
+                    settlement_business_days=int(user_input[CONF_BROKER_SETTLEMENT_DAYS]),
+                )
+                await self._async_write_broker(context.path, updated)
+            except (OSError, ValueError):
+                errors["base"] = "invalid_broker_config"
+            else:
+                return self.async_create_entry(data=dict(self.config_entry.options))
+        return self.async_show_form(
+            step_id="add_funding_transfer",
+            data_schema=self.add_suggested_values_to_schema(_broker_funding_schema(providers), suggested),
+            errors=errors,
+            last_step=True,
+        )
+
+    async def async_step_remove_funding_transfer(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Remove one directed funding edge without inferring its reverse."""
+        errors: dict[str, str] = {}
+        try:
+            context = await self._async_broker_context()
+            edges = _broker_funding_edge_options(context.document)
+        except (OSError, ValueError, PortfolioSourcePathError):
+            return self.async_abort(reason="broker_editor_unavailable")
+        if not edges:
+            return self.async_abort(reason="broker_editor_unavailable")
+        if user_input is not None:
+            try:
+                source, destination = str(user_input[CONF_BROKER_FUNDING_EDGE]).split("|", 1)
+                updated = remove_funding_transfer(
+                    context.document, from_provider=source, to_provider=destination
+                )
+                await self._async_write_broker(context.path, updated)
+            except (OSError, ValueError):
+                errors["base"] = "invalid_broker_config"
+            else:
+                return self.async_create_entry(data=dict(self.config_entry.options))
+        return self.async_show_form(
+            step_id="remove_funding_transfer",
+            data_schema=_broker_funding_edge_select_schema(edges),
+            errors=errors,
+            last_step=True,
+        )
+
+    async def _async_broker_context(self):
+        configuration = resolve_configuration_directory(
+            self.hass,
+            self.config_entry.data[CONF_CONFIG_DIRECTORY],
+            require_exists=True,
+        )
+        return await self.hass.async_add_executor_job(
+            load_broker_editor_context, configuration.config_directory
+        )
+
+    async def _async_write_broker(self, path, document) -> None:
+        await self.hass.async_add_executor_job(write_broker_document_atomic, path, document)
 
     async def async_step_plan(
         self, user_input: dict[str, Any] | None = None
@@ -2089,6 +2578,161 @@ def _execution_fees_schema() -> vol.Schema:
             vol.Required(CONF_MANUAL_VENUE_FEE_BPS): amount(1000),
             vol.Required(CONF_MANUAL_VENUE_FEE_MIN_EUR): amount(),
             vol.Required(CONF_MANUAL_SETTLEMENT_FEE_EUR): amount(),
+        }
+    )
+
+
+def _broker_settings_schema() -> vol.Schema:
+    return vol.Schema(
+        {
+            vol.Required(CONF_BROKER_FEE_DATA_MAX_AGE_DAYS): NumberSelector(
+                NumberSelectorConfig(min=1, max=366, step=1, mode=NumberSelectorMode.BOX, unit_of_measurement="d")
+            )
+        }
+    )
+
+
+def _broker_provider_select_options(document: dict[str, Any]) -> list[dict[str, str]]:
+    providers = document.get("providers", {})
+    if not isinstance(providers, dict):
+        return []
+    return [
+        {"value": provider_id, "label": str(raw.get("name") or provider_id)}
+        for provider_id, raw in sorted(providers.items())
+        if isinstance(provider_id, str) and isinstance(raw, dict)
+    ]
+
+
+def _broker_provider_select_schema(options: list[dict[str, str]]) -> vol.Schema:
+    return vol.Schema(
+        {
+            vol.Required(CONF_BROKER_PROVIDER_ID): SelectSelector(
+                SelectSelectorConfig(options=options, mode=SelectSelectorMode.DROPDOWN)
+            )
+        }
+    )
+
+
+def _broker_provider_schema(*, include_id: bool) -> vol.Schema:
+    fields: dict[Any, Any] = {}
+    if include_id:
+        fields[vol.Required(CONF_BROKER_PROVIDER_ID)] = TextSelector(TextSelectorConfig(multiline=False))
+    fields.update(
+        {
+            vol.Required(CONF_BROKER_PROVIDER_NAME): TextSelector(TextSelectorConfig(multiline=False)),
+            vol.Required(CONF_BROKER_PROVIDER_SOURCE): TextSelector(TextSelectorConfig(multiline=False)),
+            vol.Required(CONF_BROKER_PROVIDER_AS_OF): TextSelector(TextSelectorConfig(multiline=False)),
+            vol.Required(CONF_BROKER_TIE_BREAK): SelectSelector(
+                SelectSelectorConfig(
+                    options=[TIE_BREAK_PREFERRED, TIE_BREAK_NEUTRAL, TIE_BREAK_FALLBACK],
+                    mode=SelectSelectorMode.DROPDOWN,
+                    translation_key="tie_break_preference",
+                )
+            ),
+        }
+    )
+    return vol.Schema(fields)
+
+
+def _broker_savings_route_options(document: dict[str, Any]) -> list[dict[str, str]]:
+    result: list[dict[str, str]] = []
+    providers = document.get("providers", {})
+    if not isinstance(providers, dict):
+        return result
+    for provider_id, provider in sorted(providers.items()):
+        plans = provider.get("savings_plans", {}) if isinstance(provider, dict) else {}
+        if not isinstance(plans, dict):
+            continue
+        provider_name = str(provider.get("name") or provider_id)
+        for isin in sorted(plans):
+            result.append({"value": f"{provider_id}|{isin}", "label": f"{provider_name} · {isin}"})
+    return result
+
+
+def _broker_route_select_schema(options: list[dict[str, str]]) -> vol.Schema:
+    return vol.Schema(
+        {
+            vol.Required(CONF_BROKER_SAVINGS_ROUTE): SelectSelector(
+                SelectSelectorConfig(options=options, mode=SelectSelectorMode.DROPDOWN)
+            )
+        }
+    )
+
+
+def _broker_savings_plan_schema(
+    providers: list[dict[str, str]], *, include_identity: bool
+) -> vol.Schema:
+    fields: dict[Any, Any] = {}
+    if include_identity:
+        fields[vol.Required(CONF_BROKER_PROVIDER_ID)] = SelectSelector(
+            SelectSelectorConfig(options=providers, mode=SelectSelectorMode.DROPDOWN)
+        )
+        fields[vol.Required(CONF_BROKER_ISIN)] = TextSelector(TextSelectorConfig(multiline=False))
+    fields.update(
+        {
+            vol.Required(CONF_BROKER_AVAILABLE): BooleanSelector(BooleanSelectorConfig()),
+            vol.Required(CONF_BROKER_FEE_PCT): NumberSelector(
+                NumberSelectorConfig(min=0, max=25, step=0.0001, mode=NumberSelectorMode.BOX, unit_of_measurement="%")
+            ),
+            vol.Required(CONF_BROKER_PROMOTIONAL): BooleanSelector(BooleanSelectorConfig()),
+            vol.Optional(CONF_BROKER_STATUS, default=""): TextSelector(TextSelectorConfig(multiline=False)),
+        }
+    )
+    return vol.Schema(fields)
+
+
+def _broker_funding_schema(providers: list[dict[str, str]]) -> vol.Schema:
+    return vol.Schema(
+        {
+            vol.Required(CONF_BROKER_FROM_PROVIDER): SelectSelector(
+                SelectSelectorConfig(options=providers, mode=SelectSelectorMode.DROPDOWN)
+            ),
+            vol.Required(CONF_BROKER_TO_PROVIDER): SelectSelector(
+                SelectSelectorConfig(options=providers, mode=SelectSelectorMode.DROPDOWN)
+            ),
+            vol.Required(CONF_BROKER_TRANSFER_FEE_EUR): NumberSelector(
+                NumberSelectorConfig(min=0, max=10000, step=0.01, mode=NumberSelectorMode.BOX, unit_of_measurement="EUR")
+            ),
+            vol.Required(CONF_BROKER_SETTLEMENT_DAYS): NumberSelector(
+                NumberSelectorConfig(min=0, max=30, step=1, mode=NumberSelectorMode.BOX, unit_of_measurement="d")
+            ),
+        }
+    )
+
+
+def _broker_funding_edge_options(document: dict[str, Any]) -> list[dict[str, str]]:
+    providers = document.get("providers", {})
+    names = {
+        key: str(value.get("name") or key)
+        for key, value in providers.items()
+        if isinstance(providers, dict) and isinstance(value, dict)
+    } if isinstance(providers, dict) else {}
+    edges = document.get("funding_transfers", []) if document.get("schema_version") == 3 else []
+    if not isinstance(edges, list):
+        return []
+    result: list[dict[str, str]] = []
+    for edge in edges:
+        if not isinstance(edge, dict):
+            continue
+        source = edge.get("from_provider")
+        destination = edge.get("to_provider")
+        if not isinstance(source, str) or not isinstance(destination, str):
+            continue
+        result.append(
+            {
+                "value": f"{source}|{destination}",
+                "label": f"{names.get(source, source)} → {names.get(destination, destination)}",
+            }
+        )
+    return sorted(result, key=lambda item: item["label"])
+
+
+def _broker_funding_edge_select_schema(options: list[dict[str, str]]) -> vol.Schema:
+    return vol.Schema(
+        {
+            vol.Required(CONF_BROKER_FUNDING_EDGE): SelectSelector(
+                SelectSelectorConfig(options=options, mode=SelectSelectorMode.DROPDOWN)
+            )
         }
     )
 

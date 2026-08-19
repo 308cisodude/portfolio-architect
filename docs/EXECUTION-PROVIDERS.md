@@ -5,7 +5,7 @@ A configured source such as a Comdirect Gateway or Trade Republic statement tell
 where current holdings came from. It does not authorize or imply that future purchases
 must execute through that provider.
 
-Execution-provider configuration lives only in `broker.yaml`.
+Provider-aware execution configuration remains persisted in `broker.yaml`. Portfolio Architect 1.35.2 adds a native **Execution providers & funding** options editor for schema 2 and schema 3 files. The editor validates the complete document and replaces `broker.yaml` atomically; direct YAML editing remains an advanced/file-based path. Schema 1 stays readable for compatibility but must be deliberately migrated to schema 2 before the native editor is enabled.
 
 ## Schema 1 compatibility
 
@@ -102,9 +102,17 @@ For each instrument PA can evaluate:
 - available savings plans and their percentage fees; and
 - an optional provider-local manual-order fee formula.
 
-The route with the lowest cost ratio is preferred. `priority` is only a deterministic
-tie-breaker between economically equal routes; a lower number wins the tie. Provider
-priority cannot make a more expensive route defeat a cheaper route.
+The route with the lowest cost ratio is preferred. For funded schema-3 candidates,
+settlement time is considered only after economic cost. `priority` is an optional
+deterministic **tie-break preference** after both of those criteria; a lower number wins
+the tie. Provider priority cannot make a more expensive route defeat a cheaper route.
+Omitting `priority` is the neutral/default choice. The native editor presents preference
+semantics rather than requiring numeric priorities, while preserving an existing advanced
+numeric value when the user edits unrelated evidence.
+
+The optional per-route `promotional` flag is descriptive tariff/provenance metadata only.
+It must be boolean when present and never participates in route ranking. A normal
+non-promotional 0% route therefore beats a promotional route with a positive fee.
 
 The selected provider is exposed with the recommendation as bounded metadata:
 
@@ -176,9 +184,11 @@ When a cross-provider route wins, the advisory payload records:
   destination, fee and settlement business days.
 
 Provider-scoped cash output also records both the authorized amount initially available
-and the amount remaining after the current recommendations. Existing Gateway
-`all_available` and `capped` authorization semantics remain authoritative per cash
-source.
+and the amount remaining after the current recommendations. Gateway cash authorization
+remains authoritative per source. Version 1.35.2 supports three modes: `all_available`,
+`capped`, and `retain` (UI: **Keep cash reserve**). Retained-cash authorization is
+`max(eligible_eur - retain_eur, 0)`, so a retained amount above current eligible cash
+cleanly authorizes zero rather than failing.
 
 This is still planning only. Portfolio Architect never initiates the transfer, moves
 money, places the resulting order, records transaction history, or assumes that a

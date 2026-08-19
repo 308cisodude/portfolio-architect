@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway — DKB v1.35.1
+# Portfolio Architect Gateway — DKB v1.35.2
 
-Version 1.35.1 is package/User-Agent alignment for the Comdirect resilience hotfix. The DKB
+Version 1.35.2 aligns the common Gateway model with the retained-cash contract; DKB
 Gateway remains **experimental**, **manual-only** and non-live. Its v1.35.0 anonymous FinTS raw and
 decoded response fingerprint evidence is unchanged, exact response bytes remain ephemeral, and no
 authenticated DKB acquisition capability is added.
@@ -52,7 +52,7 @@ live DKB holdings and does not prove that an authenticated user's UPD advertises
 capability. Authenticated user-capability validation and DKB-App decoupled authentication
 remain later gates.
 
-The v1.35.1 DKB App requests no DKB login name, PIN or TAN and sends no holdings, balance,
+The v1.35.2 DKB App requests no DKB login name, PIN or TAN and sends no holdings, balance,
 transaction, order, transfer, payment, debit or transaction-history business transaction.
 Its provider REST source remains fail-closed and cannot publish a DKB portfolio snapshot.
 

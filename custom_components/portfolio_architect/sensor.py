@@ -714,6 +714,7 @@ class PortfolioAvailableInvestmentReserveSensor(_PortfolioMonthlyMoneySensor):
             "eligible_investment_cash_eur": plan.eligible_investment_cash_eur,
             "authorization_policy": plan.investment_cash_authorization_policy,
             "authorization_cap_eur": plan.investment_cash_authorization_cap_eur,
+            "authorization_retain_eur": plan.investment_cash_authorization_retain_eur,
             "provider_investment_cash": [
                 {
                     "provider_id": item.provider_id,
@@ -723,6 +724,7 @@ class PortfolioAvailableInvestmentReserveSensor(_PortfolioMonthlyMoneySensor):
                     "as_of": item.as_of.isoformat() if item.as_of else None,
                     "authorization_policy": item.authorization_policy,
                     "authorization_cap_eur": item.authorization_cap_eur,
+                    "authorization_retain_eur": item.authorization_retain_eur,
                 }
                 for item in plan.provider_investment_cash
             ],

@@ -450,6 +450,11 @@ def calculate_portfolio_payload_from_positions(
                     "authorized_investment_cash_eur": source_metadata["authorized_investment_cash_eur"],
                     "investment_cash_authorization_policy": source_metadata["investment_cash_authorization_policy"],
                     "investment_cash_authorization_cap_eur": source_metadata["investment_cash_authorization_cap_eur"],
+                    **(
+                        {"investment_cash_authorization_retain_eur": source_metadata["investment_cash_authorization_retain_eur"]}
+                        if "investment_cash_authorization_retain_eur" in source_metadata
+                        else {}
+                    ),
                 }
                 if cash_authorization_present
                 else {}
@@ -470,6 +475,7 @@ def calculate_portfolio_payload_from_positions(
                             "authorized_eur": item.authorized_eur,
                             "authorization_policy": item.authorization_policy,
                             "authorization_cap_eur": item.authorization_cap_eur,
+                            "authorization_retain_eur": item.authorization_retain_eur,
                         }
                         for item in provider_cash
                     ],

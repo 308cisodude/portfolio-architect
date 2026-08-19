@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.35.2
+
+- Package/common-runtime alignment for Portfolio Architect v1.35.2; statement import and private diagnostics remain unchanged.
+- The common REST schema-1 model accepts the additive retained-cash metadata contract for future provider use, but this release does not add Trade Republic cash acquisition or authorization.
+
 ## 1.35.1
 
 - Package alignment for Portfolio Architect v1.35.1; statement import, accepted snapshot, diagnostics, provider-owned cash and REST schema 1 remain unchanged.

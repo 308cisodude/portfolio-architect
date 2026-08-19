@@ -429,6 +429,34 @@ def test_ingress_updates_investment_cash_authorization_policy(tmp_path: Path) ->
         assert client.investment_cash_policy().mode == "capped"
         assert client.investment_cash_policy().cap_eur == Decimal("100")
 
+        retained_form = urlencode(
+            {
+                "csrf": controller.csrf_token,
+                "mode": "retain",
+                "retain_eur": "750",
+            }
+        )
+        connection.request(
+            "POST",
+            "/set-cash-policy",
+            body=retained_form,
+            headers={
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Content-Length": str(len(retained_form.encode())),
+                "X-Remote-User-Id": "admin",
+            },
+        )
+        response = connection.getresponse()
+        assert response.status == 303
+        response.read()
+        assert client.investment_cash_policy().mode == "retain"
+        assert client.investment_cash_policy().retain_eur == Decimal("750")
+        assert controller.status_document()["investment_cash_policy"] == {
+            "mode": "retain",
+            "cap_eur": None,
+            "retain_eur": "750",
+        }
+
         # Reproduce the v1.19.0 transition bug: browsers can retain the old cap
         # field while the operator switches the policy back to all_available.
         stale_cap_form = urlencode(
@@ -489,7 +517,11 @@ def test_ingress_updates_investment_cash_authorization_policy(tmp_path: Path) ->
         assert "function syncCashPolicy()" in page
         assert "cap.disabled=!capped" in page
         assert "cap.required=capped" in page
+        assert "retain.disabled=!retained" in page
+        assert "retain.required=retained" in page
         assert "if(!capped)cap.value=''" in page
+        assert "if(!retained)retain.value=''" in page
+        assert "Keep cash reserve" in page
     finally:
         server.shutdown()
         server.server_close()

@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.35.2
+
+- Adds a native validated Home Assistant editor for provider-aware `broker.yaml` schemas 2/3, including provider evidence, savings-plan routes and exact directed funding topology.
+- Presents provider `priority` as an optional tie-break preference while preserving cost-first and settlement-time-second routing; existing advanced numeric priority is preserved when its preference tier is unchanged.
+- Validates savings-plan `promotional` as boolean descriptive/provenance metadata only; it never participates in route economics.
+- Adds provider-owned **Keep cash reserve** (`retain`) authorization: `max(eligible - retain_eur, 0)`, with backward-compatible private policy-state loading.
+- Preserves v1.35.1 Comdirect maintenance resilience, v1.35.0 funding semantics, verified HTTPS and the advisory/no-trading boundary.
+
 ## 1.35.1
 
 - Classifies direct Comdirect `ConnectionError` transport failures, including the live-observed `ConnectionResetError`, as bounded retryable `RemoteApiError` failures instead of allowing them to escape the OAuth/session layer.
