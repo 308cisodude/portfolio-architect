@@ -254,6 +254,11 @@ def _validate_savings_plans(raw: Any, *, provider_id: str) -> dict[str, dict[str
             normalized["fee_pct"] = value.quantize(D("0.0001"), rounding=ROUND_HALF_UP)
         elif item.get("fee_pct") is not None:
             raise ValueError(f"provider {provider_id} unavailable savings plan must not declare a fee")
+        promotional = item.get("promotional")
+        if promotional is not None and not isinstance(promotional, bool):
+            raise ValueError(
+                f"provider {provider_id} savings-plan promotional flag for {isin} is invalid"
+            )
         status = item.get("status")
         if status is not None:
             _bounded_text(status, field=f"provider {provider_id} savings-plan status", maximum=96)

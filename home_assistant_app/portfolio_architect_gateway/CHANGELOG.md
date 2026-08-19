@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.35.2
+
+- Adds **Keep cash reserve** (`retain`) to provider-owned investment-cash authorization while preserving all-available/capped behavior and private schema-1 policy-state compatibility.
+- Publishes `retain_eur` only when the retained-cash mode is active; REST portfolio schema remains 1 and requires aligned v1.35.2 clients for that additive field.
+- Preserves v1.35.1 OAuth/session-maintenance resilience, PhotoTAN, verified HTTPS and the read-only boundary.
+
 ## 1.35.1
 
 - Classifies direct connection-reset/connection errors during Comdirect HTTPS/OAuth requests as bounded retryable remote-API failures.

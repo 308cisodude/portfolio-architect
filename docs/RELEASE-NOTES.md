@@ -1,60 +1,73 @@
-# Portfolio Architect 1.35.1
+# Portfolio Architect 1.35.2
 
-Version 1.35.1 is a narrow Comdirect session-maintenance resilience hotfix on top of the
-live-accepted v1.35.0 provider-scoped funding release.
+Version 1.35.2 completes the v1.35 provider-scoped funding line with native execution-policy
+configuration, explicit route-metadata semantics, and a retained-cash authorization option. It is
+prepared on top of the published and live-accepted v1.35.1 baseline.
 
-## Comdirect maintenance-thread resilience
+## Native execution-provider and funding editor
 
-During v1.35.0 live acceptance, the Comdirect OAuth-maintenance thread encountered a direct
-`ConnectionResetError` while waiting for an OAuth refresh response. That socket exception was not
-covered by the transport's existing `URLError` / timeout / TLS classifier and escaped the worker,
-terminating the long-lived maintenance thread.
+Home Assistant **Portfolio Architect → Configure → Execution providers & funding** can now edit an
+existing provider-aware `broker.yaml` using validated native forms. The file remains the authoritative
+runtime representation and direct YAML editing remains an advanced path.
 
-Version 1.35.1 closes both layers of that failure mode:
+The editor supports broker schemas 2 and 3 and can manage:
 
-- built-in `ConnectionError` failures, including connection reset/refused/aborted conditions, are
-  classified as the existing bounded retryable `RemoteApiError` with no retained response body;
-- a final ordinary-`Exception` containment barrier around one maintenance iteration prevents an
-  unexpected future exception from terminating the thread;
-- the defense-in-depth log records only the exception class name and never arbitrary exception
-  text; and
-- conclusive OAuth rejection handling remains unchanged and still fails closed to PhotoTAN
-  reauthentication when the bank actually rejects the refresh session.
+- the common fee-evidence freshness window;
+- execution providers and their evidence source/date;
+- explicit per-provider savings-plan eligibility, fee and promotional metadata; and
+- exact directed funding-transfer edges with fee and conservative settlement business days.
 
-The hotfix does not claim that the observed connection reset caused the later `invalid_token`.
-It removes the proven resilience defect: one transient transport failure can no longer silently
-remove the independent OAuth-maintenance cadence.
+Every save validates the complete broker document and atomically replaces `broker.yaml`. Schema 1
+remains runtime-compatible but is not silently migrated by the native editor. Adding the first
+funding edge deliberately upgrades schema 2 to schema 3; the reverse edge is never inferred.
 
-## Quiet dashboard correction
+## Cost-first route semantics made explicit
 
-The two German allocation-chart labels that still used the English `Robotics · Acc` text now read
-`Robotik · Thes.`. The English accumulating target remains `Robotics · Acc`, and the retained
-old distributing holding remains `Robotics · Dist` / `Robotik · Aussch.`.
+Execution economics are unchanged: actual execution and funding-transfer cost is primary, settlement
+time is secondary for otherwise equivalent funded routes, and optional provider `priority` is only a
+deterministic tie-break after those criteria. The native UI presents that field as **Tie-break
+preference** and offers a neutral/no-preference choice. Existing advanced numeric priorities are
+preserved when unrelated evidence is edited.
 
-## Compatibility and security invariants
+The optional savings-plan `promotional` field is now explicitly validated as boolean and documented
+as tariff/provenance metadata only. It never participates in route ranking. A non-promotional route
+with a lower actual fee therefore always beats a more expensive promotional route.
 
-- v1.35.0 provider-scoped authorized cash and funding topology: unchanged.
-- Broker schema 3 directed transfer relationships and route economics: unchanged.
-- Portfolio payload schema 8: unchanged.
-- REST portfolio schema 1: unchanged.
-- Gateway health schema 6: unchanged; schemas 1–5 remain supported.
-- Comdirect PhotoTAN/bootstrap, account selection, authorized-cash policy and read-only acquisition:
-  unchanged apart from transport/maintenance resilience.
-- Trade Republic statement import/private diagnostics: unchanged.
-- DKB anonymous FinTS raw/decoded response fingerprinting: unchanged; DKB remains non-live.
-- Verified private-PKI HTTPS, bearer authentication, Supervisor trust discovery, DNS pinning and
-  no-plaintext fallback: unchanged.
-- No trading, order placement, automatic sell, transfer execution, payment or transaction-history
-  capability is introduced.
+## Keep cash reserve authorization
+
+The Comdirect Gateway provider-owned investment-cash policy gains a third mode:
+
+- **All eligible cash**: authorize all eligible cash;
+- **Cap authorized cash**: authorize at most the configured EUR cap; and
+- **Keep cash reserve** (`retain`): authorize `max(eligible_eur - retain_eur, 0)`.
+
+A retained amount above current eligible cash therefore authorizes zero rather than failing. The
+private policy-state format advances to schema 2 while remaining backward-compatible with existing
+schema-1 `all_available` and `capped` state.
+
+`retain_eur` is additive REST portfolio schema-1 metadata. Existing all-available/capped payloads
+remain wire-compatible with prior versions; use aligned v1.35.2 integration/Gateway packages before
+enabling the new retained-cash mode because older strict clients do not know the new optional field.
 
 ## Long-running compatibility contracts
 
-- v1.33.0 source-freshness and plan-schedule separation remains preserved; v1.35.1 does not change any configured freshness threshold.
+- v1.33.0 source-freshness and plan-schedule separation remains preserved; v1.35.2 does not change any configured freshness threshold.
 - Recurring scheduling remains anchored to the latest valid Portfolio Architect evaluation.
-- The historical `v1.19.0-rc2` brokerage probe remains excluded and is not promoted by this release.
-- DKB live Gateway acquisition remains a later provider-specific milestone; v1.35.1 adds no authenticated DKB holdings path.
-- This release does not move PDF parsing into Portfolio Architect; Trade Republic statement PDF parsing remains isolated provider-side and memory-only.
-- No trading, order, transfer, payment, or transaction-history capability is introduced.
-- v1.35.0 provider-scoped funding remains advisory planning metadata only.
+- v1.35.1 Comdirect session-maintenance resilience remains unchanged.
 
-See `docs/UPGRADE-1.35.1.md`.
+## Compatibility and security invariants
+
+- Portfolio payload schema 8: unchanged.
+- REST portfolio schema 1: unchanged; `retain_eur` is additive and emitted only for retained-cash policy.
+- Gateway health schema 6: unchanged; schemas 1–5 remain supported.
+- Broker schemas 1/2/3 remain runtime-compatible; the native editor deliberately edits only schema 2/3.
+- v1.35.0 provider-scoped cash, exact directed funding topology and advisory-only semantics remain intact.
+- v1.35.1 Comdirect connection-error classification and maintenance-worker containment remain intact.
+- Verified private-PKI HTTPS, bearer authentication, Supervisor trust discovery, DNS pinning and no-plaintext fallback remain unchanged.
+- This release does not move PDF parsing into Portfolio Architect; Trade Republic statement import/private diagnostics remain provider-side and unchanged.
+- DKB live Gateway acquisition remains a later provider-specific milestone; DKB remains experimental, manual-only and non-live with no authenticated holdings path.
+- No trading, order, transfer, payment, or transaction-history capability is introduced; no automatic sell capability is added.
+- Native dynamic portfolio presentation remains a separate future milestone.
+- The historical `v1.19.0-rc2` brokerage probe remains excluded and is not promoted by this release.
+
+See `docs/UPGRADE-1.35.2.md`.

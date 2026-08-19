@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.35.2
+
+- Package/common-runtime alignment for Portfolio Architect v1.35.2; DKB probe behavior remains unchanged.
+- DKB remains experimental, manual-only and non-live with no authenticated holdings, transfer, payment or trading capability.
+
 ## 1.35.1
 
 - Package/User-Agent alignment for Portfolio Architect v1.35.1; the v1.35.0 raw/decoded anonymous FinTS probe fingerprinting remains unchanged.

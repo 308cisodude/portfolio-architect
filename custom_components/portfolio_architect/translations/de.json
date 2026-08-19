@@ -1740,6 +1740,9 @@
           },
           "authorization_cap_eur": {
             "name": "Freigabeobergrenze"
+          },
+          "authorization_retain_eur": {
+            "name": "Zurückzuhaltende Barreserve"
           }
         }
       },
@@ -2333,7 +2336,8 @@
           "reset_plan": "Dateibasierten Plan wiederherstellen",
           "sources": "Portfolioquellen",
           "execution": "Ausführung und Transaktionskosten",
-          "plan_schedule": "Ausführungs- & Prüfplan"
+          "plan_schedule": "Ausführungs- & Prüfplan",
+          "execution_providers": "Ausführungsanbieter & Finanzierung"
         }
       },
       "plan": {
@@ -2521,6 +2525,117 @@
           "review_lead_days": "Anzahl der Tage vor der Ausführung, für die die nächste Prüfung fällig wird.",
           "plan_execution_days": "Bei wöchentlichen Plänen sind dies Wochentage, ansonsten Monatstage von 1 bis 28."
         }
+      },
+      "execution_providers": {
+        "title": "Ausführungsanbieter & Finanzierung",
+        "description": "Bearbeite die validierte dateibasierte Broker-Konfiguration. Transaktionskosten werden immer vor Abwicklungszeit und optionaler Gleichstandspräferenz bewertet."
+      },
+      "broker_settings": {
+        "title": "Einstellungen für Gebührennachweise",
+        "description": "Tarifnachweise werden für die Routenauswahl unzulässig, sobald sie älter als dieses gemeinsame Gültigkeitsfenster sind.",
+        "data": {
+          "broker_fee_data_max_age_days": "Maximales Alter der Gebührennachweise"
+        }
+      },
+      "broker_providers": {
+        "title": "Ausführungsanbieter",
+        "description": "Anbieter für die Ausführungsplanung hinzufügen, bearbeiten oder entfernen."
+      },
+      "add_execution_provider": {
+        "title": "Ausführungsanbieter hinzufügen",
+        "description": "Füge einen Anbieter mit explizitem Tarifnachweis hinzu. Die Gleichstandspräferenz greift erst, wenn Kosten und Abwicklungszeit gleich sind.",
+        "data": {
+          "broker_provider_id": "Anbieter-ID",
+          "broker_provider_name": "Anbietername",
+          "broker_provider_source": "Nachweisquelle",
+          "broker_provider_as_of": "Nachweisdatum",
+          "broker_tie_break_preference": "Gleichstandspräferenz"
+        }
+      },
+      "edit_execution_provider": {
+        "title": "Ausführungsanbieter bearbeiten",
+        "description": "Wähle einen Anbieter.",
+        "data": {
+          "broker_provider_id": "Anbieter"
+        }
+      },
+      "edit_execution_provider_details": {
+        "title": "Ausführungsanbieter bearbeiten",
+        "description": "Aktualisiere Nachweis oder optionale Gleichstandspräferenz. Eine vorhandene erweiterte numerische Priorität bleibt erhalten, solange ihre Präferenzstufe unverändert bleibt.",
+        "data": {
+          "broker_provider_name": "Anbietername",
+          "broker_provider_source": "Nachweisquelle",
+          "broker_provider_as_of": "Nachweisdatum",
+          "broker_tie_break_preference": "Gleichstandspräferenz"
+        }
+      },
+      "remove_execution_provider": {
+        "title": "Ausführungsanbieter entfernen",
+        "description": "Ein Anbieter mit referenzierter Finanzierungsbeziehung kann erst nach Entfernen dieser Beziehung gelöscht werden.",
+        "data": {
+          "broker_provider_id": "Anbieter"
+        }
+      },
+      "broker_savings_plans": {
+        "title": "Sparplanrouten",
+        "description": "Explizite anbieterbezogene Sparplanverfügbarkeit und Kostennachweise verwalten."
+      },
+      "add_savings_plan_route": {
+        "title": "Sparplanroute hinzufügen",
+        "description": "Der Aktionsstatus beschreibt nur die Tarifart. Er verschafft einer Route niemals einen wirtschaftlichen Vorrang.",
+        "data": {
+          "broker_provider_id": "Anbieter",
+          "broker_isin": "ISIN",
+          "broker_available": "Verfügbar",
+          "broker_fee_pct": "Gebühr",
+          "broker_promotional": "Aktionstarif",
+          "broker_status": "Nachweisstatus"
+        }
+      },
+      "edit_savings_plan_route": {
+        "title": "Sparplanroute bearbeiten",
+        "description": "Wähle eine konfigurierte Route.",
+        "data": {
+          "broker_savings_route": "Sparplanroute"
+        }
+      },
+      "edit_savings_plan_route_details": {
+        "title": "Sparplanroute bearbeiten",
+        "description": "Die tatsächliche Gebühr bestimmt die Wirtschaftlichkeit. Der Aktionsstatus bleibt rein beschreibende Metadaten.",
+        "data": {
+          "broker_available": "Verfügbar",
+          "broker_fee_pct": "Gebühr",
+          "broker_promotional": "Aktionstarif",
+          "broker_status": "Nachweisstatus"
+        }
+      },
+      "remove_savings_plan_route": {
+        "title": "Sparplanroute entfernen",
+        "description": "Entferne eine explizite Anbieter-/Instrument-Route.",
+        "data": {
+          "broker_savings_route": "Sparplanroute"
+        }
+      },
+      "funding_topology": {
+        "title": "Finanzierungstopologie",
+        "description": "Anbieterübergreifendes Guthaben ist nur über eine exakt konfigurierte gerichtete Beziehung nutzbar. Die Gegenrichtung wird niemals abgeleitet."
+      },
+      "add_funding_transfer": {
+        "title": "Finanzierungsbeziehung hinzufügen",
+        "description": "Füge eine gerichtete Beziehung mit verifizierter Transfergebühr und konservativer Abwicklungszeit hinzu.",
+        "data": {
+          "broker_from_provider": "Von Anbieter",
+          "broker_to_provider": "Zu Anbieter",
+          "broker_transfer_fee_eur": "Transfergebühr",
+          "broker_settlement_business_days": "Abwicklungszeit"
+        }
+      },
+      "remove_funding_transfer": {
+        "title": "Finanzierungsbeziehung entfernen",
+        "description": "Entferne eine gerichtete Finanzierungsbeziehung.",
+        "data": {
+          "broker_funding_edge": "Finanzierungsbeziehung"
+        }
       }
     },
     "error": {
@@ -2534,14 +2649,16 @@
       "invalid_execution_config": "Die Einstellungen zu den Ausführungskosten sind widersprüchlich oder außerhalb des unterstützten Bereichs.",
       "invalid_auth": "Das lokale Gateway hat sein Bearer-Token abgelehnt.",
       "invalid_rest_gateway": "Das zusätzliche Gateway ist nicht verfügbar, dupliziert einen bestehenden Provider/Endpunkt oder stellt keinen gültigen Live-Snapshot mit Health-Schema 6 bereit.",
-      "too_many_rest_gateways": "Es werden höchstens 4 zusätzliche REST-Gateways unterstützt."
+      "too_many_rest_gateways": "Es werden höchstens 4 zusätzliche REST-Gateways unterstützt.",
+      "invalid_broker_config": "Die Konfiguration der Ausführungsanbieter ist ungültig und wurde nicht gespeichert."
     },
     "abort": {
       "plan_source_unavailable": "Die lokalen Portfoliodateien konnten für den Planeditor nicht gelesen werden.",
       "invalid_plan": "Der konfigurierte Plan hat die Validierung nicht bestanden und wurde nicht gespeichert.",
       "plan_already_uses_yaml": "Der Anlageplan verwendet bereits portfolio.yaml.",
       "no_rest_gateways": "Es sind keine zusätzlichen REST-Gateways konfiguriert.",
-      "rest_gateways_require_rest_primary": "Zusätzliche REST-Gateways erfordern ein REST-Gateway als primäre Portfolio-Architect-Quelle."
+      "rest_gateways_require_rest_primary": "Zusätzliche REST-Gateways erfordern ein REST-Gateway als primäre Portfolio-Architect-Quelle.",
+      "broker_editor_unavailable": "broker.yaml muss vorhanden sein und das anbieterbezogene Schema 2 oder 3 verwenden, bevor der native Editor genutzt werden kann."
     }
   },
   "selector": {
@@ -2636,6 +2753,13 @@
       "options": {
         "contribution_only": "Nur aktueller Beitrag",
         "gateway_balance": "Vom Gateway freigegebenes Anlageguthaben"
+      }
+    },
+    "tie_break_preference": {
+      "options": {
+        "preferred": "Bei sonstigem Gleichstand bevorzugen",
+        "neutral": "Keine Präferenz",
+        "fallback": "Nach sonst gleichwertigen Alternativen verwenden"
       }
     }
   },

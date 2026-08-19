@@ -115,6 +115,7 @@ _CASH_AUTHORIZATION_KEYS = {
     "investment_cash_authorization_policy",
     "investment_cash_authorization_cap_eur",
 }
+_CASH_AUTHORIZATION_OPTIONAL_KEYS = {"investment_cash_authorization_retain_eur"}
 _PLAN_CONFIGURATION_KEYS = {
     "contribution_per_execution_eur",
     "plan_budget_amount_eur",
@@ -393,6 +394,7 @@ class ProviderInvestmentCashData:
     authorized_eur: float | None = None
     authorization_policy: str | None = None
     authorization_cap_eur: float | None = None
+    authorization_retain_eur: float | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -433,6 +435,7 @@ class MonthlyPlanData:
     authorized_investment_cash_eur: float | None = None
     investment_cash_authorization_policy: str | None = None
     investment_cash_authorization_cap_eur: float | None = None
+    investment_cash_authorization_retain_eur: float | None = None
     execution_policy: str = "legacy_distribution"
     max_cost_ratio_pct: float = 0.0
     max_orders_per_execution: int = 32
@@ -1405,7 +1408,7 @@ def _parse_provider_investment_cash(raw: Any) -> tuple[ProviderInvestmentCashDat
         allowed = {
             "provider_id", "provider_name", "available_eur", "remaining_eur", "as_of",
             "account_balance_eur", "eligible_eur", "authorized_eur",
-            "authorization_policy", "authorization_cap_eur",
+            "authorization_policy", "authorization_cap_eur", "authorization_retain_eur",
         }
         if not set(item).issubset(allowed) or not {
             "provider_id", "provider_name", "available_eur", "remaining_eur"
@@ -1445,17 +1448,21 @@ def _parse_provider_investment_cash(raw: Any) -> tuple[ProviderInvestmentCashDat
         authorized = number(item, "authorized_eur")
         policy = item.get("authorization_policy")
         cap = number(item, "authorization_cap_eur")
-        rich = any(value is not None for value in (account, eligible, authorized, policy, cap))
+        retain = number(item, "authorization_retain_eur")
+        rich = any(value is not None for value in (account, eligible, authorized, policy, cap, retain))
         if rich:
-            if account is None or eligible is None or authorized is None or policy not in {"all_available", "capped"}:
+            if account is None or eligible is None or authorized is None or policy not in {"all_available", "capped", "retain"}:
                 raise PortfolioArchitectDataError(f"summary.provider_investment_cash[{index}] authorization metadata is incomplete")
             if authorized > eligible + 0.01 or not math.isclose(authorized, available, rel_tol=0, abs_tol=0.01):
                 raise PortfolioArchitectDataError(f"summary.provider_investment_cash[{index}] authorization values are inconsistent")
             if policy == "all_available":
-                if cap is not None or not math.isclose(authorized, eligible, rel_tol=0, abs_tol=0.01):
+                if cap is not None or retain is not None or not math.isclose(authorized, eligible, rel_tol=0, abs_tol=0.01):
                     raise PortfolioArchitectDataError(f"summary.provider_investment_cash[{index}] all-available authorization is inconsistent")
-            elif cap is None or not math.isclose(authorized, min(eligible, cap), rel_tol=0, abs_tol=0.01):
-                raise PortfolioArchitectDataError(f"summary.provider_investment_cash[{index}] capped authorization is inconsistent")
+            elif policy == "capped":
+                if cap is None or retain is not None or not math.isclose(authorized, min(eligible, cap), rel_tol=0, abs_tol=0.01):
+                    raise PortfolioArchitectDataError(f"summary.provider_investment_cash[{index}] capped authorization is inconsistent")
+            elif retain is None or cap is not None or not math.isclose(authorized, max(0.0, eligible - retain), rel_tol=0, abs_tol=0.01):
+                raise PortfolioArchitectDataError(f"summary.provider_investment_cash[{index}] retained authorization is inconsistent")
         result.append(ProviderInvestmentCashData(
             provider_id=provider_id,
             provider_name=provider_name.strip(),
@@ -1467,6 +1474,7 @@ def _parse_provider_investment_cash(raw: Any) -> tuple[ProviderInvestmentCashDat
             authorized_eur=authorized,
             authorization_policy=policy,
             authorization_cap_eur=cap,
+            authorization_retain_eur=retain,
         ))
     return tuple(sorted(result, key=lambda item: item.provider_id))
 
@@ -1604,11 +1612,15 @@ def _parse_monthly_plan(
     cash_authorization_present = _CASH_AUTHORIZATION_KEYS.intersection(summary)
     if cash_authorization_present and cash_authorization_present != _CASH_AUTHORIZATION_KEYS:
         raise PortfolioArchitectDataError("summary contains an incomplete investment cash authorization contract")
+    unexpected_cash_optional = _CASH_AUTHORIZATION_OPTIONAL_KEYS.intersection(summary)
+    if unexpected_cash_optional and not cash_authorization_present:
+        raise PortfolioArchitectDataError("summary contains retained-cash metadata without cash authorization")
     investment_account_balance = None
     eligible_investment_cash = None
     authorized_investment_cash = None
     cash_authorization_policy = None
     cash_authorization_cap = None
+    cash_authorization_retain = None
     if cash_authorization_present:
         investment_account_balance = _summary_float(
             summary, "investment_account_balance_eur", minimum=-MAX_MONEY_EUR, maximum=MAX_MONEY_EUR
@@ -1620,25 +1632,45 @@ def _parse_monthly_plan(
             summary, "authorized_investment_cash_eur", minimum=0, maximum=MAX_MONEY_EUR
         )
         cash_authorization_policy = summary.get("investment_cash_authorization_policy")
-        if cash_authorization_policy not in {"all_available", "capped"}:
+        if cash_authorization_policy not in {"all_available", "capped", "retain"}:
             raise PortfolioArchitectDataError("summary.investment_cash_authorization_policy is invalid")
         cap_raw = summary.get("investment_cash_authorization_cap_eur")
         if cap_raw is not None:
             cash_authorization_cap = _summary_float(
                 summary, "investment_cash_authorization_cap_eur", minimum=0, maximum=MAX_MONEY_EUR
             )
+        retain_raw = summary.get("investment_cash_authorization_retain_eur")
+        if retain_raw is not None:
+            cash_authorization_retain = _summary_float(
+                summary, "investment_cash_authorization_retain_eur", minimum=0, maximum=MAX_MONEY_EUR
+            )
         if authorized_investment_cash > eligible_investment_cash + 0.01:
             raise PortfolioArchitectDataError("summary authorized investment cash exceeds eligible cash")
         if cash_authorization_policy == "all_available":
-            if cash_authorization_cap is not None or not math.isclose(
-                authorized_investment_cash, eligible_investment_cash, rel_tol=0, abs_tol=0.01
+            if (
+                cash_authorization_cap is not None
+                or cash_authorization_retain is not None
+                or not math.isclose(authorized_investment_cash, eligible_investment_cash, rel_tol=0, abs_tol=0.01)
             ):
                 raise PortfolioArchitectDataError("summary all-available investment cash authorization is inconsistent")
-        else:
-            if cash_authorization_cap is None or not math.isclose(
-                authorized_investment_cash, min(eligible_investment_cash, cash_authorization_cap), rel_tol=0, abs_tol=0.01
+        elif cash_authorization_policy == "capped":
+            if (
+                cash_authorization_cap is None
+                or cash_authorization_retain is not None
+                or not math.isclose(authorized_investment_cash, min(eligible_investment_cash, cash_authorization_cap), rel_tol=0, abs_tol=0.01)
             ):
                 raise PortfolioArchitectDataError("summary capped investment cash authorization is inconsistent")
+        elif (
+            cash_authorization_retain is None
+            or cash_authorization_cap is not None
+            or not math.isclose(
+                authorized_investment_cash,
+                max(0.0, eligible_investment_cash - cash_authorization_retain),
+                rel_tol=0,
+                abs_tol=0.01,
+            )
+        ):
+            raise PortfolioArchitectDataError("summary retained investment cash authorization is inconsistent")
 
     if not execution_present and recommended > contribution + 0.01:
         raise PortfolioArchitectDataError(
@@ -1981,6 +2013,7 @@ def _parse_monthly_plan(
         authorized_investment_cash_eur=authorized_investment_cash,
         investment_cash_authorization_policy=cash_authorization_policy,
         investment_cash_authorization_cap_eur=cash_authorization_cap,
+        investment_cash_authorization_retain_eur=cash_authorization_retain,
         execution_policy=execution_policy,
         max_cost_ratio_pct=max_cost_ratio,
         max_orders_per_execution=max_orders,

@@ -56,6 +56,7 @@ class InvestmentCash:
     policy: str
     as_of: datetime
     cap_eur: Decimal | None = None
+    retain_eur: Decimal | None = None
 
     def as_dict(self) -> dict[str, str]:
         data = {
@@ -67,6 +68,8 @@ class InvestmentCash:
         }
         if self.cap_eur is not None:
             data["cap_eur"] = canonical_decimal(self.cap_eur)
+        if self.retain_eur is not None:
+            data["retain_eur"] = canonical_decimal(self.retain_eur)
         return data
 
 
@@ -215,20 +218,35 @@ def validate_snapshot(snapshot: PortfolioSnapshot) -> PortfolioSnapshot:
             canonical_decimal(investment_cash.cap_eur)
             if investment_cash.cap_eur > MAX_POSITION_VALUE_EUR:
                 raise ProtocolError("Investment cash cap exceeds the contract limit")
-        if investment_cash.policy not in {"all_available", "capped"}:
+        if investment_cash.retain_eur is not None:
+            canonical_decimal(investment_cash.retain_eur)
+            if investment_cash.retain_eur > MAX_POSITION_VALUE_EUR:
+                raise ProtocolError("Investment cash retained amount exceeds the contract limit")
+        if investment_cash.policy not in {"all_available", "capped", "retain"}:
             raise ProtocolError("Investment cash policy is invalid")
         if investment_cash.as_of.tzinfo is None or investment_cash.as_of.utcoffset() is None:
             raise ProtocolError("Investment cash timestamp must include a timezone")
         if investment_cash.authorized_eur > investment_cash.eligible_eur:
             raise ProtocolError("Authorized investment cash exceeds eligible cash")
         if investment_cash.policy == "all_available":
-            if investment_cash.cap_eur is not None or investment_cash.authorized_eur != investment_cash.eligible_eur:
+            if (
+                investment_cash.cap_eur is not None
+                or investment_cash.retain_eur is not None
+                or investment_cash.authorized_eur != investment_cash.eligible_eur
+            ):
                 raise ProtocolError("All-available investment cash policy is inconsistent")
-        else:
-            if investment_cash.cap_eur is None:
-                raise ProtocolError("Capped investment cash policy requires a cap")
+        elif investment_cash.policy == "capped":
+            if investment_cash.cap_eur is None or investment_cash.retain_eur is not None:
+                raise ProtocolError("Capped investment cash policy requires only a cap")
             if investment_cash.authorized_eur != min(investment_cash.eligible_eur, investment_cash.cap_eur):
                 raise ProtocolError("Capped investment cash authorization is inconsistent")
+        else:
+            if investment_cash.retain_eur is None or investment_cash.cap_eur is not None:
+                raise ProtocolError("Retained-cash investment policy requires only a retained amount")
+            if investment_cash.authorized_eur != max(
+                Decimal("0"), investment_cash.eligible_eur - investment_cash.retain_eur
+            ):
+                raise ProtocolError("Retained-cash investment authorization is inconsistent")
         cash_as_of = investment_cash.as_of.astimezone(timezone.utc)
         investment_cash = InvestmentCash(
             account_balance_eur=investment_cash.account_balance_eur,
@@ -237,6 +255,7 @@ def validate_snapshot(snapshot: PortfolioSnapshot) -> PortfolioSnapshot:
             policy=investment_cash.policy,
             as_of=cash_as_of,
             cap_eur=investment_cash.cap_eur,
+            retain_eur=investment_cash.retain_eur,
         )
         if reserve is None or reserve_as_of is None:
             raise ProtocolError("Investment cash requires the backward-compatible investment reserve")
@@ -350,7 +369,7 @@ def _parse_cached_investment_cash(raw: Any) -> InvestmentCash | None:
     if not isinstance(raw, dict):
         raise ProtocolError("Cached snapshot investment cash is invalid")
     required = {"account_balance_eur", "eligible_eur", "authorized_eur", "policy", "as_of"}
-    allowed = required | {"cap_eur"}
+    allowed = required | {"cap_eur", "retain_eur"}
     if not required.issubset(raw) or set(raw) - allowed:
         raise ProtocolError("Cached snapshot investment cash has an unexpected schema")
     balance = _cached_decimal(raw.get("account_balance_eur"), signed=True, field="account balance")
@@ -359,6 +378,9 @@ def _parse_cached_investment_cash(raw: Any) -> InvestmentCash | None:
     cap = None
     if "cap_eur" in raw:
         cap = _cached_decimal(raw.get("cap_eur"), signed=False, field="cash cap")
+    retain = None
+    if "retain_eur" in raw:
+        retain = _cached_decimal(raw.get("retain_eur"), signed=False, field="retained cash")
     policy = raw.get("policy")
     if not isinstance(policy, str):
         raise ProtocolError("Cached snapshot investment cash policy is invalid")
@@ -371,7 +393,7 @@ def _parse_cached_investment_cash(raw: Any) -> InvestmentCash | None:
         as_of = datetime.fromisoformat(timestamp)
     except ValueError as err:
         raise ProtocolError("Cached snapshot investment cash timestamp is invalid") from err
-    return InvestmentCash(balance, eligible, authorized, policy, as_of, cap)
+    return InvestmentCash(balance, eligible, authorized, policy, as_of, cap, retain)
 
 
 def _cached_decimal(value: Any, *, signed: bool, field: str) -> Decimal:

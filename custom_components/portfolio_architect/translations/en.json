@@ -1740,6 +1740,9 @@
           },
           "authorization_cap_eur": {
             "name": "Authorization cap"
+          },
+          "authorization_retain_eur": {
+            "name": "Retained cash reserve"
           }
         }
       },
@@ -2333,7 +2336,8 @@
           "reset_plan": "Restore file-based plan",
           "sources": "Portfolio sources",
           "execution": "Execution and transaction costs",
-          "plan_schedule": "Execution & review schedule"
+          "plan_schedule": "Execution & review schedule",
+          "execution_providers": "Execution providers & funding"
         }
       },
       "plan": {
@@ -2521,6 +2525,117 @@
           "review_lead_days": "Number of days before the execution for which the next review is due.",
           "plan_execution_days": "Weekly plans use weekdays; all other plans use days of month from 1 to 28."
         }
+      },
+      "execution_providers": {
+        "title": "Execution providers & funding",
+        "description": "Edit the validated file-backed broker configuration. Transaction cost is always evaluated before settlement time and optional tie-break preference."
+      },
+      "broker_settings": {
+        "title": "Execution evidence settings",
+        "description": "Provider tariff evidence becomes ineligible when it is older than this common freshness window.",
+        "data": {
+          "broker_fee_data_max_age_days": "Fee evidence maximum age"
+        }
+      },
+      "broker_providers": {
+        "title": "Execution providers",
+        "description": "Add, edit, or remove providers used for execution planning."
+      },
+      "add_execution_provider": {
+        "title": "Add execution provider",
+        "description": "Add one provider with explicit tariff evidence. Tie-break preference matters only after economic cost and settlement time are equal.",
+        "data": {
+          "broker_provider_id": "Provider ID",
+          "broker_provider_name": "Provider name",
+          "broker_provider_source": "Evidence source",
+          "broker_provider_as_of": "Evidence date",
+          "broker_tie_break_preference": "Tie-break preference"
+        }
+      },
+      "edit_execution_provider": {
+        "title": "Edit execution provider",
+        "description": "Select a provider.",
+        "data": {
+          "broker_provider_id": "Provider"
+        }
+      },
+      "edit_execution_provider_details": {
+        "title": "Edit execution provider",
+        "description": "Update evidence or the optional tie-break preference. Existing advanced numeric priority is preserved when its preference tier is unchanged.",
+        "data": {
+          "broker_provider_name": "Provider name",
+          "broker_provider_source": "Evidence source",
+          "broker_provider_as_of": "Evidence date",
+          "broker_tie_break_preference": "Tie-break preference"
+        }
+      },
+      "remove_execution_provider": {
+        "title": "Remove execution provider",
+        "description": "A provider referenced by a funding edge cannot be removed until that edge is removed.",
+        "data": {
+          "broker_provider_id": "Provider"
+        }
+      },
+      "broker_savings_plans": {
+        "title": "Savings-plan routes",
+        "description": "Maintain explicit per-provider savings-plan eligibility and cost evidence."
+      },
+      "add_savings_plan_route": {
+        "title": "Add savings-plan route",
+        "description": "Promotional status describes the tariff character only. It never makes a route economically preferable.",
+        "data": {
+          "broker_provider_id": "Provider",
+          "broker_isin": "ISIN",
+          "broker_available": "Available",
+          "broker_fee_pct": "Fee",
+          "broker_promotional": "Promotional tariff",
+          "broker_status": "Evidence status"
+        }
+      },
+      "edit_savings_plan_route": {
+        "title": "Edit savings-plan route",
+        "description": "Select a configured route.",
+        "data": {
+          "broker_savings_route": "Savings-plan route"
+        }
+      },
+      "edit_savings_plan_route_details": {
+        "title": "Edit savings-plan route",
+        "description": "Actual fee drives economics. Promotional status remains descriptive metadata only.",
+        "data": {
+          "broker_available": "Available",
+          "broker_fee_pct": "Fee",
+          "broker_promotional": "Promotional tariff",
+          "broker_status": "Evidence status"
+        }
+      },
+      "remove_savings_plan_route": {
+        "title": "Remove savings-plan route",
+        "description": "Remove one explicit provider/instrument route.",
+        "data": {
+          "broker_savings_route": "Savings-plan route"
+        }
+      },
+      "funding_topology": {
+        "title": "Funding topology",
+        "description": "Cross-provider cash is usable only through an exact directed edge. The reverse direction is never inferred."
+      },
+      "add_funding_transfer": {
+        "title": "Add funding transfer",
+        "description": "Add one directed funding relationship with the verified transfer fee and conservative settlement time.",
+        "data": {
+          "broker_from_provider": "From provider",
+          "broker_to_provider": "To provider",
+          "broker_transfer_fee_eur": "Transfer fee",
+          "broker_settlement_business_days": "Settlement time"
+        }
+      },
+      "remove_funding_transfer": {
+        "title": "Remove funding transfer",
+        "description": "Remove one directed funding relationship.",
+        "data": {
+          "broker_funding_edge": "Funding relationship"
+        }
       }
     },
     "error": {
@@ -2534,14 +2649,16 @@
       "invalid_execution_config": "The execution-cost settings are inconsistent or outside the supported range.",
       "invalid_auth": "The local Gateway rejected its bearer token.",
       "invalid_rest_gateway": "The additional Gateway is unavailable, duplicates an existing provider/endpoint, or does not expose a valid live schema-6 snapshot.",
-      "too_many_rest_gateways": "At most 4 additional REST Gateways are supported."
+      "too_many_rest_gateways": "At most 4 additional REST Gateways are supported.",
+      "invalid_broker_config": "The execution-provider configuration is invalid and was not saved."
     },
     "abort": {
       "plan_source_unavailable": "The local portfolio files could not be read for the plan editor.",
       "invalid_plan": "The configured plan failed validation and was not saved.",
       "plan_already_uses_yaml": "The investment plan already uses portfolio.yaml.",
       "no_rest_gateways": "No additional REST Gateways are configured.",
-      "rest_gateways_require_rest_primary": "Additional REST Gateways require the primary Portfolio Architect source to be a REST Gateway."
+      "rest_gateways_require_rest_primary": "Additional REST Gateways require the primary Portfolio Architect source to be a REST Gateway.",
+      "broker_editor_unavailable": "broker.yaml must exist and use provider-aware schema 2 or 3 before the native editor can be used."
     }
   },
   "selector": {
@@ -2636,6 +2753,13 @@
       "options": {
         "contribution_only": "Current contribution only",
         "gateway_balance": "Gateway authorized cash"
+      }
+    },
+    "tie_break_preference": {
+      "options": {
+        "preferred": "Prefer when otherwise equal",
+        "neutral": "No preference",
+        "fallback": "Use after otherwise equal alternatives"
       }
     }
   },

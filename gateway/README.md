@@ -1,10 +1,10 @@
-# Portfolio Architect Gateway runtime v1.35.1
+# Portfolio Architect Gateway runtime v1.35.2
 
-Version 1.35.1 aligns the common package with the Comdirect session-maintenance resilience
-hotfix. The Comdirect transport now reduces direct connection-reset failures to the established
-bounded `RemoteApiError` class, and its provider-specific maintenance worker contains an
-unexpected single-iteration failure. Common server behavior, REST schema 1, health schema 6,
-private-PKI HTTPS and bearer authentication remain unchanged.
+Version 1.35.2 extends the provider-neutral schema-1 cash model with optional retained-cash
+metadata while preserving v1.35.1 Comdirect session-maintenance resilience. Existing
+all-available/capped payloads remain unchanged; `retain_eur` is emitted only by a provider using
+the new retained-cash authorization mode. Common server behavior, health schema 6, private-PKI
+HTTPS and bearer authentication remain unchanged.
 
 The Gateway is a dedicated, Python-library-dependency-free service that converts one
 provider-specific portfolio source into provider-neutral Portfolio Architect REST
@@ -52,9 +52,9 @@ non-secret and carries no account/depot identity. Health schemas 1 through 5 rem
 available unchanged for older Portfolio Architect versions.
 
 The provider contract and official future App identities are documented in
-`docs/GATEWAY-PROVIDERS.md`. The common runtime remains provider-neutral in v1.35.1;
+`docs/GATEWAY-PROVIDERS.md`. The common runtime remains provider-neutral in v1.35.2;
 provider-specific acquisition continues to live only in the corresponding App package.
-The ISIN-first v1.26.1 hotfix is implemented in Portfolio Architect's Home Assistant calculation layer and does not change Gateway REST schema 1 or health schema 6. Version 1.35.1 retains the private-PKI HTTPS helper and v1.26.7 quantity-bearing cached-snapshot/ETag-precedence guarantees. Comdirect OAuth session maintenance is provider-specific; provider acquisition contracts and REST/health schemas are unchanged.
+The ISIN-first v1.26.1 hotfix is implemented in Portfolio Architect's Home Assistant calculation layer and does not change Gateway REST schema 1 or health schema 6. Version 1.35.2 retains the private-PKI HTTPS helper and v1.26.7 quantity-bearing cached-snapshot/ETag-precedence guarantees. Comdirect OAuth session maintenance is provider-specific; provider acquisition contracts and REST/health schemas are unchanged.
 
 ## Authorized investment cash
 
@@ -67,7 +67,9 @@ The Gateway then applies one authorization policy:
 
 - `all_available`: authorize all eligible cash; this is the default and preserves
   the pre-1.19 behavior;
-- `capped`: authorize no more than a configured EUR cap.
+- `capped`: authorize no more than a configured EUR cap;
+- `retain`: keep a configured EUR cash reserve untouched and authorize only
+  `max(eligible - retain_eur, 0)`. The Ingress UI labels this **Keep cash reserve**.
 
 The public snapshot retains the compatibility object and adds bounded metadata:
 

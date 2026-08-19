@@ -1,8 +1,10 @@
-# Portfolio Architect Gateway — Trade Republic v1.35.1
+# Portfolio Architect Gateway — Trade Republic v1.35.2
 
-Version 1.35.1 is package alignment for the Comdirect session-maintenance resilience hotfix.
-Trade Republic statement import, accepted snapshots, provider-owned cash, diagnostics, REST schema
-1 and verified private-PKI transport are unchanged.
+Version 1.35.2 aligns the common Gateway model with the additive retained-cash contract.
+Trade Republic statement import and accepted-snapshot behavior remain unchanged; this release does
+not add Trade Republic cash acquisition or authorization.
+Trade Republic statement import, accepted snapshots, diagnostics, REST schema 1 and verified
+private-PKI transport are unchanged.
 
 The App may persist only an allowlisted/genericized `accepted`, `rejected` or
 `internal_error` outcome next to its private snapshot. Unexpected parser/document text is
