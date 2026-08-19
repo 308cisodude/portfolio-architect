@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.35.3
+
+- Restores visible English/German labels for every list-based menu in the native Execution providers & funding editor introduced in v1.35.2.
+- Adds regression coverage that derives each emitted broker-editor menu option from config_flow.py and requires a non-empty translation matching the destination-step title in both languages.
+- Preserves v1.35.2 broker editing, route economics, tie-break/promotional semantics and Keep cash reserve behavior unchanged.
+- Preserves Gateway wire schemas, provider runtimes, verified HTTPS and the advisory/no-trading boundary; provider Apps receive version alignment only.
+
 ## 1.35.2
 
 - Adds a native validated Home Assistant editor for provider-aware `broker.yaml` schemas 2/3, including provider evidence, savings-plan routes and exact directed funding topology.

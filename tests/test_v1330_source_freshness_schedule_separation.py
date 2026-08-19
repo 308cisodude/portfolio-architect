@@ -1,4 +1,4 @@
-"""v1.35.2 source freshness and plan-schedule separation regressions."""
+"""v1.35.3 source freshness and plan-schedule separation regressions."""
 
 from __future__ import annotations
 

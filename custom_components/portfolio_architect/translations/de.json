@@ -2528,7 +2528,13 @@
       },
       "execution_providers": {
         "title": "Ausführungsanbieter & Finanzierung",
-        "description": "Bearbeite die validierte dateibasierte Broker-Konfiguration. Transaktionskosten werden immer vor Abwicklungszeit und optionaler Gleichstandspräferenz bewertet."
+        "description": "Bearbeite die validierte dateibasierte Broker-Konfiguration. Transaktionskosten werden immer vor Abwicklungszeit und optionaler Gleichstandspräferenz bewertet.",
+        "menu_options": {
+          "broker_settings": "Einstellungen für Gebührennachweise",
+          "broker_providers": "Ausführungsanbieter",
+          "broker_savings_plans": "Sparplanrouten",
+          "funding_topology": "Finanzierungstopologie"
+        }
       },
       "broker_settings": {
         "title": "Einstellungen für Gebührennachweise",
@@ -2539,7 +2545,12 @@
       },
       "broker_providers": {
         "title": "Ausführungsanbieter",
-        "description": "Anbieter für die Ausführungsplanung hinzufügen, bearbeiten oder entfernen."
+        "description": "Anbieter für die Ausführungsplanung hinzufügen, bearbeiten oder entfernen.",
+        "menu_options": {
+          "add_execution_provider": "Ausführungsanbieter hinzufügen",
+          "edit_execution_provider": "Ausführungsanbieter bearbeiten",
+          "remove_execution_provider": "Ausführungsanbieter entfernen"
+        }
       },
       "add_execution_provider": {
         "title": "Ausführungsanbieter hinzufügen",
@@ -2578,7 +2589,12 @@
       },
       "broker_savings_plans": {
         "title": "Sparplanrouten",
-        "description": "Explizite anbieterbezogene Sparplanverfügbarkeit und Kostennachweise verwalten."
+        "description": "Explizite anbieterbezogene Sparplanverfügbarkeit und Kostennachweise verwalten.",
+        "menu_options": {
+          "add_savings_plan_route": "Sparplanroute hinzufügen",
+          "edit_savings_plan_route": "Sparplanroute bearbeiten",
+          "remove_savings_plan_route": "Sparplanroute entfernen"
+        }
       },
       "add_savings_plan_route": {
         "title": "Sparplanroute hinzufügen",
@@ -2618,7 +2634,11 @@
       },
       "funding_topology": {
         "title": "Finanzierungstopologie",
-        "description": "Anbieterübergreifendes Guthaben ist nur über eine exakt konfigurierte gerichtete Beziehung nutzbar. Die Gegenrichtung wird niemals abgeleitet."
+        "description": "Anbieterübergreifendes Guthaben ist nur über eine exakt konfigurierte gerichtete Beziehung nutzbar. Die Gegenrichtung wird niemals abgeleitet.",
+        "menu_options": {
+          "add_funding_transfer": "Finanzierungsbeziehung hinzufügen",
+          "remove_funding_transfer": "Finanzierungsbeziehung entfernen"
+        }
       },
       "add_funding_transfer": {
         "title": "Finanzierungsbeziehung hinzufügen",

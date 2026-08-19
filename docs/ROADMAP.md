@@ -441,6 +441,12 @@ from current portfolio value.
 - Keep DKB non-live and do not generalize funding topology into arbitrary transit-bank graph nodes.
 - Preserve payload schema 8, REST portfolio schema 1, Gateway health schema 6, private-PKI transport and advisory-only behavior.
 
+## v1.35.3 — execution-policy menu-label hotfix
+
+- Restore the missing Home Assistant list-menu translations for all native execution-provider, savings-plan and funding-topology menus introduced in v1.35.2.
+- Cover every emitted broker-editor menu option in both English and German so unlabeled chevrons cannot regress.
+- Preserve broker schemas, route economics, retained-cash authorization, provider behavior, wire schemas and the advisory/no-trading boundary unchanged.
+
 ## Future — native dynamic portfolio presentation
 
 - Consume the v1.34 presentation contract so the reference dashboard can render the actual

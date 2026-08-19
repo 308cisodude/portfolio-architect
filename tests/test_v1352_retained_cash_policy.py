@@ -1,4 +1,4 @@
-"""Regression coverage for v1.35.2 retained-cash authorization."""
+"""Regression coverage for v1.35.3 retained-cash authorization."""
 from __future__ import annotations
 
 from datetime import datetime, timezone
