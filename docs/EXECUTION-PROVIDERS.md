@@ -7,6 +7,8 @@ must execute through that provider.
 
 Provider-aware execution configuration remains persisted in `broker.yaml`. Portfolio Architect 1.35.2 adds a native **Execution providers & funding** options editor for schema 2 and schema 3 files. The editor validates the complete document and replaces `broker.yaml` atomically; direct YAML editing remains an advanced/file-based path. Schema 1 stays readable for compatibility but must be deliberately migrated to schema 2 before the native editor is enabled.
 
+Portfolio Architect 1.35.3 restores the English/German labels for all list-based menus in that editor; the broker document model and write semantics are unchanged.
+
 ## Schema 1 compatibility
 
 Existing schema-1 files remain valid and preserve their pre-v1.30 behavior:

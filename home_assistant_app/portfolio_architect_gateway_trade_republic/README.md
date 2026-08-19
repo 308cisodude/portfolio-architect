@@ -1,8 +1,8 @@
-# Portfolio Architect Gateway — Trade Republic v1.35.2
+# Portfolio Architect Gateway — Trade Republic v1.35.3
 
-Version 1.35.2 aligns the common Gateway model with the additive retained-cash contract.
-Trade Republic statement import and accepted-snapshot behavior remain unchanged; this release does
-not add Trade Republic cash acquisition or authorization.
+Version 1.35.3 is package alignment for the Home Assistant broker-editor menu-label hotfix.
+Trade Republic statement import, accepted-snapshot behavior and the v1.35.2 common retained-cash
+contract remain unchanged; this release does not add Trade Republic cash acquisition or authorization.
 Trade Republic statement import, accepted snapshots, diagnostics, REST schema 1 and verified
 private-PKI transport are unchanged.
 

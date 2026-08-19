@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.35.3
+
+- Package/common-runtime alignment for Portfolio Architect v1.35.3; the Home Assistant-only broker-editor menu-label fix does not change statement import or private diagnostics.
+- No Trade Republic cash acquisition, transfer or trading capability is added.
+
 ## 1.35.2
 
 - Package/common-runtime alignment for Portfolio Architect v1.35.2; statement import and private diagnostics remain unchanged.

@@ -1,9 +1,8 @@
-# Portfolio Architect Gateway — Comdirect v1.35.2
+# Portfolio Architect Gateway — Comdirect v1.35.3
 
-Version 1.35.2 adds the provider-owned **Keep cash reserve** authorization mode. It authorizes
-only `max(eligible cash - retained EUR, 0)` while preserving the established all-available and
-capped modes. The v1.35.1 connection-error classification and maintenance-worker containment remain
-unchanged.
+Version 1.35.3 aligns the Comdirect App package with the Home Assistant broker-editor menu-label
+hotfix. Provider behavior is unchanged from v1.35.2: **Keep cash reserve**, all-available/capped
+authorization, and the v1.35.1 connection-error/maintenance-worker resilience remain intact.
 
 Verified HTTPS/private CA trust, bearer authentication, PhotoTAN bootstrap, account
 selection, request-timeout behavior, REST schema 1, health schema 6, portfolio normalization,

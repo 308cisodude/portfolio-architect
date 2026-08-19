@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.35.3
+
+- Package/User-Agent alignment for Portfolio Architect v1.35.3; the Home Assistant-only broker-editor menu-label fix does not change Comdirect acquisition or cash-policy behavior.
+- Preserves v1.35.2 Keep cash reserve, v1.35.1 session-maintenance resilience, verified HTTPS and the read-only boundary.
+
 ## 1.35.2
 
 - Adds **Keep cash reserve** (`retain`) to provider-owned investment-cash authorization while preserving all-available/capped behavior and private schema-1 policy-state compatibility.

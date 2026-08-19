@@ -2528,7 +2528,13 @@
       },
       "execution_providers": {
         "title": "Execution providers & funding",
-        "description": "Edit the validated file-backed broker configuration. Transaction cost is always evaluated before settlement time and optional tie-break preference."
+        "description": "Edit the validated file-backed broker configuration. Transaction cost is always evaluated before settlement time and optional tie-break preference.",
+        "menu_options": {
+          "broker_settings": "Execution evidence settings",
+          "broker_providers": "Execution providers",
+          "broker_savings_plans": "Savings-plan routes",
+          "funding_topology": "Funding topology"
+        }
       },
       "broker_settings": {
         "title": "Execution evidence settings",
@@ -2539,7 +2545,12 @@
       },
       "broker_providers": {
         "title": "Execution providers",
-        "description": "Add, edit, or remove providers used for execution planning."
+        "description": "Add, edit, or remove providers used for execution planning.",
+        "menu_options": {
+          "add_execution_provider": "Add execution provider",
+          "edit_execution_provider": "Edit execution provider",
+          "remove_execution_provider": "Remove execution provider"
+        }
       },
       "add_execution_provider": {
         "title": "Add execution provider",
@@ -2578,7 +2589,12 @@
       },
       "broker_savings_plans": {
         "title": "Savings-plan routes",
-        "description": "Maintain explicit per-provider savings-plan eligibility and cost evidence."
+        "description": "Maintain explicit per-provider savings-plan eligibility and cost evidence.",
+        "menu_options": {
+          "add_savings_plan_route": "Add savings-plan route",
+          "edit_savings_plan_route": "Edit savings-plan route",
+          "remove_savings_plan_route": "Remove savings-plan route"
+        }
       },
       "add_savings_plan_route": {
         "title": "Add savings-plan route",
@@ -2618,7 +2634,11 @@
       },
       "funding_topology": {
         "title": "Funding topology",
-        "description": "Cross-provider cash is usable only through an exact directed edge. The reverse direction is never inferred."
+        "description": "Cross-provider cash is usable only through an exact directed edge. The reverse direction is never inferred.",
+        "menu_options": {
+          "add_funding_transfer": "Add funding transfer",
+          "remove_funding_transfer": "Remove funding transfer"
+        }
       },
       "add_funding_transfer": {
         "title": "Add funding transfer",

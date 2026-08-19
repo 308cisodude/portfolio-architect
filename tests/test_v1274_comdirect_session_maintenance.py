@@ -1,4 +1,4 @@
-"""Regression coverage for v1.35.2 Comdirect OAuth session maintenance."""
+"""Regression coverage for v1.35.3 Comdirect OAuth session maintenance."""
 
 from __future__ import annotations
 
