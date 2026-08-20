@@ -1,31 +1,32 @@
-# Portfolio Architect 1.37.0
+# Portfolio Architect 1.38.0
 
-Portfolio Architect 1.37.0 introduces the shared Gateway human-input validation foundation that was deliberately deferred from the v1.36 presentation line. The milestone centralizes reusable human-numeric parsing mechanics while keeping provider and field semantics explicit and separate.
+Portfolio Architect 1.38.0 is a native Home Assistant dashboard-usability milestone built on the live-accepted v1.37.0 runtime. It collects two concrete presentation improvements observed during live use without changing provider acquisition, portfolio calculation, execution/funding semantics or Gateway wire contracts.
 
-## Shared human-input validation
+## Copy-friendly recommended-purchase ISIN
 
-A new mirrored `human_input.py` Gateway helper provides opt-in bounded primitives for:
+Recommended purchases remain dynamic presentation-slot rows and the dashboard still contains no hard-coded target IDs, ISIN-derived holding IDs or sample-instrument inventory. A visible recommended-purchase amount now has native interactions:
 
-- EUR/money values;
-- percentages;
-- quantities; and
-- bounded integers.
+- **tap:** open the corresponding generic presentation-slot ISIN entity, exposing a copy-friendly ISIN state;
+- **hold:** open the corresponding bounded purchase-explanation entity.
 
-Human numeric parsing accepts only validated locale-style syntax and returns canonical typed `Decimal`/integer values. Common German/English decimal and grouping conventions are supported where the primitive can interpret them safely. Ambiguous quantity syntax such as a lone `1,234` is rejected rather than guessed when it could mean either a decimal quantity or thousands grouping.
+Only rows with a positive proposed buy remain visible. The presentation-slot mapping is still ephemeral UI projection; stable target identity remains the opaque `target_id` repeated in slot attributes.
 
-Rejected input produces bounded guidance that never echoes the raw rejected token. Signs, exponent notation, currency text, unsafe grouping and overlong input are rejected. Common bounds are enforced before provider/field-specific semantics.
+## Policy-aware investment-cash context
 
-The helper is deliberately opt-in. Protocol identifiers, registrations, credentials, tokens and exact IDs do not pass through locale numeric normalization. The DKB FinTS product-registration path and Trade Republic statement import remain on their existing provider-specific exact-validation paths.
+The native **Authorized investment cash** Tile now shows its monetary state together with bounded context derived from already validated cash evidence:
 
-## Comdirect first production consumer
+- total available/eligible investment cash;
+- cash excluded by the active authorization policy.
 
-The existing Comdirect **Cap authorized cash** and **Keep cash reserve** form fields now use the shared EUR primitive instead of a private duplicate parser. The live-proven v1.35.4 behavior is preserved:
+The **Cash after recommended purchases** Tile shows the same context plus planned cash outlay. With complete evidence, the displayed values therefore reconcile as:
 
-- `1024`, `1024.00`, `1024,00`;
-- `1.024,00` and `1,024.00`;
-- validated space/NBSP/narrow-NBSP/apostrophe grouping.
+`remaining cash + policy-excluded cash + planned cash outlay = total available cash`.
 
-Private persisted policy state remains canonical and locale-neutral. Invalid input is still parsed before any save, so the previous valid private policy remains untouched and the established bounded Ingress feedback remains unchanged.
+For `all_available`, the policy-excluded amount is zero. For `retain`, it is the actually excluded portion of the retained reserve. For `capped`, it is the difference between eligible cash and the actually authorized amount rather than mislabelling that difference as the configured cap.
+
+Provider-scoped eligible/authorized cash is summed only when every contributing provider exposes complete rich authorization metadata. If provider-scoped evidence is incomplete, the context fails closed instead of constructing a partial total. The established top-level eligible/authorized pair remains the compatibility fallback when no provider-scoped list exists.
+
+English and German dashboard views use the same underlying numeric evidence with locale-appropriate display formatting.
 
 ## Preserved behavior and security boundaries
 
@@ -34,16 +35,18 @@ Historical experimental `v1.19.0-rc2` brokerage-diagnostic work remains excluded
 - payload schema 8: unchanged;
 - REST portfolio schema 1: unchanged;
 - Gateway health schema 6: unchanged; schemas 1–5 remain supported;
+- presentation schema 2 and v1.36 bounded presentation-slot backend: unchanged;
 - broker schemas 1/2/3 runtime compatibility: unchanged;
-- presentation schema 2 and v1.36.1 dynamic dashboard behavior: unchanged;
 - provider-scoped authorized cash, retained-cash mathematics and exact directed funding topology: unchanged;
+- v1.37 shared Gateway human-input validation and v1.35.4 Comdirect cash-input UX: unchanged;
 - v1.35.1 Comdirect OAuth/session-maintenance resilience: unchanged;
 - Trade Republic local/private statement import: unchanged; this release does not move PDF parsing into Portfolio Architect and no cash or transaction-history parser is added;
 - DKB remains experimental, manual-only and non-live; DKB live Gateway acquisition remains a later authenticated milestone;
-- verified private-PKI HTTPS, bearer authentication, Supervisor trust discovery, DNS pinning and no-plaintext fallback: unchanged;
-- No trading, order, transfer, payment, or transaction-history capability is added; no automatic-sell capability is added.
+- private-PKI verified HTTPS, bearer authentication, Supervisor trust discovery, DNS pinning and no-plaintext fallback: unchanged;
+- no trading, order placement, transfer execution, payment, transaction-history or automatic-sell capability is added.
 
+No trading, order, transfer, payment, or transaction-history capability is introduced by v1.38.0.
 
-The v1.33.0 source-freshness and plan-schedule separation remains unchanged: recurring scheduling stays anchored to the latest valid Portfolio Architect evaluation, source timestamps remain evidence-only freshness inputs, and v1.37.0 does not change any configured freshness threshold.
+The reference dashboard changes in this release. HACS does not overwrite user-owned Lovelace YAML, so users who want the v1.38.0 presentation must deliberately replace or merge their copied dashboard; bulk replacement with the supplied bilingual dashboard is the recommended upgrade path.
 
-The dashboard is unchanged from live-accepted v1.36.1; no Lovelace YAML replacement is required for v1.37.0.
+The v1.33.0 source-freshness and plan-schedule separation remains unchanged: recurring scheduling stays anchored to the latest valid Portfolio Architect evaluation, source timestamps remain evidence-only freshness inputs, and v1.38.0 does not change any configured freshness threshold.

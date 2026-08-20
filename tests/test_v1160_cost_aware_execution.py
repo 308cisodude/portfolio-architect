@@ -252,15 +252,16 @@ def test_v1160_dashboard_keeps_native_cost_aware_interaction_contract() -> None:
     ):
         assert dashboard.count(entity) >= 2
 
-    # v1.36 deliberately replaces instrument-specific purchase tiles with bounded
-    # generic aliases. entity-filter keeps native HA interaction/more-info while
-    # the stable target identity remains an attribute of each alias.
+    # v1.36 replaced instrument-specific purchase tiles with bounded generic aliases.
+    # v1.38 keeps that inventory dynamic while restoring copy-friendly ISIN access:
+    # tap opens the same slot's ISIN entity and hold keeps purchase explanation.
     assert dashboard.count("type: entity-filter") >= 2
     assert "sensor.portfolio_architect_presentation_target_01_proposed_buy" in dashboard
     assert "sensor.portfolio_architect_presentation_target_32_proposed_buy" in dashboard
     assert "sensor.portfolio_architect_presentation_target_01_purchase_explanation" in dashboard
     assert "sensor.portfolio_architect_presentation_target_32_purchase_explanation" in dashboard
-    assert "sensor.portfolio_architect_presentation_target_01_instrument_isin" not in dashboard
+    assert "sensor.portfolio_architect_presentation_target_01_instrument_isin" in dashboard
+    assert "sensor.portfolio_architect_presentation_target_32_instrument_isin" in dashboard
 
 
 def test_v1160_gateway_public_snapshot_does_not_publish_account_identity() -> None:

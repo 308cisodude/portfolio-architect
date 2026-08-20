@@ -1743,11 +1743,40 @@
           },
           "authorization_retain_eur": {
             "name": "Zurückzuhaltende Barreserve"
+          },
+          "total_available_cash_eur": {
+            "name": "Gesamtes verfügbares Bargeld"
+          },
+          "policy_excluded_cash_eur": {
+            "name": "Durch Richtlinie ausgeschlossenes Bargeld"
+          },
+          "cash_context": {
+            "name": "Bargeldkontext (Englisch)"
+          },
+          "cash_context_de": {
+            "name": "Bargeldkontext"
           }
         }
       },
       "remaining_investment_reserve": {
-        "name": "Guthaben nach empfohlenen Käufen"
+        "name": "Guthaben nach empfohlenen Käufen",
+        "state_attributes": {
+          "total_available_cash_eur": {
+            "name": "Gesamtes verfügbares Bargeld"
+          },
+          "policy_excluded_cash_eur": {
+            "name": "Durch Richtlinie ausgeschlossenes Bargeld"
+          },
+          "planned_cash_outlay_eur": {
+            "name": "Geplanter Bargeldabfluss"
+          },
+          "cash_context": {
+            "name": "Bargeldkontext (Englisch)"
+          },
+          "cash_context_de": {
+            "name": "Bargeldkontext"
+          }
+        }
       },
       "deferred_contribution": {
         "name": "Zurückgestellte Anlagereserve",

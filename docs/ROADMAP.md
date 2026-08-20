@@ -480,10 +480,20 @@ from current portfolio value.
 - Protocol identifiers, registrations, credentials, tokens and exact IDs bypass human-numeric normalization; DKB FinTS registration and Trade Republic statement import retain their provider-specific validation paths.
 - Preserve REST schema 1, health schema 6, presentation schema 2, broker schemas 1/2/3, private-PKI transport, provider behavior and the advisory/no-trading boundary.
 
-## Deferred beyond v1.37.0
+## v1.38.0 — native dashboard stardust
+
+- Restore copy-friendly recommendation interaction without hard-coded instrument inventory: tapping a visible dynamic recommended-purchase amount opens the same slot's ISIN entity, while holding the row opens the existing purchase explanation.
+- Add bounded policy-aware context to the native **Authorized investment cash** Tile: total available cash and the amount excluded by the active all-available/capped/retained policy.
+- Add the same total/policy context plus planned cash outlay to **Cash after recommended purchases**, so the visible figures reconcile as `remaining + policy excluded + planned = total available` when all evidence is present.
+- Derive the context only from already validated provider-neutral cash evidence; if provider-scoped eligibility/authorization evidence is incomplete, omit the context rather than guessing.
+- Keep the v1.36 presentation-slot backend, bounded candidate ranges and native-only dashboard architecture unchanged; add no custom frontend dependency or hard-coded target/holding identity.
+- Preserve v1.37 shared human-input validation, provider runtimes, Gateway wire/security contracts, funding/cash mathematics and the advisory/no-trading boundary.
+
+## Deferred beyond v1.38.0
 
 - **Trade Republic cash acquisition:** if implemented later, parse only conservative cash-summary evidence inside the TR App; keep private documents local, avoid transaction-history ingestion, apply explicit value-date/freshness policy and fail closed on ambiguity.
 - **DKB authenticated acquisition:** remains gated on legitimate product registration/capability evidence and later authenticated user-capability/UPD validation; do not infer holdings support from generic or anonymous bank capability lists.
-- **Further dashboard polish:** only when live use exposes a concrete presentation defect; v1.36.1 remains the accepted dynamic-dashboard baseline.
+- **Further allocation/drift visualization polish:** consider richer target markers or drift bars only when a clean native Home Assistant implementation exists and live use justifies it; do not reintroduce custom-card dependencies.
+- The historical accepted-exception horizontal-overflow wart is no longer an outstanding item: the v1.36 native dynamic policy list replaced that old static presentation path.
 
-No holdings acquisition is enabled by v1.37.0.
+No new provider holdings or cash acquisition is enabled by v1.38.0.

@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.38.0
+
+- Adds native dashboard cash-policy context so **Authorized investment cash** shows total available cash and the amount excluded by policy, while **Cash after recommended purchases** also shows planned cash outlay.
+- Restores copy-friendly recommendation interaction without hard-coded instrument inventory: tapping a dynamic recommended-purchase row opens that slot's ISIN entity, while holding the row opens the existing bounded purchase explanation.
+- Keeps the v1.36 presentation-slot backend, presentation schema 2, dynamic candidate bounds and native-only dashboard architecture unchanged; no custom frontend dependency is added.
+- Preserves v1.37 shared human-input validation, provider runtimes, payload/REST/health/broker schemas, funding/cash mathematics, private-PKI transport and the advisory/no-trading boundary.
+
 ## 1.37.0
 
 - Adds shared, opt-in Gateway human-numeric validation primitives for EUR/money, percentages, quantities and bounded integers with canonical typed output and bounded non-reflective errors.

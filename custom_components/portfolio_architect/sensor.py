@@ -52,11 +52,36 @@ from .presentation import (
     display_count_de,
     display_datetime_de,
     display_eur_de,
+    display_investment_cash_context,
     display_state_de,
+    investment_cash_totals,
 )
 
 CURRENCY_EUR = "EUR"
 REFRESH_SCHEDULE_TICK = timedelta(minutes=1)
+
+
+def _investment_cash_context(
+    plan: Any, *, german: bool, include_planned_outlay: bool
+) -> tuple[str, float, float] | None:
+    """Build bounded cash-policy context for the reference dashboard."""
+    totals = investment_cash_totals(
+        plan.provider_investment_cash,
+        fallback_eligible=plan.eligible_investment_cash_eur,
+        fallback_authorized=plan.authorized_investment_cash_eur,
+    )
+    if totals is None:
+        return None
+    total_available, policy_excluded = totals
+    context = display_investment_cash_context(
+        total_available,
+        policy_excluded,
+        planned_outlay=(
+            plan.estimated_cash_outlay_eur if include_planned_outlay else None
+        ),
+        german=german,
+    )
+    return context, total_available, policy_excluded
 
 
 class AllocationKind(StrEnum):
@@ -1051,6 +1076,12 @@ class PortfolioAvailableInvestmentReserveSensor(_PortfolioMonthlyMoneySensor):
         if not self.available:
             return base
         plan = self.coordinator.data.monthly_plan
+        context_en = _investment_cash_context(
+            plan, german=False, include_planned_outlay=False
+        )
+        context_de = _investment_cash_context(
+            plan, german=True, include_planned_outlay=False
+        )
         return {
             "reserve_source": plan.reserve_source,
             "reserve_as_of": plan.reserve_as_of.isoformat() if plan.reserve_as_of else None,
@@ -1059,6 +1090,10 @@ class PortfolioAvailableInvestmentReserveSensor(_PortfolioMonthlyMoneySensor):
             "authorization_policy": plan.investment_cash_authorization_policy,
             "authorization_cap_eur": plan.investment_cash_authorization_cap_eur,
             "authorization_retain_eur": plan.investment_cash_authorization_retain_eur,
+            "total_available_cash_eur": context_en[1] if context_en else None,
+            "policy_excluded_cash_eur": context_en[2] if context_en else None,
+            "cash_context": context_en[0] if context_en else None,
+            "cash_context_de": context_de[0] if context_de else None,
             "provider_investment_cash": [
                 {
                     "provider_id": item.provider_id,
@@ -1095,6 +1130,27 @@ class PortfolioRemainingInvestmentReserveSensor(_PortfolioMonthlyMoneySensor):
     _attr_translation_key = "remaining_investment_reserve"
     value_attribute = "remaining_reserve_eur"
     object_id = "remaining_investment_reserve"
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        base = super().extra_state_attributes
+        if not self.available:
+            return base
+        plan = self.coordinator.data.monthly_plan
+        context_en = _investment_cash_context(
+            plan, german=False, include_planned_outlay=True
+        )
+        context_de = _investment_cash_context(
+            plan, german=True, include_planned_outlay=True
+        )
+        return {
+            "total_available_cash_eur": context_en[1] if context_en else None,
+            "policy_excluded_cash_eur": context_en[2] if context_en else None,
+            "planned_cash_outlay_eur": plan.estimated_cash_outlay_eur,
+            "cash_context": context_en[0] if context_en else None,
+            "cash_context_de": context_de[0] if context_de else None,
+            **base,
+        }
 
 
 class PortfolioDeferredContributionSensor(_PortfolioMonthlyMoneySensor):

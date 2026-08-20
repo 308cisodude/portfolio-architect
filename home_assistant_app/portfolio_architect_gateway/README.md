@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway — Comdirect v1.37.0
+# Portfolio Architect Gateway — Comdirect v1.38.0
 
-Version 1.37.0 adds the shared Gateway human-numeric validation helper and migrates the existing Comdirect cash-cap/retained-reserve inputs onto its EUR primitive. The live-proven v1.35.4 accepted syntax, canonical private persistence, bounded invalid-input UX, OAuth/session maintenance and PhotoTAN behavior remain unchanged.
+Version 1.38.0 is package alignment for Portfolio Architect's Home Assistant-side dashboard usability polish. Comdirect acquisition, OAuth/session maintenance, PhotoTAN and retained-cash behavior are unchanged, including the v1.37 shared human-input helper and live-proven v1.35.4 cash syntax.
 
 Verified HTTPS/private CA trust, bearer authentication, PhotoTAN bootstrap, account
 selection, request-timeout behavior, REST schema 1, health schema 6, portfolio normalization,
