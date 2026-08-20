@@ -143,6 +143,8 @@ def test_native_editor_adds_exact_directed_edge_and_blocks_referenced_provider_r
         to_provider="broker_b",
         fee_eur=0,
         settlement_business_days=0,
+        source="Synthetic verified transfer",
+        as_of="2026-08-19",
     )
     assert broker["schema_version"] == 3
     assert broker["funding_transfers"] == [{
@@ -150,6 +152,8 @@ def test_native_editor_adds_exact_directed_edge_and_blocks_referenced_provider_r
         "to_provider": "broker_b",
         "fee_eur": 0.0,
         "settlement_business_days": 0,
+        "source": "Synthetic verified transfer",
+        "as_of": "2026-08-19",
     }]
     with pytest.raises(ValueError, match="funding transfers"):
         remove_provider(broker, provider_id="broker_b")

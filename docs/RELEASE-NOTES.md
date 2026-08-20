@@ -1,57 +1,70 @@
-# Portfolio Architect 1.39.0
+# Portfolio Architect 1.40.0
 
-Portfolio Architect 1.39.0 is a native-dashboard presentation release built on the live-accepted v1.38.1 bounded-slot architecture. The colourful paired current/target Tile view was not included in v1.38.1; that release stopped at the signed drift restoration. It restores a richer colourful current-versus-target allocation view without bringing back static instrument inventories, custom frontend code, or the live-broken entity-filter/Distribution composition. Portfolio calculations, provider acquisition, execution/funding semantics and Gateway wire contracts are unchanged.
+Portfolio Architect 1.40.0 strengthens the existing provider-scoped advisory funding topology by allowing each exact directed broker-schema-3 transfer edge to carry explicit operator-owned evidence provenance. A transfer relationship can now record the verified fee and conservative same-/multi-business-day availability assumption together with a bounded evidence source and evidence date. Portfolio Architect still moves no money and places no orders.
 
-## Dynamic colourful current and target allocation
+## Evidence-backed funding edges
 
-The **Current plan allocation** and **Plan target allocation** surfaces now render each configured target through paired native Home Assistant Conditional + Tile cards. The dashboard still enumerates only the fixed 32 generic presentation slots; it contains no target IDs, ISINs, WKNs, holding IDs or sample instrument names.
+Broker schema 3 continues to use explicit directed transfer relationships. v1.40 adds optional `source` and `as_of` fields to an edge:
 
-For each slot:
+```yaml
+funding_transfers:
+  - from_provider: broker_a
+    to_provider: broker_b
+    fee_eur: 0
+    settlement_business_days: 0
+    source: user-verified instant transfer
+    as_of: '2026-08-18'
+```
 
-- the current and target Tile use the entity's dynamic instrument name;
-- both Tiles use the same deterministic slot colour, giving the position a consistent visual identity across the two allocation columns;
-- both Tiles use the native `bar-gauge` feature on a fixed 0–100% scale;
-- visibility is conditioned on the slot's **target allocation**, not its current allocation, so a configured target that is currently missing still renders as a 0% current Tile instead of disappearing;
-- unused trailing presentation slots remain unavailable and are suppressed naturally;
-- tapping a Tile opens native more-info for the corresponding allocation entity.
+The example is synthetic. Portfolio Architect does not infer a fee, timing assumption, reverse edge, bank capability or transfer rail from provider names.
 
-The colour mapping belongs only to the ephemeral presentation-slot order. It is not portfolio identity and is never persisted into plan semantics. Stable target identity remains the opaque `target_id` repeated in slot attributes.
+When evidence provenance is present, both fields are required. Future-dated evidence is rejected. The edge uses the existing broker `fee_data_max_age_days` window: once stale, the relationship remains valid configuration evidence but becomes ineligible for route selection until refreshed. This means old observations cannot silently remain actionable forever.
 
-## Drift semantics remain unchanged
+Legacy schema-3 edges without `source`/`as_of` remain accepted for backward compatibility. The native editor creates only evidence-backed edges from v1.40 onward.
 
-The live-accepted v1.38.1 **Current portfolio allocation** drift presentation is intentionally preserved. Its colours remain semantic rather than identity-based:
+## Planning semantics
 
-- **underweight:** amber;
-- **on target:** green;
-- **overweight:** red.
+Existing route economics are preserved. Portfolio Architect evaluates execution provider and funding provider together, includes the configured transfer fee in route cost, uses conservative settlement business days only as a deterministic tie-break after economic cost, and charges one fixed transfer fee per directed edge within an allocation run. Provider-owned cash pools remain separate.
 
-The signed drift Tiles continue to use the native -100…+100 percentage-point bar gauge and open the matching bounded allocation explanation on tap. The v1.38.0 policy-aware cash context and copy-friendly recommendation ISIN interaction are also unchanged.
+A stale evidenced edge behaves as if that cross-provider route is unavailable. Same-provider cash remains locally usable without a transfer edge.
 
-## Native-only and bounded architecture
+## Native editor
 
-The reference dashboard remains core-Home-Assistant-only. It adds no `auto-entities`, card-mod, JavaScript, custom card or frontend dependency. The implementation uses the established presentation schema 2 bounded adapters and deliberately avoids an O(N²) family of target-count-specific Distribution-card variants.
+The Funding topology editor now asks for:
 
-English and German views consume the same underlying entities and the same deterministic slot-colour mapping.
+- source provider;
+- destination provider;
+- verified fee;
+- conservative settlement business days;
+- evidence source; and
+- evidence date.
 
-## Preserved behavior and security boundaries
+The evidence fields are local configuration metadata. They are not credentials and are not sent to a provider.
+
+## Preserved contracts
 
 Historical experimental `v1.19.0-rc2` brokerage-diagnostic work remains excluded and is not promoted by this release.
 
 - payload schema 8: unchanged;
 - REST portfolio schema 1: unchanged;
 - Gateway health schema 6: unchanged; schemas 1–5 remain supported;
-- presentation schema 2 and the v1.36 bounded presentation-slot backend: unchanged;
-- broker schemas 1/2/3 runtime compatibility: unchanged;
-- provider-scoped authorized cash, retained-cash mathematics and exact directed funding topology: unchanged;
-- v1.37 shared Gateway human-input validation and v1.35.4 Comdirect cash-input UX: unchanged;
+- presentation schema 2: unchanged;
+- broker schemas 1/2/3: retained, with only the optional schema-3 edge provenance described above;
+- verified private-PKI HTTPS, bearer authentication and provider isolation: unchanged.
 - v1.35.1 Comdirect OAuth/session-maintenance resilience: unchanged;
 - Trade Republic local/private statement import: unchanged; this release does not move PDF parsing into Portfolio Architect and no cash or transaction-history parser is added;
 - DKB remains experimental, manual-only and non-live; DKB live Gateway acquisition remains a later authenticated milestone;
 - private-PKI verified HTTPS, bearer authentication, Supervisor trust discovery, DNS pinning and no-plaintext fallback: unchanged;
 - no trading, order placement, transfer execution, payment, transaction-history or automatic-sell capability is added.
 
-No trading, order, transfer, payment, or transaction-history capability is introduced by v1.39.0.
+## Security and scope
 
-The reference dashboard changes in this release. HACS does not overwrite user-owned Lovelace YAML, so users who want the v1.39.0 colourful allocation presentation must deliberately replace or merge their copied dashboard; bulk replacement with the supplied bilingual dashboard is the recommended upgrade path.
+No provider acquisition code changes. No Trade Republic private API, FinTS holdings path, transfer initiation, payment initiation, transaction execution, order placement, order cancellation or sell capability is introduced. The v1.39 colourful dynamic allocation tiles, v1.38.1 drift presentation, provider cash authorization, private-PKI HTTPS, bearer authentication and fail-closed provider isolation remain intact.
 
-The v1.33.0 source-freshness and plan-schedule separation remains unchanged: recurring scheduling stays anchored to the latest valid Portfolio Architect evaluation, source timestamps remain evidence-only freshness inputs, and v1.39.0 does not change any configured freshness threshold.
+Payload schema 8, REST portfolio schema 1, Gateway health schema 6 and presentation schema 2 are unchanged. Broker schemas 1/2/3 remain supported; schema 3 gains only the optional provenance fields described above.
+
+Historical preservation notes: the colourful paired current/target Tile view was not included in v1.38.1; it arrived in v1.39.0 and remains unchanged here. The v1.33.0 source-freshness and plan-schedule separation remains unchanged: recurring scheduling stays anchored to the latest valid Portfolio Architect evaluation, source timestamps remain evidence-only freshness inputs, and v1.40.0 does not change any configured freshness threshold.
+
+No trading, order, transfer, payment, or transaction-history capability is introduced by v1.40.0.
+
+No dashboard YAML migration is required for v1.40.0.

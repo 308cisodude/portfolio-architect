@@ -158,6 +158,8 @@ CONF_BROKER_FROM_PROVIDER = "broker_from_provider"
 CONF_BROKER_TO_PROVIDER = "broker_to_provider"
 CONF_BROKER_TRANSFER_FEE_EUR = "broker_transfer_fee_eur"
 CONF_BROKER_SETTLEMENT_DAYS = "broker_settlement_business_days"
+CONF_BROKER_TRANSFER_SOURCE = "broker_transfer_source"
+CONF_BROKER_TRANSFER_AS_OF = "broker_transfer_as_of"
 
 
 from .engine.execution import ExecutionConfig
@@ -1836,6 +1838,8 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
             CONF_BROKER_TO_PROVIDER: providers[1]["value"],
             CONF_BROKER_TRANSFER_FEE_EUR: 0.0,
             CONF_BROKER_SETTLEMENT_DAYS: 0,
+            CONF_BROKER_TRANSFER_SOURCE: "",
+            CONF_BROKER_TRANSFER_AS_OF: date.today().isoformat(),
         }
         if user_input is not None:
             suggested.update(user_input)
@@ -1846,6 +1850,8 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
                     to_provider=str(user_input[CONF_BROKER_TO_PROVIDER]),
                     fee_eur=float(user_input[CONF_BROKER_TRANSFER_FEE_EUR]),
                     settlement_business_days=int(user_input[CONF_BROKER_SETTLEMENT_DAYS]),
+                    source=str(user_input[CONF_BROKER_TRANSFER_SOURCE]),
+                    as_of=str(user_input[CONF_BROKER_TRANSFER_AS_OF]),
                 )
                 await self._async_write_broker(context.path, updated)
             except (OSError, ValueError):
@@ -2695,6 +2701,12 @@ def _broker_funding_schema(providers: list[dict[str, str]]) -> vol.Schema:
             ),
             vol.Required(CONF_BROKER_SETTLEMENT_DAYS): NumberSelector(
                 NumberSelectorConfig(min=0, max=30, step=1, mode=NumberSelectorMode.BOX, unit_of_measurement="d")
+            ),
+            vol.Required(CONF_BROKER_TRANSFER_SOURCE): TextSelector(
+                TextSelectorConfig(multiline=False)
+            ),
+            vol.Required(CONF_BROKER_TRANSFER_AS_OF): TextSelector(
+                TextSelectorConfig(multiline=False)
             ),
         }
     )

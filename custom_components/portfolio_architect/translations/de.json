@@ -2663,7 +2663,7 @@
       },
       "funding_topology": {
         "title": "Finanzierungstopologie",
-        "description": "Anbieterübergreifendes Guthaben ist nur über eine exakt konfigurierte gerichtete Beziehung nutzbar. Die Gegenrichtung wird niemals abgeleitet.",
+        "description": "Anbieterübergreifendes Guthaben ist nur über eine exakt konfigurierte gerichtete Beziehung nutzbar. Die Gegenrichtung wird nie abgeleitet. Neue Beziehungen speichern eine explizite Evidenzherkunft.",
         "menu_options": {
           "add_funding_transfer": "Finanzierungsbeziehung hinzufügen",
           "remove_funding_transfer": "Finanzierungsbeziehung entfernen"
@@ -2671,12 +2671,14 @@
       },
       "add_funding_transfer": {
         "title": "Finanzierungsbeziehung hinzufügen",
-        "description": "Füge eine gerichtete Beziehung mit verifizierter Transfergebühr und konservativer Abwicklungszeit hinzu.",
+        "description": "Füge eine gerichtete Finanzierungsbeziehung mit verifizierter Transfergebühr, konservativer Abwicklungszeit und expliziter Evidenzherkunft hinzu. Evidenzbasierte Beziehungen werden unzulässig, sobald ihre Evidenz älter als das Frischefenster für Broker-Gebührendaten ist.",
         "data": {
           "broker_from_provider": "Von Anbieter",
           "broker_to_provider": "Zu Anbieter",
           "broker_transfer_fee_eur": "Transfergebühr",
-          "broker_settlement_business_days": "Abwicklungszeit"
+          "broker_settlement_business_days": "Abwicklungszeit",
+          "broker_transfer_source": "Evidenzquelle",
+          "broker_transfer_as_of": "Evidenzdatum (JJJJ-MM-TT)"
         }
       },
       "remove_funding_transfer": {

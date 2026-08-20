@@ -322,7 +322,7 @@ def execution_providers(
     if schema_version == 3:
         # Validate the complete topology up front; an invalid unused edge must not
         # survive merely because today's allocation happens to use local cash.
-        funding_transfers(broker)
+        funding_transfers(broker, evaluated_on=evaluated_on)
     max_age = broker.get("fee_data_max_age_days")
     if isinstance(max_age, bool) or not isinstance(max_age, int):
         raise ValueError("broker fee_data_max_age_days is invalid")
@@ -805,6 +805,7 @@ def choose_funded_route_for_cash(
                 broker,
                 from_provider=funding_provider_id,
                 to_provider=execution_provider.provider_id,
+                evaluated_on=evaluated_on,
             )
             if transfer is None:
                 continue

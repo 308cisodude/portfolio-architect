@@ -215,8 +215,10 @@ def add_funding_transfer(
     to_provider: str,
     fee_eur: float,
     settlement_business_days: int,
+    source: str,
+    as_of: str,
 ) -> dict[str, Any]:
-    """Add one exact directed transfer edge and opt into schema 3 when needed."""
+    """Add one evidence-backed directed transfer edge and opt into schema 3."""
 
     updated = deepcopy(document)
     updated["schema_version"] = 3
@@ -236,6 +238,8 @@ def add_funding_transfer(
             "to_provider": to_provider,
             "fee_eur": float(fee_eur),
             "settlement_business_days": int(settlement_business_days),
+            "source": source.strip(),
+            "as_of": as_of.strip(),
         }
     )
     _validate_editable_document(updated)

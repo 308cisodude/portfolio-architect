@@ -2663,7 +2663,7 @@
       },
       "funding_topology": {
         "title": "Funding topology",
-        "description": "Cross-provider cash is usable only through an exact directed edge. The reverse direction is never inferred.",
+        "description": "Cross-provider cash is usable only through an exact directed edge. The reverse direction is never inferred. New edges record explicit evidence provenance.",
         "menu_options": {
           "add_funding_transfer": "Add funding transfer",
           "remove_funding_transfer": "Remove funding transfer"
@@ -2671,12 +2671,14 @@
       },
       "add_funding_transfer": {
         "title": "Add funding transfer",
-        "description": "Add one directed funding relationship with the verified transfer fee and conservative settlement time.",
+        "description": "Add one directed funding relationship with verified transfer fee, conservative settlement time, and explicit evidence provenance. Evidence-backed edges become ineligible when their evidence is older than the broker fee-data freshness window.",
         "data": {
           "broker_from_provider": "From provider",
           "broker_to_provider": "To provider",
           "broker_transfer_fee_eur": "Transfer fee",
-          "broker_settlement_business_days": "Settlement time"
+          "broker_settlement_business_days": "Settlement time",
+          "broker_transfer_source": "Evidence source",
+          "broker_transfer_as_of": "Evidence date (YYYY-MM-DD)"
         }
       },
       "remove_funding_transfer": {

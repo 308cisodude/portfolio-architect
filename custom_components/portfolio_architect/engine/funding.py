@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import date
 from decimal import Decimal, ROUND_HALF_UP
 import re
 from typing import Any, Final
@@ -14,6 +15,7 @@ _MAX_TRANSFER_FEE_EUR: Final = D("10000")
 _MAX_SETTLEMENT_DAYS: Final = 30
 _MAX_PROVIDER_NAME: Final = 80
 _MAX_PROVIDER_CASH_SOURCES: Final = 16
+_MAX_TRANSFER_EVIDENCE_SOURCE: Final = 160
 
 
 @dataclass(frozen=True, slots=True)
@@ -24,6 +26,9 @@ class FundingTransfer:
     to_provider: str
     fee_eur: Decimal
     settlement_business_days: int
+    evidence_source: str | None = None
+    evidence_as_of: date | None = None
+    evidence_fresh: bool = True
 
 
 @dataclass(frozen=True, slots=True)
@@ -58,13 +63,31 @@ def _money(value: Any, *, field: str, maximum: Decimal = D("1000000000")) -> Dec
     return parsed.quantize(D("0.01"), rounding=ROUND_HALF_UP)
 
 
-def funding_transfers(broker: dict[str, Any]) -> tuple[FundingTransfer, ...]:
+def _evidence_source(value: Any, *, field: str) -> str:
+    if (
+        not isinstance(value, str)
+        or not value.strip()
+        or len(value.strip()) > _MAX_TRANSFER_EVIDENCE_SOURCE
+        or any(ord(char) < 32 for char in value)
+    ):
+        raise ValueError(f"{field} is invalid")
+    return value.strip()
+
+
+def funding_transfers(
+    broker: dict[str, Any], *, evaluated_on: date | None = None
+) -> tuple[FundingTransfer, ...]:
     """Return strict directed transfer edges from broker schema 3.
 
     Broker schemas 1 and 2 intentionally contain no cross-provider funding
     relationships. Same-provider cash is always usable locally and needs no edge.
     Schema 3 adds only explicit directed edges; reverse transferability is never
-    inferred.
+    inferred. v1.40 optionally binds an edge to operator-owned evidence using
+    ``source`` + ``as_of``. Evidenced edges use the existing broker
+    ``fee_data_max_age_days`` window and become ineligible when stale.
+
+    Legacy schema-3 edges without provenance remain accepted for backward
+    compatibility, but the native editor creates evidence-backed edges.
     """
 
     if not isinstance(broker, dict):
@@ -87,15 +110,25 @@ def funding_transfers(broker: dict[str, Any]) -> tuple[FundingTransfer, ...]:
     if not isinstance(raw_edges, list) or len(raw_edges) > _MAX_FUNDING_TRANSFERS:
         raise ValueError("broker schema 3 requires a bounded funding_transfers list")
 
+    max_age_raw = broker.get("fee_data_max_age_days")
+    if isinstance(max_age_raw, bool) or not isinstance(max_age_raw, int) or not 1 <= max_age_raw <= 366:
+        raise ValueError("broker fee_data_max_age_days is invalid")
+    today = evaluated_on or date.today()
+
     seen: set[tuple[str, str]] = set()
     result: list[FundingTransfer] = []
+    required = {
+        "from_provider",
+        "to_provider",
+        "fee_eur",
+        "settlement_business_days",
+    }
+    evidence_fields = {"source", "as_of"}
     for index, raw in enumerate(raw_edges):
-        if not isinstance(raw, dict) or set(raw) != {
-            "from_provider",
-            "to_provider",
-            "fee_eur",
-            "settlement_business_days",
-        }:
+        if not isinstance(raw, dict):
+            raise ValueError(f"funding_transfers[{index}] is invalid")
+        keys = set(raw)
+        if frozenset(keys) not in {frozenset(required), frozenset(required | evidence_fields)}:
             raise ValueError(f"funding_transfers[{index}] is invalid")
         source = _provider_id(raw["from_provider"], field=f"funding_transfers[{index}].from_provider")
         destination = _provider_id(raw["to_provider"], field=f"funding_transfers[{index}].to_provider")
@@ -110,6 +143,22 @@ def funding_transfers(broker: dict[str, Any]) -> tuple[FundingTransfer, ...]:
         days = raw["settlement_business_days"]
         if isinstance(days, bool) or not isinstance(days, int) or not 0 <= days <= _MAX_SETTLEMENT_DAYS:
             raise ValueError(f"funding_transfers[{index}].settlement_business_days is invalid")
+
+        evidence_source: str | None = None
+        evidence_as_of: date | None = None
+        evidence_fresh = True
+        if evidence_fields.issubset(keys):
+            evidence_source = _evidence_source(
+                raw["source"], field=f"funding_transfers[{index}].source"
+            )
+            try:
+                evidence_as_of = date.fromisoformat(str(raw["as_of"]))
+            except ValueError as err:
+                raise ValueError(f"funding_transfers[{index}].as_of is invalid") from err
+            if evidence_as_of > today:
+                raise ValueError(f"funding_transfers[{index}].as_of is in the future")
+            evidence_fresh = (today - evidence_as_of).days <= max_age_raw
+
         result.append(
             FundingTransfer(
                 from_provider=source,
@@ -120,20 +169,27 @@ def funding_transfers(broker: dict[str, Any]) -> tuple[FundingTransfer, ...]:
                     maximum=_MAX_TRANSFER_FEE_EUR,
                 ),
                 settlement_business_days=days,
+                evidence_source=evidence_source,
+                evidence_as_of=evidence_as_of,
+                evidence_fresh=evidence_fresh,
             )
         )
     return tuple(sorted(result, key=lambda item: (item.from_provider, item.to_provider)))
 
 
 def transfer_for(
-    broker: dict[str, Any], *, from_provider: str, to_provider: str
+    broker: dict[str, Any], *, from_provider: str, to_provider: str, evaluated_on: date | None = None
 ) -> FundingTransfer | None:
-    """Return one explicit directed transfer edge, or None when unavailable."""
+    """Return one explicit fresh directed transfer edge, or None when unavailable."""
 
     if from_provider == to_provider:
         return FundingTransfer(from_provider, to_provider, D("0"), 0)
-    for item in funding_transfers(broker):
-        if item.from_provider == from_provider and item.to_provider == to_provider:
+    for item in funding_transfers(broker, evaluated_on=evaluated_on):
+        if (
+            item.from_provider == from_provider
+            and item.to_provider == to_provider
+            and item.evidence_fresh
+        ):
             return item
     return None
 
