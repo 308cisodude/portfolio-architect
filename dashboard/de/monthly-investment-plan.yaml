@@ -373,38 +373,38 @@ cards:
     rows: auto
 - type: entity-filter
   entities:
-  - sensor.portfolio_architect_presentation_target_01_proposed_buy
-  - sensor.portfolio_architect_presentation_target_02_proposed_buy
-  - sensor.portfolio_architect_presentation_target_03_proposed_buy
-  - sensor.portfolio_architect_presentation_target_04_proposed_buy
-  - sensor.portfolio_architect_presentation_target_05_proposed_buy
-  - sensor.portfolio_architect_presentation_target_06_proposed_buy
-  - sensor.portfolio_architect_presentation_target_07_proposed_buy
-  - sensor.portfolio_architect_presentation_target_08_proposed_buy
-  - sensor.portfolio_architect_presentation_target_09_proposed_buy
-  - sensor.portfolio_architect_presentation_target_10_proposed_buy
-  - sensor.portfolio_architect_presentation_target_11_proposed_buy
-  - sensor.portfolio_architect_presentation_target_12_proposed_buy
-  - sensor.portfolio_architect_presentation_target_13_proposed_buy
-  - sensor.portfolio_architect_presentation_target_14_proposed_buy
-  - sensor.portfolio_architect_presentation_target_15_proposed_buy
-  - sensor.portfolio_architect_presentation_target_16_proposed_buy
-  - sensor.portfolio_architect_presentation_target_17_proposed_buy
-  - sensor.portfolio_architect_presentation_target_18_proposed_buy
-  - sensor.portfolio_architect_presentation_target_19_proposed_buy
-  - sensor.portfolio_architect_presentation_target_20_proposed_buy
-  - sensor.portfolio_architect_presentation_target_21_proposed_buy
-  - sensor.portfolio_architect_presentation_target_22_proposed_buy
-  - sensor.portfolio_architect_presentation_target_23_proposed_buy
-  - sensor.portfolio_architect_presentation_target_24_proposed_buy
-  - sensor.portfolio_architect_presentation_target_25_proposed_buy
-  - sensor.portfolio_architect_presentation_target_26_proposed_buy
-  - sensor.portfolio_architect_presentation_target_27_proposed_buy
-  - sensor.portfolio_architect_presentation_target_28_proposed_buy
-  - sensor.portfolio_architect_presentation_target_29_proposed_buy
-  - sensor.portfolio_architect_presentation_target_30_proposed_buy
-  - sensor.portfolio_architect_presentation_target_31_proposed_buy
-  - sensor.portfolio_architect_presentation_target_32_proposed_buy
+  - {entity: sensor.portfolio_architect_presentation_target_01_proposed_buy, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_02_proposed_buy, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_03_proposed_buy, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_04_proposed_buy, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_05_proposed_buy, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_06_proposed_buy, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_07_proposed_buy, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_08_proposed_buy, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_09_proposed_buy, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_10_proposed_buy, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_11_proposed_buy, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_12_proposed_buy, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_13_proposed_buy, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_14_proposed_buy, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_15_proposed_buy, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_16_proposed_buy, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_17_proposed_buy, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_18_proposed_buy, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_19_proposed_buy, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_20_proposed_buy, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_21_proposed_buy, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_22_proposed_buy, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_23_proposed_buy, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_24_proposed_buy, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_25_proposed_buy, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_26_proposed_buy, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_27_proposed_buy, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_28_proposed_buy, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_29_proposed_buy, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_30_proposed_buy, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_31_proposed_buy, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_32_proposed_buy, name: {type: entity}}
   conditions:
   - condition: numeric_state
     above: 0
@@ -418,38 +418,38 @@ cards:
     rows: auto
 - type: entity-filter
   entities:
-  - sensor.portfolio_architect_presentation_target_01_purchase_explanation
-  - sensor.portfolio_architect_presentation_target_02_purchase_explanation
-  - sensor.portfolio_architect_presentation_target_03_purchase_explanation
-  - sensor.portfolio_architect_presentation_target_04_purchase_explanation
-  - sensor.portfolio_architect_presentation_target_05_purchase_explanation
-  - sensor.portfolio_architect_presentation_target_06_purchase_explanation
-  - sensor.portfolio_architect_presentation_target_07_purchase_explanation
-  - sensor.portfolio_architect_presentation_target_08_purchase_explanation
-  - sensor.portfolio_architect_presentation_target_09_purchase_explanation
-  - sensor.portfolio_architect_presentation_target_10_purchase_explanation
-  - sensor.portfolio_architect_presentation_target_11_purchase_explanation
-  - sensor.portfolio_architect_presentation_target_12_purchase_explanation
-  - sensor.portfolio_architect_presentation_target_13_purchase_explanation
-  - sensor.portfolio_architect_presentation_target_14_purchase_explanation
-  - sensor.portfolio_architect_presentation_target_15_purchase_explanation
-  - sensor.portfolio_architect_presentation_target_16_purchase_explanation
-  - sensor.portfolio_architect_presentation_target_17_purchase_explanation
-  - sensor.portfolio_architect_presentation_target_18_purchase_explanation
-  - sensor.portfolio_architect_presentation_target_19_purchase_explanation
-  - sensor.portfolio_architect_presentation_target_20_purchase_explanation
-  - sensor.portfolio_architect_presentation_target_21_purchase_explanation
-  - sensor.portfolio_architect_presentation_target_22_purchase_explanation
-  - sensor.portfolio_architect_presentation_target_23_purchase_explanation
-  - sensor.portfolio_architect_presentation_target_24_purchase_explanation
-  - sensor.portfolio_architect_presentation_target_25_purchase_explanation
-  - sensor.portfolio_architect_presentation_target_26_purchase_explanation
-  - sensor.portfolio_architect_presentation_target_27_purchase_explanation
-  - sensor.portfolio_architect_presentation_target_28_purchase_explanation
-  - sensor.portfolio_architect_presentation_target_29_purchase_explanation
-  - sensor.portfolio_architect_presentation_target_30_purchase_explanation
-  - sensor.portfolio_architect_presentation_target_31_purchase_explanation
-  - sensor.portfolio_architect_presentation_target_32_purchase_explanation
+  - {entity: sensor.portfolio_architect_presentation_target_01_purchase_explanation, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_02_purchase_explanation, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_03_purchase_explanation, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_04_purchase_explanation, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_05_purchase_explanation, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_06_purchase_explanation, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_07_purchase_explanation, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_08_purchase_explanation, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_09_purchase_explanation, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_10_purchase_explanation, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_11_purchase_explanation, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_12_purchase_explanation, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_13_purchase_explanation, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_14_purchase_explanation, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_15_purchase_explanation, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_16_purchase_explanation, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_17_purchase_explanation, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_18_purchase_explanation, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_19_purchase_explanation, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_20_purchase_explanation, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_21_purchase_explanation, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_22_purchase_explanation, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_23_purchase_explanation, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_24_purchase_explanation, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_25_purchase_explanation, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_26_purchase_explanation, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_27_purchase_explanation, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_28_purchase_explanation, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_29_purchase_explanation, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_30_purchase_explanation, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_31_purchase_explanation, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_32_purchase_explanation, name: {type: entity}}
   conditions:
   - condition: state
     state: deferred

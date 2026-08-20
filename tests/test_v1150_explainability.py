@@ -21,6 +21,15 @@ def _walk(value):
             yield from _walk(child)
 
 
+def _candidate_entity(value) -> str | None:
+    if isinstance(value, str):
+        return value
+    if isinstance(value, dict):
+        entity = value.get("entity")
+        return entity if isinstance(entity, str) else None
+    return None
+
+
 def test_bounded_explanation_entities_exist() -> None:
     source = SENSOR.read_text(encoding="utf-8")
     for class_name in (
@@ -41,7 +50,7 @@ def test_dashboard_routes_dynamic_inventory_through_native_more_info() -> None:
 
     dynamic_filters = [card for card in cards if card.get("type") == "entity-filter"]
     assert dynamic_filters
-    assert any("sensor.portfolio_architect_presentation_target_01_proposed_buy" in card.get("entities", []) for card in dynamic_filters)
+    assert any(any(_candidate_entity(item) == "sensor.portfolio_architect_presentation_target_01_proposed_buy" for item in card.get("entities", [])) for card in dynamic_filters)
     assert any(
         any(
             (entity == "sensor.portfolio_architect_presentation_target_01_allocation_drift")
@@ -50,8 +59,8 @@ def test_dashboard_routes_dynamic_inventory_through_native_more_info() -> None:
         )
         for card in dynamic_filters
     )
-    assert any("sensor.portfolio_architect_presentation_policy_001_finding" in card.get("entities", []) for card in dynamic_filters)
-    assert all(card.get("card", {}).get("type") in {"entities", "glance", "distribution"} for card in dynamic_filters if isinstance(card.get("card"), dict))
+    assert any(any(_candidate_entity(item) == "sensor.portfolio_architect_presentation_policy_001_finding" for item in card.get("entities", [])) for card in dynamic_filters)
+    assert all(card.get("card", {}).get("type") in {"entities", "glance"} for card in dynamic_filters if isinstance(card.get("card"), dict))
 
     sensor = (ROOT / "custom_components/portfolio_architect/sensor.py").read_text(encoding="utf-8")
     target_slot = sensor.split("class PortfolioTargetPresentationSlotSensor", 1)[1].split(

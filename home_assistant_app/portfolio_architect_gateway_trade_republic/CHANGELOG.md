@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.36.1
+
+- Package/version alignment for the Portfolio Architect v1.36.1 Home Assistant dashboard hotfix; statement import and private diagnostics are unchanged.
+- No Trade Republic cash acquisition, transaction-history, transfer or trading capability is added.
+
 ## 1.36.0
 
 - Package/version alignment for Portfolio Architect v1.36.0 native dynamic presentation. Trade Republic provider acquisition/runtime behavior is unchanged.

@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway runtime v1.36.0
+# Portfolio Architect Gateway runtime v1.36.1
 
-Version 1.36.0 is package alignment for Portfolio Architect's Home Assistant-side native dynamic presentation milestone. Provider acquisition, cash-policy parsing/mathematics, v1.35.1 Comdirect session-maintenance resilience, health schema 6, private-PKI HTTPS and bearer authentication remain unchanged.
+Version 1.36.1 is package alignment for Portfolio Architect's Home Assistant-side dynamic-dashboard hotfix. Provider acquisition, cash-policy parsing/mathematics, v1.35.1 Comdirect session-maintenance resilience, health schema 6, private-PKI HTTPS and bearer authentication remain unchanged.
 
 The Gateway is a dedicated, Python-library-dependency-free service that converts one
 provider-specific portfolio source into provider-neutral Portfolio Architect REST
@@ -48,9 +48,9 @@ non-secret and carries no account/depot identity. Health schemas 1 through 5 rem
 available unchanged for older Portfolio Architect versions.
 
 The provider contract and official future App identities are documented in
-`docs/GATEWAY-PROVIDERS.md`. The common runtime remains provider-neutral in v1.36.0;
+`docs/GATEWAY-PROVIDERS.md`. The common runtime remains provider-neutral in v1.36.1;
 provider-specific acquisition continues to live only in the corresponding App package.
-The ISIN-first v1.26.1 hotfix is implemented in Portfolio Architect's Home Assistant calculation layer and does not change Gateway REST schema 1 or health schema 6. Version 1.36.0 retains the private-PKI HTTPS helper and v1.26.7 quantity-bearing cached-snapshot/ETag-precedence guarantees. Comdirect OAuth session maintenance is provider-specific; provider acquisition contracts and REST/health schemas are unchanged.
+The ISIN-first v1.26.1 hotfix is implemented in Portfolio Architect's Home Assistant calculation layer and does not change Gateway REST schema 1 or health schema 6. Version 1.36.1 retains the private-PKI HTTPS helper and v1.26.7 quantity-bearing cached-snapshot/ETag-precedence guarantees. Comdirect OAuth session maintenance is provider-specific; provider acquisition contracts and REST/health schemas are unchanged.
 
 ## Authorized investment cash
 

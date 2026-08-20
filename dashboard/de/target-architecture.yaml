@@ -26,38 +26,38 @@ cards:
   state_content: coverage_summary
 - type: entity-filter
   entities:
-  - binary_sensor.portfolio_architect_presentation_target_01_held
-  - binary_sensor.portfolio_architect_presentation_target_02_held
-  - binary_sensor.portfolio_architect_presentation_target_03_held
-  - binary_sensor.portfolio_architect_presentation_target_04_held
-  - binary_sensor.portfolio_architect_presentation_target_05_held
-  - binary_sensor.portfolio_architect_presentation_target_06_held
-  - binary_sensor.portfolio_architect_presentation_target_07_held
-  - binary_sensor.portfolio_architect_presentation_target_08_held
-  - binary_sensor.portfolio_architect_presentation_target_09_held
-  - binary_sensor.portfolio_architect_presentation_target_10_held
-  - binary_sensor.portfolio_architect_presentation_target_11_held
-  - binary_sensor.portfolio_architect_presentation_target_12_held
-  - binary_sensor.portfolio_architect_presentation_target_13_held
-  - binary_sensor.portfolio_architect_presentation_target_14_held
-  - binary_sensor.portfolio_architect_presentation_target_15_held
-  - binary_sensor.portfolio_architect_presentation_target_16_held
-  - binary_sensor.portfolio_architect_presentation_target_17_held
-  - binary_sensor.portfolio_architect_presentation_target_18_held
-  - binary_sensor.portfolio_architect_presentation_target_19_held
-  - binary_sensor.portfolio_architect_presentation_target_20_held
-  - binary_sensor.portfolio_architect_presentation_target_21_held
-  - binary_sensor.portfolio_architect_presentation_target_22_held
-  - binary_sensor.portfolio_architect_presentation_target_23_held
-  - binary_sensor.portfolio_architect_presentation_target_24_held
-  - binary_sensor.portfolio_architect_presentation_target_25_held
-  - binary_sensor.portfolio_architect_presentation_target_26_held
-  - binary_sensor.portfolio_architect_presentation_target_27_held
-  - binary_sensor.portfolio_architect_presentation_target_28_held
-  - binary_sensor.portfolio_architect_presentation_target_29_held
-  - binary_sensor.portfolio_architect_presentation_target_30_held
-  - binary_sensor.portfolio_architect_presentation_target_31_held
-  - binary_sensor.portfolio_architect_presentation_target_32_held
+  - {entity: binary_sensor.portfolio_architect_presentation_target_01_held, name: {type: entity}}
+  - {entity: binary_sensor.portfolio_architect_presentation_target_02_held, name: {type: entity}}
+  - {entity: binary_sensor.portfolio_architect_presentation_target_03_held, name: {type: entity}}
+  - {entity: binary_sensor.portfolio_architect_presentation_target_04_held, name: {type: entity}}
+  - {entity: binary_sensor.portfolio_architect_presentation_target_05_held, name: {type: entity}}
+  - {entity: binary_sensor.portfolio_architect_presentation_target_06_held, name: {type: entity}}
+  - {entity: binary_sensor.portfolio_architect_presentation_target_07_held, name: {type: entity}}
+  - {entity: binary_sensor.portfolio_architect_presentation_target_08_held, name: {type: entity}}
+  - {entity: binary_sensor.portfolio_architect_presentation_target_09_held, name: {type: entity}}
+  - {entity: binary_sensor.portfolio_architect_presentation_target_10_held, name: {type: entity}}
+  - {entity: binary_sensor.portfolio_architect_presentation_target_11_held, name: {type: entity}}
+  - {entity: binary_sensor.portfolio_architect_presentation_target_12_held, name: {type: entity}}
+  - {entity: binary_sensor.portfolio_architect_presentation_target_13_held, name: {type: entity}}
+  - {entity: binary_sensor.portfolio_architect_presentation_target_14_held, name: {type: entity}}
+  - {entity: binary_sensor.portfolio_architect_presentation_target_15_held, name: {type: entity}}
+  - {entity: binary_sensor.portfolio_architect_presentation_target_16_held, name: {type: entity}}
+  - {entity: binary_sensor.portfolio_architect_presentation_target_17_held, name: {type: entity}}
+  - {entity: binary_sensor.portfolio_architect_presentation_target_18_held, name: {type: entity}}
+  - {entity: binary_sensor.portfolio_architect_presentation_target_19_held, name: {type: entity}}
+  - {entity: binary_sensor.portfolio_architect_presentation_target_20_held, name: {type: entity}}
+  - {entity: binary_sensor.portfolio_architect_presentation_target_21_held, name: {type: entity}}
+  - {entity: binary_sensor.portfolio_architect_presentation_target_22_held, name: {type: entity}}
+  - {entity: binary_sensor.portfolio_architect_presentation_target_23_held, name: {type: entity}}
+  - {entity: binary_sensor.portfolio_architect_presentation_target_24_held, name: {type: entity}}
+  - {entity: binary_sensor.portfolio_architect_presentation_target_25_held, name: {type: entity}}
+  - {entity: binary_sensor.portfolio_architect_presentation_target_26_held, name: {type: entity}}
+  - {entity: binary_sensor.portfolio_architect_presentation_target_27_held, name: {type: entity}}
+  - {entity: binary_sensor.portfolio_architect_presentation_target_28_held, name: {type: entity}}
+  - {entity: binary_sensor.portfolio_architect_presentation_target_29_held, name: {type: entity}}
+  - {entity: binary_sensor.portfolio_architect_presentation_target_30_held, name: {type: entity}}
+  - {entity: binary_sensor.portfolio_architect_presentation_target_31_held, name: {type: entity}}
+  - {entity: binary_sensor.portfolio_architect_presentation_target_32_held, name: {type: entity}}
   conditions:
   - condition: state
     state_not: unavailable
@@ -74,38 +74,38 @@ cards:
     rows: auto
 - type: entity-filter
   entities:
-  - sensor.portfolio_architect_presentation_target_01_position_sources
-  - sensor.portfolio_architect_presentation_target_02_position_sources
-  - sensor.portfolio_architect_presentation_target_03_position_sources
-  - sensor.portfolio_architect_presentation_target_04_position_sources
-  - sensor.portfolio_architect_presentation_target_05_position_sources
-  - sensor.portfolio_architect_presentation_target_06_position_sources
-  - sensor.portfolio_architect_presentation_target_07_position_sources
-  - sensor.portfolio_architect_presentation_target_08_position_sources
-  - sensor.portfolio_architect_presentation_target_09_position_sources
-  - sensor.portfolio_architect_presentation_target_10_position_sources
-  - sensor.portfolio_architect_presentation_target_11_position_sources
-  - sensor.portfolio_architect_presentation_target_12_position_sources
-  - sensor.portfolio_architect_presentation_target_13_position_sources
-  - sensor.portfolio_architect_presentation_target_14_position_sources
-  - sensor.portfolio_architect_presentation_target_15_position_sources
-  - sensor.portfolio_architect_presentation_target_16_position_sources
-  - sensor.portfolio_architect_presentation_target_17_position_sources
-  - sensor.portfolio_architect_presentation_target_18_position_sources
-  - sensor.portfolio_architect_presentation_target_19_position_sources
-  - sensor.portfolio_architect_presentation_target_20_position_sources
-  - sensor.portfolio_architect_presentation_target_21_position_sources
-  - sensor.portfolio_architect_presentation_target_22_position_sources
-  - sensor.portfolio_architect_presentation_target_23_position_sources
-  - sensor.portfolio_architect_presentation_target_24_position_sources
-  - sensor.portfolio_architect_presentation_target_25_position_sources
-  - sensor.portfolio_architect_presentation_target_26_position_sources
-  - sensor.portfolio_architect_presentation_target_27_position_sources
-  - sensor.portfolio_architect_presentation_target_28_position_sources
-  - sensor.portfolio_architect_presentation_target_29_position_sources
-  - sensor.portfolio_architect_presentation_target_30_position_sources
-  - sensor.portfolio_architect_presentation_target_31_position_sources
-  - sensor.portfolio_architect_presentation_target_32_position_sources
+  - {entity: sensor.portfolio_architect_presentation_target_01_position_sources, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_02_position_sources, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_03_position_sources, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_04_position_sources, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_05_position_sources, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_06_position_sources, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_07_position_sources, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_08_position_sources, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_09_position_sources, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_10_position_sources, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_11_position_sources, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_12_position_sources, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_13_position_sources, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_14_position_sources, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_15_position_sources, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_16_position_sources, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_17_position_sources, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_18_position_sources, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_19_position_sources, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_20_position_sources, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_21_position_sources, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_22_position_sources, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_23_position_sources, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_24_position_sources, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_25_position_sources, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_26_position_sources, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_27_position_sources, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_28_position_sources, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_29_position_sources, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_30_position_sources, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_31_position_sources, name: {type: entity}}
+  - {entity: sensor.portfolio_architect_presentation_target_32_position_sources, name: {type: entity}}
   conditions:
   - condition: numeric_state
     above: 1
