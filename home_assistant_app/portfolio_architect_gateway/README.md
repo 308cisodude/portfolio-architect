@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway — Comdirect v1.38.1
+# Portfolio Architect Gateway — Comdirect v1.39.0
 
-Version 1.38.1 is package alignment for Portfolio Architect's Home Assistant-side native dynamic allocation-drift presentation. Comdirect acquisition, OAuth/session maintenance, PhotoTAN and retained-cash behavior are unchanged; the v1.38.0 cash/ISIN dashboard work, v1.37 shared human-input helper and live-proven v1.35.4 cash syntax remain intact.
+Version 1.39.0 is package alignment for Portfolio Architect's Home Assistant-side dynamic colourful current/target allocation presentation. Comdirect acquisition, OAuth/session maintenance, PhotoTAN and retained-cash behavior are unchanged; the live-accepted v1.38.1 signed drift presentation, v1.38.0 cash/ISIN work, v1.37 shared human-input helper and live-proven v1.35.4 cash syntax remain intact.
 
 Verified HTTPS/private CA trust, bearer authentication, PhotoTAN bootstrap, account
 selection, request-timeout behavior, REST schema 1, health schema 6, portfolio normalization,

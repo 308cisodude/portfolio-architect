@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.39.0
+
+- Package/version alignment for Portfolio Architect v1.39.0 dynamic colourful current/target allocation presentation; Comdirect acquisition, OAuth/session maintenance, PhotoTAN and cash-policy parsing are unchanged.
+- Preserves the live-accepted v1.38.1 signed drift presentation, v1.38.0 cash/ISIN work, verified HTTPS/private CA trust, bearer authentication and the read-only boundary.
+
 ## 1.38.1
 
 - Package/version alignment for Portfolio Architect v1.38.1 native dynamic allocation-drift presentation; Comdirect acquisition, OAuth/session maintenance, PhotoTAN and cash-policy parsing are unchanged.

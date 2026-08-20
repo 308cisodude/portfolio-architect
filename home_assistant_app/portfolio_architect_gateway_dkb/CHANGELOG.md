@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.39.0
+
+- Package/version alignment for Portfolio Architect v1.39.0 dynamic colourful current/target allocation presentation; DKB capability-probe behavior is unchanged.
+- DKB remains experimental, manual-only and non-live; registered capability probing, verified HTTPS/private CA trust and the no-login/no-trading boundary are unchanged.
+
 ## 1.38.1
 
 - Package/version alignment for Portfolio Architect v1.38.1 native dynamic allocation-drift presentation; The anonymous registered FinTS probe is unchanged; DKB remains experimental, manual-only and non-live.

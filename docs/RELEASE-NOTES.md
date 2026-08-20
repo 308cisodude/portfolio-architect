@@ -1,31 +1,37 @@
-# Portfolio Architect 1.38.1
+# Portfolio Architect 1.39.0
 
-Portfolio Architect 1.38.1 is a narrow native-dashboard follow-up to the published v1.38.0 release. The richer per-target drift visualization discussed while v1.38.0 was prepared was not included in the published v1.38.0 dashboard; v1.38.1 adds that presentation cleanly on top of the immutable published baseline without changing portfolio calculations, provider acquisition, execution/funding semantics or Gateway wire contracts.
+Portfolio Architect 1.39.0 is a native-dashboard presentation release built on the live-accepted v1.38.1 bounded-slot architecture. The colourful paired current/target Tile view was not included in v1.38.1; that release stopped at the signed drift restoration. It restores a richer colourful current-versus-target allocation view without bringing back static instrument inventories, custom frontend code, or the live-broken entity-filter/Distribution composition. Portfolio calculations, provider acquisition, execution/funding semantics and Gateway wire contracts are unchanged.
 
-## Dynamic native allocation drift
+## Dynamic colourful current and target allocation
 
-The reference dashboard now consumes the existing bounded target presentation slots as dynamic signed drift Tiles. For each of the 32 generic target slots, three native Home Assistant Conditional variants select the visible presentation from the slot's allocation status:
+The **Current plan allocation** and **Plan target allocation** surfaces now render each configured target through paired native Home Assistant Conditional + Tile cards. The dashboard still enumerates only the fixed 32 generic presentation slots; it contains no target IDs, ISINs, WKNs, holding IDs or sample instrument names.
+
+For each slot:
+
+- the current and target Tile use the entity's dynamic instrument name;
+- both Tiles use the same deterministic slot colour, giving the position a consistent visual identity across the two allocation columns;
+- both Tiles use the native `bar-gauge` feature on a fixed 0–100% scale;
+- visibility is conditioned on the slot's **target allocation**, not its current allocation, so a configured target that is currently missing still renders as a 0% current Tile instead of disappearing;
+- unused trailing presentation slots remain unavailable and are suppressed naturally;
+- tapping a Tile opens native more-info for the corresponding allocation entity.
+
+The colour mapping belongs only to the ephemeral presentation-slot order. It is not portfolio identity and is never persisted into plan semantics. Stable target identity remains the opaque `target_id` repeated in slot attributes.
+
+## Drift semantics remain unchanged
+
+The live-accepted v1.38.1 **Current portfolio allocation** drift presentation is intentionally preserved. Its colours remain semantic rather than identity-based:
 
 - **underweight:** amber;
 - **on target:** green;
 - **overweight:** red.
 
-Each visible card is a core Tile bound to the slot's numeric allocation-drift sensor. The Tile uses the entity's dynamic instrument name and the native `bar-gauge` feature with a fixed signed range of **-100 to +100 percentage points**, so positive and negative drift share one stable scale without instrument-specific YAML. Tapping the drift Tile opens the same slot's bounded allocation-explanation entity. Unused trailing slots remain unavailable and are naturally suppressed by the state conditions.
+The signed drift Tiles continue to use the native -100…+100 percentage-point bar gauge and open the matching bounded allocation explanation on tap. The v1.38.0 policy-aware cash context and copy-friendly recommendation ISIN interaction are also unchanged.
 
-A separate synthetic target marker is not included. The dashboard presents the signed percentage-point drift that Portfolio Architect already calculates and exposes; it does not fabricate a second frontend calculation or custom-card state.
+## Native-only and bounded architecture
 
-The implementation remains bounded and native-only. It adds no `auto-entities`, card-mod, JavaScript, custom frontend dependency, target hash, holding ID or sample instrument inventory to the dashboard. The presentation-slot mapping remains an ephemeral UI projection; stable target identity remains the opaque `target_id` repeated in slot attributes.
+The reference dashboard remains core-Home-Assistant-only. It adds no `auto-entities`, card-mod, JavaScript, custom card or frontend dependency. The implementation uses the established presentation schema 2 bounded adapters and deliberately avoids an O(N²) family of target-count-specific Distribution-card variants.
 
-## v1.38.0 usability work preserved
-
-The published v1.38.0 presentation improvements remain unchanged:
-
-- a visible recommended-purchase row still opens the matching generic presentation-slot ISIN entity on tap and the bounded purchase explanation on hold;
-- **Authorized investment cash** still shows total available cash plus cash excluded by policy when complete validated evidence exists;
-- **Cash after recommended purchases** still shows the same policy context plus planned cash outlay;
-- incomplete provider-scoped cash evidence still fails closed rather than constructing a partial total.
-
-English and German dashboard views use the same underlying entities and bounded candidate ranges.
+English and German views consume the same underlying entities and the same deterministic slot-colour mapping.
 
 ## Preserved behavior and security boundaries
 
@@ -44,8 +50,8 @@ Historical experimental `v1.19.0-rc2` brokerage-diagnostic work remains excluded
 - private-PKI verified HTTPS, bearer authentication, Supervisor trust discovery, DNS pinning and no-plaintext fallback: unchanged;
 - no trading, order placement, transfer execution, payment, transaction-history or automatic-sell capability is added.
 
-No trading, order, transfer, payment, or transaction-history capability is introduced by v1.38.1.
+No trading, order, transfer, payment, or transaction-history capability is introduced by v1.39.0.
 
-The reference dashboard changes in this release. HACS does not overwrite user-owned Lovelace YAML, so users who want the v1.38.1 drift presentation must deliberately replace or merge their copied dashboard; bulk replacement with the supplied bilingual dashboard is the recommended upgrade path.
+The reference dashboard changes in this release. HACS does not overwrite user-owned Lovelace YAML, so users who want the v1.39.0 colourful allocation presentation must deliberately replace or merge their copied dashboard; bulk replacement with the supplied bilingual dashboard is the recommended upgrade path.
 
-The v1.33.0 source-freshness and plan-schedule separation remains unchanged: recurring scheduling stays anchored to the latest valid Portfolio Architect evaluation, source timestamps remain evidence-only freshness inputs, and v1.38.1 does not change any configured freshness threshold.
+The v1.33.0 source-freshness and plan-schedule separation remains unchanged: recurring scheduling stays anchored to the latest valid Portfolio Architect evaluation, source timestamps remain evidence-only freshness inputs, and v1.39.0 does not change any configured freshness threshold.
