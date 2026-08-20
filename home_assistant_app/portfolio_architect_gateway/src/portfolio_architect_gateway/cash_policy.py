@@ -9,6 +9,7 @@ import re
 from typing import Any, Final
 
 from .errors import ProtocolError
+from .human_input import HumanInputError, parse_human_eur
 from .store import load_json_state, save_json_state
 
 MODE_ALL_AVAILABLE: Final = "all_available"
@@ -146,90 +147,15 @@ def _parse_optional_canonical_amount(value: Any, *, field: str) -> Decimal | Non
 
 
 def _parse_form_amount(value: str, *, label: str) -> Decimal:
-    """Parse a bounded human EUR amount while keeping persisted state canonical.
-
-    The Ingress UI is intentionally locale-tolerant: comma or dot may be the
-    decimal separator, while comma, dot, spaces or apostrophes may group thousands.
-    Ambiguous single punctuation with exactly three trailing digits is treated as a
-    thousands separator because cash-policy amounts support at most two decimals.
-    """
-    token = value.strip()
+    """Parse one human EUR amount through the shared Gateway validation primitive."""
     try:
-        canonical = _canonicalize_form_amount(token)
-        parsed = Decimal(canonical)
-    except (InvalidOperation, ValueError) as err:
+        return parse_human_eur(value, label=label, maximum=MAX_CASH_EUR)
+    except HumanInputError as err:
+        # Keep the live-proven v1.35.4 Comdirect form contract stable even though
+        # parsing mechanics are now shared. The rejected token is never reflected.
         raise ValueError(
             f"{label} must be a non-negative EUR amount with at most two decimals"
         ) from err
-    try:
-        _validate_amount(parsed, field=label)
-    except ProtocolError as err:
-        raise ValueError(str(err)) from err
-    return parsed
-
-
-def _canonicalize_form_amount(token: str) -> str:
-    if not token:
-        raise ValueError("empty amount")
-    normalized = token.replace("\u00a0", " ").replace("\u202f", " ").replace("\u2019", "'")
-    allowed = set("0123456789., '")
-    if any(char not in allowed for char in normalized):
-        raise ValueError("unsupported amount character")
-
-    dot_count = normalized.count(".")
-    comma_count = normalized.count(",")
-    decimal_sep: str | None = None
-    if dot_count and comma_count:
-        decimal_sep = "." if normalized.rfind(".") > normalized.rfind(",") else ","
-        if normalized.count(decimal_sep) != 1:
-            raise ValueError("repeated decimal separator")
-    elif dot_count == 1:
-        trailing = len(normalized) - normalized.rfind(".") - 1
-        if trailing in {1, 2}:
-            decimal_sep = "."
-    elif comma_count == 1:
-        trailing = len(normalized) - normalized.rfind(",") - 1
-        if trailing in {1, 2}:
-            decimal_sep = ","
-
-    if decimal_sep is None:
-        integer_part = normalized
-        fraction = ""
-    else:
-        integer_part, fraction = normalized.rsplit(decimal_sep, 1)
-        if not fraction or len(fraction) > 2 or not fraction.isdigit():
-            raise ValueError("invalid fractional part")
-        if decimal_sep in integer_part:
-            raise ValueError("decimal separator reused as grouping")
-
-    digits = _ungroup_integer(integer_part, decimal_sep=decimal_sep)
-    return digits + (("." + fraction) if fraction else "")
-
-
-def _ungroup_integer(value: str, *, decimal_sep: str | None) -> str:
-    if not value:
-        raise ValueError("missing integer part")
-    grouping_candidates = {".", ",", " ", "'"}
-    if decimal_sep is not None:
-        grouping_candidates.discard(decimal_sep)
-    present = {char for char in grouping_candidates if char in value}
-    if len(present) > 1:
-        raise ValueError("mixed grouping separators")
-    if not present:
-        if not value.isdigit() or (len(value) > 1 and value.startswith("0")):
-            raise ValueError("invalid integer part")
-        return value
-
-    separator = next(iter(present))
-    groups = value.split(separator)
-    if any(not group.isdigit() for group in groups):
-        raise ValueError("invalid grouped integer")
-    first = groups[0]
-    if not 1 <= len(first) <= 3 or (len(first) > 1 and first.startswith("0")) or first == "0":
-        raise ValueError("invalid first grouping")
-    if any(len(group) != 3 for group in groups[1:]):
-        raise ValueError("invalid thousands grouping")
-    return "".join(groups)
 
 
 def _validate_amount(value: Decimal, *, field: str) -> None:

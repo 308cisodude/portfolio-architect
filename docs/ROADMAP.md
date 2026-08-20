@@ -469,12 +469,21 @@ from current portfolio value.
 - Request entity-only Home Assistant display names for dynamic candidates so the `Portfolio Architect` device prefix does not crowd instrument labels.
 - Preserve all provider, execution/funding, retained-cash, wire-schema, private-PKI and advisory/no-trading contracts.
 
-## Deferred — shared human-input validation primitives
+## v1.37.0 — shared human-input validation foundation
 
-- Centralize reusable syntax normalization and bounded type validation for opt-in human numeric fields such as money, percentages, quantities and bounded integers.
+- Centralize reusable syntax normalization and bounded type validation for opt-in human numeric fields: EUR/money, percentages, quantities and bounded integers.
 - Keep field/provider semantics separate: shared mechanics produce a canonical typed value, then provider-specific validation decides whether it is meaningful.
-- Invalid human input must return bounded guidance, preserve previous valid state and never reflect rejected raw input or arbitrary exception text.
-- Protocol identifiers, registrations, tokens and exact IDs must bypass locale normalization; the DKB FinTS product registration remains an exact identifier.
-- Persisted state and REST values remain canonical and locale-neutral. This work is deliberately not part of v1.36.1.
+- Reject ambiguous cross-locale quantity syntax rather than guessing; accept locale-style grouping/decimal syntax only when the primitive can interpret it safely.
+- Invalid human input returns bounded guidance, preserves previous valid state and never reflects rejected raw input or arbitrary exception text.
+- Migrate only the existing Comdirect capped/retained cash amount fields onto the shared EUR primitive, preserving the live-proven v1.35.4 accepted syntax and canonical private persistence.
+- Mirror the helper consistently into all provider App build contexts for future opt-in use, while leaving unused provider paths behaviorally unchanged.
+- Protocol identifiers, registrations, credentials, tokens and exact IDs bypass human-numeric normalization; DKB FinTS registration and Trade Republic statement import retain their provider-specific validation paths.
+- Preserve REST schema 1, health schema 6, presentation schema 2, broker schemas 1/2/3, private-PKI transport, provider behavior and the advisory/no-trading boundary.
 
-No holdings acquisition is enabled by this release.
+## Deferred beyond v1.37.0
+
+- **Trade Republic cash acquisition:** if implemented later, parse only conservative cash-summary evidence inside the TR App; keep private documents local, avoid transaction-history ingestion, apply explicit value-date/freshness policy and fail closed on ambiguity.
+- **DKB authenticated acquisition:** remains gated on legitimate product registration/capability evidence and later authenticated user-capability/UPD validation; do not infer holdings support from generic or anonymous bank capability lists.
+- **Further dashboard polish:** only when live use exposes a concrete presentation defect; v1.36.1 remains the accepted dynamic-dashboard baseline.
+
+No holdings acquisition is enabled by v1.37.0.

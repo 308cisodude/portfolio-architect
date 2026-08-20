@@ -1,5 +1,5 @@
 name: Portfolio Architect Gateway — Trade Republic
-version: 1.36.1
+version: 1.37.0
 slug: portfolio_architect_gateway_trade_republic
 description: Isolated Trade Republic Gateway with verified private-PKI HTTPS, local private DEPOTAUSZUG statement PDF import and provider-neutral read-only portfolio service.
 url: https://developers.home-assistant.io/docs/apps/

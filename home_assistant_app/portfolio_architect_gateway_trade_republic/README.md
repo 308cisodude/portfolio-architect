@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway — Trade Republic v1.36.1
+# Portfolio Architect Gateway — Trade Republic v1.37.0
 
-Version 1.36.1 is package alignment for Portfolio Architect's Home Assistant-side dynamic-dashboard hotfix. Trade Republic statement import/private diagnostics are unchanged and no cash or transaction-history acquisition is added.
+Version 1.37.0 carries the shared human-numeric Gateway helper for future opt-in use, but the Trade Republic statement-import path does not use locale numeric normalization. Statement import/private diagnostics are unchanged and no cash or transaction-history acquisition is added.
 
 Verified HTTPS/private CA trust, bearer
 authentication, REST schema 1, health schema 6 and accepted snapshot serving are unchanged.

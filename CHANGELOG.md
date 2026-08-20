@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.37.0
+
+- Adds shared, opt-in Gateway human-numeric validation primitives for EUR/money, percentages, quantities and bounded integers with canonical typed output and bounded non-reflective errors.
+- Migrates the existing Comdirect capped/retained cash amount fields onto the shared EUR primitive while preserving every live-proven v1.35.4 locale form, canonical private persistence and previous-state-on-error behavior.
+- Rejects unsafe/ambiguous numeric syntax rather than guessing; protocol identifiers, registrations, credentials, tokens and exact IDs stay on provider-specific validation paths and bypass locale numeric normalization.
+- Mirrors the helper into all provider App build contexts for future opt-in use without changing DKB/TR provider behavior, wire schemas, presentation schema 2, funding/cash mathematics, private-PKI transport or the advisory/no-trading boundary.
+
 ## 1.36.1
 
 - Fixes the live-observed native-dashboard incompatibility where `entity-filter` correctly selected dynamic allocation slots but a nested Distribution card remained empty.
