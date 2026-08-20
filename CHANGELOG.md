@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.38.1
+
+- Restores native dynamic allocation-drift visualization for all 32 bounded generic target presentation slots without reintroducing an instrument-specific dashboard inventory.
+- Uses only core Home Assistant Conditional and Tile cards: underweight slots render amber, on-target slots green, and overweight slots red, with the Tile-native signed `bar-gauge` bounded from -100 to +100 percentage points.
+- Keeps instrument names dynamic and makes each visible drift tile open the matching bounded allocation explanation on tap.
+- Preserves the v1.38.0 policy-aware cash context and copy-friendly recommendation ISIN interaction, presentation schema 2, provider runtimes, Gateway wire/security contracts, funding/cash mathematics and the advisory/no-trading boundary.
+
 ## 1.38.0
 
 - Adds native dashboard cash-policy context so **Authorized investment cash** shows total available cash and the amount excluded by policy, while **Cash after recommended purchases** also shows planned cash outlay.

@@ -489,11 +489,18 @@ from current portfolio value.
 - Keep the v1.36 presentation-slot backend, bounded candidate ranges and native-only dashboard architecture unchanged; add no custom frontend dependency or hard-coded target/holding identity.
 - Preserve v1.37 shared human-input validation, provider runtimes, Gateway wire/security contracts, funding/cash mathematics and the advisory/no-trading boundary.
 
-## Deferred beyond v1.38.0
+## v1.38.1 — native dynamic drift stardust
+
+- Restore signed per-target allocation-drift visualization for all 32 bounded generic target presentation slots without reintroducing instrument-specific YAML.
+- Select amber, green or red native Tile presentation through core Conditional cards based on the slot's `underweight`, `on_target` or `overweight` status.
+- Use the Tile-native `bar-gauge` on a stable -100…+100 percentage-point range and retain the entity's dynamic instrument name.
+- Make each visible drift Tile open the matching bounded allocation explanation on tap; no frontend calculation or separate synthetic target marker is added.
+- Preserve the v1.38.0 copy-friendly recommendation ISIN interaction and policy-aware cash context, presentation schema 2, provider runtimes, Gateway wire/security contracts and advisory/no-trading boundary.
+
+## Deferred beyond v1.38.1
 
 - **Trade Republic cash acquisition:** if implemented later, parse only conservative cash-summary evidence inside the TR App; keep private documents local, avoid transaction-history ingestion, apply explicit value-date/freshness policy and fail closed on ambiguity.
 - **DKB authenticated acquisition:** remains gated on legitimate product registration/capability evidence and later authenticated user-capability/UPD validation; do not infer holdings support from generic or anonymous bank capability lists.
-- **Further allocation/drift visualization polish:** consider richer target markers or drift bars only when a clean native Home Assistant implementation exists and live use justifies it; do not reintroduce custom-card dependencies.
 - The historical accepted-exception horizontal-overflow wart is no longer an outstanding item: the v1.36 native dynamic policy list replaced that old static presentation path.
 
-No new provider holdings or cash acquisition is enabled by v1.38.0.
+No new provider holdings or cash acquisition is enabled by v1.38.1.
