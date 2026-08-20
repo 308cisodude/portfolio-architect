@@ -84,9 +84,9 @@ def test_current_runtime_versions_are_aligned() -> None:
     manifest = json.loads((COMPONENT / "manifest.json").read_text())
     const = (COMPONENT / "const.py").read_text(encoding="utf-8")
     engine_init = (COMPONENT / "engine" / "__init__.py").read_text(encoding="utf-8")
-    assert manifest["version"] == "1.38.0"
-    assert 'VERSION: Final = "1.38.0"' in const
-    assert '__version__ = "1.38.0"' in engine_init
+    assert manifest["version"] == "1.38.1"
+    assert 'VERSION: Final = "1.38.1"' in const
+    assert '__version__ = "1.38.1"' in engine_init
 
 
 def test_native_monthly_plan_runtime_and_policy_entities_are_registered() -> None:

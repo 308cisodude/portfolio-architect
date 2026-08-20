@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.38.1
+
+- Package/version alignment for Portfolio Architect v1.38.1 native dynamic allocation-drift presentation; Statement import and private diagnostics are unchanged; no cash or transaction-history acquisition is added.
+- Preserves the v1.38.0 cash/ISIN presentation work; the v1.37 shared human-input helper remains unused by statement parsing and no transfer or trading capability is added.
+
 ## 1.38.0
 
 - Package/version alignment for Portfolio Architect v1.38.0 native dashboard usability polish; statement import and private diagnostics are unchanged.

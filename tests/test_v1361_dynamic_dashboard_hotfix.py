@@ -73,26 +73,42 @@ def test_dynamic_candidates_request_entity_only_names() -> None:
         assert isinstance(candidate, dict)
         assert candidate.get("name") == {"type": "entity"}
         seen += 1
-    # EN and DE each enumerate 1,600 bounded candidates in the canonical view.
-    assert seen == 3200
+
+    # v1.38.1 replaces the former 3 × 32 allocation-status entity-filter rows per
+    # locale with native Conditional + Tile cards, while retaining entity-only
+    # dynamic names for those bounded target candidates.
+    drift_tiles = [
+        item["card"]
+        for item in _walk(doc)
+        if item.get("type") == "conditional"
+        and isinstance(item.get("card"), dict)
+        and str(item["card"].get("entity", "")).endswith("_allocation_drift")
+    ]
+    assert len(drift_tiles) == 192
+    assert all(tile.get("name") == {"type": "entity"} for tile in drift_tiles)
+    # EN and DE still enumerate the same 1,600 bounded dynamic candidates each.
+    assert seen + len(drift_tiles) == 3200
 
 
 def test_conditioned_candidates_keep_per_entity_conditions() -> None:
     doc = yaml.safe_load(DASHBOARD.read_text(encoding="utf-8"))
-    filters = _entity_filters(doc)
-    allocation_status_filters = [
-        wrapper
-        for wrapper in filters
-        if wrapper["card"].get("title")
-        in {"Underweight", "On target", "Overweight", "Untergewichtet", "Im Zielkorridor", "Übergewichtet"}
+    allocation_status_cards = [
+        item
+        for item in _walk(doc)
+        if item.get("type") == "conditional"
+        and isinstance(item.get("card"), dict)
+        and str(item["card"].get("entity", "")).endswith("_allocation_drift")
     ]
-    assert len(allocation_status_filters) == 6
-    for wrapper in allocation_status_filters:
-        assert len(wrapper["entities"]) == 32
-        for candidate in wrapper["entities"]:
-            assert candidate["name"] == {"type": "entity"}
-            assert candidate["conditions"][0]["condition"] == "state"
-            assert candidate["conditions"][0]["entity"].endswith("_allocation_status")
+    assert len(allocation_status_cards) == 192
+    expected = {"underweight": "amber", "on_target": "green", "overweight": "red"}
+    for wrapper in allocation_status_cards:
+        assert len(wrapper["conditions"]) == 1
+        condition = wrapper["conditions"][0]
+        assert condition["condition"] == "state"
+        assert condition["entity"].endswith("_allocation_status")
+        assert condition["state"] in expected
+        assert wrapper["card"]["color"] == expected[condition["state"]]
+        assert wrapper["card"]["name"] == {"type": "entity"}
 
 
 def test_hotfix_preserves_dynamic_bounds_and_no_instrument_inventory() -> None:

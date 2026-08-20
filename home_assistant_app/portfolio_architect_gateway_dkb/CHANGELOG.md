@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.38.1
+
+- Package/version alignment for Portfolio Architect v1.38.1 native dynamic allocation-drift presentation; The anonymous registered FinTS probe is unchanged; DKB remains experimental, manual-only and non-live.
+- Preserves the v1.38.0 cash/ISIN presentation work; the v1.37 shared human-input helper remains unused by exact FinTS registration/probe fields.
+
 ## 1.38.0
 
 - Package/version alignment for Portfolio Architect v1.38.0 native dashboard usability polish; the anonymous registered FinTS probe is unchanged.
