@@ -497,10 +497,18 @@ from current portfolio value.
 - Make each visible drift Tile open the matching bounded allocation explanation on tap; no frontend calculation or separate synthetic target marker is added.
 - Preserve the v1.38.0 copy-friendly recommendation ISIN interaction and policy-aware cash context, presentation schema 2, provider runtimes, Gateway wire/security contracts and advisory/no-trading boundary.
 
-## Deferred beyond v1.38.1
+## v1.39.0 — dynamic colourful allocation presentation
+
+- Replace the current/target allocation entity-filter lists with paired native Conditional + Tile cards across the same 32 bounded generic target presentation slots.
+- Use a deterministic native colour palette per presentation slot so current and target views share position identity without persisting colour into portfolio semantics.
+- Use native 0–100% bar gauges and condition current visibility on target membership so configured-but-missing targets remain visible at 0% current allocation.
+- Preserve v1.38.1 signed drift status colours, gauges and explanation tap-through unchanged.
+- Preserve presentation schema 2, provider runtimes, wire/security contracts, cash/funding mathematics and the advisory/no-trading boundary.
+
+## Deferred beyond v1.39.0
 
 - **Trade Republic cash acquisition:** if implemented later, parse only conservative cash-summary evidence inside the TR App; keep private documents local, avoid transaction-history ingestion, apply explicit value-date/freshness policy and fail closed on ambiguity.
 - **DKB authenticated acquisition:** remains gated on legitimate product registration/capability evidence and later authenticated user-capability/UPD validation; do not infer holdings support from generic or anonymous bank capability lists.
 - The historical accepted-exception horizontal-overflow wart is no longer an outstanding item: the v1.36 native dynamic policy list replaced that old static presentation path.
 
-No new provider holdings or cash acquisition is enabled by v1.38.1.
+No new provider holdings or cash acquisition is enabled by v1.39.0.

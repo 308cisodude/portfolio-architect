@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.39.0
+
+- Package/version alignment for Portfolio Architect v1.39.0 dynamic colourful current/target allocation presentation; Trade Republic statement import and private diagnostics are unchanged.
+- Preserves verified HTTPS/private CA trust, bearer authentication, local/private statement processing and the read-only boundary; no cash or transaction-history acquisition is added.
+
 ## 1.38.1
 
 - Package/version alignment for Portfolio Architect v1.38.1 native dynamic allocation-drift presentation; Statement import and private diagnostics are unchanged; no cash or transaction-history acquisition is added.

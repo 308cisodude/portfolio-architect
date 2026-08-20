@@ -23,7 +23,7 @@ def test_allocation_stack_is_native_and_separates_scopes():
         config=yaml.safe_load(source)
         assert config['type']=='vertical-stack'
         assert source.count('type: distribution')==0
-        assert source.count('type: entity-filter')>=3
+        assert source.count('type: entity-filter')>=2
         assert 'whole_portfolio_allocation' in source
         assert 'outside_scope' in source
         assert '_current_allocation' in source and '_target_allocation' in source

@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.39.0
+
+- Replaces the two bounded current/target allocation entity-filter lists with paired native Conditional + Tile cards for all 32 generic presentation slots, restoring a colourful position-identity view without hard-coded instrument inventory.
+- Gives each current/target slot pair the same deterministic native colour and a 0–100% Tile `bar-gauge`; current visibility is keyed to target membership so a configured-but-missing target remains visible at 0%.
+- Preserves the live-accepted v1.38.1 amber/green/red signed drift Tiles unchanged, including -100…+100 pp gauges and tap-through to bounded allocation explanations.
+- Preserves v1.38.0 policy-aware cash context and copy-friendly ISIN interaction, presentation schema 2, provider runtimes, Gateway wire/security contracts, funding/cash mathematics and the advisory/no-trading boundary.
+
 ## 1.38.1
 
 - Restores native dynamic allocation-drift visualization for all 32 bounded generic target presentation slots without reintroducing an instrument-specific dashboard inventory.

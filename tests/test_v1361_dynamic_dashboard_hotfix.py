@@ -50,11 +50,7 @@ def test_dynamic_allocation_filters_feed_native_entities_lists() -> None:
     by_title = {wrapper["card"].get("title"): wrapper for wrapper in filters}
     expected = {
         "Whole-portfolio allocation": 544,
-        "Current plan allocation": 32,
-        "Plan target allocation": 32,
         "Allokation des Gesamtportfolios": 544,
-        "Aktuelle Planallokation": 32,
-        "Zielallokation des Plans": 32,
     }
     for title, count in expected.items():
         wrapper = by_title[title]
@@ -74,9 +70,9 @@ def test_dynamic_candidates_request_entity_only_names() -> None:
         assert candidate.get("name") == {"type": "entity"}
         seen += 1
 
-    # v1.38.1 replaces the former 3 × 32 allocation-status entity-filter rows per
-    # locale with native Conditional + Tile cards, while retaining entity-only
-    # dynamic names for those bounded target candidates.
+    # v1.39.0 replaces the former 3 × 32 allocation-status entity-filter rows per
+    # locale with native Conditional + Tile cards. v1.39.0 likewise moves the
+    # current/target allocation rows to paired Conditional + Tile cards.
     drift_tiles = [
         item["card"]
         for item in _walk(doc)
@@ -86,8 +82,17 @@ def test_dynamic_candidates_request_entity_only_names() -> None:
     ]
     assert len(drift_tiles) == 192
     assert all(tile.get("name") == {"type": "entity"} for tile in drift_tiles)
+    allocation_tiles = [
+        item["card"]
+        for item in _walk(doc)
+        if item.get("type") == "conditional"
+        and isinstance(item.get("card"), dict)
+        and str(item["card"].get("entity", "")).endswith(("_current_allocation", "_target_allocation"))
+    ]
+    assert len(allocation_tiles) == 128
+    assert all(tile.get("name") == {"type": "entity"} for tile in allocation_tiles)
     # EN and DE still enumerate the same 1,600 bounded dynamic candidates each.
-    assert seen + len(drift_tiles) == 3200
+    assert seen + len(drift_tiles) + len(allocation_tiles) == 3200
 
 
 def test_conditioned_candidates_keep_per_entity_conditions() -> None:
