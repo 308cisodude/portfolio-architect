@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.37.0
+
+- Adds the shared Gateway human-numeric validation helper and moves the existing Comdirect cash-cap/retained-reserve form parsing onto its EUR primitive.
+- Preserves v1.35.4 accepted locale forms, canonical private policy persistence, bounded invalid-input feedback, v1.35.1 session-maintenance resilience, verified HTTPS and the read-only boundary.
+
 ## 1.36.1
 
 - Package/version alignment for the Portfolio Architect v1.36.1 Home Assistant dashboard hotfix; Comdirect acquisition, OAuth/session maintenance, PhotoTAN and cash authorization are unchanged.

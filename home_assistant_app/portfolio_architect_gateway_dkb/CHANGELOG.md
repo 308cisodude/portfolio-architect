@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.37.0
+
+- Package/common-runtime alignment for the shared human-numeric validation foundation; DKB does not opt its FinTS registration/probe fields into locale numeric normalization.
+- The anonymous registered FinTS probe remains experimental, manual-only and non-live with no authenticated holdings, transfer, payment or trading capability.
+
 ## 1.36.1
 
 - Package/version alignment for the Portfolio Architect v1.36.1 Home Assistant dashboard hotfix; the anonymous registered FinTS probe is unchanged.

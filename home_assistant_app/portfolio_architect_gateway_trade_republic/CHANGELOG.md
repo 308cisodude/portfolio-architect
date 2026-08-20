@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.37.0
+
+- Package/common-runtime alignment for the shared human-numeric validation foundation; Trade Republic statement import does not opt into locale numeric normalization.
+- Statement import/private diagnostics remain unchanged and no Trade Republic cash, transaction-history, transfer or trading capability is added.
+
 ## 1.36.1
 
 - Package/version alignment for the Portfolio Architect v1.36.1 Home Assistant dashboard hotfix; statement import and private diagnostics are unchanged.
