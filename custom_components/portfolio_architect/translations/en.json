@@ -1743,11 +1743,40 @@
           },
           "authorization_retain_eur": {
             "name": "Retained cash reserve"
+          },
+          "total_available_cash_eur": {
+            "name": "Total available cash"
+          },
+          "policy_excluded_cash_eur": {
+            "name": "Cash excluded by policy"
+          },
+          "cash_context": {
+            "name": "Cash context"
+          },
+          "cash_context_de": {
+            "name": "Cash context (German)"
           }
         }
       },
       "remaining_investment_reserve": {
-        "name": "Cash after recommended purchases"
+        "name": "Cash after recommended purchases",
+        "state_attributes": {
+          "total_available_cash_eur": {
+            "name": "Total available cash"
+          },
+          "policy_excluded_cash_eur": {
+            "name": "Cash excluded by policy"
+          },
+          "planned_cash_outlay_eur": {
+            "name": "Planned cash outlay"
+          },
+          "cash_context": {
+            "name": "Cash context"
+          },
+          "cash_context_de": {
+            "name": "Cash context (German)"
+          }
+        }
       },
       "deferred_contribution": {
         "name": "Deferred investment reserve",

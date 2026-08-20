@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway — DKB v1.37.0
+# Portfolio Architect Gateway — DKB v1.38.0
 
-Version 1.37.0 carries the shared human-numeric Gateway helper for future opt-in use, but DKB does not use it for the FinTS product registration or anonymous probe. DKB remains experimental, manual-only and non-live; the registered capability probe is unchanged.
+Version 1.38.0 is package alignment for Portfolio Architect's Home Assistant-side dashboard usability polish. The v1.37 shared human-input helper remains present but unused by the exact FinTS registration/probe fields. DKB remains experimental, manual-only and non-live; the registered capability probe is unchanged.
 
 The probe stays fixed to DKB's documented FinTS endpoint and bank code. It sends only anonymous
 dialog-initialization segments and persists only bounded, non-private evidence.
@@ -49,7 +49,7 @@ live DKB holdings and does not prove that an authenticated user's UPD advertises
 capability. Authenticated user-capability validation and DKB-App decoupled authentication
 remain later gates.
 
-The v1.37.0 DKB App requests no DKB login name, PIN or TAN and sends no holdings, balance,
+The v1.38.0 DKB App requests no DKB login name, PIN or TAN and sends no holdings, balance,
 transaction, order, transfer, payment, debit or transaction-history business transaction.
 Its provider REST source remains fail-closed and cannot publish a DKB portfolio snapshot.
 

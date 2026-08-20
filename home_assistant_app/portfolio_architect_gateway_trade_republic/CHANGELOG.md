@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.38.0
+
+- Package/version alignment for Portfolio Architect v1.38.0 native dashboard usability polish; statement import and private diagnostics are unchanged.
+- The v1.37 shared human-input helper remains unused by statement parsing, and no Trade Republic cash, transaction-history, transfer or trading capability is added.
+
 ## 1.37.0
 
 - Package/common-runtime alignment for the shared human-numeric validation foundation; Trade Republic statement import does not opt into locale numeric normalization.

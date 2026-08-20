@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.38.0
+
+- Package/version alignment for Portfolio Architect v1.38.0 native dashboard usability polish; Comdirect acquisition, OAuth/session maintenance, PhotoTAN and cash-policy parsing are unchanged.
+- Preserves the v1.37 shared human-input helper, v1.35.4 accepted cash syntax, verified HTTPS/private CA trust, bearer authentication and the read-only boundary.
+
 ## 1.37.0
 
 - Adds the shared Gateway human-numeric validation helper and moves the existing Comdirect cash-cap/retained-reserve form parsing onto its EUR primitive.

@@ -263,6 +263,9 @@ sections:
       type: tile
       entity: sensor.portfolio_architect_available_investment_reserve
       name: Authorized investment cash
+      state_content:
+      - state
+      - cash_context
       tap_action:
         action: more-info
       icon: mdi:piggy-bank-outline
@@ -349,6 +352,9 @@ sections:
       type: tile
       entity: sensor.portfolio_architect_remaining_investment_reserve
       name: Cash after recommended purchases
+      state_content:
+      - state
+      - cash_context
       tap_action:
         action: more-info
       icon: mdi:cash-clock
@@ -375,38 +381,38 @@ sections:
       rows: auto
   - type: entity-filter
     entities:
-    - {entity: sensor.portfolio_architect_presentation_target_01_proposed_buy, name: {type: entity}}
-    - {entity: sensor.portfolio_architect_presentation_target_02_proposed_buy, name: {type: entity}}
-    - {entity: sensor.portfolio_architect_presentation_target_03_proposed_buy, name: {type: entity}}
-    - {entity: sensor.portfolio_architect_presentation_target_04_proposed_buy, name: {type: entity}}
-    - {entity: sensor.portfolio_architect_presentation_target_05_proposed_buy, name: {type: entity}}
-    - {entity: sensor.portfolio_architect_presentation_target_06_proposed_buy, name: {type: entity}}
-    - {entity: sensor.portfolio_architect_presentation_target_07_proposed_buy, name: {type: entity}}
-    - {entity: sensor.portfolio_architect_presentation_target_08_proposed_buy, name: {type: entity}}
-    - {entity: sensor.portfolio_architect_presentation_target_09_proposed_buy, name: {type: entity}}
-    - {entity: sensor.portfolio_architect_presentation_target_10_proposed_buy, name: {type: entity}}
-    - {entity: sensor.portfolio_architect_presentation_target_11_proposed_buy, name: {type: entity}}
-    - {entity: sensor.portfolio_architect_presentation_target_12_proposed_buy, name: {type: entity}}
-    - {entity: sensor.portfolio_architect_presentation_target_13_proposed_buy, name: {type: entity}}
-    - {entity: sensor.portfolio_architect_presentation_target_14_proposed_buy, name: {type: entity}}
-    - {entity: sensor.portfolio_architect_presentation_target_15_proposed_buy, name: {type: entity}}
-    - {entity: sensor.portfolio_architect_presentation_target_16_proposed_buy, name: {type: entity}}
-    - {entity: sensor.portfolio_architect_presentation_target_17_proposed_buy, name: {type: entity}}
-    - {entity: sensor.portfolio_architect_presentation_target_18_proposed_buy, name: {type: entity}}
-    - {entity: sensor.portfolio_architect_presentation_target_19_proposed_buy, name: {type: entity}}
-    - {entity: sensor.portfolio_architect_presentation_target_20_proposed_buy, name: {type: entity}}
-    - {entity: sensor.portfolio_architect_presentation_target_21_proposed_buy, name: {type: entity}}
-    - {entity: sensor.portfolio_architect_presentation_target_22_proposed_buy, name: {type: entity}}
-    - {entity: sensor.portfolio_architect_presentation_target_23_proposed_buy, name: {type: entity}}
-    - {entity: sensor.portfolio_architect_presentation_target_24_proposed_buy, name: {type: entity}}
-    - {entity: sensor.portfolio_architect_presentation_target_25_proposed_buy, name: {type: entity}}
-    - {entity: sensor.portfolio_architect_presentation_target_26_proposed_buy, name: {type: entity}}
-    - {entity: sensor.portfolio_architect_presentation_target_27_proposed_buy, name: {type: entity}}
-    - {entity: sensor.portfolio_architect_presentation_target_28_proposed_buy, name: {type: entity}}
-    - {entity: sensor.portfolio_architect_presentation_target_29_proposed_buy, name: {type: entity}}
-    - {entity: sensor.portfolio_architect_presentation_target_30_proposed_buy, name: {type: entity}}
-    - {entity: sensor.portfolio_architect_presentation_target_31_proposed_buy, name: {type: entity}}
-    - {entity: sensor.portfolio_architect_presentation_target_32_proposed_buy, name: {type: entity}}
+    - {entity: sensor.portfolio_architect_presentation_target_01_proposed_buy, name: {type: entity}, tap_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_01_instrument_isin}, hold_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_01_purchase_explanation}}
+    - {entity: sensor.portfolio_architect_presentation_target_02_proposed_buy, name: {type: entity}, tap_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_02_instrument_isin}, hold_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_02_purchase_explanation}}
+    - {entity: sensor.portfolio_architect_presentation_target_03_proposed_buy, name: {type: entity}, tap_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_03_instrument_isin}, hold_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_03_purchase_explanation}}
+    - {entity: sensor.portfolio_architect_presentation_target_04_proposed_buy, name: {type: entity}, tap_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_04_instrument_isin}, hold_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_04_purchase_explanation}}
+    - {entity: sensor.portfolio_architect_presentation_target_05_proposed_buy, name: {type: entity}, tap_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_05_instrument_isin}, hold_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_05_purchase_explanation}}
+    - {entity: sensor.portfolio_architect_presentation_target_06_proposed_buy, name: {type: entity}, tap_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_06_instrument_isin}, hold_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_06_purchase_explanation}}
+    - {entity: sensor.portfolio_architect_presentation_target_07_proposed_buy, name: {type: entity}, tap_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_07_instrument_isin}, hold_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_07_purchase_explanation}}
+    - {entity: sensor.portfolio_architect_presentation_target_08_proposed_buy, name: {type: entity}, tap_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_08_instrument_isin}, hold_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_08_purchase_explanation}}
+    - {entity: sensor.portfolio_architect_presentation_target_09_proposed_buy, name: {type: entity}, tap_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_09_instrument_isin}, hold_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_09_purchase_explanation}}
+    - {entity: sensor.portfolio_architect_presentation_target_10_proposed_buy, name: {type: entity}, tap_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_10_instrument_isin}, hold_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_10_purchase_explanation}}
+    - {entity: sensor.portfolio_architect_presentation_target_11_proposed_buy, name: {type: entity}, tap_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_11_instrument_isin}, hold_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_11_purchase_explanation}}
+    - {entity: sensor.portfolio_architect_presentation_target_12_proposed_buy, name: {type: entity}, tap_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_12_instrument_isin}, hold_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_12_purchase_explanation}}
+    - {entity: sensor.portfolio_architect_presentation_target_13_proposed_buy, name: {type: entity}, tap_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_13_instrument_isin}, hold_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_13_purchase_explanation}}
+    - {entity: sensor.portfolio_architect_presentation_target_14_proposed_buy, name: {type: entity}, tap_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_14_instrument_isin}, hold_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_14_purchase_explanation}}
+    - {entity: sensor.portfolio_architect_presentation_target_15_proposed_buy, name: {type: entity}, tap_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_15_instrument_isin}, hold_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_15_purchase_explanation}}
+    - {entity: sensor.portfolio_architect_presentation_target_16_proposed_buy, name: {type: entity}, tap_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_16_instrument_isin}, hold_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_16_purchase_explanation}}
+    - {entity: sensor.portfolio_architect_presentation_target_17_proposed_buy, name: {type: entity}, tap_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_17_instrument_isin}, hold_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_17_purchase_explanation}}
+    - {entity: sensor.portfolio_architect_presentation_target_18_proposed_buy, name: {type: entity}, tap_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_18_instrument_isin}, hold_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_18_purchase_explanation}}
+    - {entity: sensor.portfolio_architect_presentation_target_19_proposed_buy, name: {type: entity}, tap_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_19_instrument_isin}, hold_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_19_purchase_explanation}}
+    - {entity: sensor.portfolio_architect_presentation_target_20_proposed_buy, name: {type: entity}, tap_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_20_instrument_isin}, hold_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_20_purchase_explanation}}
+    - {entity: sensor.portfolio_architect_presentation_target_21_proposed_buy, name: {type: entity}, tap_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_21_instrument_isin}, hold_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_21_purchase_explanation}}
+    - {entity: sensor.portfolio_architect_presentation_target_22_proposed_buy, name: {type: entity}, tap_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_22_instrument_isin}, hold_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_22_purchase_explanation}}
+    - {entity: sensor.portfolio_architect_presentation_target_23_proposed_buy, name: {type: entity}, tap_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_23_instrument_isin}, hold_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_23_purchase_explanation}}
+    - {entity: sensor.portfolio_architect_presentation_target_24_proposed_buy, name: {type: entity}, tap_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_24_instrument_isin}, hold_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_24_purchase_explanation}}
+    - {entity: sensor.portfolio_architect_presentation_target_25_proposed_buy, name: {type: entity}, tap_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_25_instrument_isin}, hold_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_25_purchase_explanation}}
+    - {entity: sensor.portfolio_architect_presentation_target_26_proposed_buy, name: {type: entity}, tap_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_26_instrument_isin}, hold_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_26_purchase_explanation}}
+    - {entity: sensor.portfolio_architect_presentation_target_27_proposed_buy, name: {type: entity}, tap_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_27_instrument_isin}, hold_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_27_purchase_explanation}}
+    - {entity: sensor.portfolio_architect_presentation_target_28_proposed_buy, name: {type: entity}, tap_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_28_instrument_isin}, hold_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_28_purchase_explanation}}
+    - {entity: sensor.portfolio_architect_presentation_target_29_proposed_buy, name: {type: entity}, tap_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_29_instrument_isin}, hold_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_29_purchase_explanation}}
+    - {entity: sensor.portfolio_architect_presentation_target_30_proposed_buy, name: {type: entity}, tap_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_30_instrument_isin}, hold_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_30_purchase_explanation}}
+    - {entity: sensor.portfolio_architect_presentation_target_31_proposed_buy, name: {type: entity}, tap_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_31_instrument_isin}, hold_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_31_purchase_explanation}}
+    - {entity: sensor.portfolio_architect_presentation_target_32_proposed_buy, name: {type: entity}, tap_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_32_instrument_isin}, hold_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_32_purchase_explanation}}
     conditions:
     - condition: numeric_state
       above: 0

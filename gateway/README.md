@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway runtime v1.37.0
+# Portfolio Architect Gateway runtime v1.38.0
 
-Version 1.37.0 adds a shared opt-in human-numeric validation module to the common Gateway runtime. The existing Comdirect cash-policy amount fields now consume the shared EUR primitive while preserving v1.35.4 locale behavior, canonical private persistence and bounded invalid-input UX. Provider acquisition, policy mathematics, v1.35.1 session-maintenance resilience, health schema 6, private-PKI HTTPS and bearer authentication remain unchanged.
+Version 1.38.0 is package/version alignment for Portfolio Architect's Home Assistant-side dashboard usability milestone. The common Gateway runtime and provider acquisition are unchanged; the v1.37 shared human-numeric helper, Comdirect cash-policy behavior, v1.35.1 session-maintenance resilience, health schema 6, private-PKI HTTPS and bearer authentication remain intact.
 
 The Gateway is a dedicated, Python-library-dependency-free service that converts one
 provider-specific portfolio source into provider-neutral Portfolio Architect REST
@@ -48,9 +48,9 @@ non-secret and carries no account/depot identity. Health schemas 1 through 5 rem
 available unchanged for older Portfolio Architect versions.
 
 The provider contract and official future App identities are documented in
-`docs/GATEWAY-PROVIDERS.md`. The common runtime remains provider-neutral in v1.37.0;
+`docs/GATEWAY-PROVIDERS.md`. The common runtime remains provider-neutral in v1.38.0;
 provider-specific acquisition continues to live only in the corresponding App package.
-The ISIN-first v1.26.1 hotfix is implemented in Portfolio Architect's Home Assistant calculation layer and does not change Gateway REST schema 1 or health schema 6. Version 1.37.0 retains the private-PKI HTTPS helper and v1.26.7 quantity-bearing cached-snapshot/ETag-precedence guarantees. Comdirect OAuth session maintenance is provider-specific; provider acquisition contracts and REST/health schemas are unchanged.
+The ISIN-first v1.26.1 hotfix is implemented in Portfolio Architect's Home Assistant calculation layer and does not change Gateway REST schema 1 or health schema 6. Version 1.38.0 retains the private-PKI HTTPS helper and v1.26.7 quantity-bearing cached-snapshot/ETag-precedence guarantees. Comdirect OAuth session maintenance is provider-specific; provider acquisition contracts and REST/health schemas are unchanged.
 
 ## Authorized investment cash
 

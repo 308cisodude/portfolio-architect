@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.38.0
+
+- Package/version alignment for Portfolio Architect v1.38.0 native dashboard usability polish; the anonymous registered FinTS probe is unchanged.
+- DKB remains experimental, manual-only and non-live; the v1.37 shared human-input helper remains unused by exact FinTS registration/probe fields.
+
 ## 1.37.0
 
 - Package/common-runtime alignment for the shared human-numeric validation foundation; DKB does not opt its FinTS registration/probe fields into locale numeric normalization.

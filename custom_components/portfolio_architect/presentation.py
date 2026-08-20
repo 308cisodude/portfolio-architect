@@ -8,6 +8,7 @@ attributes instead of relying on frontend locale translation for state values.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
 from typing import Any
@@ -142,6 +143,66 @@ def display_eur_de(value: Any, *, available: bool = True) -> str:
         return _NOT_AVAILABLE_DE
     text = f"{amount:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
     return f"{text} €"
+
+
+def display_eur_en(value: Any, *, available: bool = True) -> str:
+    """Render one EUR amount using English separators for dashboard context."""
+    if not available or value is None:
+        return "Unavailable"
+    try:
+        amount = Decimal(str(value))
+    except (InvalidOperation, ValueError):
+        return "Unavailable"
+    return f"€{amount:,.2f}"
+
+
+def investment_cash_totals(
+    provider_cash: Iterable[Any],
+    *,
+    fallback_eligible: Any | None,
+    fallback_authorized: Any | None,
+) -> tuple[float, float] | None:
+    """Return total eligible and policy-excluded cash when evidence is complete."""
+    providers = tuple(provider_cash)
+    if providers:
+        if any(item.eligible_eur is None or item.authorized_eur is None for item in providers):
+            return None
+        eligible = sum((Decimal(str(item.eligible_eur)) for item in providers), Decimal("0"))
+        authorized = sum((Decimal(str(item.authorized_eur)) for item in providers), Decimal("0"))
+    elif fallback_eligible is not None and fallback_authorized is not None:
+        eligible = Decimal(str(fallback_eligible))
+        authorized = Decimal(str(fallback_authorized))
+    else:
+        return None
+    cents = Decimal("0.01")
+    eligible = eligible.quantize(cents)
+    excluded = max(Decimal("0"), eligible - authorized).quantize(cents)
+    return float(eligible), float(excluded)
+
+
+def display_investment_cash_context(
+    total_available: Any,
+    policy_excluded: Any,
+    *,
+    planned_outlay: Any | None = None,
+    german: bool,
+) -> str:
+    """Render bounded policy context for authorized/remaining investment cash."""
+    if german:
+        parts = [
+            f"von {display_eur_de(total_available)} verfügbarem Bargeld",
+            f"{display_eur_de(policy_excluded)} per Richtlinie ausgeschlossen",
+        ]
+        if planned_outlay is not None and Decimal(str(planned_outlay)) > Decimal("0.005"):
+            parts.append(f"{display_eur_de(planned_outlay)} geplant")
+    else:
+        parts = [
+            f"of {display_eur_en(total_available)} available cash",
+            f"{display_eur_en(policy_excluded)} excluded by policy",
+        ]
+        if planned_outlay is not None and Decimal(str(planned_outlay)) > Decimal("0.005"):
+            parts.append(f"{display_eur_en(planned_outlay)} planned")
+    return " · ".join(parts)
 
 
 def display_count_de(value: int | None, *, available: bool = True) -> str:
