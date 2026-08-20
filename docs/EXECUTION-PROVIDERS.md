@@ -159,11 +159,20 @@ funding_transfers:
     to_provider: broker_b
     fee_eur: 1.50
     settlement_business_days: 2
+    source: user-verified transfer evidence
+    as_of: 2026-08-18
 ```
 
 The values are synthetic examples. Transfer cost and conservative settlement delay are
 operator-owned configuration evidence; Portfolio Architect does not infer them from a
-bank name or assume that a standard transfer is free.
+bank name or assume that a standard transfer is free. From v1.40 onward, an edge may
+also carry bounded `source` + `as_of` provenance. When one is present, both are required.
+The native editor creates only evidence-backed edges.
+
+Evidence-backed edges use the existing `fee_data_max_age_days` window. A future evidence
+date fails closed; a stale edge remains valid configuration evidence but is excluded from
+route selection until the operator refreshes the observation. Legacy schema-3 edges
+without provenance remain supported for backward compatibility.
 
 Same-provider funding is implicit and has no transfer fee or delay. Cross-provider
 funding is eligible only when the exact directed edge exists. An edge from `broker_a`

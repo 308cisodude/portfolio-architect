@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.40.0
+
+- Adds optional evidence provenance (`source` + `as_of`) to existing broker-schema-3 directed funding-transfer edges while preserving legacy schema-3 edges for backward compatibility.
+- Native broker editing now creates evidence-backed transfer edges and requires the operator to record both evidence source and evidence date alongside verified fee and conservative settlement time.
+- Evidence-backed transfer edges use the existing `fee_data_max_age_days` freshness window; stale edges remain valid configuration evidence but fail closed for route selection until refreshed, and future/partial evidence is rejected.
+- Preserves provider-scoped cash ownership, explicit one-way topology, cost-first route ranking, REST schema 1, Gateway health schema 6, private-PKI HTTPS, provider acquisition, dashboard presentation and the advisory/no-money-movement boundary.
+
 ## 1.39.0
 
 - Replaces the two bounded current/target allocation entity-filter lists with paired native Conditional + Tile cards for all 32 generic presentation slots, restoring a colourful position-identity view without hard-coded instrument inventory.

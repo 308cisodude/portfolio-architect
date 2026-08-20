@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.40.0
+
+- Package/version alignment for Portfolio Architect v1.40.0 evidence-backed advisory funding-transfer modelling; Trade Republic local statement import/private diagnostics are unchanged.
+- No provider App gains transfer, payment, order-placement or other write capability; verified HTTPS/private CA trust and bearer authentication remain unchanged.
+
 ## 1.39.0
 
 - Package/version alignment for Portfolio Architect v1.39.0 dynamic colourful current/target allocation presentation; Trade Republic statement import and private diagnostics are unchanged.

@@ -505,10 +505,19 @@ from current portfolio value.
 - Preserve v1.38.1 signed drift status colours, gauges and explanation tap-through unchanged.
 - Preserve presentation schema 2, provider runtimes, wire/security contracts, cash/funding mathematics and the advisory/no-trading boundary.
 
-## Deferred beyond v1.39.0
+## v1.40.0 — evidence-backed funding transfers
+
+- Keep broker schema 3 and its exact directed funding topology; add optional bounded `source` + `as_of` provenance to each transfer edge without inventing transfer capability from provider identity.
+- Make the native broker editor create evidence-backed edges and require verified fee, conservative business-day availability, evidence source and evidence date together.
+- Reuse the existing `fee_data_max_age_days` evidence window for evidenced funding edges; stale edges stay parseable but fail closed for route selection until refreshed.
+- Preserve legacy provenance-free schema-3 edges for backward compatibility, while future/partial evidence fails closed and reverse transferability is never inferred.
+- Keep provider-scoped cash pools separate and Portfolio Architect advisory-only: no transfer initiation, payment API, order placement, transaction history or inferred execution is added.
+- Preserve v1.39.0 dashboard presentation, provider acquisition, REST schema 1, health schema 6, presentation schema 2 and verified private-PKI transport.
+
+## Deferred beyond v1.40.0
 
 - **Trade Republic cash acquisition:** if implemented later, parse only conservative cash-summary evidence inside the TR App; keep private documents local, avoid transaction-history ingestion, apply explicit value-date/freshness policy and fail closed on ambiguity.
 - **DKB authenticated acquisition:** remains gated on legitimate product registration/capability evidence and later authenticated user-capability/UPD validation; do not infer holdings support from generic or anonymous bank capability lists.
 - The historical accepted-exception horizontal-overflow wart is no longer an outstanding item: the v1.36 native dynamic policy list replaced that old static presentation path.
 
-No new provider holdings or cash acquisition is enabled by v1.39.0.
+No new provider holdings or cash acquisition is enabled by v1.40.0.
