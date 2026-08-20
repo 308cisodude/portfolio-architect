@@ -55,6 +55,15 @@ def _bilingual_cards(title: str) -> list[dict]:
     return _policy_section_cards(view)
 
 
+def _candidate_entity(value) -> str | None:
+    if isinstance(value, str):
+        return value
+    if isinstance(value, dict):
+        entity = value.get("entity")
+        return entity if isinstance(entity, str) else None
+    return None
+
+
 def _assert_opportunity_heading(cards: list[dict], expected_heading: str) -> None:
     candidates = [
         (index, card)
@@ -87,7 +96,7 @@ def _assert_opportunity_heading(cards: list[dict], expected_heading: str) -> Non
     policy_indexes = [
         index for index, card in enumerate(cards)
         if card.get("type") == "entity-filter"
-        and "sensor.portfolio_architect_presentation_policy_001_finding" in card.get("entities", [])
+        and any(_candidate_entity(item) == "sensor.portfolio_architect_presentation_policy_001_finding" for item in card.get("entities", []))
     ]
     assert len(review_indexes) == 2
     assert len(policy_indexes) == 1

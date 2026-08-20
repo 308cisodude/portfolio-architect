@@ -4,9 +4,10 @@
 labelled `EN` and `DE`.
 
 The reference dashboard uses only native Home Assistant Heading, Tile,
-Conditional, Glance, and Distribution cards. It avoids Markdown, custom cards,
-Entities cards, Entity-filter cards, JavaScript, and nested fixed-column Grid
-cards. Sections rearrange across desktop, tablet, and smartphone widths.
+Conditional, Glance, Entities, and Entity-filter cards. It avoids Markdown,
+custom cards, Distribution-card composition for dynamic inventories, JavaScript,
+and nested fixed-column Grid cards. Sections rearrange across desktop, tablet,
+and smartphone widths.
 
 ## Reference-dashboard ownership
 
@@ -44,6 +45,8 @@ original monetary/count entities, whose fail-closed availability semantics remai
 unchanged.
 
 v1.36 consumes the first-class `sensor.portfolio_architect_presentation_model` through bounded diagnostic presentation-slot entities. The reference dashboard enumerates only generic bounded slot candidates and lets native Home Assistant `entity-filter` cards select the currently available target, outside-scope and active-policy inventory. Stable target/holding identity remains on the target-ID/position-ID entities and is repeated in slot attributes. No `auto-entities`, card-mod, custom JavaScript or custom-card dependency is required. User-owned dashboard copies remain opt-in and are never overwritten by HACS.
+
+v1.36.1 corrects the live-observed frontend composition edge case where filtered allocation entities did not repopulate a nested Distribution card. The same positive-valued dynamic candidates now feed native Entities cards. Dynamic candidate rows request Home Assistant's entity-only registry name so the device prefix is omitted without hard-coding instrument names.
 
 ## Allocation overview contract
 

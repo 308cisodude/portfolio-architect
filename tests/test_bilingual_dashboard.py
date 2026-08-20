@@ -51,7 +51,7 @@ def test_sections_use_native_responsive_cards():
         assert 'entity-filter' in types
         # No nested fixed-column grid cards; only Sections themselves use grid.
         assert not any(card.get('type')=='grid' and 'columns' in card for card in cards)
-        assert {'tile','conditional','glance','distribution','heading','entities','entity-filter'} <= types
+        assert {'tile','conditional','glance','heading','entities','entity-filter'} <= types
 
 
 def test_half_width_tile_labels_are_narrow_screen_safe():

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.36.1
+
+- Package/version alignment for the Portfolio Architect v1.36.1 Home Assistant dashboard hotfix; the anonymous registered FinTS probe is unchanged.
+- DKB remains experimental, manual-only and non-live with no authenticated holdings, transfer, payment or trading capability.
+
 ## 1.36.0
 
 - Package/version alignment for Portfolio Architect v1.36.0 native dynamic presentation. DKB provider acquisition/runtime behavior is unchanged.

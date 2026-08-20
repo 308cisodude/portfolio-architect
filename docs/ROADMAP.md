@@ -463,4 +463,18 @@ from current portfolio value.
 - Keep user-owned dashboard copies opt-in: HACS/integration updates never overwrite an imported or personalized Lovelace dashboard.
 - Preserve all v1.35 execution-policy, funding, retained-cash and Gateway security/runtime contracts.
 
+## v1.36.1 — dynamic native-dashboard hotfix
+
+- Replace only the live-broken `entity-filter` → Distribution composition with native filtered Entities lists; retain the v1.36.0 presentation schema 2 backend and slot bounds unchanged.
+- Request entity-only Home Assistant display names for dynamic candidates so the `Portfolio Architect` device prefix does not crowd instrument labels.
+- Preserve all provider, execution/funding, retained-cash, wire-schema, private-PKI and advisory/no-trading contracts.
+
+## Deferred — shared human-input validation primitives
+
+- Centralize reusable syntax normalization and bounded type validation for opt-in human numeric fields such as money, percentages, quantities and bounded integers.
+- Keep field/provider semantics separate: shared mechanics produce a canonical typed value, then provider-specific validation decides whether it is meaningful.
+- Invalid human input must return bounded guidance, preserve previous valid state and never reflect rejected raw input or arbitrary exception text.
+- Protocol identifiers, registrations, tokens and exact IDs must bypass locale normalization; the DKB FinTS product registration remains an exact identifier.
+- Persisted state and REST values remain canonical and locale-neutral. This work is deliberately not part of v1.36.1.
+
 No holdings acquisition is enabled by this release.

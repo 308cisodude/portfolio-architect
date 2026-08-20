@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.36.1
+
+- Fixes the live-observed native-dashboard incompatibility where `entity-filter` correctly selected dynamic allocation slots but a nested Distribution card remained empty.
+- Renders the three dynamic allocation surfaces through core Entities cards while preserving the same positive-value filters, bounded slot inventories and presentation schema 2 backend contract.
+- Uses Home Assistant structured entity-only names for dynamic presentation candidates so instrument labels no longer inherit the `Portfolio Architect` device prefix; no instrument names are hard-coded back into YAML.
+- Preserves provider runtimes, v1.35.4 Comdirect cash-input normalization, retained cash/funding, broker semantics, Gateway wire/security contracts and the advisory/no-trading boundary.
+
 ## 1.36.0
 
 - Completes the native dynamic portfolio-presentation milestone with bounded diagnostic presentation-slot adapters for configured targets, outside-scope holdings and active policy findings.

@@ -56,7 +56,7 @@ def test_dashboard_exposes_overlapping_target_position_sources_dynamically() -> 
     source_filter = next(
         item for item in cards
         if item.get("type") == "entity-filter"
-        and "sensor.portfolio_architect_presentation_target_01_position_sources" in item.get("entities", [])
+        and any((candidate.get("entity") if isinstance(candidate, dict) else candidate) == "sensor.portfolio_architect_presentation_target_01_position_sources" for candidate in item.get("entities", []))
     )
     assert len(source_filter["entities"]) == 32
     assert source_filter["conditions"] == [{"condition": "numeric_state", "above": 1}]

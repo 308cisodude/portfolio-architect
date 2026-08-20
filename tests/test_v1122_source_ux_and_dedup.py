@@ -59,10 +59,10 @@ def test_outside_scope_holdings_use_bounded_native_dynamic_list() -> None:
         item for item in cards
         if isinstance(item, dict)
         and item.get("type") == "entity-filter"
-        and "sensor.portfolio_architect_presentation_outside_001_holding_value" in item.get("entities", [])
+        and any((candidate.get("entity") if isinstance(candidate, dict) else candidate) == "sensor.portfolio_architect_presentation_outside_001_holding_value" for candidate in item.get("entities", []))
     )
     assert len(outside["entities"]) == 512
-    assert outside["entities"][-1] == "sensor.portfolio_architect_presentation_outside_512_holding_value"
+    assert outside["entities"][-1]["entity"] == "sensor.portfolio_architect_presentation_outside_512_holding_value"
     assert outside["card"]["type"] == "glance"
     assert outside["grid_options"]["columns"] == "full"
     assert outside["show_empty"] is False

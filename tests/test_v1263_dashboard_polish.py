@@ -75,6 +75,15 @@ def _named_tiles(view: dict, name: str) -> list[dict]:
     return found
 
 
+
+def _candidate_entity(value) -> str | None:
+    if isinstance(value, str):
+        return value
+    if isinstance(value, dict):
+        entity = value.get("entity")
+        return entity if isinstance(entity, str) else None
+    return None
+
 def test_german_unavailable_plan_values_use_available_actionability_proxy() -> None:
     german = _view("DE")
     allocated = _named_tiles(german, "Zugeordnet")
@@ -129,7 +138,7 @@ def test_policy_summary_keeps_aggregate_counters_out_of_primary_tiles() -> None:
         assert OPPORTUNITIES not in entities
         assert EXCEPTIONS in entities
         policy_filters = [card for card in cards if card.get("type") == "entity-filter"]
-        assert any("sensor.portfolio_architect_presentation_policy_001_finding" in card.get("entities", []) for card in policy_filters)
+        assert any(any(_candidate_entity(item) == "sensor.portfolio_architect_presentation_policy_001_finding" for item in card.get("entities", [])) for card in policy_filters)
 
 
 def test_policy_exception_lifecycle_tiles_are_coherently_ordered() -> None:
@@ -143,7 +152,7 @@ def test_policy_exception_lifecycle_tiles_are_coherently_ordered() -> None:
         policy_index = next(
             index for index, card in enumerate(cards)
             if card.get("type") == "entity-filter"
-            and "sensor.portfolio_architect_presentation_policy_001_finding" in card.get("entities", [])
+            and any(_candidate_entity(item) == "sensor.portfolio_architect_presentation_policy_001_finding" for item in card.get("entities", []))
         )
 
         assert exception_index < last_index
@@ -179,7 +188,7 @@ def test_concrete_policy_findings_remain_visible_through_generic_slot_contract()
         policy = next(
             card for card in cards
             if card.get("type") == "entity-filter"
-            and "sensor.portfolio_architect_presentation_policy_001_finding" in card.get("entities", [])
+            and any(_candidate_entity(item) == "sensor.portfolio_architect_presentation_policy_001_finding" for item in card.get("entities", []))
         )
         assert len(policy["entities"]) == 256
         assert policy["card"]["type"] == "entities"

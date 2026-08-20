@@ -29,6 +29,15 @@ def _walk(value):
             yield from _walk(child)
 
 
+def _candidate_entity(value) -> str | None:
+    if isinstance(value, str):
+        return value
+    if isinstance(value, dict):
+        entity = value.get("entity")
+        return entity if isinstance(entity, str) else None
+    return None
+
+
 def _policy_slot_filters(path: Path) -> list[dict]:
     document = yaml.safe_load(path.read_text(encoding="utf-8"))
     return [
@@ -36,7 +45,7 @@ def _policy_slot_filters(path: Path) -> list[dict]:
         if isinstance(node, dict)
         and node.get("type") == "entity-filter"
         and any(
-            str(entity).startswith("sensor.portfolio_architect_presentation_policy_")
+            (_candidate_entity(entity) or "").startswith("sensor.portfolio_architect_presentation_policy_")
             for entity in node.get("entities", [])
         )
     ]
@@ -48,8 +57,8 @@ def test_localised_exception_presentation_is_bounded_native_list() -> None:
         assert len(cards) == 1
         card = cards[0]
         assert len(card["entities"]) == 256
-        assert card["entities"][0] == "sensor.portfolio_architect_presentation_policy_001_finding"
-        assert card["entities"][-1] == "sensor.portfolio_architect_presentation_policy_256_finding"
+        assert _candidate_entity(card["entities"][0]) == "sensor.portfolio_architect_presentation_policy_001_finding"
+        assert _candidate_entity(card["entities"][-1]) == "sensor.portfolio_architect_presentation_policy_256_finding"
         assert card["card"]["type"] == "entities"
         assert card["grid_options"]["columns"] == "full"
         assert card["show_empty"] is False

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.36.1
+
+- Package/version alignment for the Portfolio Architect v1.36.1 Home Assistant dashboard hotfix; Comdirect acquisition, OAuth/session maintenance, PhotoTAN and cash authorization are unchanged.
+- Preserves the v1.35.4 locale-tolerant cash-policy parser, verified HTTPS/private CA trust, bearer authentication and the read-only boundary.
+
 ## 1.36.0
 
 - Package/version alignment for Portfolio Architect v1.36.0 native dynamic presentation. Comdirect provider acquisition/runtime behavior is unchanged.

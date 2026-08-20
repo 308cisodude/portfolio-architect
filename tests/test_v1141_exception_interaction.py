@@ -28,13 +28,22 @@ def _walk(value):
             yield from _walk(child)
 
 
+def _candidate_entity(value) -> str | None:
+    if isinstance(value, str):
+        return value
+    if isinstance(value, dict):
+        entity = value.get("entity")
+        return entity if isinstance(entity, str) else None
+    return None
+
+
 def _policy_slot_filters(path: Path) -> list[dict]:
     document = yaml.safe_load(path.read_text(encoding="utf-8"))
     return [
         node for node in _walk(document)
         if isinstance(node, dict)
         and node.get("type") == "entity-filter"
-        and "sensor.portfolio_architect_presentation_policy_001_finding" in node.get("entities", [])
+        and any(_candidate_entity(item) == "sensor.portfolio_architect_presentation_policy_001_finding" for item in node.get("entities", []))
     ]
 
 
