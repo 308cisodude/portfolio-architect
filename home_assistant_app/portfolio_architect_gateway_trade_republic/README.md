@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway — Trade Republic v1.41.0
+# Portfolio Architect Gateway — Trade Republic v1.41.1
 
-Version 1.41.0 adds a separate strict local `KONTOAUSZUG` cash-statement import beside the established `DEPOTAUSZUG` holdings import. The two evidence families persist independently and are composed only at the provider-neutral REST boundary; raw PDFs and transaction/account identity data are not retained.
+Version 1.41.1 is package alignment for the Portfolio Architect local-cash routing tie-break hotfix. The separate strict local `DEPOTAUSZUG` holdings and `KONTOAUSZUG` cash-statement imports introduced in v1.41.0 are unchanged.
 
 Verified HTTPS/private CA trust, bearer
 authentication, REST schema 1, health schema 6 and accepted snapshot serving are unchanged.

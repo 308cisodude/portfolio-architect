@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.41.1
+
+- Fixes the live-proven zero-fee/zero-day provider-funding tie where a Trade Republic purchase could be funded from Comdirect even though sufficient fresh Trade Republic local cash was already available.
+- Keeps cost, settlement time, explicit provider priority, order amount and fees ahead of the new tie-break, then prefers `funding_transfer_required: false` before arbitrary route/provider identifiers when those existing economics are otherwise equal.
+- Adds executable regression coverage reproducing the exact local-cash-versus-Comdirect-transfer parity case while preserving v1.41.0 Trade Republic KONTOAUSZUG acquisition, evidence freshness, schemas, provider runtimes and the advisory/no-money-movement boundary.
+
 ## 1.41.0
 
 - Adds a separate strict Trade Republic `KONTOAUSZUG` text-PDF importer for provider-scoped cash while preserving the established `DEPOTAUSZUG` holdings importer as an independent evidence family.

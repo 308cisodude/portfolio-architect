@@ -856,6 +856,7 @@ def choose_funded_route_for_cash(
             item.provider_priority,
             -item.order_amount_eur,
             item.fee_eur + item.funding_transfer_fee_eur,
+            item.funding_transfer_required,
             item.route,
             item.provider_id or "",
             item.funding_provider_id or "",
