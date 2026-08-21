@@ -51,7 +51,7 @@ def test_dashboard_routes_dynamic_inventory_through_native_more_info() -> None:
     dynamic_filters = [card for card in cards if card.get("type") == "entity-filter"]
     assert dynamic_filters
     assert any(any(_candidate_entity(item) == "sensor.portfolio_architect_presentation_target_01_proposed_buy" for item in card.get("entities", [])) for card in dynamic_filters)
-    # v1.40.1 routes allocation drift through native Conditional + Tile cards
+    # v1.41.0 routes allocation drift through native Conditional + Tile cards
     # instead of the older entity-filter list, while keeping the same bounded
     # generic presentation-slot identity and native more-info explainability.
     drift_cards = [

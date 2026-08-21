@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.41.0
+
+- Adds a separate local `KONTOAUSZUG` cash-statement import beside the established `DEPOTAUSZUG` holdings import, with independently persisted bounded private cash state and fail-closed reconciliation.
+- Raw PDFs, transaction rows, counterparties and account/identity data are not persisted; no Trade Republic credentials/private API, trading, transfer, payment or order capability is introduced.
+
 ## 1.40.1
 
 - Package/version alignment for the Portfolio Architect v1.40.1 Home Assistant Configure-menu compatibility hotfix; Trade Republic local statement import/private diagnostics are unchanged.

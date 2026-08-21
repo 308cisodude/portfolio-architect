@@ -10,7 +10,7 @@ DKB=ROOT/"home_assistant_app"/"portfolio_architect_gateway_dkb"/"src"/"portfolio
 TRADE_REPUBLIC=ROOT/"home_assistant_app"/"portfolio_architect_gateway_trade_republic"/"src"/"portfolio_architect_gateway"
 SHELL_FILES={"__init__.py","errors.py","human_input.py","models.py","provider.py","runtime_config.py","server.py","store.py","pending_app.py","supervisor_tls.py"}
 DKB_PROVIDER_FILES={"dkb_app.py","dkb_fints.py"}
-TR_PROVIDER_FILES={"trade_republic_app.py","trade_republic_statement.py"}
+TR_PROVIDER_FILES={"trade_republic_app.py","trade_republic_statement.py","trade_republic_cash_statement.py","trade_republic_pdf.py"}
 
 
 def _sync_shell(target: Path, *, provider_files: set[str]) -> None:

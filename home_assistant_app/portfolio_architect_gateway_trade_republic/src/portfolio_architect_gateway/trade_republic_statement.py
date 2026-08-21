@@ -10,21 +10,26 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
-from io import BytesIO
 from pathlib import Path
 import re
 from typing import Final
 
-from pypdf import PdfReader
-
 from .errors import ConfigurationError, ProtocolError
 from .models import PortfolioSnapshot, Position, validate_snapshot
 from .store import load_snapshot
+from .trade_republic_cash_statement import (
+    CASH_STATE_FILE_NAME,
+    TradeRepublicCashSnapshot,
+    load_cash_snapshot,
+    save_cash_snapshot,
+)
+from .trade_republic_pdf import (
+    MAX_EXTRACTED_TEXT_CHARS,
+    MAX_PDF_BYTES,
+    TradeRepublicPdfError,
+    extract_bounded_pdf_text,
+)
 
-MAX_PDF_BYTES: Final = 5 * 1024 * 1024
-MAX_PDF_PAGES: Final = 32
-MAX_PAGE_CONTENT_BYTES: Final = 2 * 1024 * 1024
-MAX_EXTRACTED_TEXT_CHARS: Final = 512 * 1024
 MAX_IMPORT_POSITIONS: Final = 512
 MAX_POSITION_QUANTITY: Final = Decimal("1000000000000")
 MAX_CLOCK_SKEW: Final = timedelta(minutes=5)
@@ -68,11 +73,22 @@ class TradeRepublicStatementProvider:
     """Static provider backed by the last accepted private statement snapshot."""
 
     def __init__(self, snapshot_file) -> None:
-        self._snapshot_file = snapshot_file
+        self._snapshot_file = Path(snapshot_file)
+        self._cash_file = self._snapshot_file.parent / CASH_STATE_FILE_NAME
         try:
-            self._snapshot = load_snapshot(snapshot_file)
+            loaded = load_snapshot(self._snapshot_file)
+            self._holdings_snapshot = _holdings_only(loaded) if loaded is not None else None
+            self._cash_snapshot = load_cash_snapshot(self._cash_file)
+            if self._cash_snapshot is None and loaded is not None and loaded.investment_cash is not None:
+                # Recovery compatibility: a composed schema-1 snapshot may survive even if
+                # the dedicated sibling state was lost.  Retain only the bounded cash facts.
+                self._cash_snapshot = TradeRepublicCashSnapshot(
+                    account_balance_eur=loaded.investment_cash.account_balance_eur,
+                    as_of=loaded.investment_cash.as_of,
+                    generated_at=loaded.investment_cash.as_of,
+                )
         except ProtocolError as err:
-            raise ConfigurationError("Stored Trade Republic snapshot is invalid") from err
+            raise ConfigurationError("Stored Trade Republic private snapshot is invalid") from err
 
     @property
     def provider_id(self) -> str:
@@ -84,63 +100,72 @@ class TradeRepublicStatementProvider:
         return 86400
 
     def fetch_snapshot(self) -> PortfolioSnapshot:
-        if self._snapshot is None:
-            raise ConfigurationError("No supported Trade Republic statement has been imported")
-        return self._snapshot
+        snapshot = self.snapshot
+        if snapshot is None:
+            raise ConfigurationError("No supported Trade Republic depot statement has been imported")
+        return snapshot
 
     def replace_snapshot(self, snapshot: PortfolioSnapshot | None) -> None:
-        self._snapshot = snapshot
+        self._holdings_snapshot = _holdings_only(snapshot) if snapshot is not None else None
+
+    def replace_cash_snapshot(self, snapshot: TradeRepublicCashSnapshot | None) -> None:
+        self._cash_snapshot = snapshot
+
+    def persist_cash_snapshot(self, snapshot: TradeRepublicCashSnapshot | None) -> None:
+        save_cash_snapshot(self._cash_file, snapshot)
+
+    @property
+    def holdings_snapshot(self) -> PortfolioSnapshot | None:
+        return self._holdings_snapshot
+
+    @property
+    def cash_snapshot(self) -> TradeRepublicCashSnapshot | None:
+        return self._cash_snapshot
 
     @property
     def snapshot(self) -> PortfolioSnapshot | None:
-        return self._snapshot
+        if self._holdings_snapshot is None:
+            return None
+        if self._cash_snapshot is None:
+            return self._holdings_snapshot
+        cash = self._cash_snapshot.investment_cash()
+        return validate_snapshot(
+            PortfolioSnapshot(
+                generated_at=self._holdings_snapshot.generated_at,
+                positions=self._holdings_snapshot.positions,
+                investment_reserve_eur=cash.authorized_eur,
+                investment_reserve_as_of=cash.as_of,
+                investment_cash=cash,
+            )
+        )
 
     @property
     def snapshot_file(self) -> Path:
         """Return the App-private normalized-snapshot path for sibling state files."""
-        return Path(self._snapshot_file)
+        return self._snapshot_file
+
+    @property
+    def cash_file(self) -> Path:
+        return self._cash_file
+
+
+def _holdings_only(snapshot: PortfolioSnapshot) -> PortfolioSnapshot:
+    """Strip optional cash from a loaded/composed REST snapshot."""
+    return validate_snapshot(
+        PortfolioSnapshot(
+            generated_at=snapshot.generated_at,
+            positions=snapshot.positions,
+        )
+    )
 
 
 def parse_statement_pdf(data: bytes, *, now: datetime | None = None) -> PortfolioSnapshot:
     """Parse one bounded text-based Trade Republic depot statement PDF."""
-    if not isinstance(data, bytes) or not data or len(data) > MAX_PDF_BYTES:
-        raise StatementImportError("PDF is empty or exceeds the 5 MiB import limit")
-    if not data.startswith(b"%PDF-"):
-        raise StatementImportError("Uploaded file is not a PDF document")
-
     try:
-        reader = PdfReader(BytesIO(data), strict=True)
-        if reader.is_encrypted:
-            raise StatementImportError("Encrypted PDF statements are not supported")
-        page_count = len(reader.pages)
-        if not 1 <= page_count <= MAX_PDF_PAGES:
-            raise StatementImportError("PDF page count is outside the supported range")
-
-        page_texts: list[str] = []
-        total_chars = 0
-        for page in reader.pages:
-            contents = page.get_contents()
-            if contents is not None:
-                decoded = contents.get_data()
-                if len(decoded) > MAX_PAGE_CONTENT_BYTES:
-                    raise StatementImportError("PDF page content exceeds the import safety limit")
-            text = page.extract_text(
-                extraction_mode="layout",
-                layout_mode_space_vertically=False,
-            )
-            if not isinstance(text, str) or not text.strip():
-                raise StatementImportError("PDF does not contain an extractable text layer")
-            total_chars += len(text)
-            if total_chars > MAX_EXTRACTED_TEXT_CHARS:
-                raise StatementImportError("Extracted PDF text exceeds the import safety limit")
-            page_texts.append(text)
-    except StatementImportError:
-        raise
-    except Exception as err:
-        raise StatementImportError("PDF could not be parsed safely") from err
-
-    return parse_statement_text("\n".join(page_texts), now=now)
-
+        text = extract_bounded_pdf_text(data)
+    except TradeRepublicPdfError as err:
+        raise StatementImportError(str(err)) from err
+    return parse_statement_text(text, now=now)
 
 def parse_statement_text(text: str, *, now: datetime | None = None) -> PortfolioSnapshot:
     """Parse the supported German ``DEPOTAUSZUG`` text layout fail-closed."""

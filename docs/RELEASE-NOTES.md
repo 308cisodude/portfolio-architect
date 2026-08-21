@@ -1,69 +1,51 @@
-# Portfolio Architect 1.40.1
+# Portfolio Architect 1.41.0
 
-Portfolio Architect v1.40.1 hardens the native Home Assistant **Configure** experience after live v1.40.0 testing exposed two form-level UX defects: the savings-plan route form could not be constructed by Home Assistant Core 2026.8.1 because its percentage selector requested a step below Home Assistant's supported minimum, and free-text evidence dates failed closed without useful browser guidance when entered in a locale-style format.
+Portfolio Architect v1.41.0 adds **strict local Trade Republic cash-statement acquisition** without introducing an unofficial Trade Republic API, transaction-history ingestion, or any money-movement capability. The Trade Republic Gateway now treats the established German text-PDF `DEPOTAUSZUG` holdings family and the German text-PDF `KONTOAUSZUG` cash family as independent evidence sources.
 
-## Configure-menu compatibility audit
+## Trade Republic cash statements
 
-The complete `PortfolioArchitectOptionsFlow` surface was audited against Home Assistant Core 2026.8.1 selector contracts rather than patching only the one field that failed live.
+The admin-only Trade Republic Gateway Ingress UI now exposes two separate import paths:
 
-The audit covers every native selector configuration used by Configure, including Number, Select, Text, Boolean and Date selectors. Regression coverage now also derives every rendered options-flow step and requires bilingual translation coverage, and checks that literal menu destinations resolve to implemented flow methods.
+- `DEPOTAUSZUG` → validated holdings snapshot;
+- `KONTOAUSZUG` → validated provider-scoped cash snapshot.
 
-The live failure was isolated to the savings-plan fee selector:
+The cash parser is deliberately bounded and fail-closed. It validates the Trade Republic issuer marker, one unambiguous `Cashkonto` summary, beginning balance + incoming payments − outgoing payments = ending balance, one unambiguous `BARMITTELÜBERSICHT` as-of date, and reconciliation of trust-account plus qualified money-market-fund components against the ending cash balance. Unsupported, encrypted, image-only, malformed, ambiguous, future-dated, or internally inconsistent documents are rejected without replacing either last accepted private snapshot.
 
-- v1.40.0 requested `step=0.0001`;
-- Home Assistant Core 2026.8.1 requires numeric `NumberSelector` steps of at least `0.001`;
-- v1.40.1 uses `0.001`, the finest supported value.
+Uploaded PDFs are parsed in memory and are never persisted. Transaction rows, transfer counterparties, IBAN/account identifiers, account holder/address data, and raw statement text are not retained. Only a schema-1 private cash state containing the bounded EUR balance plus evidence timestamps is stored in the Trade Republic App-private data volume.
 
-Home Assistant does not round typed box input to the selector step, so this is a compatibility correction rather than a reduction in practical broker-fee precision.
+## Independent holdings and cash evidence
 
-No other invalid selector configuration was found in the audited Configure surface.
+Trade Republic holdings and cash are now stored independently and composed only at the provider-neutral REST boundary. Importing fresh cash does not refresh the holdings timestamp, and importing fresh holdings does not refresh the cash timestamp. A failed cash import cannot replace accepted holdings; a failed depot import cannot erase accepted cash.
 
-## Native evidence dates
+REST portfolio schema 1 is unchanged. The existing additive `investment_reserve` and `investment_cash` fields carry the accepted Trade Republic cash result. Home Assistant now permits those cash timestamps to be independent of the holdings snapshot timestamp and separately freshness-gates provider cash using the configured `imported_statement` evidence threshold before it can affect funding decisions. Stale cash is silently excluded from route funding while still-valid holdings remain usable according to their own freshness evidence.
 
-Broker provider evidence dates and funding-transfer evidence dates now use Home Assistant's native `DateSelector` instead of free-text fields.
+## Security and provider boundaries
 
-New evidence forms preselect the current Home Assistant-local date. Existing provider evidence dates remain preselected when editing. The editor also propagates that Home Assistant-local date through broker-document validation and atomic write validation so a local date selected shortly after local midnight is not incorrectly compared against a host-UTC previous day.
+- No Trade Republic credentials are requested or stored.
+- No private/undocumented Trade Republic API is contacted.
+- No transaction-history model or transaction rows are persisted.
+- No trading, order placement/cancellation, transfer, payment, sell, or withdrawal capability is added.
+- Verified private-PKI HTTPS, bearer authentication, provider isolation, REST schema 1, Gateway health schema 6, broker schemas 1/2/3, and the advisory-only execution boundary remain intact.
+- The DKB anonymous FinTS capability probe and Comdirect live acquisition behavior are unchanged apart from normal 1.41.0 package/version alignment.
 
-The stored broker format remains ISO `YYYY-MM-DD`; only the input control changes.
+## Presentation
 
-## Bounded duplicate feedback
+The v1.39.0 colourful paired allocation Tiles and v1.38.1 signed drift presentation are unchanged. The v1.41.0 bilingual reference dashboard is byte-identical to v1.40.1, so no dashboard YAML migration is required.
 
-The native broker editor now gives specific field-level errors when an operator tries to add:
+## Upgrade intent
 
-- an execution provider ID that already exists;
-- a savings-plan route that already exists for the same provider/ISIN; or
-- a directed funding transfer that already exists for the same source/destination pair.
+After updating the integration and Gateway Apps in place, open **Portfolio Architect Gateway — Trade Republic** and import a current official `KONTOAUSZUG` through the new cash-statement form. Keep the existing `DEPOTAUSZUG` import for holdings. The two imports are intentionally separate so each evidence family can age and fail closed independently.
 
-Other invalid or unsafe broker changes continue to fail closed behind the bounded generic broker-configuration error.
+## Compatibility contracts retained
 
-## Preserved contracts
-
-v1.40.1 changes only Home Assistant configuration-flow/editor behavior plus aligned version/package metadata.
-
-- v1.40.0 evidence-backed funding-transfer semantics are unchanged;
-- cost-first route selection and provider-scoped cash ownership are unchanged;
-- payload schema 8, REST portfolio schema 1, Gateway health schema 6 and presentation schema 2 are unchanged;
-- broker schemas 1/2/3 are unchanged;
-- Comdirect, DKB and Trade Republic provider acquisition/runtime behavior is unchanged;
-- verified private-PKI HTTPS, bearer authentication and fail-closed provider isolation are unchanged;
-- the v1.39.0 colourful allocation dashboard and v1.38.1 signed drift presentation are unchanged;
-- no Trade Republic private API or unsupported provider access is introduced;
-- no trading, order, transfer, payment or transaction-history capability is added.
-
-No dashboard YAML migration is required for v1.40.1.
-
-## Historical compatibility preservation
-
-Historical experimental `v1.19.0-rc2` brokerage-diagnostic work remains excluded and is not promoted by this release.
-
-- payload schema 8: unchanged;
-- REST portfolio schema 1: unchanged;
-- Gateway health schema 6: unchanged; schemas 1–5 remain supported;
-- presentation schema 2: unchanged;
-- broker schemas 1/2/3: unchanged;
-- Trade Republic local/private statement import is unchanged; this release does not move PDF parsing into Portfolio Architect;
-- DKB remains experimental, manual-only and non-live; DKB live Gateway acquisition remains a later authenticated milestone.
-
-The colourful paired current/target Tile view was not included in v1.38.1; it arrived in v1.39.0 and remains unchanged here. The v1.33.0 source-freshness and plan-schedule separation remains unchanged: recurring scheduling stays anchored to the latest valid Portfolio Architect evaluation, source timestamps remain evidence-only freshness inputs, and v1.40.1 does not change any configured freshness threshold.
-
-No trading, order, transfer, payment, or transaction-history capability is introduced by v1.40.1.
+- payload schema 8: unchanged
+- REST portfolio schema 1: unchanged
+- Gateway health schema 6: unchanged; schemas 1–5 remain supported.
+- presentation schema 2 remains unchanged.
+- broker schemas 1/2/3 remain unchanged.
+- The v1.33.0 source-freshness and plan-schedule separation remains unchanged: recurring scheduling stays anchored to the latest valid Portfolio Architect evaluation, and v1.41.0 does not change any configured freshness threshold.
+- DKB live Gateway acquisition remains a later gated milestone; this release does not infer authenticated holdings support from anonymous capability evidence.
+- Trade Republic PDF parsing remains inside its provider-isolated Gateway App and does not move PDF parsing into Portfolio Architect.
+- The historical v1.19.0-rc2 state remains historical and is not promoted by this release.
+- The colourful paired allocation Tile view was not included in v1.38.1; it arrived in v1.39.0 and remains unchanged here.
+- No trading, order, transfer, payment, or transaction-history capability is introduced by v1.41.0.
