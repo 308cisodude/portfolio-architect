@@ -161,5 +161,5 @@ def test_native_editor_creates_evidence_backed_edge() -> None:
     assert 'CONF_BROKER_TRANSFER_AS_OF = "broker_transfer_as_of"' in flow
     en = (COMPONENT / "translations" / "en.json").read_text(encoding="utf-8")
     de = (COMPONENT / "translations" / "de.json").read_text(encoding="utf-8")
-    assert "Evidence source" in en and "Evidence date (YYYY-MM-DD)" in en
-    assert "Evidenzquelle" in de and "Evidenzdatum (JJJJ-MM-TT)" in de
+    assert "Evidence source" in en and "Evidence date" in en
+    assert "Evidenzquelle" in de and "Evidenzdatum" in de

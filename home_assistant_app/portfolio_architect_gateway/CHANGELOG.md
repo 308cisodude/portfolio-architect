@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.40.1
+
+- Package/version alignment for the Portfolio Architect v1.40.1 Home Assistant Configure-menu compatibility hotfix; Comdirect acquisition, OAuth/session maintenance, PhotoTAN and cash-policy parsing are unchanged.
+- Provider runtime, verified HTTPS/private CA trust, bearer authentication and the read-only/no-money-movement boundary remain unchanged.
+
 ## 1.40.0
 
 - Package/version alignment for Portfolio Architect v1.40.0 evidence-backed advisory funding-transfer modelling; Comdirect acquisition, OAuth/session maintenance, PhotoTAN and cash-policy parsing are unchanged.

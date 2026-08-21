@@ -1,47 +1,58 @@
-# Portfolio Architect 1.40.0
+# Portfolio Architect 1.40.1
 
-Portfolio Architect 1.40.0 strengthens the existing provider-scoped advisory funding topology by allowing each exact directed broker-schema-3 transfer edge to carry explicit operator-owned evidence provenance. A transfer relationship can now record the verified fee and conservative same-/multi-business-day availability assumption together with a bounded evidence source and evidence date. Portfolio Architect still moves no money and places no orders.
+Portfolio Architect v1.40.1 hardens the native Home Assistant **Configure** experience after live v1.40.0 testing exposed two form-level UX defects: the savings-plan route form could not be constructed by Home Assistant Core 2026.8.1 because its percentage selector requested a step below Home Assistant's supported minimum, and free-text evidence dates failed closed without useful browser guidance when entered in a locale-style format.
 
-## Evidence-backed funding edges
+## Configure-menu compatibility audit
 
-Broker schema 3 continues to use explicit directed transfer relationships. v1.40 adds optional `source` and `as_of` fields to an edge:
+The complete `PortfolioArchitectOptionsFlow` surface was audited against Home Assistant Core 2026.8.1 selector contracts rather than patching only the one field that failed live.
 
-```yaml
-funding_transfers:
-  - from_provider: broker_a
-    to_provider: broker_b
-    fee_eur: 0
-    settlement_business_days: 0
-    source: user-verified instant transfer
-    as_of: '2026-08-18'
-```
+The audit covers every native selector configuration used by Configure, including Number, Select, Text, Boolean and Date selectors. Regression coverage now also derives every rendered options-flow step and requires bilingual translation coverage, and checks that literal menu destinations resolve to implemented flow methods.
 
-The example is synthetic. Portfolio Architect does not infer a fee, timing assumption, reverse edge, bank capability or transfer rail from provider names.
+The live failure was isolated to the savings-plan fee selector:
 
-When evidence provenance is present, both fields are required. Future-dated evidence is rejected. The edge uses the existing broker `fee_data_max_age_days` window: once stale, the relationship remains valid configuration evidence but becomes ineligible for route selection until refreshed. This means old observations cannot silently remain actionable forever.
+- v1.40.0 requested `step=0.0001`;
+- Home Assistant Core 2026.8.1 requires numeric `NumberSelector` steps of at least `0.001`;
+- v1.40.1 uses `0.001`, the finest supported value.
 
-Legacy schema-3 edges without `source`/`as_of` remain accepted for backward compatibility. The native editor creates only evidence-backed edges from v1.40 onward.
+Home Assistant does not round typed box input to the selector step, so this is a compatibility correction rather than a reduction in practical broker-fee precision.
 
-## Planning semantics
+No other invalid selector configuration was found in the audited Configure surface.
 
-Existing route economics are preserved. Portfolio Architect evaluates execution provider and funding provider together, includes the configured transfer fee in route cost, uses conservative settlement business days only as a deterministic tie-break after economic cost, and charges one fixed transfer fee per directed edge within an allocation run. Provider-owned cash pools remain separate.
+## Native evidence dates
 
-A stale evidenced edge behaves as if that cross-provider route is unavailable. Same-provider cash remains locally usable without a transfer edge.
+Broker provider evidence dates and funding-transfer evidence dates now use Home Assistant's native `DateSelector` instead of free-text fields.
 
-## Native editor
+New evidence forms preselect the current Home Assistant-local date. Existing provider evidence dates remain preselected when editing. The editor also propagates that Home Assistant-local date through broker-document validation and atomic write validation so a local date selected shortly after local midnight is not incorrectly compared against a host-UTC previous day.
 
-The Funding topology editor now asks for:
+The stored broker format remains ISO `YYYY-MM-DD`; only the input control changes.
 
-- source provider;
-- destination provider;
-- verified fee;
-- conservative settlement business days;
-- evidence source; and
-- evidence date.
+## Bounded duplicate feedback
 
-The evidence fields are local configuration metadata. They are not credentials and are not sent to a provider.
+The native broker editor now gives specific field-level errors when an operator tries to add:
+
+- an execution provider ID that already exists;
+- a savings-plan route that already exists for the same provider/ISIN; or
+- a directed funding transfer that already exists for the same source/destination pair.
+
+Other invalid or unsafe broker changes continue to fail closed behind the bounded generic broker-configuration error.
 
 ## Preserved contracts
+
+v1.40.1 changes only Home Assistant configuration-flow/editor behavior plus aligned version/package metadata.
+
+- v1.40.0 evidence-backed funding-transfer semantics are unchanged;
+- cost-first route selection and provider-scoped cash ownership are unchanged;
+- payload schema 8, REST portfolio schema 1, Gateway health schema 6 and presentation schema 2 are unchanged;
+- broker schemas 1/2/3 are unchanged;
+- Comdirect, DKB and Trade Republic provider acquisition/runtime behavior is unchanged;
+- verified private-PKI HTTPS, bearer authentication and fail-closed provider isolation are unchanged;
+- the v1.39.0 colourful allocation dashboard and v1.38.1 signed drift presentation are unchanged;
+- no Trade Republic private API or unsupported provider access is introduced;
+- no trading, order, transfer, payment or transaction-history capability is added.
+
+No dashboard YAML migration is required for v1.40.1.
+
+## Historical compatibility preservation
 
 Historical experimental `v1.19.0-rc2` brokerage-diagnostic work remains excluded and is not promoted by this release.
 
@@ -49,22 +60,10 @@ Historical experimental `v1.19.0-rc2` brokerage-diagnostic work remains excluded
 - REST portfolio schema 1: unchanged;
 - Gateway health schema 6: unchanged; schemas 1–5 remain supported;
 - presentation schema 2: unchanged;
-- broker schemas 1/2/3: retained, with only the optional schema-3 edge provenance described above;
-- verified private-PKI HTTPS, bearer authentication and provider isolation: unchanged.
-- v1.35.1 Comdirect OAuth/session-maintenance resilience: unchanged;
-- Trade Republic local/private statement import: unchanged; this release does not move PDF parsing into Portfolio Architect and no cash or transaction-history parser is added;
-- DKB remains experimental, manual-only and non-live; DKB live Gateway acquisition remains a later authenticated milestone;
-- private-PKI verified HTTPS, bearer authentication, Supervisor trust discovery, DNS pinning and no-plaintext fallback: unchanged;
-- no trading, order placement, transfer execution, payment, transaction-history or automatic-sell capability is added.
+- broker schemas 1/2/3: unchanged;
+- Trade Republic local/private statement import is unchanged; this release does not move PDF parsing into Portfolio Architect;
+- DKB remains experimental, manual-only and non-live; DKB live Gateway acquisition remains a later authenticated milestone.
 
-## Security and scope
+The colourful paired current/target Tile view was not included in v1.38.1; it arrived in v1.39.0 and remains unchanged here. The v1.33.0 source-freshness and plan-schedule separation remains unchanged: recurring scheduling stays anchored to the latest valid Portfolio Architect evaluation, source timestamps remain evidence-only freshness inputs, and v1.40.1 does not change any configured freshness threshold.
 
-No provider acquisition code changes. No Trade Republic private API, FinTS holdings path, transfer initiation, payment initiation, transaction execution, order placement, order cancellation or sell capability is introduced. The v1.39 colourful dynamic allocation tiles, v1.38.1 drift presentation, provider cash authorization, private-PKI HTTPS, bearer authentication and fail-closed provider isolation remain intact.
-
-Payload schema 8, REST portfolio schema 1, Gateway health schema 6 and presentation schema 2 are unchanged. Broker schemas 1/2/3 remain supported; schema 3 gains only the optional provenance fields described above.
-
-Historical preservation notes: the colourful paired current/target Tile view was not included in v1.38.1; it arrived in v1.39.0 and remains unchanged here. The v1.33.0 source-freshness and plan-schedule separation remains unchanged: recurring scheduling stays anchored to the latest valid Portfolio Architect evaluation, source timestamps remain evidence-only freshness inputs, and v1.40.0 does not change any configured freshness threshold.
-
-No trading, order, transfer, payment, or transaction-history capability is introduced by v1.40.0.
-
-No dashboard YAML migration is required for v1.40.0.
+No trading, order, transfer, payment, or transaction-history capability is introduced by v1.40.1.

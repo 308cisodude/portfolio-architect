@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import date
 from decimal import Decimal, ROUND_FLOOR
 from urllib.parse import urlsplit
 from typing import Any
@@ -17,9 +16,12 @@ from homeassistant.config_entries import (
 )
 from homeassistant.core import callback
 from homeassistant.helpers.service_info.hassio import HassioServiceInfo
+from homeassistant.util import dt as dt_util
 from homeassistant.helpers.selector import (
     BooleanSelector,
     BooleanSelectorConfig,
+    DateSelector,
+    DateSelectorConfig,
     NumberSelector,
     NumberSelectorConfig,
     NumberSelectorMode,
@@ -1488,6 +1490,7 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
                 updated = set_general_settings(
                     context.document,
                     fee_data_max_age_days=int(user_input[CONF_BROKER_FEE_DATA_MAX_AGE_DAYS]),
+                    evaluated_on=dt_util.now().date(),
                 )
                 await self._async_write_broker(context.path, updated)
             except (OSError, ValueError):
@@ -1525,7 +1528,7 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
             CONF_BROKER_PROVIDER_ID: "",
             CONF_BROKER_PROVIDER_NAME: "",
             CONF_BROKER_PROVIDER_SOURCE: "",
-            CONF_BROKER_PROVIDER_AS_OF: date.today().isoformat(),
+            CONF_BROKER_PROVIDER_AS_OF: dt_util.now().date().isoformat(),
             CONF_BROKER_TIE_BREAK: TIE_BREAK_NEUTRAL,
         }
         if user_input is not None:
@@ -1540,9 +1543,15 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
                     as_of=str(user_input[CONF_BROKER_PROVIDER_AS_OF]),
                     tie_break=str(user_input[CONF_BROKER_TIE_BREAK]),
                     create=True,
+                    evaluated_on=dt_util.now().date(),
                 )
                 await self._async_write_broker(context.path, updated)
-            except (OSError, ValueError, PortfolioSourcePathError):
+            except ValueError as err:
+                if str(err) == "provider already exists":
+                    errors[CONF_BROKER_PROVIDER_ID] = "provider_already_exists"
+                else:
+                    errors["base"] = "invalid_broker_config"
+            except (OSError, PortfolioSourcePathError):
                 errors["base"] = "invalid_broker_config"
             else:
                 return self.async_create_entry(data=dict(self.config_entry.options))
@@ -1605,6 +1614,7 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
                     as_of=str(user_input[CONF_BROKER_PROVIDER_AS_OF]),
                     tie_break=str(user_input[CONF_BROKER_TIE_BREAK]),
                     create=False,
+                    evaluated_on=dt_util.now().date(),
                 )
                 await self._async_write_broker(context.path, updated)
             except (OSError, ValueError):
@@ -1634,6 +1644,7 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
                 updated = remove_provider(
                     context.document,
                     provider_id=str(user_input[CONF_BROKER_PROVIDER_ID]),
+                    evaluated_on=dt_util.now().date(),
                 )
                 await self._async_write_broker(context.path, updated)
             except (OSError, ValueError):
@@ -1692,9 +1703,15 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
                     promotional=bool(user_input[CONF_BROKER_PROMOTIONAL]),
                     status=str(user_input.get(CONF_BROKER_STATUS, "")),
                     create=True,
+                    evaluated_on=dt_util.now().date(),
                 )
                 await self._async_write_broker(context.path, updated)
-            except (OSError, ValueError):
+            except ValueError as err:
+                if str(err) == "savings-plan route already exists":
+                    errors[CONF_BROKER_ISIN] = "savings_plan_route_already_exists"
+                else:
+                    errors["base"] = "invalid_broker_config"
+            except OSError:
                 errors["base"] = "invalid_broker_config"
             else:
                 return self.async_create_entry(data=dict(self.config_entry.options))
@@ -1763,6 +1780,7 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
                     promotional=bool(user_input[CONF_BROKER_PROMOTIONAL]),
                     status=str(user_input.get(CONF_BROKER_STATUS, "")),
                     create=False,
+                    evaluated_on=dt_util.now().date(),
                 )
                 await self._async_write_broker(context.path, updated)
             except (OSError, ValueError):
@@ -1794,7 +1812,12 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
             token = str(user_input[CONF_BROKER_SAVINGS_ROUTE])
             try:
                 provider_id, isin = token.split("|", 1)
-                updated = remove_savings_plan(context.document, provider_id=provider_id, isin=isin)
+                updated = remove_savings_plan(
+                    context.document,
+                    provider_id=provider_id,
+                    isin=isin,
+                    evaluated_on=dt_util.now().date(),
+                )
                 await self._async_write_broker(context.path, updated)
             except (OSError, ValueError):
                 errors["base"] = "invalid_broker_config"
@@ -1839,7 +1862,7 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
             CONF_BROKER_TRANSFER_FEE_EUR: 0.0,
             CONF_BROKER_SETTLEMENT_DAYS: 0,
             CONF_BROKER_TRANSFER_SOURCE: "",
-            CONF_BROKER_TRANSFER_AS_OF: date.today().isoformat(),
+            CONF_BROKER_TRANSFER_AS_OF: dt_util.now().date().isoformat(),
         }
         if user_input is not None:
             suggested.update(user_input)
@@ -1852,9 +1875,15 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
                     settlement_business_days=int(user_input[CONF_BROKER_SETTLEMENT_DAYS]),
                     source=str(user_input[CONF_BROKER_TRANSFER_SOURCE]),
                     as_of=str(user_input[CONF_BROKER_TRANSFER_AS_OF]),
+                    evaluated_on=dt_util.now().date(),
                 )
                 await self._async_write_broker(context.path, updated)
-            except (OSError, ValueError):
+            except ValueError as err:
+                if str(err) == "funding transfer already exists":
+                    errors[CONF_BROKER_TO_PROVIDER] = "funding_transfer_already_exists"
+                else:
+                    errors["base"] = "invalid_broker_config"
+            except OSError:
                 errors["base"] = "invalid_broker_config"
             else:
                 return self.async_create_entry(data=dict(self.config_entry.options))
@@ -1881,7 +1910,10 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
             try:
                 source, destination = str(user_input[CONF_BROKER_FUNDING_EDGE]).split("|", 1)
                 updated = remove_funding_transfer(
-                    context.document, from_provider=source, to_provider=destination
+                    context.document,
+                    from_provider=source,
+                    to_provider=destination,
+                    evaluated_on=dt_util.now().date(),
                 )
                 await self._async_write_broker(context.path, updated)
             except (OSError, ValueError):
@@ -1902,11 +1934,15 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
             require_exists=True,
         )
         return await self.hass.async_add_executor_job(
-            load_broker_editor_context, configuration.config_directory
+            load_broker_editor_context,
+            configuration.config_directory,
+            dt_util.now().date(),
         )
 
     async def _async_write_broker(self, path, document) -> None:
-        await self.hass.async_add_executor_job(write_broker_document_atomic, path, document)
+        await self.hass.async_add_executor_job(
+            write_broker_document_atomic, path, document, dt_util.now().date()
+        )
 
     async def async_step_plan(
         self, user_input: dict[str, Any] | None = None
@@ -2627,7 +2663,7 @@ def _broker_provider_schema(*, include_id: bool) -> vol.Schema:
         {
             vol.Required(CONF_BROKER_PROVIDER_NAME): TextSelector(TextSelectorConfig(multiline=False)),
             vol.Required(CONF_BROKER_PROVIDER_SOURCE): TextSelector(TextSelectorConfig(multiline=False)),
-            vol.Required(CONF_BROKER_PROVIDER_AS_OF): TextSelector(TextSelectorConfig(multiline=False)),
+            vol.Required(CONF_BROKER_PROVIDER_AS_OF): DateSelector(DateSelectorConfig()),
             vol.Required(CONF_BROKER_TIE_BREAK): SelectSelector(
                 SelectSelectorConfig(
                     options=[TIE_BREAK_PREFERRED, TIE_BREAK_NEUTRAL, TIE_BREAK_FALLBACK],
@@ -2678,7 +2714,7 @@ def _broker_savings_plan_schema(
         {
             vol.Required(CONF_BROKER_AVAILABLE): BooleanSelector(BooleanSelectorConfig()),
             vol.Required(CONF_BROKER_FEE_PCT): NumberSelector(
-                NumberSelectorConfig(min=0, max=25, step=0.0001, mode=NumberSelectorMode.BOX, unit_of_measurement="%")
+                NumberSelectorConfig(min=0, max=25, step=0.001, mode=NumberSelectorMode.BOX, unit_of_measurement="%")
             ),
             vol.Required(CONF_BROKER_PROMOTIONAL): BooleanSelector(BooleanSelectorConfig()),
             vol.Optional(CONF_BROKER_STATUS, default=""): TextSelector(TextSelectorConfig(multiline=False)),
@@ -2705,9 +2741,7 @@ def _broker_funding_schema(providers: list[dict[str, str]]) -> vol.Schema:
             vol.Required(CONF_BROKER_TRANSFER_SOURCE): TextSelector(
                 TextSelectorConfig(multiline=False)
             ),
-            vol.Required(CONF_BROKER_TRANSFER_AS_OF): TextSelector(
-                TextSelectorConfig(multiline=False)
-            ),
+            vol.Required(CONF_BROKER_TRANSFER_AS_OF): DateSelector(DateSelectorConfig()),
         }
     )
 

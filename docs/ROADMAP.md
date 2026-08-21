@@ -514,10 +514,18 @@ from current portfolio value.
 - Keep provider-scoped cash pools separate and Portfolio Architect advisory-only: no transfer initiation, payment API, order placement, transaction history or inferred execution is added.
 - Preserve v1.39.0 dashboard presentation, provider acquisition, REST schema 1, health schema 6, presentation schema 2 and verified private-PKI transport.
 
-## Deferred beyond v1.40.0
+## v1.40.1 — Configure-form compatibility hardening
+
+- Fix the Home Assistant 2026.8.1 NumberSelector floor violation that prevents savings-plan route forms from opening.
+- Audit every native Configure selector/mode/step and all options-flow destinations/translations.
+- Use native DateSelector controls for broker evidence dates with Home Assistant-local current-date defaults for new evidence.
+- Surface bounded duplicate provider/route/funding-edge errors without weakening generic fail-closed validation.
+- Preserve v1.40.0 evidence-backed funding semantics, broker schemas, provider runtimes and dashboard presentation.
+
+## Deferred beyond v1.40.1
 
 - **Trade Republic cash acquisition:** if implemented later, parse only conservative cash-summary evidence inside the TR App; keep private documents local, avoid transaction-history ingestion, apply explicit value-date/freshness policy and fail closed on ambiguity.
 - **DKB authenticated acquisition:** remains gated on legitimate product registration/capability evidence and later authenticated user-capability/UPD validation; do not infer holdings support from generic or anonymous bank capability lists.
 - The historical accepted-exception horizontal-overflow wart is no longer an outstanding item: the v1.36 native dynamic policy list replaced that old static presentation path.
 
-No new provider holdings or cash acquisition is enabled by v1.40.0.
+No new provider holdings or cash acquisition is enabled by v1.40.1.

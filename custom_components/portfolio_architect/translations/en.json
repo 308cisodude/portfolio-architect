@@ -2678,7 +2678,7 @@
           "broker_transfer_fee_eur": "Transfer fee",
           "broker_settlement_business_days": "Settlement time",
           "broker_transfer_source": "Evidence source",
-          "broker_transfer_as_of": "Evidence date (YYYY-MM-DD)"
+          "broker_transfer_as_of": "Evidence date"
         }
       },
       "remove_funding_transfer": {
@@ -2701,7 +2701,10 @@
       "invalid_auth": "The local Gateway rejected its bearer token.",
       "invalid_rest_gateway": "The additional Gateway is unavailable, duplicates an existing provider/endpoint, or does not expose a valid live schema-6 snapshot.",
       "too_many_rest_gateways": "At most 4 additional REST Gateways are supported.",
-      "invalid_broker_config": "The execution-provider configuration is invalid and was not saved."
+      "invalid_broker_config": "The execution-provider configuration is invalid and was not saved.",
+      "provider_already_exists": "This provider ID already exists.",
+      "savings_plan_route_already_exists": "This provider already has a savings-plan route for that ISIN.",
+      "funding_transfer_already_exists": "This directed funding transfer already exists."
     },
     "abort": {
       "plan_source_unavailable": "The local portfolio files could not be read for the plan editor.",
