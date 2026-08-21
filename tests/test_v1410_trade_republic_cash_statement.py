@@ -1,4 +1,4 @@
-"""Regression coverage for v1.41.0 Trade Republic cash-statement acquisition."""
+"""Regression coverage for v1.41.1 Trade Republic cash-statement acquisition."""
 from __future__ import annotations
 
 from datetime import datetime, timezone

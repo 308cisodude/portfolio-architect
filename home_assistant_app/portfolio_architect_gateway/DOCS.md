@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway — Comdirect v1.41.0
+# Portfolio Architect Gateway — Comdirect v1.41.1
 
-Version 1.41.0 is package alignment for Portfolio Architect Trade Republic cash-statement acquisition. Comdirect OAuth/session maintenance, account selection, authorized cash, provider runtime and verified-HTTPS behavior are unchanged.
+Version 1.41.1 is package alignment for the Portfolio Architect local-cash routing tie-break hotfix. Comdirect OAuth/session maintenance, account selection, authorized cash, provider runtime and verified-HTTPS behavior are unchanged.
 
 Verified HTTPS/private CA trust, bearer authentication, PhotoTAN bootstrap, account
 selection, request-timeout behavior, REST schema 1, health schema 6, portfolio normalization,

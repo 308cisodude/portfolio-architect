@@ -530,9 +530,15 @@ from current portfolio value.
 - Keep holdings and cash evidence timestamps independent through REST schema 1 and freshness-gate provider cash separately using the existing `imported_statement` threshold.
 - Preserve the advisory-only execution boundary and avoid undocumented/private Trade Republic APIs entirely.
 
-## Deferred beyond v1.41.0
+## v1.41.1 — Local-cash funding tie-break hotfix
+
+- Prefer execution-provider-local cash when it is otherwise economically identical to a transfer-funded candidate.
+- Preserve cost-first routing, settlement-time ordering, explicit provider priority, order amount and fee semantics before applying the local-cash preference.
+- Add executable zero-fee/zero-day parity regression coverage; no provider acquisition, schema, dashboard or money-movement capability changes.
+
+## Deferred beyond v1.41.1
 
 - **DKB authenticated acquisition:** remains gated on legitimate product registration/capability evidence and later authenticated user-capability/UPD validation; do not infer holdings support from generic or anonymous bank capability lists.
 - The historical accepted-exception horizontal-overflow wart is no longer an outstanding item: the v1.36 native dynamic policy list replaced that old static presentation path.
 
-v1.41.0 enables only bounded local Trade Republic cash-statement acquisition; no new remote provider API or transaction capability is enabled.
+v1.41.1 retains bounded local Trade Republic cash-statement acquisition and changes only the funded-route tie-break; no new remote provider API or transaction capability is enabled.

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.41.1
+
+- Package/version alignment for Portfolio Architect v1.41.1 local-cash routing tie-break hotfix; Trade Republic DEPOTAUSZUG holdings and KONTOAUSZUG cash import behavior is unchanged from v1.41.0.
+
 ## 1.41.0
 
 - Adds a separate local `KONTOAUSZUG` cash-statement import beside the established `DEPOTAUSZUG` holdings import, with independently persisted bounded private cash state and fail-closed reconciliation.
