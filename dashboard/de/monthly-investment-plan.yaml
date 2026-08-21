@@ -377,6 +377,22 @@ cards:
   grid_options:
     columns: full
     rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_execution_path
+    state_not: unavailable
+  - condition: state
+    entity: sensor.portfolio_architect_execution_path
+    state_not: unknown
+  card:
+    type: markdown
+    title: Ausführungsweg
+    content: >-
+      {{ state_attr('sensor.portfolio_architect_execution_path', 'markdown_de') or '' }}
+  grid_options:
+    columns: full
+    rows: auto
 - type: entity-filter
   entities:
   - {entity: sensor.portfolio_architect_presentation_target_01_proposed_buy, name: {type: entity}, tap_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_01_instrument_isin}, hold_action: {action: more-info, entity: sensor.portfolio_architect_presentation_target_01_purchase_explanation}}

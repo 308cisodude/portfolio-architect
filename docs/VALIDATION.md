@@ -1,16 +1,18 @@
-# v1.41.1 validation
+# v1.42.0 validation
 
-Portfolio Architect v1.41.1 is prepared from the exact published v1.41.0 tracked-source baseline. The release changes only the funded-route tie-break, adds direct regression coverage, and performs normal package/version/documentation alignment. The v1.41.0 Trade Republic cash-statement acquisition implementation is unchanged.
+Portfolio Architect v1.42.0 is prepared from the exact published/live-accepted v1.41.1 tracked-source baseline. The release adds only Home Assistant-side normalized execution-path presentation, native reference-dashboard rendering, regression coverage, and normal package/version/documentation alignment.
 
 Validation requires:
 
-- all integration/common Gateway/provider App current-version markers align to 1.41.1 while historical release documentation remains historical;
-- a synthetic zero-fee/zero-business-day Comdirect → Trade Republic edge plus sufficient local Trade Republic cash reproduces the v1.41.0 lexical tie and selects local Trade Republic cash under v1.41.1;
-- cost ratio, settlement time, configured provider priority, executable order amount and combined fees remain ahead of the new local-cash preference;
-- existing provider-scoped cash, exact directed funding topology and transfer-fee semantics remain unchanged;
-- Trade Republic `DEPOTAUSZUG` holdings and `KONTOAUSZUG` cash import behavior remains unchanged from v1.41.0;
-- no provider acquisition, schema, dashboard, trading, transfer execution, payment or other money-movement capability is added;
-- the complete regression suite, structured-file parsing, Python compilation, publication/privacy gates, provider-App source parity, deterministic release builds, release verification and release-artifact privacy checks pass;
-- full Git overlay and binary-patch replay reproduce the exact final tracked tree from the v1.41.0 baseline including executable-bit semantics.
+- all integration/common Gateway/provider App current-version markers align to 1.42.0 while historical release documentation remains historical;
+- the execution-path adapter consumes already-decided plan/position fields and contains no route-selection or funded-route-selection dependency;
+- local-cash, transfer, and mixed synthetic cases produce deterministic bounded ordered steps and bilingual presentation text;
+- zero settlement business days renders as same-business-day availability without claiming an instant-transfer SLA;
+- the bilingual reference dashboard contains exactly one execution-path Markdown renderer per locale and its Jinja only reads the integration-owned localized Markdown attribute;
+- the dashboard does not infer funding from `funding_transfers`, provider cash, execution-provider attributes, or other business-policy inputs;
+- historical native-dashboard contracts continue to prohibit custom cards, card-mod, auto-entities and JavaScript while allowing the deliberately bounded native Markdown renderer introduced here;
+- provider-scoped cash, cost-first funding selection, v1.41.1 local-cash preference, Trade Republic holdings/cash acquisition, and all provider runtime behavior remain unchanged;
+- payload schema 8, REST portfolio schema 1, Gateway health schema 6, presentation schema 2 and broker schemas 1/2/3 remain unchanged;
+- source/release privacy, publication readiness, provider-App source parity, deterministic release builds, and exact Git overlay/binary-patch replay all pass.
 
-The preparation environment has no Docker command. Protected GitHub workflows remain authoritative for actual Docker build/smoke execution.
+Docker remains a protected GitHub-workflow validation boundary when a local Docker daemon is unavailable.

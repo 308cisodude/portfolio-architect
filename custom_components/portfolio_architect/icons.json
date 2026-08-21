@@ -383,6 +383,15 @@
       },
       "presentation_model": {
         "default": "mdi:view-dashboard-outline"
+      },
+      "execution_path": {
+        "default": "mdi:map-marker-path",
+        "state": {
+          "local_cash": "mdi:cash-check",
+          "transfer": "mdi:bank-transfer",
+          "mixed": "mdi:transit-connection-variant",
+          "purchase_only": "mdi:cart-arrow-right"
+        }
       }
     },
     "date": {

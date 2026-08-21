@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.42.0
+
+- Adds a bounded normalized Home Assistant execution-path entity that turns the already-decided actionable plan into ordered local-cash, funding-transfer and purchase presentation steps without rerunning route selection.
+- Adds English/German plain-text and Markdown rendering plus a native bilingual **Execution path / Ausführungsweg** dashboard block whose Jinja only reads the integration-owned presentation attribute.
+- Preserves payload/REST/health/presentation/broker schemas, v1.41.1 provider-local-cash routing, provider acquisition, verified private-PKI transport and the advisory/no-money-movement boundary; users of the supplied dashboard should bulk-replace its complete YAML.
+
 ## 1.41.1
 
 - Fixes the live-proven zero-fee/zero-day provider-funding tie where a Trade Republic purchase could be funded from Comdirect even though sufficient fresh Trade Republic local cash was already available.

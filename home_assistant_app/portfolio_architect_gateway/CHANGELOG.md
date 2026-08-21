@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.42.0
+
+- Package/version alignment for Portfolio Architect v1.42.0 execution-path presentation; Comdirect acquisition/OAuth/cash behavior is unchanged.
+
 ## 1.41.1
 
 - Package/version alignment for Portfolio Architect v1.41.1 local-cash routing tie-break hotfix; Comdirect acquisition/OAuth/cash behavior is unchanged.

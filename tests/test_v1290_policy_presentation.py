@@ -127,4 +127,5 @@ def test_policy_polish_uses_no_custom_or_markdown_card_surface() -> None:
         source = path.read_text(encoding="utf-8").casefold()
         assert "card_mod" not in source
         assert "custom:" not in source
-        assert "type: markdown" not in source
+        if "type: markdown" in source:
+            assert "sensor.portfolio_architect_execution_path" in source

@@ -1976,6 +1976,38 @@
             "name": "Bestandsinventar des aktuellen Plans"
           }
         }
+      },
+      "execution_path": {
+        "name": "Ausführungsweg",
+        "state": {
+          "local_cash": "Lokales Guthaben verwenden",
+          "transfer": "Geldtransfer erforderlich",
+          "mixed": "Gemischter Finanzierungsweg",
+          "purchase_only": "Kaufanweisungen"
+        },
+        "state_attributes": {
+          "execution_path_schema_version": {
+            "name": "Schema des Ausführungswegs"
+          },
+          "step_count": {
+            "name": "Anweisungsschritte"
+          },
+          "steps": {
+            "name": "Strukturierte Ausführungsschritte"
+          },
+          "instruction": {
+            "name": "Ausführungsanweisung (Englisch)"
+          },
+          "instruction_de": {
+            "name": "Ausführungsanweisung"
+          },
+          "markdown": {
+            "name": "Dashboard-Ausführungsanweisung (Englisch)"
+          },
+          "markdown_de": {
+            "name": "Dashboard-Ausführungsanweisung"
+          }
+        }
       }
     },
     "date": {

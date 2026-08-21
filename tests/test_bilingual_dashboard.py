@@ -46,12 +46,14 @@ def test_sections_use_native_responsive_cards():
             assert section['cards'][0]['type']=='heading'
         cards=list(_walk(view))
         types={card.get('type') for card in cards if isinstance(card,dict)}
-        assert 'markdown' not in types
+        # v1.42.0 deliberately adds one core Markdown renderer per locale for
+        # integration-owned execution-path presentation; routing logic stays out of Lovelace.
+        assert sum(1 for card in cards if card.get('type') == 'markdown') == 1
         assert 'entities' in types
         assert 'entity-filter' in types
         # No nested fixed-column grid cards; only Sections themselves use grid.
         assert not any(card.get('type')=='grid' and 'columns' in card for card in cards)
-        assert {'tile','conditional','glance','heading','entities','entity-filter'} <= types
+        assert {'tile','conditional','glance','heading','entities','entity-filter','markdown'} <= types
 
 
 def test_half_width_tile_labels_are_narrow_screen_safe():

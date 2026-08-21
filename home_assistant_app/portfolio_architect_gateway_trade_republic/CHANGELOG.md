@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.42.0
+
+- Package/version alignment for Portfolio Architect v1.42.0 execution-path presentation; Trade Republic DEPOTAUSZUG/KONTOAUSZUG acquisition is unchanged.
+
 ## 1.41.1
 
 - Package/version alignment for Portfolio Architect v1.41.1 local-cash routing tie-break hotfix; Trade Republic DEPOTAUSZUG holdings and KONTOAUSZUG cash import behavior is unchanged from v1.41.0.

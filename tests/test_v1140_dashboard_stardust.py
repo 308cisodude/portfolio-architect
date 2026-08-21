@@ -79,5 +79,6 @@ def test_complete_views_preserve_bounded_native_policy_presentation() -> None:
 def test_stardust_does_not_add_parallel_presentation() -> None:
     for path in DASHBOARD.rglob("*.yaml"):
         source = path.read_text(encoding="utf-8").casefold()
-        assert "type: markdown" not in source, path
         assert "sensor.portfolio_architect_allocation_overview" not in source, path
+        if "type: markdown" in source:
+            assert "sensor.portfolio_architect_execution_path" in source, path
