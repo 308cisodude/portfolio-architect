@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.41.0
+
+- Package/version alignment for Portfolio Architect v1.41.0 Trade Republic cash-statement acquisition; DKB remains experimental/manual-only and its anonymous FinTS capability probe is unchanged.
+- No DKB login, holdings, transfer, payment or order capability is added.
+
 ## 1.40.1
 
 - Package/version alignment for the Portfolio Architect v1.40.1 Home Assistant Configure-menu compatibility hotfix; DKB remains experimental/manual-only and the anonymous FinTS capability-probe behavior is unchanged.

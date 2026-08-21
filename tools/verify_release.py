@@ -207,6 +207,8 @@ def verify_gateway_app_archive_layouts(directory: Path, release_version: str) ->
                 for name in (
                     "src/portfolio_architect_gateway/trade_republic_app.py",
                     "src/portfolio_architect_gateway/trade_republic_statement.py",
+                    "src/portfolio_architect_gateway/trade_republic_cash_statement.py",
+                    "src/portfolio_architect_gateway/trade_republic_pdf.py",
                 ):
                     if name not in payload:
                         raise SystemExit(f"{archive_name} missing provider module: {name}")

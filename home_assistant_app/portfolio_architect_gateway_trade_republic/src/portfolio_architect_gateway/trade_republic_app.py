@@ -32,6 +32,10 @@ from .pending_app import (
 from .runtime_config import ensure_api_token
 from .store import load_json_state, save_json_state
 from .server import GatewayState, create_server
+from .trade_republic_cash_statement import (
+    CashStatementImportError,
+    parse_cash_statement_pdf,
+)
 from .trade_republic_statement import (
     MAX_PDF_BYTES,
     StatementImportError,
@@ -46,8 +50,10 @@ MAX_BOUNDARY_BYTES: Final = 70
 IMPORT_DIAGNOSTIC_FILE_NAME: Final = "trade-republic-import-diagnostic.json"
 _IMPORT_DIAGNOSTIC_OUTCOMES: Final = frozenset({"accepted", "rejected", "internal_error"})
 _ACCEPTED_NOTICE_RE: Final = re.compile(
-    r"^Statement accepted: \d{1,3} positions; snapshot timestamp "
-    r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:.+-]+\.$"
+    r"^(?:Statement accepted: \d{1,3} positions; snapshot timestamp "
+    r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:.+-]+|"
+    r"Cash statement accepted: EUR (?:0|[1-9][0-9]{0,11})(?:\.[0-9]{1,2})?; cash timestamp "
+    r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:.+-]+)\.$"
 )
 _INTERNAL_ERROR_NOTICES: Final = frozenset(
     {
@@ -100,6 +106,16 @@ _SAFE_IMPORT_ERRORS: Final = frozenset(
         "Import form part headers are too large",
         "Import form part disposition is invalid",
         "Import form contains unexpected or duplicate fields",
+        "Statement contains an ambiguous Cashkonto summary",
+        "Cashkonto arithmetic does not reconcile",
+        "Statement contains an ambiguous cash as-of date",
+        "Cash statement as-of date is invalid",
+        "Cash statement as-of date is newer than document creation",
+        "Cash statement trust-account section is missing",
+        "Cash statement trust-account section is ambiguous",
+        "Cash statement money-market-fund section is missing",
+        "Cash statement money-market-fund section is ambiguous",
+        "Cash custody components do not reconcile with Cashkonto ending balance",
     }
 )
 _SAFE_DECIMAL_ERROR_RE: Final = re.compile(
@@ -206,26 +222,42 @@ class TradeRepublicIngressHandler(ProviderShellIngressHandler):
         if not self._authorised_ingress():
             self._empty(HTTPStatus.FORBIDDEN)
             return
-        if urlsplit(self.path).path != "/import":
+        import_path = urlsplit(self.path).path
+        if import_path not in {"/import", "/import-cash"}:
             self._empty(HTTPStatus.NOT_FOUND)
             return
         try:
             nonce, document = self._read_import_form()
             if not secrets.compare_digest(nonce, self.tr_server.import_nonce):
                 raise StatementImportError("Import form session is invalid; reload the page and try again")
-            snapshot = parse_statement_pdf(document)
-            previous = self.tr_server.statement_provider.snapshot
-            self.tr_server.statement_provider.replace_snapshot(snapshot)
-            if not self.tr_server.gateway_state.refresh(trigger="manual"):
-                self.tr_server.statement_provider.replace_snapshot(previous)
-                raise StatementImportError("Imported statement could not be activated")
-            summary = import_summary(snapshot)
-            self.tr_server.record_import_diagnostic(
-                "accepted",
-                f"Statement accepted: {summary.position_count} positions; "
-                f"snapshot timestamp {summary.generated_at.isoformat(timespec='seconds')}.",
-            )
-        except StatementImportError as err:
+            if import_path == "/import":
+                snapshot = parse_statement_pdf(document)
+                previous = self.tr_server.statement_provider.holdings_snapshot
+                self.tr_server.statement_provider.replace_snapshot(snapshot)
+                if not self.tr_server.gateway_state.refresh(trigger="manual"):
+                    self.tr_server.statement_provider.replace_snapshot(previous)
+                    raise StatementImportError("Imported statement could not be activated")
+                summary = import_summary(snapshot)
+                self.tr_server.record_import_diagnostic(
+                    "accepted",
+                    f"Statement accepted: {summary.position_count} positions; "
+                    f"snapshot timestamp {summary.generated_at.isoformat(timespec='seconds')}.",
+                )
+            else:
+                cash = parse_cash_statement_pdf(document)
+                previous_cash = self.tr_server.statement_provider.cash_snapshot
+                self.tr_server.statement_provider.replace_cash_snapshot(cash)
+                self.tr_server.statement_provider.persist_cash_snapshot(cash)
+                if not self.tr_server.gateway_state.refresh(trigger="manual"):
+                    self.tr_server.statement_provider.replace_cash_snapshot(previous_cash)
+                    self.tr_server.statement_provider.persist_cash_snapshot(previous_cash)
+                    raise CashStatementImportError("Imported statement could not be activated")
+                self.tr_server.record_import_diagnostic(
+                    "accepted",
+                    f"Cash statement accepted: EUR {cash.eligible_eur}; "
+                    f"cash timestamp {cash.as_of.isoformat(timespec='seconds')}.",
+                )
+        except (StatementImportError, CashStatementImportError) as err:
             _LOGGER.warning("Trade Republic statement import rejected")
             self.tr_server.record_import_diagnostic(
                 "rejected", f"Statement rejected: {_public_statement_error(err)}"
@@ -304,7 +336,15 @@ class TradeRepublicIngressHandler(ProviderShellIngressHandler):
                 f"Active private snapshot: {summary.position_count} positions; "
                 f"timestamp {escape(summary.generated_at.isoformat(timespec='seconds'))}."
             )
-        body = f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Portfolio Architect Gateway — {name}</title><style>body{{font-family:system-ui,sans-serif;max-width:760px;margin:2rem auto;padding:0 1rem;background:#111;color:#eee}}section{{border:1px solid #444;border-radius:12px;padding:1rem;margin:1rem 0}}code{{word-break:break-all}}.warn{{color:#ffca28}}.ok{{color:#7ddc7a}}.small{{font-size:.9rem;color:#bbb}}input[type=file]{{display:block;margin:.8rem 0 1rem}}button{{padding:.6rem 1rem}}</style></head><body><main><h1>Portfolio Architect Gateway — {name}</h1><section><h2>Trade Republic depot statement import</h2><p>Portfolio Architect {escape(__version__)} supports the German text-PDF <strong>DEPOTAUSZUG</strong> statement family. The uploaded PDF is parsed in memory and is not stored. Only the validated provider-neutral holdings snapshot is persisted in this App's private data volume.</p>{notice}<p>{escape(snapshot_text)}</p><form method="post" action="./import" enctype="multipart/form-data"><input type="hidden" name="nonce" value="{nonce}"><label for="statement">Trade Republic DEPOTAUSZUG PDF</label><input id="statement" type="file" name="statement" accept="application/pdf,.pdf" required><button type="submit">Import statement</button></form><p class="warn">Unsupported, encrypted, scanned/image-only, ambiguous, or internally inconsistent documents are rejected without replacing the last accepted snapshot.</p></section><section><h2>Runtime</h2><p>Provider ID: <code>{provider_id}</code></p><p>Gateway status: <strong>{status}</strong></p><p>Bearer token: <code>{token}</code></p><p>The token and normalized snapshot are App-private state and survive in-place upgrades. Do not publish screenshots containing the token.</p></section></main></body></html>"""
+        cash_snapshot = self.tr_server.statement_provider.cash_snapshot
+        if cash_snapshot is None:
+            cash_text = "No supported cash statement has been imported yet."
+        else:
+            cash_text = (
+                f"Active private cash: EUR {cash_snapshot.eligible_eur}; "
+                f"timestamp {cash_snapshot.as_of.isoformat(timespec='seconds')}."
+            )
+        body = f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Portfolio Architect Gateway — {name}</title><style>body{{font-family:system-ui,sans-serif;max-width:760px;margin:2rem auto;padding:0 1rem;background:#111;color:#eee}}section{{border:1px solid #444;border-radius:12px;padding:1rem;margin:1rem 0}}code{{word-break:break-all}}.warn{{color:#ffca28}}.ok{{color:#7ddc7a}}.small{{font-size:.9rem;color:#bbb}}input[type=file]{{display:block;margin:.8rem 0 1rem}}button{{padding:.6rem 1rem}}</style></head><body><main><h1>Portfolio Architect Gateway — {name}</h1><section><h2>Trade Republic statement import</h2><p>Portfolio Architect {escape(__version__)} keeps <strong>DEPOTAUSZUG</strong> holdings and <strong>KONTOAUSZUG</strong> cash evidence independent. Uploaded PDFs are parsed in memory and are not stored; only bounded provider-neutral snapshots persist in this App's private data volume.</p>{notice}<h3>Depot holdings</h3><p>{escape(snapshot_text)}</p><form method="post" action="./import" enctype="multipart/form-data"><input type="hidden" name="nonce" value="{nonce}"><label for="statement">Trade Republic DEPOTAUSZUG PDF</label><input id="statement" type="file" name="statement" accept="application/pdf,.pdf" required><button type="submit">Import depot statement</button></form><h3>Investment cash</h3><p>{escape(cash_text)}</p><form method="post" action="./import-cash" enctype="multipart/form-data"><input type="hidden" name="nonce" value="{nonce}"><label for="cash-statement">Trade Republic KONTOAUSZUG PDF</label><input id="cash-statement" type="file" name="statement" accept="application/pdf,.pdf" required><button type="submit">Import cash statement</button></form><p class="warn">Unsupported, encrypted, scanned/image-only, ambiguous, or internally inconsistent documents are rejected without replacing either last accepted private snapshot.</p></section><section><h2>Runtime</h2><p>Provider ID: <code>{provider_id}</code></p><p>Gateway status: <strong>{status}</strong></p><p>Bearer token: <code>{token}</code></p><p>The token and normalized snapshot are App-private state and survive in-place upgrades. Do not publish screenshots containing the token.</p></section></main></body></html>"""
         return body.encode("utf-8")
 
     def _html_status(self, body: bytes, status: HTTPStatus) -> None:
@@ -357,7 +397,7 @@ def _validated_import_notice(outcome: str, value: str) -> str:
     return "Stored import diagnostic is invalid."
 
 
-def _public_statement_error(err: StatementImportError) -> str:
+def _public_statement_error(err: StatementImportError | CashStatementImportError) -> str:
     """Return only allowlisted parser/form diagnostics, never document-derived text."""
     message = " ".join(str(err).split())
     if message in _SAFE_IMPORT_ERRORS or _SAFE_DECIMAL_ERROR_RE.fullmatch(message):

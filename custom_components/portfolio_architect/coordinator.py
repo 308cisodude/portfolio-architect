@@ -108,6 +108,7 @@ from .engine.models import Position
 from .engine.rest import PROVIDER_LOCAL_REST_JSON, RestInvestmentCash, RestSnapshot
 from .last_known_good import RestLastKnownGoodStore, configuration_fingerprint
 from .freshness import (
+    evidence_kind as source_evidence_kind,
     source_freshness_rows as build_source_freshness_rows,
     stale_rows as select_stale_rows,
     stale_summary as build_stale_summary,
@@ -1398,7 +1399,10 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
                 supplemental_health_errors,
                 supplemental_provider_cash,
             ) = await _async_fetch_supplemental_rest_snapshots(
-                self.hass, self.supplemental_rest_sources
+                self.hass,
+                self.supplemental_rest_sources,
+                cash_freshness_threshold_hours_by_kind=self.freshness_threshold_hours_by_kind,
+                now=dt_util.utcnow(),
             )
             if supplemental_health_errors:
                 self.supplemental_gateway_health = supplemental_health
@@ -1488,6 +1492,7 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
                 self._rest_investment_reserve_as_of,
                 self._rest_investment_cash,
                 supplemental_provider_cash,
+                self.freshness_threshold_hours_by_kind,
             )
             data = _parse_payload(payload)
         except SupplementalPortfolioSourceError as err:
@@ -1789,10 +1794,42 @@ def _provider_display_name(provider_id: str) -> str:
 
 
 
-def _provider_cash_metadata(provider_id: str, snapshot: RestSnapshot) -> dict[str, Any] | None:
-    """Return bounded provider-scoped cash evidence without changing REST schema 1."""
+def _cash_timestamp_is_fresh(
+    provider_id: str,
+    as_of: datetime,
+    *,
+    now: datetime,
+    threshold_hours_by_kind: dict[str, int] | None,
+) -> bool:
+    """Fail closed when provider cash evidence is outside its evidence-kind window."""
+    if threshold_hours_by_kind is None:
+        return True
+    threshold = threshold_hours_by_kind.get(source_evidence_kind(provider_id))
+    if isinstance(threshold, bool) or not isinstance(threshold, int):
+        return False
+    current = now.astimezone(timezone.utc)
+    timestamp = as_of.astimezone(timezone.utc)
+    age_seconds = (current - timestamp).total_seconds()
+    return -300 <= age_seconds <= threshold * 3600
+
+
+def _provider_cash_metadata(
+    provider_id: str,
+    snapshot: RestSnapshot,
+    *,
+    now: datetime | None = None,
+    threshold_hours_by_kind: dict[str, int] | None = None,
+) -> dict[str, Any] | None:
+    """Return bounded fresh provider-scoped cash evidence without changing REST schema 1."""
 
     if snapshot.investment_reserve_eur is None or snapshot.investment_reserve_as_of is None:
+        return None
+    if not _cash_timestamp_is_fresh(
+        provider_id,
+        snapshot.investment_reserve_as_of,
+        now=now or dt_util.utcnow(),
+        threshold_hours_by_kind=threshold_hours_by_kind,
+    ):
         return None
     result: dict[str, Any] = {
         "provider_id": provider_id,
@@ -1863,6 +1900,9 @@ def _validate_supplemental_rest_integrity(
 async def _async_fetch_supplemental_rest_snapshots(
     hass: HomeAssistant,
     configs: tuple[SupplementalRestSourceConfig, ...],
+    *,
+    cash_freshness_threshold_hours_by_kind: dict[str, int] | None = None,
+    now: datetime | None = None,
 ) -> tuple[
     tuple[PortfolioSourceSnapshot, ...],
     dict[str, GatewayHealth],
@@ -1896,7 +1936,12 @@ async def _async_fetch_supplemental_rest_snapshots(
             )
             snapshots.append(validated)
             if result.snapshot is not None:
-                cash_metadata = _provider_cash_metadata(config.provider_id, result.snapshot)
+                cash_metadata = _provider_cash_metadata(
+                    config.provider_id,
+                    result.snapshot,
+                    now=now,
+                    threshold_hours_by_kind=cash_freshness_threshold_hours_by_kind,
+                )
                 if cash_metadata is not None:
                     provider_cash[config.provider_id] = cash_metadata
         except PortfolioRestAuthenticationError:
@@ -2050,6 +2095,7 @@ def _calculate_rest_payload(
     investment_reserve_as_of: datetime | None,
     investment_cash: RestInvestmentCash | None,
     supplemental_provider_cash: dict[str, dict[str, Any]],
+    cash_freshness_threshold_hours_by_kind: dict[str, int] | None = None,
 ) -> tuple[dict[str, Any], AggregationResult]:
     primary = PortfolioSourceSnapshot(
         source_id=primary_provider_id,
@@ -2069,6 +2115,19 @@ def _calculate_rest_payload(
     has_supplements = bool(supplemental_paths or supplemental_rest_snapshots)
     provider = PROVIDER_MULTI_SOURCE if has_supplements else PROVIDER_LOCAL_REST_JSON
     provider_cash: dict[str, dict[str, Any]] = dict(supplemental_provider_cash)
+    if (
+        investment_reserve_eur is not None
+        and investment_reserve_as_of is not None
+        and not _cash_timestamp_is_fresh(
+            primary_provider_id,
+            investment_reserve_as_of,
+            now=dt_util.utcnow(),
+            threshold_hours_by_kind=cash_freshness_threshold_hours_by_kind,
+        )
+    ):
+        investment_reserve_eur = None
+        investment_reserve_as_of = None
+        investment_cash = None
     if investment_reserve_eur is not None and investment_reserve_as_of is not None:
         primary_cash: dict[str, Any] = {
             "provider_id": primary_provider_id,

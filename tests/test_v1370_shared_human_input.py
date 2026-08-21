@@ -1,4 +1,4 @@
-"""v1.40.1 shared Gateway human-input validation contracts."""
+"""v1.41.0 shared Gateway human-input validation contracts."""
 
 from __future__ import annotations
 
@@ -148,13 +148,13 @@ def test_v1370_version_metadata_and_sync_contract_are_aligned() -> None:
     import json  # noqa: PLC0415
     import yaml  # noqa: PLC0415
 
-    assert 'version = "1.40.1"' in (ROOT / "pyproject.toml").read_text()
+    assert 'version = "1.41.0"' in (ROOT / "pyproject.toml").read_text()
     manifest = json.loads((ROOT / "custom_components" / "portfolio_architect" / "manifest.json").read_text())
-    assert manifest["version"] == "1.40.1"
-    assert 'VERSION: Final = "1.40.1"' in (
+    assert manifest["version"] == "1.41.0"
+    assert 'VERSION: Final = "1.41.0"' in (
         ROOT / "custom_components" / "portfolio_architect" / "const.py"
     ).read_text()
-    assert '__version__ = "1.40.1"' in (
+    assert '__version__ = "1.41.0"' in (
         ROOT / "custom_components" / "portfolio_architect" / "engine" / "__init__.py"
     ).read_text()
     for app in (
@@ -163,7 +163,7 @@ def test_v1370_version_metadata_and_sync_contract_are_aligned() -> None:
         "portfolio_architect_gateway_trade_republic",
     ):
         config = yaml.safe_load((ROOT / "home_assistant_app" / app / "config.yaml").read_text())
-        assert config["version"] == "1.40.1"
+        assert config["version"] == "1.41.0"
 
     sync = (ROOT / "tools" / "sync_gateway_app_sources.py").read_text()
     assert '"human_input.py"' in sync

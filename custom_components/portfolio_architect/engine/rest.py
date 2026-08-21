@@ -173,13 +173,9 @@ def parse_rest_snapshot(
             raise ValueError("REST response investment_reserve has an unexpected schema")
         reserve_eur = _parse_reserve_value(raw_reserve.get("available_eur"))
         reserve_as_of = _parse_generated_at(raw_reserve.get("as_of"), now=now)
-        if reserve_as_of > generated_at + MAX_REST_CLOCK_SKEW:
-            raise ValueError("REST investment reserve timestamp is newer than the snapshot")
 
     investment_cash = _parse_investment_cash(payload.get("investment_cash"), now=now)
     if investment_cash is not None:
-        if investment_cash.as_of > generated_at + MAX_REST_CLOCK_SKEW:
-            raise ValueError("REST investment cash timestamp is newer than the snapshot")
         if reserve_eur is None or reserve_as_of is None:
             raise ValueError("REST investment_cash requires investment_reserve compatibility data")
         if reserve_eur != investment_cash.authorized_eur or reserve_as_of != investment_cash.as_of:

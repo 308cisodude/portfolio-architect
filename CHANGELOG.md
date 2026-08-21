@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.41.0
+
+- Adds a separate strict Trade Republic `KONTOAUSZUG` text-PDF importer for provider-scoped cash while preserving the established `DEPOTAUSZUG` holdings importer as an independent evidence family.
+- Reconciles Cashkonto arithmetic and trust-account/QMMF custody totals before accepting cash, persists only bounded normalized private cash state, and never stores raw PDFs, transaction rows, counterparties, account identifiers, names or addresses.
+- Keeps holdings and cash timestamps independent through REST schema 1 and freshness-gates provider cash separately using the existing imported-statement threshold so fresh cash cannot refresh stale holdings and fresh holdings cannot refresh stale cash.
+- Preserves verified private-PKI transport, provider isolation, broker/funding semantics, dashboard presentation and the advisory/no-money-movement boundary; no unofficial Trade Republic API is introduced.
+
 ## 1.40.1
 
 - Fixes the native savings-plan Add/Edit form HTTP 400 by raising its percentage NumberSelector step from the Home Assistant-invalid `0.0001` to the supported `0.001` floor, without changing typed fee semantics.

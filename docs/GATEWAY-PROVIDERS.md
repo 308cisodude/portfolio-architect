@@ -19,7 +19,7 @@ provider-neutral runtime code. `GatewayState` and `create_server()` consume
 
 ## Official App identities
 
-| Provider | Display name | App slug | v1.40.1 state |
+| Provider | Display name | App slug | v1.41.0 state |
 | --- | --- | --- | --- |
 | Comdirect | Portfolio Architect Gateway — Comdirect | `portfolio_architect_gateway` | stable live provider, auto-start |
 | DKB | Portfolio Architect Gateway — DKB | `portfolio_architect_gateway_dkb` | experimental manual-only anonymous FinTS capability probe; no live portfolio acquisition |
@@ -38,7 +38,7 @@ importer: before the first accepted `DEPOTAUSZUG` it remains degraded/unavailabl
 after acceptance, `fetch_snapshot()` returns the persisted provider-neutral
 snapshot and the common REST/health server operates normally. Version 1.26.0 changes
 its boot policy to automatic because Portfolio Architect can now keep it configured
-as an ongoing REST contributor. DKB remains manual-only. Version 1.28.0 added only
+as an ongoing REST contributor. Version 1.41.0 adds a separate `KONTOAUSZUG` cash-statement parser and private sibling cash state. The two Trade Republic evidence families remain independently fail-closed and are composed only into the existing additive REST-schema-1 cash fields; raw PDFs and transaction/account identity data are not persisted. DKB remains manual-only. Version 1.28.0 added only
 a registration-gated anonymous FinTS BPD capability probe; its provider REST snapshot
 remains fail-closed and no live DKB acquisition path exists yet.
 

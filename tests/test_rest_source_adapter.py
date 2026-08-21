@@ -214,13 +214,13 @@ def test_rest_schema_rejects_ambiguous_investment_reserve() -> None:
     with pytest.raises(ValueError, match="include a timezone"):
         parse_rest_snapshot(naive, now=now)
 
-    newer_than_snapshot = _snapshot_payload()
-    newer_than_snapshot["investment_reserve"] = {
+    independent_cash_evidence = _snapshot_payload()
+    independent_cash_evidence["investment_reserve"] = {
         "available_eur": "1050.00",
         "as_of": "2026-07-30T14:40:01Z",
     }
-    with pytest.raises(ValueError, match="newer than the snapshot"):
-        parse_rest_snapshot(newer_than_snapshot, now=now)
+    parsed = parse_rest_snapshot(independent_cash_evidence, now=now)
+    assert parsed.investment_reserve_as_of == datetime(2026, 7, 30, 14, 40, 1, tzinfo=timezone.utc)
 
 
 def test_rest_schema_accepts_and_cross_checks_authorized_investment_cash() -> None:

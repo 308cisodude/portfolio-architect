@@ -522,10 +522,17 @@ from current portfolio value.
 - Surface bounded duplicate provider/route/funding-edge errors without weakening generic fail-closed validation.
 - Preserve v1.40.0 evidence-backed funding semantics, broker schemas, provider runtimes and dashboard presentation.
 
-## Deferred beyond v1.40.1
+## v1.41.0 — Trade Republic cash-statement acquisition
 
-- **Trade Republic cash acquisition:** if implemented later, parse only conservative cash-summary evidence inside the TR App; keep private documents local, avoid transaction-history ingestion, apply explicit value-date/freshness policy and fail closed on ambiguity.
+- Add a separate strict German text-PDF `KONTOAUSZUG` parser inside the Trade Republic App while retaining `DEPOTAUSZUG` holdings as an independent evidence family.
+- Persist only bounded normalized provider-scoped cash state; do not retain PDFs, transaction rows, counterparties, IBAN/account identifiers, names or addresses.
+- Reconcile `Cashkonto` arithmetic and trust-account/QMMF custody totals before accepting cash.
+- Keep holdings and cash evidence timestamps independent through REST schema 1 and freshness-gate provider cash separately using the existing `imported_statement` threshold.
+- Preserve the advisory-only execution boundary and avoid undocumented/private Trade Republic APIs entirely.
+
+## Deferred beyond v1.41.0
+
 - **DKB authenticated acquisition:** remains gated on legitimate product registration/capability evidence and later authenticated user-capability/UPD validation; do not infer holdings support from generic or anonymous bank capability lists.
 - The historical accepted-exception horizontal-overflow wart is no longer an outstanding item: the v1.36 native dynamic policy list replaced that old static presentation path.
 
-No new provider holdings or cash acquisition is enabled by v1.40.1.
+v1.41.0 enables only bounded local Trade Republic cash-statement acquisition; no new remote provider API or transaction capability is enabled.
