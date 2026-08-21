@@ -1,4 +1,4 @@
-"""v1.41.1 native dashboard usability contracts."""
+"""v1.42.0 native dashboard usability contracts."""
 
 from __future__ import annotations
 
@@ -165,16 +165,16 @@ def test_cash_sensors_expose_context_attributes_without_changing_wire_contracts(
 
 
 def test_v1380_metadata_dashboard_and_translation_contracts_are_aligned() -> None:
-    assert 'version = "1.41.1"' in (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    assert 'version = "1.42.0"' in (ROOT / "pyproject.toml").read_text(encoding="utf-8")
     manifest = json.loads((COMPONENT / "manifest.json").read_text(encoding="utf-8"))
-    assert manifest["version"] == "1.41.1"
-    assert 'VERSION: Final = "1.41.1"' in (COMPONENT / "const.py").read_text(encoding="utf-8")
-    assert '__version__ = "1.41.1"' in (COMPONENT / "engine" / "__init__.py").read_text(encoding="utf-8")
-    assert (ROOT / "docs" / "UPGRADE-1.41.1.md").is_file()
+    assert manifest["version"] == "1.42.0"
+    assert 'VERSION: Final = "1.42.0"' in (COMPONENT / "const.py").read_text(encoding="utf-8")
+    assert '__version__ = "1.42.0"' in (COMPONENT / "engine" / "__init__.py").read_text(encoding="utf-8")
+    assert (ROOT / "docs" / "UPGRADE-1.42.0.md").is_file()
 
     source = DASHBOARD.read_text(encoding="utf-8")
     lowered = source.casefold()
-    for forbidden in ("auto-entities", "card-mod", "custom:", "javascript", "markdown"):
+    for forbidden in ("auto-entities", "card-mod", "custom:", "javascript"):
         assert forbidden not in lowered
     assert re.search(r"portfolio_architect_target_[0-9a-f]{32}_", source) is None
     assert "portfolio_architect_holding_" not in source

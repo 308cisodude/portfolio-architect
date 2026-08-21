@@ -1,54 +1,49 @@
-# Portfolio Architect 1.41.1
+# Portfolio Architect 1.42.0
 
-Portfolio Architect v1.41.1 is a narrow live-acceptance hotfix for **provider-local cash preference**. v1.41.0 successfully added independent Trade Republic `KONTOAUSZUG` cash evidence, but live testing exposed one deterministic tie: sufficient Trade Republic local cash and a zero-fee/zero-business-day Comdirect → Trade Republic funding edge produced otherwise identical candidates, and the final lexical funding-provider ID tie-break selected Comdirect.
+Portfolio Architect v1.42.0 is a **presentation-boundary release**. It exposes the already-decided funding and purchase sequence as a bounded normalized Home Assistant execution-path entity, and the bilingual reference dashboard renders that entity directly through one native Markdown card per locale. The frontend does not recalculate routing, funding, fees, provider choice, or actionability.
 
-## Fixed routing tie
+## Normalized execution path
 
-`choose_funded_route_for_cash()` keeps its established ordering for:
+A new diagnostic enum sensor, `sensor.portfolio_architect_execution_path`, derives presentation-only instructions from the validated actionable plan after the engine has already made its decisions. The sensor exposes execution-path presentation schema 1 with:
 
-1. total route cost ratio;
-2. funding settlement business days;
-3. explicit execution-provider priority;
-4. executable order amount; and
-5. combined execution/funding fees.
+- a bounded ordered `steps` list;
+- English and German plain-text instructions;
+- English and German pre-rendered Markdown;
+- explicit presentation modes `local_cash`, `transfer`, `mixed`, and `purchase_only`.
 
-Only after those fields are equal does v1.41.1 now prefer `funding_transfer_required == false` before arbitrary route/provider identifiers. Sufficient execution-provider-local cash therefore wins an otherwise identical transfer-funded candidate without changing cost-first routing or explicit user preference semantics.
+The presentation adapter consumes the plan's existing decided purchase/funding fields and aggregate `funding_transfers`; it does not import or call route-selection or funded-route-selection code. The path is bounded to 80 total presentation steps and is unavailable when the coordinator does not have an actionable plan.
 
-Executable regression coverage reproduces the live zero-fee/zero-day parity case with fully synthetic provider and cash data and proves that local execution-provider cash is selected while the transfer edge remains unused.
+For execution-provider-local cash, the path explicitly says to use the cash already available at that provider before presenting the purchase. When an advisory funding transfer is part of the decided plan, the path presents the transfer first, including amount, fee, and conservative settlement-business-day evidence, then presents the purchase. Zero settlement business days is described only as **same business day** / **am selben Geschäftstag**; it is never promoted into an instant-transfer SLA.
 
-## Trade Republic cash statements unchanged
+## Native bilingual dashboard rendering
 
-The separate provider-isolated Trade Republic statement families introduced in v1.41.0 are unchanged:
+The v1.39.0 colourful paired allocation Tile view was not included in v1.38.1; it remains present and unchanged alongside the v1.38.1 signed drift presentation.
 
-- `DEPOTAUSZUG` → validated holdings snapshot;
-- `KONTOAUSZUG` → validated provider-scoped cash snapshot.
+The reference dashboard adds an **Execution path / Ausführungsweg** block immediately before the existing recommended-purchases section. Each locale uses one core Home Assistant Markdown card whose template does only one thing: read the integration-owned `markdown` or `markdown_de` attribute from the execution-path sensor.
 
-Uploaded PDFs remain in-memory only. Transaction rows, transfer counterparties, IBAN/account identifiers, account holder/address data, and raw statement text are not retained. Holdings and cash remain independently persisted and independently freshness-gated. Trade Republic PDF parsing remains inside its provider-isolated Gateway App and does not move PDF parsing into Portfolio Architect.
+No dashboard Jinja reads `funding_transfers`, provider cash, execution-provider fields, route costs, or business-policy state. There is no custom card, card-mod, auto-entities, JavaScript, or additional frontend dependency. Routing remains owned by the engine/integration; the frontend merely renders the already-decided presentation contract.
 
-## Security and provider boundaries
+Because the reference dashboard itself changes in v1.42.0, users who maintain the supplied bilingual dashboard should replace the complete dashboard YAML with the v1.42.0 version. Integration/HACS updates still never overwrite user-managed Lovelace YAML automatically.
 
-- No Trade Republic credentials are requested or stored.
-- No private/undocumented Trade Republic API is contacted.
-- No transaction-history model or transaction rows are persisted.
-- Verified private-PKI HTTPS, bearer authentication, provider isolation and fail-closed provider behavior remain intact.
-- The DKB anonymous FinTS capability probe and Comdirect live acquisition behavior are unchanged apart from normal 1.41.1 package/version alignment.
-- DKB live Gateway acquisition remains a later gated milestone; this release does not infer authenticated holdings support from anonymous capability evidence.
+## Advisory-only boundary
 
-## Presentation
+The rendered path is explicitly advisory. Portfolio Architect still cannot move cash or place orders. The normalized instructions do not add service calls, provider write methods, transfers, payments, withdrawals, order placement/cancellation, or sell capability.
 
-The v1.39.0 colourful paired allocation Tile view was not included in v1.38.1; it arrived in v1.39.0 and remains unchanged here. The v1.38.1 signed drift presentation is likewise unchanged. The v1.41.1 bilingual reference dashboard is byte-identical to v1.41.0, so no dashboard YAML migration is required.
+The v1.41.0 Trade Republic `KONTOAUSZUG`/`DEPOTAUSZUG` acquisition and the v1.41.1 provider-local-cash routing tie-break remain unchanged. Trade Republic PDF parsing remains inside its provider-isolated Gateway App and does not move PDF parsing into Portfolio Architect. Comdirect, DKB, and Trade Republic Gateway runtime behavior is unchanged apart from normal v1.42.0 package/version alignment. DKB live Gateway acquisition remains a later gated milestone; v1.42.0 does not infer authenticated holdings support from anonymous capability evidence.
 
 ## Compatibility contracts retained
 
 - payload schema 8: unchanged
 - REST portfolio schema 1: unchanged
 - Gateway health schema 6: unchanged; schemas 1–5 remain supported.
-- presentation schema 2 remains unchanged.
+- presentation schema 2 remains unchanged; execution-path presentation schema 1 is an additive Home Assistant presentation contract, not a payload-schema change.
 - broker schemas 1/2/3 remain unchanged.
-- The v1.33.0 source-freshness and plan-schedule separation remains unchanged: recurring scheduling stays anchored to the latest valid Portfolio Architect evaluation, and v1.41.1 does not change any configured freshness threshold.
+- provider-scoped cash, funding-transfer evidence/freshness, cost-first route ordering, and the v1.41.1 local-cash tie-break remain unchanged.
+- The v1.33.0 source-freshness and plan-schedule separation remains unchanged: recurring scheduling stays anchored to the latest valid Portfolio Architect evaluation, and v1.42.0 does not change any configured freshness threshold.
+- Verified private-PKI HTTPS, bearer authentication, Supervisor trust discovery, provider isolation, and fail-closed provider behavior remain unchanged.
 - The historical v1.19.0-rc2 state remains historical and is not promoted by this release.
-- No trading, order, transfer, payment, or transaction-history capability is introduced by v1.41.1.
+- No trading, order, transfer, payment, or transaction-history capability is introduced by v1.42.0; withdrawal capability is likewise absent.
 
 ## Upgrade
 
-Update the integration and all three Gateway Apps in place to v1.41.1. Preserve existing private App state. No broker or dashboard migration is required. The Trade Republic `DEPOTAUSZUG` holdings and `KONTOAUSZUG` cash import behavior is unchanged from v1.41.0.
+Update the integration and all three Gateway Apps in place to v1.42.0. Preserve existing private App state. No broker migration is required. To use the new reference presentation, bulk-replace the complete bilingual dashboard YAML with the v1.42.0 dashboard.

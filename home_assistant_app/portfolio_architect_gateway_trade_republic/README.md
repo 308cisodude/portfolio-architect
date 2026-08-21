@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway — Trade Republic v1.41.1
+# Portfolio Architect Gateway — Trade Republic v1.42.0
 
-Version 1.41.1 is package alignment for the Portfolio Architect local-cash routing tie-break hotfix. The separate strict local `DEPOTAUSZUG` holdings and `KONTOAUSZUG` cash-statement imports introduced in v1.41.0 are unchanged.
+Version 1.42.0 is package alignment for the Portfolio Architect execution-path presentation release. The separate strict local `DEPOTAUSZUG` holdings and `KONTOAUSZUG` cash-statement imports introduced in v1.41.0 are unchanged.
 
 Verified HTTPS/private CA trust, bearer
 authentication, REST schema 1, health schema 6 and accepted snapshot serving are unchanged.

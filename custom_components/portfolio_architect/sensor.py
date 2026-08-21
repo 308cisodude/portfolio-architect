@@ -35,6 +35,7 @@ from .engine.aggregation import PROVIDER_MULTI_SOURCE
 from .engine.importers import PROVIDER_COMDIRECT, PROVIDER_DKB, PROVIDER_GENERIC_CSV
 from .engine.rest import PROVIDER_LOCAL_REST_JSON
 from .execution_semantics import PLAN_ACTIONABILITY_STATES, derive_plan_actionability
+from .execution_path import EXECUTION_PATH_MODES, EXECUTION_PATH_SCHEMA_VERSION, build_execution_path
 from .model import HoldingData, PolicyFindingData, PositionData
 from .portfolio_presentation import (
     PRESENTATION_SCHEMA_VERSION,
@@ -128,6 +129,7 @@ async def async_setup_entry(
             PortfolioEstimatedCashOutlaySensor(coordinator, entry),
             PortfolioExecutionPolicySensor(coordinator, entry),
             PortfolioExecutionStateSensor(coordinator, entry),
+            PortfolioExecutionPathSensor(coordinator, entry),
             PortfolioPlanActionabilitySensor(coordinator, entry),
             PortfolioAdditionalInvestmentCashRequiredSensor(coordinator, entry),
             PortfolioInvestmentReserveSourceSensor(coordinator, entry),
@@ -1385,6 +1387,68 @@ class PortfolioExecutionStateSensor(_PortfolioPlanEnumSensor):
                 plan.additional_investment_cash_required_eur
             ),
             "reserve_source": plan.reserve_source,
+            **base,
+        }
+
+
+class PortfolioExecutionPathSensor(
+    CoordinatorEntity[PortfolioArchitectCoordinator], SensorEntity
+):
+    """Presentation-only instructions for the already-decided next execution."""
+
+    _attr_has_entity_name = True
+    _attr_translation_key = "execution_path"
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_options = sorted(EXECUTION_PATH_MODES)
+
+    def __init__(
+        self, coordinator: PortfolioArchitectCoordinator, entry: ConfigEntry
+    ) -> None:
+        super().__init__(coordinator, context="execution_path")
+        source_key = entry.unique_id or entry.entry_id
+        self._attr_unique_id = f"{source_key}_execution_path"
+        self._attr_device_info = _device_info(source_key)
+
+    @property
+    def suggested_object_id(self) -> str:
+        return "execution_path"
+
+    @property
+    def _presentation(self):
+        if self.coordinator.data is None:
+            return None
+        return build_execution_path(
+            self.coordinator.data.monthly_plan,
+            self.coordinator.data.positions.values(),
+        )
+
+    @property
+    def available(self) -> bool:
+        return (
+            super().available
+            and self.coordinator.plan_actionable
+            and self._presentation is not None
+        )
+
+    @property
+    def native_value(self) -> str | None:
+        presentation = self._presentation
+        return presentation.mode if self.available and presentation is not None else None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        base = _source_attributes(self.coordinator)
+        presentation = self._presentation
+        if not self.available or presentation is None:
+            return base
+        return {
+            "execution_path_schema_version": EXECUTION_PATH_SCHEMA_VERSION,
+            "step_count": len(presentation.steps),
+            "steps": [dict(item) for item in presentation.steps],
+            "instruction": presentation.instruction,
+            "instruction_de": presentation.instruction_de,
+            "markdown": presentation.markdown,
+            "markdown_de": presentation.markdown_de,
             **base,
         }
 

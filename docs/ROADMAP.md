@@ -536,9 +536,16 @@ from current portfolio value.
 - Preserve cost-first routing, settlement-time ordering, explicit provider priority, order amount and fee semantics before applying the local-cash preference.
 - Add executable zero-fee/zero-day parity regression coverage; no provider acquisition, schema, dashboard or money-movement capability changes.
 
-## Deferred beyond v1.41.1
+## v1.42.0 — Normalized execution-path presentation
+
+- Expose the already-decided actionable funding/purchase sequence as a bounded Home Assistant presentation contract rather than asking Lovelace to infer route semantics.
+- Add bilingual plain/Markdown instructions for provider-local cash, advisory funding transfers, mixed funding and purchases, with conservative settlement-day wording and an explicit advisory-only footer.
+- Render the integration-owned localized Markdown through one native Home Assistant card per dashboard locale; no custom card, JavaScript or routing logic enters the frontend.
+- Preserve v1.41.1 funding economics, provider acquisition, schemas, verified HTTPS and the no-money-movement boundary.
+
+## Deferred beyond v1.42.0
 
 - **DKB authenticated acquisition:** remains gated on legitimate product registration/capability evidence and later authenticated user-capability/UPD validation; do not infer holdings support from generic or anonymous bank capability lists.
 - The historical accepted-exception horizontal-overflow wart is no longer an outstanding item: the v1.36 native dynamic policy list replaced that old static presentation path.
 
-v1.41.1 retains bounded local Trade Republic cash-statement acquisition and changes only the funded-route tie-break; no new remote provider API or transaction capability is enabled.
+v1.41.1 retains bounded local Trade Republic cash-statement acquisition and changes only the funded-route tie-break; no new remote provider API or transaction capability is enabled. v1.42.0 adds only presentation of those already-decided instructions and likewise enables no new remote provider API or transaction capability.

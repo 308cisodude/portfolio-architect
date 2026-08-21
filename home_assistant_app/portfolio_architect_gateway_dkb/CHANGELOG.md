@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.42.0
+
+- Package/version alignment for Portfolio Architect v1.42.0 execution-path presentation; DKB remains experimental/manual-only and its anonymous capability probe is unchanged.
+
 ## 1.41.1
 
 - Package/version alignment for Portfolio Architect v1.41.1 local-cash routing tie-break hotfix; DKB remains experimental/manual-only and its anonymous FinTS capability probe is unchanged.

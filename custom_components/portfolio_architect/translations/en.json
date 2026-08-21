@@ -1976,6 +1976,38 @@
             "name": "Current-plan holding inventory"
           }
         }
+      },
+      "execution_path": {
+        "name": "Execution path",
+        "state": {
+          "local_cash": "Use local cash",
+          "transfer": "Funding transfer required",
+          "mixed": "Mixed funding path",
+          "purchase_only": "Purchase instructions"
+        },
+        "state_attributes": {
+          "execution_path_schema_version": {
+            "name": "Execution path schema"
+          },
+          "step_count": {
+            "name": "Instruction steps"
+          },
+          "steps": {
+            "name": "Structured execution steps"
+          },
+          "instruction": {
+            "name": "Execution instruction"
+          },
+          "instruction_de": {
+            "name": "Execution instruction (German)"
+          },
+          "markdown": {
+            "name": "Dashboard execution instruction"
+          },
+          "markdown_de": {
+            "name": "Dashboard execution instruction (German)"
+          }
+        }
       }
     },
     "date": {

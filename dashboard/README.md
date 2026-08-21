@@ -4,7 +4,9 @@
 labelled `EN` and `DE`.
 
 The reference dashboard uses only native Home Assistant Heading, Tile,
-Conditional, Glance, Entities, and Entity-filter cards. It avoids Markdown,
+Conditional, Glance, Entities, Entity-filter, and Markdown cards. Markdown is
+used only as a bounded renderer for the integration-owned execution-path text;
+it does not infer routes or funding decisions in Jinja. The dashboard avoids
 custom cards, Distribution-card composition for dynamic inventories, JavaScript,
 and nested fixed-column Grid cards. Sections rearrange across desktop, tablet,
 and smartphone widths.
@@ -21,7 +23,7 @@ will say so explicitly. Users can then review/import the newer YAML deliberately
 without risking silent replacement of local dashboard customizations.
 
 The investment-plan section shows budget, frequency, contribution per execution,
-execution count, scheduled execution, current actionability, last evaluation, and current buy recommendations. Runtime
+execution count, scheduled execution, current actionability, last evaluation, the normalized execution path, and current buy recommendations. The execution-path card simply renders the bounded bilingual instruction already exposed by `sensor.portfolio_architect_execution_path`; all provider, funding and purchase decisions remain integration-owned presentation data derived from the validated plan. Runtime
 health shows the active source provider, last evaluation, snapshot freshness-window status, next plan review, Gateway operating mode, snapshot age, next live
 refresh, refresh duration and trigger, and conditional last-known-good,
 refresh-running, operator-attention, recovery-action, last-failure, and

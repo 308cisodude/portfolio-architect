@@ -151,7 +151,7 @@ def test_old_current_target_entity_filter_lists_are_removed_without_touching_dri
 def test_colour_is_slot_identity_only_and_dashboard_remains_generic_native_only() -> None:
     source = DASHBOARD.read_text(encoding="utf-8")
     lowered = source.casefold()
-    for forbidden in ("auto-entities", "card-mod", "custom:", "javascript", "markdown"):
+    for forbidden in ("auto-entities", "card-mod", "custom:", "javascript"):
         assert forbidden not in lowered
     assert re.search(r"portfolio_architect_target_[0-9a-f]{32}_", source) is None
     assert "portfolio_architect_holding_" not in source
@@ -161,20 +161,20 @@ def test_colour_is_slot_identity_only_and_dashboard_remains_generic_native_only(
 
 
 def test_v1390_release_metadata_and_preserved_contracts_are_aligned() -> None:
-    assert 'version = "1.41.1"' in (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    assert 'version = "1.42.0"' in (ROOT / "pyproject.toml").read_text(encoding="utf-8")
     manifest = json.loads((COMPONENT / "manifest.json").read_text(encoding="utf-8"))
-    assert manifest["version"] == "1.41.1"
-    assert 'VERSION: Final = "1.41.1"' in (COMPONENT / "const.py").read_text(encoding="utf-8")
-    assert '__version__ = "1.41.1"' in (COMPONENT / "engine" / "__init__.py").read_text(encoding="utf-8")
+    assert manifest["version"] == "1.42.0"
+    assert 'VERSION: Final = "1.42.0"' in (COMPONENT / "const.py").read_text(encoding="utf-8")
+    assert '__version__ = "1.42.0"' in (COMPONENT / "engine" / "__init__.py").read_text(encoding="utf-8")
     for app in (
         "portfolio_architect_gateway",
         "portfolio_architect_gateway_dkb",
         "portfolio_architect_gateway_trade_republic",
     ):
         config = yaml.safe_load((ROOT / "home_assistant_app" / app / "config.yaml").read_text())
-        assert config["version"] == "1.41.1"
+        assert config["version"] == "1.42.0"
 
-    assert (ROOT / "docs" / "UPGRADE-1.41.1.md").is_file()
+    assert (ROOT / "docs" / "UPGRADE-1.42.0.md").is_file()
     release_notes = (ROOT / "docs" / "RELEASE-NOTES.md").read_text(encoding="utf-8")
     for contract in (
         "payload schema 8: unchanged",
