@@ -70,8 +70,8 @@ def test_dynamic_candidates_request_entity_only_names() -> None:
         assert candidate.get("name") == {"type": "entity"}
         seen += 1
 
-    # v1.40.0 replaces the former 3 × 32 allocation-status entity-filter rows per
-    # locale with native Conditional + Tile cards. v1.40.0 likewise moves the
+    # v1.40.1 replaces the former 3 × 32 allocation-status entity-filter rows per
+    # locale with native Conditional + Tile cards. v1.40.1 likewise moves the
     # current/target allocation rows to paired Conditional + Tile cards.
     drift_tiles = [
         item["card"]

@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.40.1
+
+- Fixes the native savings-plan Add/Edit form HTTP 400 by raising its percentage NumberSelector step from the Home Assistant-invalid `0.0001` to the supported `0.001` floor, without changing typed fee semantics.
+- Audits the full Portfolio Architect Configure surface against Home Assistant Core 2026.8.1 selector contracts and adds executable regression coverage for every numeric selector step, selector mode/type, rendered options-flow translation and menu destination.
+- Replaces broker evidence-date free text with native DateSelector controls; new evidence defaults to the current Home Assistant-local date, existing provider evidence stays preselected on edit, and broker validation uses the same local evaluation date across load/mutate/write.
+- Adds bounded field-level errors for duplicate execution providers, savings-plan routes and directed funding transfers while preserving all v1.40.0 funding/evidence semantics, provider runtimes, schemas, dashboard presentation and the advisory/no-money-movement boundary.
+
 ## 1.40.0
 
 - Adds optional evidence provenance (`source` + `as_of`) to existing broker-schema-3 directed funding-transfer edges while preserving legacy schema-3 edges for backward compatibility.

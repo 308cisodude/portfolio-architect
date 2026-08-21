@@ -25,7 +25,7 @@ from .errors import ProtocolError, RemoteApiError
 
 MAX_REMOTE_RESPONSE_BYTES: Final = 2 * 1024 * 1024
 MAX_REMOTE_HEADER_BYTES: Final = 64 * 1024
-USER_AGENT: Final = "portfolio-architect-gateway/1.40.0"
+USER_AGENT: Final = "portfolio-architect-gateway/1.40.1"
 
 
 @dataclass(frozen=True, slots=True)

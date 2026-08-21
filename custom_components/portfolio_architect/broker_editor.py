@@ -43,22 +43,27 @@ class BrokerEditorContext:
     document: dict[str, Any]
 
 
-def load_broker_editor_context(config_directory: Path) -> BrokerEditorContext:
+def load_broker_editor_context(
+    config_directory: Path, evaluated_on: date | None = None
+) -> BrokerEditorContext:
     """Load and validate a provider-aware broker document for native editing."""
 
     path = config_directory / "broker.yaml"
     document = load_yaml(path)
-    _validate_editable_document(document)
+    _validate_editable_document(document, evaluated_on=evaluated_on)
     return BrokerEditorContext(path=path, document=deepcopy(document))
 
 
-def _validate_editable_document(document: dict[str, Any]) -> None:
+def _validate_editable_document(
+    document: dict[str, Any], *, evaluated_on: date | None = None
+) -> None:
     schema = document.get("schema_version")
     if schema not in {2, 3}:
         raise ValueError("native broker editor requires broker schema 2 or 3")
-    execution_providers(document, evaluated_on=date.today())
+    today = evaluated_on or date.today()
+    execution_providers(document, evaluated_on=today)
     if schema == 3:
-        funding_transfers(document)
+        funding_transfers(document, evaluated_on=today)
 
 
 def tie_break_mode(provider: dict[str, Any]) -> str:
@@ -72,10 +77,12 @@ def tie_break_mode(provider: dict[str, Any]) -> str:
     return TIE_BREAK_PREFERRED if value < 100 else TIE_BREAK_FALLBACK
 
 
-def set_general_settings(document: dict[str, Any], *, fee_data_max_age_days: int) -> dict[str, Any]:
+def set_general_settings(
+    document: dict[str, Any], *, fee_data_max_age_days: int, evaluated_on: date | None = None
+) -> dict[str, Any]:
     updated = deepcopy(document)
     updated["fee_data_max_age_days"] = fee_data_max_age_days
-    _validate_editable_document(updated)
+    _validate_editable_document(updated, evaluated_on=evaluated_on)
     return updated
 
 
@@ -88,6 +95,7 @@ def upsert_provider(
     as_of: str,
     tie_break: str,
     create: bool,
+    evaluated_on: date | None = None,
 ) -> dict[str, Any]:
     """Add or edit one provider while preserving its route profiles."""
 
@@ -100,7 +108,7 @@ def upsert_provider(
         parsed_date = date.fromisoformat(as_of.strip())
     except ValueError as err:
         raise ValueError("provider evidence date is invalid") from err
-    if parsed_date > date.today():
+    if parsed_date > (evaluated_on or date.today()):
         raise ValueError("provider evidence date is in the future")
 
     updated = deepcopy(document)
@@ -128,11 +136,13 @@ def upsert_provider(
             existing["priority"] = priority
     existing.setdefault("savings_plans", {})
     providers[provider_id] = existing
-    _validate_editable_document(updated)
+    _validate_editable_document(updated, evaluated_on=evaluated_on)
     return updated
 
 
-def remove_provider(document: dict[str, Any], *, provider_id: str) -> dict[str, Any]:
+def remove_provider(
+    document: dict[str, Any], *, provider_id: str, evaluated_on: date | None = None
+) -> dict[str, Any]:
     updated = deepcopy(document)
     providers = updated.get("providers")
     if not isinstance(providers, dict) or provider_id not in providers:
@@ -146,7 +156,7 @@ def remove_provider(document: dict[str, Any], *, provider_id: str) -> dict[str, 
         }:
             raise ValueError("remove funding transfers that reference the provider first")
     del providers[provider_id]
-    _validate_editable_document(updated)
+    _validate_editable_document(updated, evaluated_on=evaluated_on)
     return updated
 
 
@@ -160,6 +170,7 @@ def upsert_savings_plan(
     promotional: bool,
     status: str,
     create: bool,
+    evaluated_on: date | None = None,
 ) -> dict[str, Any]:
     """Add or edit one explicit per-provider savings-plan route."""
 
@@ -192,11 +203,13 @@ def upsert_savings_plan(
     if status.strip():
         route["status"] = status.strip()
     plans[canonical_isin] = route
-    _validate_editable_document(updated)
+    _validate_editable_document(updated, evaluated_on=evaluated_on)
     return updated
 
 
-def remove_savings_plan(document: dict[str, Any], *, provider_id: str, isin: str) -> dict[str, Any]:
+def remove_savings_plan(
+    document: dict[str, Any], *, provider_id: str, isin: str, evaluated_on: date | None = None
+) -> dict[str, Any]:
     updated = deepcopy(document)
     providers = updated.get("providers")
     provider = providers.get(provider_id) if isinstance(providers, dict) else None
@@ -204,7 +217,7 @@ def remove_savings_plan(document: dict[str, Any], *, provider_id: str, isin: str
     if not isinstance(plans, dict) or isin not in plans:
         raise ValueError("savings-plan route does not exist")
     del plans[isin]
-    _validate_editable_document(updated)
+    _validate_editable_document(updated, evaluated_on=evaluated_on)
     return updated
 
 
@@ -217,6 +230,7 @@ def add_funding_transfer(
     settlement_business_days: int,
     source: str,
     as_of: str,
+    evaluated_on: date | None = None,
 ) -> dict[str, Any]:
     """Add one evidence-backed directed transfer edge and opt into schema 3."""
 
@@ -242,12 +256,13 @@ def add_funding_transfer(
             "as_of": as_of.strip(),
         }
     )
-    _validate_editable_document(updated)
+    _validate_editable_document(updated, evaluated_on=evaluated_on)
     return updated
 
 
 def remove_funding_transfer(
-    document: dict[str, Any], *, from_provider: str, to_provider: str
+    document: dict[str, Any], *, from_provider: str, to_provider: str,
+    evaluated_on: date | None = None
 ) -> dict[str, Any]:
     updated = deepcopy(document)
     if updated.get("schema_version") != 3:
@@ -267,14 +282,16 @@ def remove_funding_transfer(
     ]
     if len(updated["funding_transfers"]) == before:
         raise ValueError("funding transfer does not exist")
-    _validate_editable_document(updated)
+    _validate_editable_document(updated, evaluated_on=evaluated_on)
     return updated
 
 
-def write_broker_document_atomic(path: Path, document: dict[str, Any]) -> None:
+def write_broker_document_atomic(
+    path: Path, document: dict[str, Any], evaluated_on: date | None = None
+) -> None:
     """Validate and atomically replace broker.yaml while preserving its file mode."""
 
-    _validate_editable_document(document)
+    _validate_editable_document(document, evaluated_on=evaluated_on)
     body = yaml.safe_dump(
         document,
         allow_unicode=True,
