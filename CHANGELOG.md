@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.43.0
+
+- Adds optional per-savings-plan-route `source` + `as_of` provenance and independent freshness using the existing broker fee-data age window, while legacy routes continue to inherit provider-level evidence unchanged.
+- Enhances the existing native savings-plan route editor to create/refresh explicit route evidence and adds native editing for exact directed funding-transfer fee, settlement-time and evidence fields without changing edge identity.
+- Preserves broker schemas 1/2/3, route economics, provider acquisition, v1.42 execution-path presentation, verified private-PKI transport and the advisory/no-money-movement boundary; no dashboard migration is required.
+
 ## 1.42.0
 
 - Adds a bounded normalized Home Assistant execution-path entity that turns the already-decided actionable plan into ordered local-cash, funding-transfer and purchase presentation steps without rerunning route selection.

@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway — DKB v1.42.0
+# Portfolio Architect Gateway — DKB v1.43.0
 
-Version 1.42.0 is package alignment for the Portfolio Architect execution-path presentation release. DKB remains experimental, manual-only and non-live; the registered anonymous FinTS capability probe is unchanged.
+Version 1.43.0 is package alignment for the Portfolio Architect route-level evidence and native funding-edge editing release. DKB remains experimental, manual-only and non-live; the registered anonymous FinTS capability probe is unchanged.
 
 The probe stays fixed to DKB's documented FinTS endpoint and bank code. It sends only anonymous
 dialog-initialization segments and persists only bounded, non-private evidence.
@@ -49,7 +49,7 @@ live DKB holdings and does not prove that an authenticated user's UPD advertises
 capability. Authenticated user-capability validation and DKB-App decoupled authentication
 remain later gates.
 
-The v1.42.0 DKB App requests no DKB login name, PIN or TAN and sends no holdings, balance,
+The v1.43.0 DKB App requests no DKB login name, PIN or TAN and sends no holdings, balance,
 transaction, order, transfer, payment, debit or transaction-history business transaction.
 Its provider REST source remains fail-closed and cannot publish a DKB portfolio snapshot.
 

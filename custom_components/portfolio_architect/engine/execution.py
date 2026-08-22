@@ -234,11 +234,29 @@ def _provider_priority(value: Any) -> int:
     return parsed
 
 
-def _validate_savings_plans(raw: Any, *, provider_id: str) -> dict[str, dict[str, Any]]:
+def _validate_savings_plans(
+    raw: Any,
+    *,
+    provider_id: str,
+    evaluated_on: date | None = None,
+    max_age_days: int | None = None,
+    provider_source: str | None = None,
+    provider_as_of: date | None = None,
+    provider_fresh: bool = True,
+) -> dict[str, dict[str, Any]]:
+    """Validate route profiles and normalize their effective evidence.
+
+    Route-level ``source`` + ``as_of`` is optional for compatibility. When the
+    pair is absent, the route inherits the provider-level evidence exactly as
+    schemas 2/3 did before v1.43. When present, route freshness is evaluated
+    independently with the same broker fee-data age window.
+    """
+
     if raw is None:
         return {}
     if not isinstance(raw, dict) or len(raw) > _MAX_SAVINGS_PLANS:
         raise ValueError(f"provider {provider_id} savings_plans is invalid")
+    today = evaluated_on or date.today()
     result: dict[str, dict[str, Any]] = {}
     for isin, item in raw.items():
         if not isinstance(isin, str) or not 1 <= len(isin) <= 32 or not isinstance(item, dict):
@@ -262,6 +280,46 @@ def _validate_savings_plans(raw: Any, *, provider_id: str) -> dict[str, dict[str
         status = item.get("status")
         if status is not None:
             _bounded_text(status, field=f"provider {provider_id} savings-plan status", maximum=96)
+
+        has_source = "source" in item
+        has_as_of = "as_of" in item
+        if has_source != has_as_of:
+            raise ValueError(
+                f"provider {provider_id} savings-plan evidence for {isin} is incomplete"
+            )
+        if has_source:
+            if max_age_days is None:
+                raise ValueError(
+                    f"provider {provider_id} savings-plan evidence for {isin} requires provider-aware schema"
+                )
+            evidence_source = _bounded_text(
+                item.get("source"),
+                field=f"provider {provider_id} savings-plan source for {isin}",
+                maximum=_MAX_PROVIDER_SOURCE,
+            )
+            try:
+                evidence_as_of = date.fromisoformat(str(item.get("as_of")))
+            except ValueError as err:
+                raise ValueError(
+                    f"provider {provider_id} savings-plan as_of for {isin} is invalid"
+                ) from err
+            if evidence_as_of > today:
+                raise ValueError(
+                    f"provider {provider_id} savings-plan as_of for {isin} is in the future"
+                )
+            evidence_fresh = (today - evidence_as_of).days <= max_age_days
+            normalized["source"] = evidence_source
+            normalized["as_of"] = evidence_as_of.isoformat()
+        else:
+            evidence_source = provider_source
+            evidence_as_of = provider_as_of
+            evidence_fresh = provider_fresh
+
+        # Private normalized values are never serialized back to broker.yaml;
+        # they keep route selection independent from provider-level freshness.
+        normalized["_evidence_source"] = evidence_source
+        normalized["_evidence_as_of"] = evidence_as_of
+        normalized["_evidence_fresh"] = evidence_fresh
         result[isin] = normalized
     return result
 
@@ -278,8 +336,8 @@ def execution_providers(
     into provider-aware routing and require explicit provider provenance plus a
     bounded fee-data freshness window. Schema 3 additionally validates its full
     directed funding topology even if no current recommendation needs an edge.
-    Stale providers remain known but are never eligible for route selection or
-    fee-policy compliance.
+    From v1.43, a savings-plan route may carry its own evidence pair and therefore
+    remain fresh independently of stale provider-level fallback/manual-order evidence.
     """
 
     if not isinstance(broker, dict):
@@ -302,7 +360,13 @@ def execution_providers(
                 as_of = date.fromisoformat(str(broker["as_of"]))
             except ValueError as err:
                 raise ValueError("broker.as_of is invalid") from err
-        plans = _validate_savings_plans(raw.get("savings_plans", {}), provider_id=provider_id)
+        plans = _validate_savings_plans(
+            raw.get("savings_plans", {}),
+            provider_id=provider_id,
+            evaluated_on=evaluated_on,
+            provider_as_of=as_of,
+            provider_fresh=True,
+        )
         return (
             ExecutionProvider(
                 provider_id=provider_id,
@@ -354,7 +418,15 @@ def execution_providers(
             raise ValueError(f"provider {provider_id} as_of is in the future")
         age_days = (today - as_of).days
         fresh = age_days <= max_age_days
-        plans = _validate_savings_plans(raw.get("savings_plans", {}), provider_id=provider_id)
+        plans = _validate_savings_plans(
+            raw.get("savings_plans", {}),
+            provider_id=provider_id,
+            evaluated_on=today,
+            max_age_days=max_age_days,
+            provider_source=source,
+            provider_as_of=as_of,
+            provider_fresh=fresh,
+        )
         manual_raw = raw.get("manual_order")
         manual_profile: ManualFeeProfile | None = None
         if manual_raw is not None:
@@ -391,22 +463,30 @@ def savings_plan_routes(
 
     routes: list[SavingsPlanRoute] = []
     for provider in execution_providers(broker, evaluated_on=evaluated_on):
-        if not provider.fresh:
-            continue
         item = provider.savings_plans.get(isin)
-        if not isinstance(item, dict) or item.get("available") is not True:
+        if (
+            not isinstance(item, dict)
+            or item.get("available") is not True
+            or item.get("_evidence_fresh") is not True
+        ):
             continue
         fee = item.get("fee_pct")
         if not isinstance(fee, Decimal):
             fee = D(str(fee))
+        evidence_as_of = item.get("_evidence_as_of")
+        if evidence_as_of is not None and not isinstance(evidence_as_of, date):
+            raise ValueError(f"provider {provider.provider_id} savings-plan evidence is invalid")
+        evidence_source = item.get("_evidence_source")
+        if evidence_source is not None and not isinstance(evidence_source, str):
+            raise ValueError(f"provider {provider.provider_id} savings-plan evidence is invalid")
         routes.append(
             SavingsPlanRoute(
                 provider_id=provider.provider_id,
                 provider_name=provider.name,
                 priority=provider.priority,
                 fee_pct=fee,
-                as_of=provider.as_of,
-                source=provider.source,
+                as_of=evidence_as_of,
+                source=evidence_source,
             )
         )
     return tuple(
@@ -549,8 +629,9 @@ def choose_route(
     """Choose the lowest-ratio configured provider/method route.
 
     This keeps the historical caller contract while extending the candidate set
-    across all fresh schema-2 providers. For schema 1 the numerical result is
-    unchanged; the returned estimate now also carries the broker identity.
+    across provider-aware routes. Savings-plan freshness may be route-specific;
+    manual-order freshness remains provider-level. For schema 1 the numerical
+    result is unchanged and the estimate still carries the broker identity.
     """
 
     candidates: list[RouteEstimate] = []
@@ -560,8 +641,6 @@ def choose_route(
         for item in savings_plan_routes(broker, isin, evaluated_on=evaluated_on)
     }
     for provider in providers:
-        if not provider.fresh:
-            continue
         savings = savings_by_provider.get(provider.provider_id)
         if savings is not None and savings_plan_amount_eur > 0:
             candidates.append(
@@ -570,11 +649,11 @@ def choose_route(
                     savings.fee_pct,
                     provider_id=provider.provider_id,
                     provider_name=provider.name,
-                    fee_data_as_of=(provider.as_of.isoformat() if provider.as_of else None),
+                    fee_data_as_of=(savings.as_of.isoformat() if savings.as_of else None),
                     provider_priority=provider.priority,
                 )
             )
-        profile = _provider_manual_profile(provider, config)
+        profile = _provider_manual_profile(provider, config) if provider.fresh else None
         if profile is not None and manual_order_amount_eur > 0:
             candidates.append(
                 estimate_manual_order(
@@ -670,11 +749,9 @@ def choose_route_for_cash(
         for item in savings_plan_routes(broker, isin, evaluated_on=evaluated_on)
     }
     for provider in providers:
-        if not provider.fresh:
-            continue
         if execution_provider_id is not None and provider.provider_id != execution_provider_id:
             continue
-        as_of = provider.as_of.isoformat() if provider.as_of else None
+        provider_as_of = provider.as_of.isoformat() if provider.as_of else None
         savings = savings_by_provider.get(provider.provider_id)
         if savings is not None:
             savings_cash = min(reserve_cash_budget_eur, periodic_cash_budget_eur)
@@ -695,11 +772,11 @@ def choose_route_for_cash(
                         savings.fee_pct,
                         provider_id=provider.provider_id,
                         provider_name=provider.name,
-                        fee_data_as_of=as_of,
+                        fee_data_as_of=(savings.as_of.isoformat() if savings.as_of else None),
                         provider_priority=provider.priority,
                     )
                 )
-        profile = _provider_manual_profile(provider, config)
+        profile = _provider_manual_profile(provider, config) if provider.fresh else None
         if profile is not None:
             principal = _floor_to_step(
                 min(
@@ -715,7 +792,7 @@ def choose_route_for_cash(
                         profile,
                         provider_id=provider.provider_id,
                         provider_name=provider.name,
-                        fee_data_as_of=as_of,
+                        fee_data_as_of=provider_as_of,
                         provider_priority=provider.priority,
                     )
                 )
@@ -795,8 +872,6 @@ def choose_funded_route_for_cash(
     candidates: list[RouteEstimate] = []
     providers = execution_providers(broker, evaluated_on=evaluated_on)
     for execution_provider in providers:
-        if not execution_provider.fresh:
-            continue
         for funding_provider_id, raw_cash in sorted(funding_cash_by_provider.items()):
             cash = D(str(raw_cash))
             if not cash.is_finite() or cash <= 0:

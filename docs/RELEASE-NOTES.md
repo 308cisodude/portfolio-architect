@@ -1,49 +1,49 @@
-# Portfolio Architect 1.42.0
+# Portfolio Architect 1.43.0
 
-Portfolio Architect v1.42.0 is a **presentation-boundary release**. It exposes the already-decided funding and purchase sequence as a bounded normalized Home Assistant execution-path entity, and the bilingual reference dashboard renders that entity directly through one native Markdown card per locale. The frontend does not recalculate routing, funding, fees, provider choice, or actionability.
+Portfolio Architect v1.43.0 is an **execution-evidence governance release**. It allows each schema-2/schema-3 savings-plan provider/ISIN route to carry its own `source` + `as_of` evidence pair, so unrelated routes at one provider no longer need to share one freshness date. It also adds native editing for existing exact directed funding-transfer edges.
 
-## Normalized execution path
+## Route-level evidence and freshness
 
-A new diagnostic enum sensor, `sensor.portfolio_architect_execution_path`, derives presentation-only instructions from the validated actionable plan after the engine has already made its decisions. The sensor exposes execution-path presentation schema 1 with:
+Savings-plan routes may now contain bounded route-specific provenance:
 
-- a bounded ordered `steps` list;
-- English and German plain-text instructions;
-- English and German pre-rendered Markdown;
-- explicit presentation modes `local_cash`, `transfer`, `mixed`, and `purchase_only`.
+```yaml
+savings_plans:
+  IE0000000001:
+    available: true
+    fee_pct: 0.0
+    promotional: false
+    status: user_verified
+    source: route-specific ex-ante cost information
+    as_of: 2026-08-22
+```
 
-The presentation adapter consumes the plan's existing decided purchase/funding fields and aggregate `funding_transfers`; it does not import or call route-selection or funded-route-selection code. The path is bounded to 80 total presentation steps and is unavailable when the coordinator does not have an actionable plan.
+When the pair is present, v1.43 evaluates it independently with the existing `fee_data_max_age_days` window. A stale route fails closed even when provider-level evidence is fresh. Conversely, fresh explicit route evidence remains eligible when the provider-level fallback record is stale; provider-local manual-order profiles continue to depend on provider-level evidence.
 
-For execution-provider-local cash, the path explicitly says to use the cash already available at that provider before presenting the purchase. When an advisory funding transfer is part of the decided plan, the path presents the transfer first, including amount, fee, and conservative settlement-business-day evidence, then presents the purchase. Zero settlement business days is described only as **same business day** / **am selben Geschäftstag**; it is never promoted into an instant-transfer SLA.
+Existing savings-plan routes without route-level provenance remain fully backward compatible and inherit provider-level evidence/freshness exactly as before v1.43. There is no automatic broker-file rewrite during upgrade. New native route entries always record explicit route evidence, while editing a legacy route pre-fills its provider fallback and writes explicit route provenance when saved.
 
-## Native bilingual dashboard rendering
+## Native editor improvements
 
-The v1.39.0 colourful paired allocation Tile view was not included in v1.38.1; it remains present and unchanged alongside the v1.38.1 signed drift presentation.
+The established **Edit savings-plan route** flow now edits route evidence together with availability, fee, promotional status, and evidence status.
 
-The reference dashboard adds an **Execution path / Ausführungsweg** block immediately before the existing recommended-purchases section. Each locale uses one core Home Assistant Markdown card whose template does only one thing: read the integration-owned `markdown` or `markdown_de` attribute from the execution-path sensor.
+The **Funding topology** menu gains **Edit funding transfer**. The exact directed source/destination identity remains immutable while editing; only fee, conservative settlement business days, evidence source, and evidence date may change. This avoids the previous remove/re-add workflow for ordinary evidence refreshes while preserving exact one-way topology and duplicate-edge rules.
 
-No dashboard Jinja reads `funding_transfers`, provider cash, execution-provider fields, route costs, or business-policy state. There is no custom card, card-mod, auto-entities, JavaScript, or additional frontend dependency. Routing remains owned by the engine/integration; the frontend merely renders the already-decided presentation contract.
-
-Because the reference dashboard itself changes in v1.42.0, users who maintain the supplied bilingual dashboard should replace the complete dashboard YAML with the v1.42.0 version. Integration/HACS updates still never overwrite user-managed Lovelace YAML automatically.
-
-## Advisory-only boundary
-
-The rendered path is explicitly advisory. Portfolio Architect still cannot move cash or place orders. The normalized instructions do not add service calls, provider write methods, transfers, payments, withdrawals, order placement/cancellation, or sell capability.
-
-The v1.41.0 Trade Republic `KONTOAUSZUG`/`DEPOTAUSZUG` acquisition and the v1.41.1 provider-local-cash routing tie-break remain unchanged. Trade Republic PDF parsing remains inside its provider-isolated Gateway App and does not move PDF parsing into Portfolio Architect. Comdirect, DKB, and Trade Republic Gateway runtime behavior is unchanged apart from normal v1.42.0 package/version alignment. DKB live Gateway acquisition remains a later gated milestone; v1.42.0 does not infer authenticated holdings support from anonymous capability evidence.
-
-## Compatibility contracts retained
+## Compatibility and unchanged behavior
 
 - payload schema 8: unchanged
 - REST portfolio schema 1: unchanged
 - Gateway health schema 6: unchanged; schemas 1–5 remain supported.
-- presentation schema 2 remains unchanged; execution-path presentation schema 1 is an additive Home Assistant presentation contract, not a payload-schema change.
+- presentation schema 2 remains unchanged.
 - broker schemas 1/2/3 remain unchanged.
-- provider-scoped cash, funding-transfer evidence/freshness, cost-first route ordering, and the v1.41.1 local-cash tie-break remain unchanged.
-- The v1.33.0 source-freshness and plan-schedule separation remains unchanged: recurring scheduling stays anchored to the latest valid Portfolio Architect evaluation, and v1.42.0 does not change any configured freshness threshold.
-- Verified private-PKI HTTPS, bearer authentication, Supervisor trust discovery, provider isolation, and fail-closed provider behavior remain unchanged.
+- route ranking economics, v1.41.1 local-cash tie-break, provider-scoped cash, and funding-transfer cost ordering are unchanged.
+- The v1.33.0 source-freshness and plan-schedule separation remains unchanged: recurring scheduling stays anchored to the latest valid Portfolio Architect evaluation, and v1.43.0 does not change any configured freshness threshold.
+- v1.42 normalized execution-path sensor and bilingual native dashboard renderer are unchanged; no dashboard migration is required.
+- The v1.39.0 colourful paired allocation Tile view was not included in v1.38.1; the current native allocation and drift presentation remains unchanged.
+- Trade Republic `DEPOTAUSZUG`/`KONTOAUSZUG` acquisition is unchanged; Trade Republic PDF parsing remains provider-isolated and does not move PDF parsing into Portfolio Architect.
+- Comdirect OAuth/session/cash behavior is unchanged. DKB live Gateway acquisition remains a later gated milestone; the anonymous capability probe remains fail-closed.
+- Verified private-PKI HTTPS, bearer authentication, Supervisor trust discovery, DNS pinning, provider isolation, and fail-closed provider behavior remain unchanged.
 - The historical v1.19.0-rc2 state remains historical and is not promoted by this release.
-- No trading, order, transfer, payment, or transaction-history capability is introduced by v1.42.0; withdrawal capability is likewise absent.
+- No trading, order, transfer, payment, or transaction-history capability is introduced; sell and withdrawal capability likewise remain absent.
 
 ## Upgrade
 
-Update the integration and all three Gateway Apps in place to v1.42.0. Preserve existing private App state. No broker migration is required. To use the new reference presentation, bulk-replace the complete bilingual dashboard YAML with the v1.42.0 dashboard.
+Update the integration and all three Gateway Apps in place to v1.43.0. Existing broker configuration remains valid without changes. No dashboard YAML replacement is required. Operators may migrate individual legacy savings-plan routes to explicit route-level provenance over time by editing and saving them through the native Configure flow or by advanced YAML editing.

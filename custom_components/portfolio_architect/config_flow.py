@@ -124,6 +124,7 @@ from .broker_editor import (
     TIE_BREAK_NEUTRAL,
     TIE_BREAK_PREFERRED,
     add_funding_transfer,
+    edit_funding_transfer,
     load_broker_editor_context,
     remove_funding_transfer,
     remove_provider,
@@ -155,6 +156,8 @@ CONF_BROKER_AVAILABLE = "broker_available"
 CONF_BROKER_FEE_PCT = "broker_fee_pct"
 CONF_BROKER_PROMOTIONAL = "broker_promotional"
 CONF_BROKER_STATUS = "broker_status"
+CONF_BROKER_ROUTE_SOURCE = "broker_route_source"
+CONF_BROKER_ROUTE_AS_OF = "broker_route_as_of"
 CONF_BROKER_FUNDING_EDGE = "broker_funding_edge"
 CONF_BROKER_FROM_PROVIDER = "broker_from_provider"
 CONF_BROKER_TO_PROVIDER = "broker_to_provider"
@@ -933,6 +936,7 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
     _schedule_settings_draft: dict[str, Any] | None = None
     _broker_provider_id: str | None = None
     _broker_route_token: str | None = None
+    _broker_funding_token: str | None = None
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
@@ -1690,6 +1694,8 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
             CONF_BROKER_FEE_PCT: 0.0,
             CONF_BROKER_PROMOTIONAL: False,
             CONF_BROKER_STATUS: "",
+            CONF_BROKER_ROUTE_SOURCE: "",
+            CONF_BROKER_ROUTE_AS_OF: dt_util.now().date().isoformat(),
         }
         if user_input is not None:
             suggested.update(user_input)
@@ -1702,6 +1708,8 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
                     fee_pct=float(user_input[CONF_BROKER_FEE_PCT]),
                     promotional=bool(user_input[CONF_BROKER_PROMOTIONAL]),
                     status=str(user_input.get(CONF_BROKER_STATUS, "")),
+                    source=str(user_input[CONF_BROKER_ROUTE_SOURCE]),
+                    as_of=str(user_input[CONF_BROKER_ROUTE_AS_OF]),
                     create=True,
                     evaluated_on=dt_util.now().date(),
                 )
@@ -1765,6 +1773,8 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
                 CONF_BROKER_FEE_PCT: float(route.get("fee_pct", 0.0)),
                 CONF_BROKER_PROMOTIONAL: bool(route.get("promotional", False)),
                 CONF_BROKER_STATUS: str(route.get("status") or ""),
+                CONF_BROKER_ROUTE_SOURCE: str(route.get("source") or provider.get("source") or ""),
+                CONF_BROKER_ROUTE_AS_OF: str(route.get("as_of") or provider.get("as_of") or dt_util.now().date().isoformat()),
             }
         except (OSError, ValueError, PortfolioSourcePathError):
             return self.async_abort(reason="broker_editor_unavailable")
@@ -1779,6 +1789,8 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
                     fee_pct=float(user_input[CONF_BROKER_FEE_PCT]),
                     promotional=bool(user_input[CONF_BROKER_PROMOTIONAL]),
                     status=str(user_input.get(CONF_BROKER_STATUS, "")),
+                    source=str(user_input[CONF_BROKER_ROUTE_SOURCE]),
+                    as_of=str(user_input[CONF_BROKER_ROUTE_AS_OF]),
                     create=False,
                     evaluated_on=dt_util.now().date(),
                 )
@@ -1841,6 +1853,7 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
             return self.async_abort(reason="broker_editor_unavailable")
         menu = ["add_funding_transfer"]
         if _broker_funding_edge_options(context.document):
+            menu.append("edit_funding_transfer")
             menu.append("remove_funding_transfer")
         return self.async_show_menu(step_id="funding_topology", menu_options=menu)
 
@@ -1889,7 +1902,91 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
                 return self.async_create_entry(data=dict(self.config_entry.options))
         return self.async_show_form(
             step_id="add_funding_transfer",
-            data_schema=self.add_suggested_values_to_schema(_broker_funding_schema(providers), suggested),
+            data_schema=self.add_suggested_values_to_schema(_broker_funding_schema(providers, include_identity=True), suggested),
+            errors=errors,
+            last_step=True,
+        )
+
+    async def async_step_edit_funding_transfer(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Select one existing directed funding edge."""
+        try:
+            context = await self._async_broker_context()
+            edges = _broker_funding_edge_options(context.document)
+        except (OSError, ValueError, PortfolioSourcePathError):
+            return self.async_abort(reason="broker_editor_unavailable")
+        if not edges:
+            return self.async_abort(reason="broker_editor_unavailable")
+        if user_input is not None:
+            token = str(user_input[CONF_BROKER_FUNDING_EDGE])
+            if token not in {item["value"] for item in edges}:
+                return self.async_abort(reason="broker_editor_unavailable")
+            self._broker_funding_token = token
+            return await self.async_step_edit_funding_transfer_details()
+        return self.async_show_form(
+            step_id="edit_funding_transfer",
+            data_schema=_broker_funding_edge_select_schema(edges),
+        )
+
+    async def async_step_edit_funding_transfer_details(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Edit economics and evidence for one exact directed funding edge."""
+        token = self._broker_funding_token
+        if token is None or "|" not in token:
+            return self.async_abort(reason="broker_editor_unavailable")
+        source, destination = token.split("|", 1)
+        errors: dict[str, str] = {}
+        try:
+            context = await self._async_broker_context()
+            providers = _broker_provider_select_options(context.document)
+            edges = context.document.get("funding_transfers", [])
+            edge = next(
+                (
+                    item
+                    for item in edges
+                    if isinstance(item, dict)
+                    and item.get("from_provider") == source
+                    and item.get("to_provider") == destination
+                ),
+                None,
+            )
+            if not isinstance(edge, dict):
+                raise ValueError("funding edge disappeared")
+            suggested = {
+                CONF_BROKER_TRANSFER_FEE_EUR: float(edge.get("fee_eur", 0.0)),
+                CONF_BROKER_SETTLEMENT_DAYS: int(edge.get("settlement_business_days", 0)),
+                CONF_BROKER_TRANSFER_SOURCE: str(edge.get("source") or ""),
+                CONF_BROKER_TRANSFER_AS_OF: str(edge.get("as_of") or dt_util.now().date().isoformat()),
+            }
+        except (OSError, ValueError, PortfolioSourcePathError):
+            return self.async_abort(reason="broker_editor_unavailable")
+        if user_input is not None:
+            suggested.update(user_input)
+            try:
+                updated = edit_funding_transfer(
+                    context.document,
+                    from_provider=source,
+                    to_provider=destination,
+                    fee_eur=float(user_input[CONF_BROKER_TRANSFER_FEE_EUR]),
+                    settlement_business_days=int(user_input[CONF_BROKER_SETTLEMENT_DAYS]),
+                    source=str(user_input[CONF_BROKER_TRANSFER_SOURCE]),
+                    as_of=str(user_input[CONF_BROKER_TRANSFER_AS_OF]),
+                    evaluated_on=dt_util.now().date(),
+                )
+                await self._async_write_broker(context.path, updated)
+            except (OSError, ValueError):
+                errors["base"] = "invalid_broker_config"
+            else:
+                self._broker_funding_token = None
+                return self.async_create_entry(data=dict(self.config_entry.options))
+        return self.async_show_form(
+            step_id="edit_funding_transfer_details",
+            data_schema=self.add_suggested_values_to_schema(
+                _broker_funding_schema(providers, include_identity=False), suggested
+            ),
+            description_placeholders={"from_provider": source, "to_provider": destination},
             errors=errors,
             last_step=True,
         )
@@ -2718,20 +2815,30 @@ def _broker_savings_plan_schema(
             ),
             vol.Required(CONF_BROKER_PROMOTIONAL): BooleanSelector(BooleanSelectorConfig()),
             vol.Optional(CONF_BROKER_STATUS, default=""): TextSelector(TextSelectorConfig(multiline=False)),
+            vol.Required(CONF_BROKER_ROUTE_SOURCE): TextSelector(TextSelectorConfig(multiline=False)),
+            vol.Required(CONF_BROKER_ROUTE_AS_OF): DateSelector(DateSelectorConfig()),
         }
     )
     return vol.Schema(fields)
 
 
-def _broker_funding_schema(providers: list[dict[str, str]]) -> vol.Schema:
-    return vol.Schema(
+def _broker_funding_schema(
+    providers: list[dict[str, str]], *, include_identity: bool = True
+) -> vol.Schema:
+    fields: dict[Any, Any] = {}
+    if include_identity:
+        fields.update(
+            {
+                vol.Required(CONF_BROKER_FROM_PROVIDER): SelectSelector(
+                    SelectSelectorConfig(options=providers, mode=SelectSelectorMode.DROPDOWN)
+                ),
+                vol.Required(CONF_BROKER_TO_PROVIDER): SelectSelector(
+                    SelectSelectorConfig(options=providers, mode=SelectSelectorMode.DROPDOWN)
+                ),
+            }
+        )
+    fields.update(
         {
-            vol.Required(CONF_BROKER_FROM_PROVIDER): SelectSelector(
-                SelectSelectorConfig(options=providers, mode=SelectSelectorMode.DROPDOWN)
-            ),
-            vol.Required(CONF_BROKER_TO_PROVIDER): SelectSelector(
-                SelectSelectorConfig(options=providers, mode=SelectSelectorMode.DROPDOWN)
-            ),
             vol.Required(CONF_BROKER_TRANSFER_FEE_EUR): NumberSelector(
                 NumberSelectorConfig(min=0, max=10000, step=0.01, mode=NumberSelectorMode.BOX, unit_of_measurement="EUR")
             ),
@@ -2744,6 +2851,7 @@ def _broker_funding_schema(providers: list[dict[str, str]]) -> vol.Schema:
             vol.Required(CONF_BROKER_TRANSFER_AS_OF): DateSelector(DateSelectorConfig()),
         }
     )
+    return vol.Schema(fields)
 
 
 def _broker_funding_edge_options(document: dict[str, Any]) -> list[dict[str, str]]:
