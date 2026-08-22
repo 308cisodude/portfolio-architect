@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.44.0
+
+- Package/version alignment for Portfolio Architect v1.44.0 Configure edit-context UX consistency; Trade Republic DEPOTAUSZUG/KONTOAUSZUG acquisition is unchanged.
+
 ## 1.43.0
 
 - Package/version alignment for Portfolio Architect v1.43.0 route-level execution evidence and native funding-edge editing; Trade Republic DEPOTAUSZUG/KONTOAUSZUG acquisition is unchanged.

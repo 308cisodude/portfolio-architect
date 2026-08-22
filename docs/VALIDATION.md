@@ -1,16 +1,20 @@
-# v1.43.0 validation
+# v1.44.0 validation
 
-Portfolio Architect v1.43.0 is prepared from the exact published/live-accepted v1.42.0 tracked-source baseline. The release adds Home Assistant-side route-level savings-plan evidence/freshness, enhanced native route editing, native exact funding-edge editing, regression coverage, and normal package/version/documentation alignment. Provider acquisition and the v1.42 dashboard remain unchanged.
+Portfolio Architect v1.44.0 is prepared from the exact published/live-accepted v1.43.0 tracked-source baseline. The release is a Home Assistant Configure UX consistency pass: selected-object edit forms gain immutable identity context, every Configure menu receives structural bilingual label coverage, and normal package/version/documentation alignment is applied. Planner/provider runtime and dashboard behavior remain unchanged.
 
 Release validation requires:
 
-- all integration/common Gateway/provider App current-version markers align to 1.43.0 while historical release documentation remains historical;
-- broker schemas 1/2/3 remain accepted and legacy provider-level route-evidence fallback stays compatible;
-- explicit route evidence is pairwise, bounded, future-safe and independently freshness-gated by `fee_data_max_age_days`;
-- stale route evidence cannot be refreshed by a provider-level date, and fresh explicit route evidence is not suppressed merely because provider-level fallback/manual-order evidence is stale;
-- native savings-plan route Add/Edit uses Home Assistant DateSelector controls and writes explicit route evidence;
-- native funding-transfer Edit preserves exact directed edge identity while allowing only fee, conservative settlement days, source and date to change;
-- provider-scoped cash, v1.41.1 local-cash routing, v1.42 execution-path presentation, wire/security schemas and advisory-only semantics remain unchanged;
+- all integration/common Gateway/provider App current-version markers align to 1.44.0 while historical release documentation remains historical;
+- the exact v1.43.0 normalized tracked-source fingerprint is used as the preparation baseline;
+- every native Configure menu target has a non-empty English and German menu label and translated target-step title;
+- menu translation ordering matches emitted Configure menu ordering, including the funding-topology edit action;
+- every `async_step_edit_*_details` selected-object editor exposes explicit description placeholders for immutable identity context;
+- English and German editor descriptions consume every required identity placeholder above the editable fields;
+- execution-provider context includes provider display name + provider ID;
+- savings-plan-route context includes provider display name + provider ID + ISIN;
+- funding-transfer context includes exact directed source/destination provider names + IDs;
+- the plan-instrument editor retains its existing instrument name/ISIN/target-ID context;
+- v1.43 route-level evidence/fallback/freshness behavior, v1.41.1 local-cash routing, v1.42 execution-path presentation, provider acquisition, wire/security schemas and advisory-only semantics remain unchanged;
 - complete regression tests, Python compilation, structured-file parsing and `git diff --check` pass;
 - source/release privacy, publication readiness, provider-App source parity, deterministic release builds, and exact Git overlay/binary-patch replay all pass.
 

@@ -551,9 +551,17 @@ from current portfolio value.
 - Add native editing for an existing exact directed funding edge's fee, conservative settlement time, evidence source and evidence date while keeping source/destination identity immutable.
 - Preserve route economics, v1.41.1 local-cash tie-break, v1.42 execution-path presentation, provider acquisition, broker schemas 1/2/3, verified HTTPS and the advisory/no-money-movement boundary.
 
-## Deferred beyond v1.43.0
+## v1.44.0 — Configure edit-context consistency
+
+- Audit every native menu reachable below Configure and require complete bilingual labels plus translated destination titles in regression coverage.
+- Add a non-editable context line above each selected-object editor so execution-provider edits show provider identity, savings-plan edits show provider + ISIN identity, and funding-transfer edits show the exact directed edge.
+- Retain the already-compliant plan-instrument identity presentation and leave global settings forms identified by their own titles rather than inventing synthetic object identity.
+- Keep all immutable provider/route/edge keys out of the editable schema while preserving existing editor validation and write behavior.
+- Preserve v1.43 route-evidence semantics, v1.41.1 local-cash routing, v1.42 execution-path presentation, provider acquisition, schemas, verified HTTPS and the advisory/no-money-movement boundary.
+
+## Deferred beyond v1.44.0
 
 - **DKB authenticated acquisition:** remains gated on legitimate product registration/capability evidence and later authenticated user-capability/UPD validation; do not infer holdings support from generic or anonymous bank capability lists.
 - The historical accepted-exception horizontal-overflow wart is no longer an outstanding item: the v1.36 native dynamic policy list replaced that old static presentation path.
 
-v1.41.1 retains bounded local Trade Republic cash-statement acquisition and changes only the funded-route tie-break; no new remote provider API or transaction capability is enabled. v1.42.0 adds only presentation of those already-decided instructions. v1.43.0 changes only Home Assistant-side execution-evidence governance/editing and likewise enables no new remote provider API or transaction capability.
+v1.41.1 retains bounded local Trade Republic cash-statement acquisition and changes only the funded-route tie-break; no new remote provider API or transaction capability is enabled. v1.42.0 adds only presentation of those already-decided instructions. v1.43.0 changes only Home Assistant-side execution-evidence governance/editing; v1.44.0 changes only Configure presentation/identity context. Neither enables a new remote provider API or transaction capability.

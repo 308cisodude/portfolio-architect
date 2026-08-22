@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway — Comdirect v1.43.0
+# Portfolio Architect Gateway — Comdirect v1.44.0
 
-Version 1.43.0 is package alignment for the Portfolio Architect route-level evidence and native funding-edge editing release. Comdirect OAuth/session maintenance, account selection, authorized cash, provider runtime and verified-HTTPS behavior are unchanged.
+Version 1.44.0 is package alignment for the Portfolio Architect Configure edit-context consistency release. Comdirect OAuth/session maintenance, account selection, authorized cash, provider runtime and verified-HTTPS behavior are unchanged.
 
 Verified HTTPS/private CA trust, bearer authentication, PhotoTAN bootstrap, account
 selection, request-timeout behavior, REST schema 1, health schema 6, portfolio normalization,
