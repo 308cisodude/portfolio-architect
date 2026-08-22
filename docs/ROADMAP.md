@@ -543,9 +543,17 @@ from current portfolio value.
 - Render the integration-owned localized Markdown through one native Home Assistant card per dashboard locale; no custom card, JavaScript or routing logic enters the frontend.
 - Preserve v1.41.1 funding economics, provider acquisition, schemas, verified HTTPS and the no-money-movement boundary.
 
-## Deferred beyond v1.42.0
+## v1.43.0 — Route-level execution evidence and native evidence editing
+
+- Allow each schema-2/schema-3 savings-plan provider/ISIN route to carry its own bounded `source` + `as_of` evidence pair and evaluate freshness independently with the existing fee-data age window.
+- Preserve legacy route behavior by falling back to provider-level evidence when a route has no explicit pair; do not rewrite `broker.yaml` automatically during upgrade.
+- Enhance the existing native savings-plan route editor so opening a legacy route pre-fills provider evidence and saving makes that route's evidence explicit.
+- Add native editing for an existing exact directed funding edge's fee, conservative settlement time, evidence source and evidence date while keeping source/destination identity immutable.
+- Preserve route economics, v1.41.1 local-cash tie-break, v1.42 execution-path presentation, provider acquisition, broker schemas 1/2/3, verified HTTPS and the advisory/no-money-movement boundary.
+
+## Deferred beyond v1.43.0
 
 - **DKB authenticated acquisition:** remains gated on legitimate product registration/capability evidence and later authenticated user-capability/UPD validation; do not infer holdings support from generic or anonymous bank capability lists.
 - The historical accepted-exception horizontal-overflow wart is no longer an outstanding item: the v1.36 native dynamic policy list replaced that old static presentation path.
 
-v1.41.1 retains bounded local Trade Republic cash-statement acquisition and changes only the funded-route tie-break; no new remote provider API or transaction capability is enabled. v1.42.0 adds only presentation of those already-decided instructions and likewise enables no new remote provider API or transaction capability.
+v1.41.1 retains bounded local Trade Republic cash-statement acquisition and changes only the funded-route tie-break; no new remote provider API or transaction capability is enabled. v1.42.0 adds only presentation of those already-decided instructions. v1.43.0 changes only Home Assistant-side execution-evidence governance/editing and likewise enables no new remote provider API or transaction capability.

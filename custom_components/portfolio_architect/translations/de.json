@@ -2659,14 +2659,16 @@
       },
       "add_savings_plan_route": {
         "title": "Sparplanroute hinzufügen",
-        "description": "Der Aktionsstatus beschreibt nur die Tarifart. Er verschafft einer Route niemals einen wirtschaftlichen Vorrang.",
+        "description": "Die tatsächliche Gebühr bestimmt die Wirtschaftlichkeit. Speichere routenspezifische Evidenz, damit jede Anbieter-/ISIN-Route unabhängig veralten kann.",
         "data": {
           "broker_provider_id": "Anbieter",
           "broker_isin": "ISIN",
           "broker_available": "Verfügbar",
           "broker_fee_pct": "Gebühr",
           "broker_promotional": "Aktionstarif",
-          "broker_status": "Nachweisstatus"
+          "broker_status": "Nachweisstatus",
+          "broker_route_source": "Evidenzquelle",
+          "broker_route_as_of": "Evidenzdatum"
         }
       },
       "edit_savings_plan_route": {
@@ -2678,12 +2680,14 @@
       },
       "edit_savings_plan_route_details": {
         "title": "Sparplanroute bearbeiten",
-        "description": "Die tatsächliche Gebühr bestimmt die Wirtschaftlichkeit. Der Aktionsstatus bleibt rein beschreibende Metadaten.",
+        "description": "Bearbeite Routenökonomie und routenspezifische Evidenz. Bestehende Routen übernehmen zunächst die Anbieter-Evidenz; beim Speichern wird die Routen-Evidenz explizit.",
         "data": {
           "broker_available": "Verfügbar",
           "broker_fee_pct": "Gebühr",
           "broker_promotional": "Aktionstarif",
-          "broker_status": "Nachweisstatus"
+          "broker_status": "Nachweisstatus",
+          "broker_route_source": "Evidenzquelle",
+          "broker_route_as_of": "Evidenzdatum"
         }
       },
       "remove_savings_plan_route": {
@@ -2698,7 +2702,8 @@
         "description": "Anbieterübergreifendes Guthaben ist nur über eine exakt konfigurierte gerichtete Beziehung nutzbar. Die Gegenrichtung wird nie abgeleitet. Neue Beziehungen speichern eine explizite Evidenzherkunft.",
         "menu_options": {
           "add_funding_transfer": "Finanzierungsbeziehung hinzufügen",
-          "remove_funding_transfer": "Finanzierungsbeziehung entfernen"
+          "remove_funding_transfer": "Finanzierungsbeziehung entfernen",
+          "edit_funding_transfer": "Finanzierungsbeziehung bearbeiten"
         }
       },
       "add_funding_transfer": {
@@ -2718,6 +2723,23 @@
         "description": "Entferne eine gerichtete Finanzierungsbeziehung.",
         "data": {
           "broker_funding_edge": "Finanzierungsbeziehung"
+        }
+      },
+      "edit_funding_transfer": {
+        "title": "Finanzierungsbeziehung bearbeiten",
+        "description": "Wähle eine konfigurierte gerichtete Finanzierungsbeziehung.",
+        "data": {
+          "broker_funding_edge": "Finanzierungsbeziehung"
+        }
+      },
+      "edit_funding_transfer_details": {
+        "title": "Finanzierungsbeziehung bearbeiten",
+        "description": "Bearbeite Gebühr, konservative Abwicklungszeit und Evidenz, ohne die gerichtete Anbieterbeziehung zu ändern.",
+        "data": {
+          "broker_transfer_fee_eur": "Transfergebühr",
+          "broker_settlement_business_days": "Abwicklungszeit",
+          "broker_transfer_source": "Evidenzquelle",
+          "broker_transfer_as_of": "Evidenzdatum"
         }
       }
     },

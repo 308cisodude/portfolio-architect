@@ -46,6 +46,8 @@ providers:
       IE0000000001:
         available: true
         fee_pct: 1.5
+        source: synthetic route-specific tariff evidence
+        as_of: 2026-08-15
     manual_order:
       available: true
       commission_base_eur: 4.90
@@ -65,6 +67,8 @@ providers:
       IE0000000001:
         available: true
         fee_pct: 0
+        source: synthetic route-specific tariff evidence
+        as_of: 2026-08-16
     manual_order:
       available: true
       commission_base_eur: 1.00
@@ -96,6 +100,27 @@ but is **ineligible** for route selection and fee-policy compliance. A future-da
 PA does not scrape brokerage websites, infer current fees from historical purchases,
 or silently convert missing data to a zero fee. Updating fee evidence is an explicit
 configuration/governance action.
+
+### Route-level evidence (v1.43+)
+
+A schema-2/schema-3 savings-plan route may carry its own bounded `source` + `as_of`
+pair. When present, both fields are required and the route is freshness-gated
+independently with the same `fee_data_max_age_days` window. This allows one provider/ISIN
+observation to expire without making unrelated routes at the same provider stale.
+
+Existing route entries without route-level provenance remain fully compatible. They
+inherit the provider-level `source`, `as_of`, and freshness exactly as before v1.43.
+The native **Add savings-plan route** flow writes explicit route evidence. The existing
+**Edit savings-plan route** flow pre-fills provider evidence for a legacy route and writes
+it explicitly when the operator saves, providing a deliberate migration path without
+automatically rewriting `broker.yaml` during upgrade.
+
+Provider-level evidence remains required by schemas 2/3 because it is still the fallback
+for legacy routes and the evidence basis for provider-local manual-order fee profiles.
+A stale provider record therefore does not suppress a savings-plan route whose own
+route-level evidence is fresh; it still suppresses the provider's manual-order profile.
+Conversely, stale route evidence fails closed even when the provider-level record is fresh.
+Future-dated or partial route evidence is rejected.
 
 ### Route selection
 
@@ -167,7 +192,9 @@ The values are synthetic examples. Transfer cost and conservative settlement del
 operator-owned configuration evidence; Portfolio Architect does not infer them from a
 bank name or assume that a standard transfer is free. From v1.40 onward, an edge may
 also carry bounded `source` + `as_of` provenance. When one is present, both are required.
-The native editor creates only evidence-backed edges.
+The native editor creates only evidence-backed edges. From v1.43 it can also edit
+fee, conservative settlement time, source and evidence date for an existing exact
+directed edge without changing the source/destination identity.
 
 Evidence-backed edges use the existing `fee_data_max_age_days` window. A future evidence
 date fails closed; a stale edge remains valid configuration evidence but is excluded from

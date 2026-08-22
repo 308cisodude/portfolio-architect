@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.43.0
+
+- Package/version alignment for Portfolio Architect v1.43.0 route-level execution evidence and native funding-edge editing; DKB remains experimental/manual-only and its anonymous capability probe is unchanged.
+
 ## 1.42.0
 
 - Package/version alignment for Portfolio Architect v1.42.0 execution-path presentation; DKB remains experimental/manual-only and its anonymous capability probe is unchanged.

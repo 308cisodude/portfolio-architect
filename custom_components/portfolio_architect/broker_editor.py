@@ -170,15 +170,37 @@ def upsert_savings_plan(
     promotional: bool,
     status: str,
     create: bool,
+    source: str | None = None,
+    as_of: str | None = None,
     evaluated_on: date | None = None,
 ) -> dict[str, Any]:
-    """Add or edit one explicit per-provider savings-plan route."""
+    """Add or edit one explicit per-provider savings-plan route.
+
+    v1.43 allows route-level evidence to override the provider-level fallback.
+    Callers that omit both fields retain the legacy provider-level evidence
+    contract; native v1.43 forms always supply an explicit pair.
+    """
 
     canonical_isin = isin.strip().upper()
     if _ISIN_RE.fullmatch(canonical_isin) is None:
         raise ValueError("savings-plan ISIN is invalid")
     if not isinstance(promotional, bool):
         raise ValueError("promotional must be boolean")
+    if (source is None) != (as_of is None):
+        raise ValueError("savings-plan evidence is incomplete")
+    parsed_date: date | None = None
+    evidence_source: str | None = None
+    if source is not None and as_of is not None:
+        evidence_source = source.strip()
+        if not evidence_source or len(evidence_source) > 160 or any(ord(char) < 32 for char in evidence_source):
+            raise ValueError("savings-plan evidence source is invalid")
+        try:
+            parsed_date = date.fromisoformat(as_of.strip())
+        except ValueError as err:
+            raise ValueError("savings-plan evidence date is invalid") from err
+        if parsed_date > (evaluated_on or date.today()):
+            raise ValueError("savings-plan evidence date is in the future")
+
     updated = deepcopy(document)
     providers = updated.get("providers")
     provider = providers.get(provider_id) if isinstance(providers, dict) else None
@@ -202,6 +224,9 @@ def upsert_savings_plan(
         route["fee_pct"] = float(fee_pct)
     if status.strip():
         route["status"] = status.strip()
+    if evidence_source is not None and parsed_date is not None:
+        route["source"] = evidence_source
+        route["as_of"] = parsed_date.isoformat()
     plans[canonical_isin] = route
     _validate_editable_document(updated, evaluated_on=evaluated_on)
     return updated
@@ -256,6 +281,46 @@ def add_funding_transfer(
             "as_of": as_of.strip(),
         }
     )
+    _validate_editable_document(updated, evaluated_on=evaluated_on)
+    return updated
+
+
+def edit_funding_transfer(
+    document: dict[str, Any],
+    *,
+    from_provider: str,
+    to_provider: str,
+    fee_eur: float,
+    settlement_business_days: int,
+    source: str,
+    as_of: str,
+    evaluated_on: date | None = None,
+) -> dict[str, Any]:
+    """Edit one exact directed funding edge without changing its identity."""
+
+    updated = deepcopy(document)
+    if updated.get("schema_version") != 3:
+        raise ValueError("funding topology is not enabled")
+    edges = updated.get("funding_transfers")
+    if not isinstance(edges, list):
+        raise ValueError("funding transfer list is invalid")
+    matches = [
+        index
+        for index, edge in enumerate(edges)
+        if isinstance(edge, dict)
+        and edge.get("from_provider") == from_provider
+        and edge.get("to_provider") == to_provider
+    ]
+    if len(matches) != 1:
+        raise ValueError("funding transfer does not exist")
+    edges[matches[0]] = {
+        "from_provider": from_provider,
+        "to_provider": to_provider,
+        "fee_eur": float(fee_eur),
+        "settlement_business_days": int(settlement_business_days),
+        "source": source.strip(),
+        "as_of": as_of.strip(),
+    }
     _validate_editable_document(updated, evaluated_on=evaluated_on)
     return updated
 

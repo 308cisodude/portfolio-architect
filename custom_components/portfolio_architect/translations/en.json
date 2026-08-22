@@ -2659,14 +2659,16 @@
       },
       "add_savings_plan_route": {
         "title": "Add savings-plan route",
-        "description": "Promotional status describes the tariff character only. It never makes a route economically preferable.",
+        "description": "Promotional status describes the tariff character only. Actual fee drives economics. Record route-specific evidence so each provider/ISIN route can expire independently.",
         "data": {
           "broker_provider_id": "Provider",
           "broker_isin": "ISIN",
           "broker_available": "Available",
           "broker_fee_pct": "Fee",
           "broker_promotional": "Promotional tariff",
-          "broker_status": "Evidence status"
+          "broker_status": "Evidence status",
+          "broker_route_source": "Evidence source",
+          "broker_route_as_of": "Evidence date"
         }
       },
       "edit_savings_plan_route": {
@@ -2678,12 +2680,14 @@
       },
       "edit_savings_plan_route_details": {
         "title": "Edit savings-plan route",
-        "description": "Actual fee drives economics. Promotional status remains descriptive metadata only.",
+        "description": "Edit route economics and route-specific evidence. Legacy routes initially inherit provider evidence; saving this form makes the route evidence explicit.",
         "data": {
           "broker_available": "Available",
           "broker_fee_pct": "Fee",
           "broker_promotional": "Promotional tariff",
-          "broker_status": "Evidence status"
+          "broker_status": "Evidence status",
+          "broker_route_source": "Evidence source",
+          "broker_route_as_of": "Evidence date"
         }
       },
       "remove_savings_plan_route": {
@@ -2698,7 +2702,8 @@
         "description": "Cross-provider cash is usable only through an exact directed edge. The reverse direction is never inferred. New edges record explicit evidence provenance.",
         "menu_options": {
           "add_funding_transfer": "Add funding transfer",
-          "remove_funding_transfer": "Remove funding transfer"
+          "remove_funding_transfer": "Remove funding transfer",
+          "edit_funding_transfer": "Edit funding transfer"
         }
       },
       "add_funding_transfer": {
@@ -2718,6 +2723,23 @@
         "description": "Remove one directed funding relationship.",
         "data": {
           "broker_funding_edge": "Funding relationship"
+        }
+      },
+      "edit_funding_transfer": {
+        "title": "Edit funding transfer",
+        "description": "Select a configured directed funding relationship.",
+        "data": {
+          "broker_funding_edge": "Funding relationship"
+        }
+      },
+      "edit_funding_transfer_details": {
+        "title": "Edit funding transfer",
+        "description": "Edit fee, conservative settlement time and evidence without changing the directed provider relationship.",
+        "data": {
+          "broker_transfer_fee_eur": "Transfer fee",
+          "broker_settlement_business_days": "Settlement time",
+          "broker_transfer_source": "Evidence source",
+          "broker_transfer_as_of": "Evidence date"
         }
       }
     },
