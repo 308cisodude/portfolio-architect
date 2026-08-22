@@ -2393,12 +2393,12 @@
         "title": "Portfolio-Architect-Konfiguration",
         "menu_options": {
           "plan": "Anlageplan",
-          "runtime": "Laufzeitschutz",
-          "reset_plan": "Dateibasierten Plan wiederherstellen",
-          "sources": "Portfolioquellen",
-          "execution": "Ausführung und Transaktionskosten",
           "plan_schedule": "Ausführungs- & Prüfplan",
-          "execution_providers": "Ausführungsanbieter & Finanzierung"
+          "execution": "Ausführung und Transaktionskosten",
+          "execution_providers": "Ausführungsanbieter & Finanzierung",
+          "sources": "Portfolioquellen",
+          "runtime": "Laufzeitschutz",
+          "reset_plan": "Dateibasierten Plan wiederherstellen"
         }
       },
       "plan": {
@@ -2633,7 +2633,7 @@
       },
       "edit_execution_provider_details": {
         "title": "Ausführungsanbieter bearbeiten",
-        "description": "Aktualisiere Nachweis oder optionale Gleichstandspräferenz. Eine vorhandene erweiterte numerische Priorität bleibt erhalten, solange ihre Präferenzstufe unverändert bleibt.",
+        "description": "**Bearbeitet:** {provider_name} · Anbieter-ID `{provider_id}`\n\nAktualisiere Nachweis oder optionale Gleichstandspräferenz. Eine vorhandene erweiterte numerische Priorität bleibt erhalten, solange ihre Präferenzstufe unverändert bleibt.",
         "data": {
           "broker_provider_name": "Anbietername",
           "broker_provider_source": "Nachweisquelle",
@@ -2680,7 +2680,7 @@
       },
       "edit_savings_plan_route_details": {
         "title": "Sparplanroute bearbeiten",
-        "description": "Bearbeite Routenökonomie und routenspezifische Evidenz. Bestehende Routen übernehmen zunächst die Anbieter-Evidenz; beim Speichern wird die Routen-Evidenz explizit.",
+        "description": "**Bearbeitet:** {provider_name} [`{provider_id}`] · ISIN `{isin}`\n\nBearbeite Routenökonomie und routenspezifische Evidenz. Bestehende Routen übernehmen zunächst die Anbieter-Evidenz; beim Speichern wird die Routen-Evidenz explizit.",
         "data": {
           "broker_available": "Verfügbar",
           "broker_fee_pct": "Gebühr",
@@ -2702,8 +2702,8 @@
         "description": "Anbieterübergreifendes Guthaben ist nur über eine exakt konfigurierte gerichtete Beziehung nutzbar. Die Gegenrichtung wird nie abgeleitet. Neue Beziehungen speichern eine explizite Evidenzherkunft.",
         "menu_options": {
           "add_funding_transfer": "Finanzierungsbeziehung hinzufügen",
-          "remove_funding_transfer": "Finanzierungsbeziehung entfernen",
-          "edit_funding_transfer": "Finanzierungsbeziehung bearbeiten"
+          "edit_funding_transfer": "Finanzierungsbeziehung bearbeiten",
+          "remove_funding_transfer": "Finanzierungsbeziehung entfernen"
         }
       },
       "add_funding_transfer": {
@@ -2734,7 +2734,7 @@
       },
       "edit_funding_transfer_details": {
         "title": "Finanzierungsbeziehung bearbeiten",
-        "description": "Bearbeite Gebühr, konservative Abwicklungszeit und Evidenz, ohne die gerichtete Anbieterbeziehung zu ändern.",
+        "description": "**Bearbeitet:** {from_provider_name} [`{from_provider_id}`] → {to_provider_name} [`{to_provider_id}`]\n\nBearbeite Gebühr, konservative Abwicklungszeit und Evidenz, ohne die gerichtete Anbieterbeziehung zu ändern.",
         "data": {
           "broker_transfer_fee_eur": "Transfergebühr",
           "broker_settlement_business_days": "Abwicklungszeit",

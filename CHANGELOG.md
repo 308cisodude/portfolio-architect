@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.44.0
+
+- Audits every native Configure menu and requires complete English/German labels plus translated destination titles, including the live-observed blank Edit funding transfer row.
+- Adds non-editable identity context above every selected-object edit form: execution provider, savings-plan provider/ISIN route, and exact directed funding-transfer edge; the already-contextualized plan-instrument editor remains unchanged.
+- Preserves v1.43 route-level evidence semantics, route economics, provider acquisition, wire/security schemas, v1.42 execution-path/dashboard presentation and the advisory/no-money-movement boundary; no broker or dashboard migration is required.
+
 ## 1.43.0
 
 - Adds optional per-savings-plan-route `source` + `as_of` provenance and independent freshness using the existing broker fee-data age window, while legacy routes continue to inherit provider-level evidence unchanged.

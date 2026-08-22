@@ -1629,6 +1629,10 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
         return self.async_show_form(
             step_id="edit_execution_provider_details",
             data_schema=self.add_suggested_values_to_schema(_broker_provider_schema(include_id=False), suggested),
+            description_placeholders={
+                "provider_name": str(provider.get("name") or provider_id),
+                "provider_id": provider_id,
+            },
             errors=errors,
             last_step=True,
         )
@@ -1803,7 +1807,11 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
         return self.async_show_form(
             step_id="edit_savings_plan_route_details",
             data_schema=self.add_suggested_values_to_schema(_broker_savings_plan_schema(providers, include_identity=False), suggested),
-            description_placeholders={"provider_id": provider_id, "isin": isin},
+            description_placeholders={
+                "provider_name": str(provider.get("name") or provider_id),
+                "provider_id": provider_id,
+                "isin": isin,
+            },
             errors=errors,
             last_step=True,
         )
@@ -1981,12 +1989,18 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
             else:
                 self._broker_funding_token = None
                 return self.async_create_entry(data=dict(self.config_entry.options))
+        provider_names = {item["value"]: item["label"] for item in providers}
         return self.async_show_form(
             step_id="edit_funding_transfer_details",
             data_schema=self.add_suggested_values_to_schema(
                 _broker_funding_schema(providers, include_identity=False), suggested
             ),
-            description_placeholders={"from_provider": source, "to_provider": destination},
+            description_placeholders={
+                "from_provider_name": provider_names.get(source, source),
+                "from_provider_id": source,
+                "to_provider_name": provider_names.get(destination, destination),
+                "to_provider_id": destination,
+            },
             errors=errors,
             last_step=True,
         )
