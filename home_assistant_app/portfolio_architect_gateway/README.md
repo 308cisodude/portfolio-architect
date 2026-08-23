@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway — Comdirect v1.46.0
+# Portfolio Architect Gateway — Comdirect v1.47.0
 
-Version 1.46.0 is package alignment for the Home Assistant-side DKB bridge-retirement release. The temporary DKB migration-only endpoint is removed from the common runtime. Comdirect OAuth/session maintenance, account selection, authorized cash, cached-snapshot behavior and verified-HTTPS serving are unchanged.
+Version 1.47.0 is package alignment for DKB provider-scoped Girokonto cash evidence. Comdirect OAuth/session maintenance, account selection, authorized cash, cached-snapshot behavior and verified-HTTPS serving are unchanged.
 
 Verified HTTPS/private CA trust, bearer authentication, PhotoTAN bootstrap, account
 selection, request-timeout behavior, REST schema 1, health schema 6, portfolio normalization,

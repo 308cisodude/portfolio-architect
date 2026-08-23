@@ -17,8 +17,14 @@ import re
 from pathlib import Path
 from typing import Final, Iterable
 
+from .dkb_cash_csv import (
+    CASH_STATE_FILE_NAME,
+    DkbCashSnapshot,
+    load_cash_snapshot,
+    save_cash_snapshot,
+)
 from .errors import ConfigurationError, ProtocolError
-from .models import Position, PortfolioSnapshot, validate_snapshot
+from .models import PortfolioSnapshot, Position, validate_snapshot
 from .store import load_snapshot
 
 D = Decimal
@@ -98,12 +104,23 @@ class DkbCsvImportSummary:
 
 
 class DkbCsvProvider:
-    """Static provider backed by the last accepted canonical DKB snapshot."""
+    """Static DKB provider with independent holdings and Girokonto cash evidence."""
 
     def __init__(self, snapshot_file: Path) -> None:
         self._snapshot_file = Path(snapshot_file)
+        self._cash_file = self._snapshot_file.parent / CASH_STATE_FILE_NAME
         try:
-            self._snapshot = load_snapshot(self._snapshot_file)
+            loaded = load_snapshot(self._snapshot_file)
+            self._holdings_snapshot = _holdings_only(loaded) if loaded is not None else None
+            self._cash_snapshot = load_cash_snapshot(self._cash_file)
+            if self._cash_snapshot is None and loaded is not None and loaded.investment_cash is not None:
+                # Recovery compatibility: retain only the bounded normalized cash facts
+                # if the composed canonical snapshot survived but sibling cash state did not.
+                self._cash_snapshot = DkbCashSnapshot(
+                    account_balance_eur=loaded.investment_cash.account_balance_eur,
+                    as_of=loaded.investment_cash.as_of,
+                    generated_at=loaded.investment_cash.as_of,
+                )
         except ProtocolError as err:
             raise ConfigurationError("Stored DKB private snapshot is invalid") from err
 
@@ -117,20 +134,62 @@ class DkbCsvProvider:
         return 86400
 
     def fetch_snapshot(self) -> PortfolioSnapshot:
-        if self._snapshot is None:
+        snapshot = self.snapshot
+        if snapshot is None:
             raise ConfigurationError("No supported DKB depot CSV batch has been imported")
-        return self._snapshot
+        return snapshot
+
+    @property
+    def holdings_snapshot(self) -> PortfolioSnapshot | None:
+        return self._holdings_snapshot
+
+    @property
+    def cash_snapshot(self) -> DkbCashSnapshot | None:
+        return self._cash_snapshot
 
     @property
     def snapshot(self) -> PortfolioSnapshot | None:
-        return self._snapshot
+        if self._holdings_snapshot is None:
+            return None
+        if self._cash_snapshot is None:
+            return self._holdings_snapshot
+        cash = self._cash_snapshot.investment_cash()
+        return validate_snapshot(
+            PortfolioSnapshot(
+                generated_at=self._holdings_snapshot.generated_at,
+                positions=self._holdings_snapshot.positions,
+                investment_reserve_eur=cash.authorized_eur,
+                investment_reserve_as_of=cash.as_of,
+                investment_cash=cash,
+            )
+        )
 
     @property
     def snapshot_file(self) -> Path:
         return self._snapshot_file
 
+    @property
+    def cash_file(self) -> Path:
+        return self._cash_file
+
     def replace_snapshot(self, snapshot: PortfolioSnapshot | None) -> None:
-        self._snapshot = snapshot
+        self._holdings_snapshot = _holdings_only(snapshot) if snapshot is not None else None
+
+    def replace_cash_snapshot(self, snapshot: DkbCashSnapshot | None) -> None:
+        self._cash_snapshot = snapshot
+
+    def persist_cash_snapshot(self, snapshot: DkbCashSnapshot | None) -> None:
+        save_cash_snapshot(self._cash_file, snapshot)
+
+
+def _holdings_only(snapshot: PortfolioSnapshot) -> PortfolioSnapshot:
+    """Strip optional cash from a loaded/composed canonical snapshot."""
+    return validate_snapshot(
+        PortfolioSnapshot(
+            generated_at=snapshot.generated_at,
+            positions=snapshot.positions,
+        )
+    )
 
 
 def parse_dkb_csv_batch(documents: Iterable[bytes]) -> tuple[PortfolioSnapshot, DkbCsvImportSummary]:

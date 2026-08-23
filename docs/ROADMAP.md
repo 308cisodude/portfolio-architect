@@ -580,9 +580,18 @@ Live acceptance of v1.45.0 proved the exact atomic DKB source cut-over but expos
 - Remove the temporary DKB migration-only REST endpoint from the common Gateway/App surface; ordinary DKB Gateway CSV acquisition and the anonymous FinTS probe remain unchanged.
 - Preserve source-set/LKG behavior, schemas, private-PKI transport, cash routing, planner economics and dashboard behavior.
 
-## After v1.45.0 — provider acquisition cleanup
+## v1.47.0 — DKB provider-scoped cash evidence
+
+- Add a second DKB Gateway import family for the native Girokonto `Umsatzliste` CSV and use only the explicit dated EUR `Kontostand` as provider-scoped cash evidence.
+- Keep depot holdings and Girokonto cash as independent evidence clocks: holdings retain Gateway-snapshot freshness, while cash uses the imported-statement freshness policy already established for Trade Republic cash.
+- Persist only normalized balance/date evidence; account identifiers, transaction rows, counterparties, references and raw CSV bytes remain transient.
+- Clamp negative balances to zero eligible/authorized cash and never infer overdraft or credit facilities.
+- Preserve REST schema 1, DKB FinTS isolation, provider identity, private-PKI transport, source-set/LKG semantics and the advisory/no-money-movement boundary.
+
+## After v1.47.0 — provider acquisition cleanup
 
 - **Completed in v1.46.0:** retire the legacy PA-side `dkb_csv` parser/path after live-proven Gateway migration.
+- **Completed in v1.47.0:** give the DKB Gateway independent provider-scoped cash evidence equivalent to the established Trade Republic holdings/cash split.
 - Next, move the existing Comdirect CSV adapter into the Comdirect Gateway alongside its live API acquisition, with explicit acquisition policy and no silent fallback from configured live acquisition to stale upload data.
 - Later introduce a deliberate generic import Gateway and move provider-neutral mapped CSV parsing out of Portfolio Architect itself.
 

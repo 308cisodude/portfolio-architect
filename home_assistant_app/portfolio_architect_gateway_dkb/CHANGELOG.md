@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.47.0
+
+- Adds a separate bounded DKB Girokonto `Umsatzliste` CSV importer for provider-scoped cash beside the existing depot-CSV holdings importer.
+- Persists only normalized balance/date evidence; account identifiers, transaction rows, counterparties, references and raw CSV bytes remain transient.
+- Keeps holdings and cash timestamps independent, clamps negative balances to zero eligible cash, and never infers overdraft/credit availability.
+- Leaves the anonymous FinTS probe isolated and authenticated FinTS disabled.
+
 ## 1.46.0
 
 - Removes the temporary migration-only canonical-snapshot endpoint after the PA-side legacy DKB CSV bridge was live-proven and retired. DKB CSV acquisition and FinTS probing are unchanged.

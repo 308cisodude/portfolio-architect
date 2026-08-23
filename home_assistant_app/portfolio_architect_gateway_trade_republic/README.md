@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway — Trade Republic v1.46.0
+# Portfolio Architect Gateway — Trade Republic v1.47.0
 
-Version 1.46.0 is package alignment for the Home Assistant-side DKB bridge-retirement release. The temporary DKB migration-only endpoint is removed from the common runtime. Trade Republic holdings/cash statement acquisition and verified-HTTPS snapshot serving are unchanged.
+Version 1.47.0 is package alignment for DKB provider-scoped Girokonto cash evidence. Trade Republic holdings/cash statement acquisition and verified-HTTPS snapshot serving are unchanged.
 
 Verified HTTPS/private CA trust, bearer
 authentication, REST schema 1, health schema 6 and accepted snapshot serving are unchanged.

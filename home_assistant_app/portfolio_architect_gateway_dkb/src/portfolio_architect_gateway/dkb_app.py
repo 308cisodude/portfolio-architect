@@ -20,6 +20,7 @@ from typing import Any, Final
 from urllib.parse import parse_qs, urlsplit
 
 from . import __version__
+from .dkb_cash_csv import DkbCashCsvImportError, MAX_CASH_CSV_BYTES, parse_dkb_cash_csv
 from .dkb_csv import (
     DkbCsvImportError,
     DkbCsvProvider,
@@ -54,6 +55,7 @@ INGRESS_BIND: Final = "0.0.0.0"
 INGRESS_PORT: Final = 8099
 MAX_FORM_BYTES: Final = 8 * 1024
 MAX_MULTIPART_BYTES: Final = MAX_CSV_BATCH_BYTES + 256 * 1024
+MAX_CASH_MULTIPART_BYTES: Final = MAX_CASH_CSV_BYTES + 256 * 1024
 MAX_BOUNDARY_BYTES: Final = 70
 MAX_HEADER_BYTES: Final = 32 * 1024
 PRODUCT_ID_FILE_NAME: Final = "dkb-fints-product-id"
@@ -366,6 +368,43 @@ class DKBIngressHandler(BaseHTTPRequestHandler):
             self._html_status(self._render_page(), HTTPStatus.OK)
             return
 
+        if path == "/import-cash":
+            try:
+                nonce, documents = self._read_csv_import_form(maximum_bytes=MAX_CASH_MULTIPART_BYTES)
+                if not secrets.compare_digest(nonce, self.app_server.controller.csrf_token):
+                    raise DkbCashCsvImportError("Import form session is invalid; reload the page and try again")
+                if len(documents) != 1:
+                    raise DkbCashCsvImportError("Import exactly one DKB Girokonto cash CSV")
+                cash = parse_dkb_cash_csv(documents[0])
+                previous_cash = self.app_server.csv_provider.cash_snapshot
+                self.app_server.csv_provider.replace_cash_snapshot(cash)
+                self.app_server.csv_provider.persist_cash_snapshot(cash)
+                if not self.app_server.gateway_state.refresh(trigger="manual"):
+                    self.app_server.csv_provider.replace_cash_snapshot(previous_cash)
+                    self.app_server.csv_provider.persist_cash_snapshot(previous_cash)
+                    raise DkbCashCsvImportError("Imported DKB cash CSV could not be activated")
+                self.app_server.last_import_notice = (
+                    "accepted",
+                    f"DKB cash CSV accepted: EUR {cash.eligible_eur}; cash timestamp "
+                    f"{cash.as_of.isoformat(timespec='seconds')}.",
+                )
+                _LOGGER.info("DKB cash CSV import activated normalized provider-scoped cash evidence")
+            except (DkbCashCsvImportError, DkbCsvImportError) as err:
+                _LOGGER.warning("DKB cash CSV import rejected")
+                self.app_server.last_import_notice = ("rejected", _public_cash_csv_error(err))
+                self._html_status(self._render_page(), HTTPStatus.BAD_REQUEST)
+                return
+            except Exception:
+                _LOGGER.exception("DKB cash CSV import failed internally")
+                self.app_server.last_import_notice = (
+                    "internal_error",
+                    "DKB cash CSV import failed internally; no new cash evidence was activated.",
+                )
+                self._html_status(self._render_page(), HTTPStatus.INTERNAL_SERVER_ERROR)
+                return
+            self._html_status(self._render_page(), HTTPStatus.OK)
+            return
+
         try:
             form = self._read_form()
         except ValueError:
@@ -394,7 +433,7 @@ class DKBIngressHandler(BaseHTTPRequestHandler):
             return
         self._empty(HTTPStatus.NOT_FOUND)
 
-    def _read_csv_import_form(self) -> tuple[str, tuple[bytes, ...]]:
+    def _read_csv_import_form(self, *, maximum_bytes: int = MAX_MULTIPART_BYTES) -> tuple[str, tuple[bytes, ...]]:
         if sum(len(key) + len(value) for key, value in self.headers.items()) > MAX_HEADER_BYTES:
             raise DkbCsvImportError("Import request headers are too large")
         if self.headers.get_content_type() != "multipart/form-data":
@@ -415,7 +454,7 @@ class DKBIngressHandler(BaseHTTPRequestHandler):
             length = int(length_token) if length_token is not None else -1
         except ValueError as err:
             raise DkbCsvImportError("Import request length is invalid") from err
-        if not 1 <= length <= MAX_MULTIPART_BYTES:
+        if not 1 <= length <= maximum_bytes:
             raise DkbCsvImportError("Import request is empty or too large")
         body = self.rfile.read(length)
         if len(body) != length:
@@ -477,20 +516,28 @@ class DKBIngressHandler(BaseHTTPRequestHandler):
         bpd = str(result.bpd_version) if result and result.bpd_version is not None else "unknown"
         suffix = f"…{product[-6:]}" if product and len(product) > 6 else (product or "not configured")
         csrf = escape(controller.csrf_token, quote=True)
-        snapshot = self.app_server.csv_provider.snapshot
+        snapshot = self.app_server.csv_provider.holdings_snapshot
         if snapshot is None:
             snapshot_text = "No DKB depot CSV batch has been imported yet."
         else:
             snapshot_text = (
-                f"Active canonical snapshot: {len(snapshot.positions)} positions; "
+                f"Active private holdings: {len(snapshot.positions)} positions; "
                 f"timestamp {snapshot.generated_at.isoformat(timespec='seconds')}."
+            )
+        cash_snapshot = self.app_server.csv_provider.cash_snapshot
+        if cash_snapshot is None:
+            cash_text = "No DKB Girokonto cash CSV has been imported yet."
+        else:
+            cash_text = (
+                f"Active private cash: EUR {cash_snapshot.eligible_eur}; "
+                f"timestamp {cash_snapshot.as_of.isoformat(timespec='seconds')}."
             )
         notice = ""
         if self.app_server.last_import_notice is not None:
             outcome, message = self.app_server.last_import_notice
             css_class = "ok" if outcome == "accepted" else "warn"
             notice = f'<p class="{css_class}">{escape(message)}</p>'
-        body = f"""<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Portfolio Architect Gateway — DKB</title><style>body{{font-family:system-ui,sans-serif;max-width:850px;margin:2rem auto;padding:0 1rem;background:#111;color:#eee}}section{{border:1px solid #444;border-radius:12px;padding:1rem;margin:1rem 0}}code{{word-break:break-all}}input{{width:min(34rem,95%);padding:.55rem}}button{{padding:.55rem .8rem;margin-top:.5rem}}.warn{{color:#ffca28}}.ok{{color:#66bb6a}}.small{{font-size:.9rem;color:#bbb}}</style></head><body><main><h1>Portfolio Architect Gateway — DKB</h1><section><h2>v{escape(__version__)} DKB acquisition</h2><p>DKB depot CSV is an active provider acquisition method. Uploaded exports are parsed only in memory; depot numbers and raw CSV content are never persisted. One authoritative upload batch produces one canonical DKB snapshot.</p>{notice}<p>{escape(snapshot_text)}</p><form method=\"post\" action=\"import-csv\" enctype=\"multipart/form-data\"><input type=\"hidden\" name=\"nonce\" value=\"{csrf}\"><label for=\"statement\">Current DKB depot CSV export(s)</label><input id=\"statement\" type=\"file\" name=\"statement\" accept=\"text/csv,.csv\" multiple required><br><button type=\"submit\">Import DKB CSV batch</button></form><p class=\"small\">Upload all current DKB depot exports together. Up to {MAX_CSV_FILES} files are accepted. If several dated exports of one depot are included, only the newest is counted. The batch replaces the complete DKB holdings snapshot.</p></section><section><h2>FinTS registration and research probe</h2><p>Fixed endpoint: <code>{escape(DKB_FINTS_ENDPOINT)}</code><br>Bank code: <code>{escape(DKB_BANK_CODE)}</code><br>Configured registration: <code>{escape(suffix)}</code></p><form method=\"post\" action=\"configure-product\"><input type=\"hidden\" name=\"csrf\" value=\"{csrf}\"><label for=\"product_id\">FinTS product registration number</label><br><input id=\"product_id\" name=\"product_id\" minlength=\"25\" maxlength=\"25\" pattern=\"[A-Za-z0-9]{{25}}\" autocomplete=\"off\" required><br><button type=\"submit\">Store registration number</button></form><p class=\"small\">Use the complete 25-character registration number issued for Portfolio Architect itself. It is transmitted only as the HKVVB product designation; a library/kernel registration must not be reused for production access.</p></section><section><h2>Anonymous BPD capability probe</h2><p>State: <strong>{escape(view.state)}</strong></p><p>{escape(view.message)}</p><form method=\"post\" action=\"probe\"><input type=\"hidden\" name=\"csrf\" value=\"{csrf}\"><button type=\"submit\" {'disabled' if product is None else ''}>Probe DKB FinTS capabilities</button></form><p>BPD version: <code>{escape(bpd)}</code><br>{HOLDINGS_PARAMETER_SEGMENT} advertised: <strong>{holdings}</strong><br>Observed parameter segments: <code>{escape(param)}</code><br>Bounded return codes: <code>{escape(codes)}</code></p><p>Sanitized bank return messages:</p>{bank_messages}<p>Raw response body SHA-256: <code>{escape(raw_response_fingerprint)}</code><br>Raw response body bytes: <code>{escape(raw_response_bytes)}</code><br>Decoded response SHA-256: <code>{escape(response_fingerprint)}</code><br>Decoded response bytes: <code>{escape(response_bytes)}</code></p><p class=\"small\">Only bounded HIRMG/HIRMS return-message text plus cryptographic response fingerprints and byte counts are retained for diagnostics. The configured product registration is redacted if echoed; arbitrary segment payload and the raw FinTS response are discarded after fingerprinting; exact raw/decoded response bytes never persist. A positive bank-level BPD result is only evidence to continue research; authenticated user-parameter validation is still required before holdings acquisition may be implemented.</p></section><section><h2>Gateway boundary</h2><p>Bearer token: <code>{escape(self.app_server.api_token)}</code></p><p class=\"small\">The token, normalized DKB snapshot, and FinTS registration state are App-private and survive in-place upgrades. FinTS cannot replace or silently fall back to the CSV snapshot; authenticated DKB FinTS acquisition remains disabled.</p></section></main></body></html>"""
+        body = f"""<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Portfolio Architect Gateway — DKB</title><style>body{{font-family:system-ui,sans-serif;max-width:850px;margin:2rem auto;padding:0 1rem;background:#111;color:#eee}}section{{border:1px solid #444;border-radius:12px;padding:1rem;margin:1rem 0}}code{{word-break:break-all}}input{{width:min(34rem,95%);padding:.55rem}}button{{padding:.55rem .8rem;margin-top:.5rem}}.warn{{color:#ffca28}}.ok{{color:#66bb6a}}.small{{font-size:.9rem;color:#bbb}}</style></head><body><main><h1>Portfolio Architect Gateway — DKB</h1><section><h2>v{escape(__version__)} DKB acquisition</h2><p>DKB depot holdings and Girokonto cash are independent evidence families. Uploaded CSVs are parsed only in memory; depot/account identifiers, transaction rows, and raw CSV content are never persisted. Only bounded normalized provider state survives.</p>{notice}<h3>Depot holdings</h3><p>{escape(snapshot_text)}</p><form method=\"post\" action=\"import-csv\" enctype=\"multipart/form-data\"><input type=\"hidden\" name=\"nonce\" value=\"{csrf}\"><label for=\"statement\">Current DKB depot CSV export(s)</label><input id=\"statement\" type=\"file\" name=\"statement\" accept=\"text/csv,.csv\" multiple required><br><button type=\"submit\">Import DKB depot CSV batch</button></form><p class=\"small\">Upload all current DKB depot exports together. Up to {MAX_CSV_FILES} files are accepted. If several dated exports of one depot are included, only the newest is counted. The batch replaces only the DKB holdings evidence.</p><h3>Investment cash</h3><p>{escape(cash_text)}</p><form method=\"post\" action=\"import-cash\" enctype=\"multipart/form-data\"><input type=\"hidden\" name=\"nonce\" value=\"{csrf}\"><label for=\"cash-statement\">DKB Girokonto Umsatzliste CSV</label><input id=\"cash-statement\" type=\"file\" name=\"statement\" accept=\"text/csv,.csv\" required><br><button type=\"submit\">Import DKB cash CSV</button></form><p class=\"small\">The importer uses only the explicit dated EUR Kontostand as cash evidence. Transaction rows and account identifiers are discarded. A negative balance authorizes EUR 0; no overdraft or credit facility is inferred. Importing cash does not refresh holdings evidence, and importing holdings does not refresh cash evidence.</p></section><section><h2>FinTS registration and research probe</h2><p>Fixed endpoint: <code>{escape(DKB_FINTS_ENDPOINT)}</code><br>Bank code: <code>{escape(DKB_BANK_CODE)}</code><br>Configured registration: <code>{escape(suffix)}</code></p><form method=\"post\" action=\"configure-product\"><input type=\"hidden\" name=\"csrf\" value=\"{csrf}\"><label for=\"product_id\">FinTS product registration number</label><br><input id=\"product_id\" name=\"product_id\" minlength=\"25\" maxlength=\"25\" pattern=\"[A-Za-z0-9]{{25}}\" autocomplete=\"off\" required><br><button type=\"submit\">Store registration number</button></form><p class=\"small\">Use the complete 25-character registration number issued for Portfolio Architect itself. It is transmitted only as the HKVVB product designation; a library/kernel registration must not be reused for production access.</p></section><section><h2>Anonymous BPD capability probe</h2><p>State: <strong>{escape(view.state)}</strong></p><p>{escape(view.message)}</p><form method=\"post\" action=\"probe\"><input type=\"hidden\" name=\"csrf\" value=\"{csrf}\"><button type=\"submit\" {'disabled' if product is None else ''}>Probe DKB FinTS capabilities</button></form><p>BPD version: <code>{escape(bpd)}</code><br>{HOLDINGS_PARAMETER_SEGMENT} advertised: <strong>{holdings}</strong><br>Observed parameter segments: <code>{escape(param)}</code><br>Bounded return codes: <code>{escape(codes)}</code></p><p>Sanitized bank return messages:</p>{bank_messages}<p>Raw response body SHA-256: <code>{escape(raw_response_fingerprint)}</code><br>Raw response body bytes: <code>{escape(raw_response_bytes)}</code><br>Decoded response SHA-256: <code>{escape(response_fingerprint)}</code><br>Decoded response bytes: <code>{escape(response_bytes)}</code></p><p class=\"small\">Only bounded HIRMG/HIRMS return-message text plus cryptographic response fingerprints and byte counts are retained for diagnostics. The configured product registration is redacted if echoed; arbitrary segment payload and the raw FinTS response are discarded after fingerprinting; exact raw/decoded response bytes never persist. A positive bank-level BPD result is only evidence to continue research; authenticated user-parameter validation is still required before holdings acquisition may be implemented.</p></section><section><h2>Gateway boundary</h2><p>Bearer token: <code>{escape(self.app_server.api_token)}</code></p><p class=\"small\">The token, normalized DKB holdings/cash state, and FinTS registration state are App-private and survive in-place upgrades. FinTS cannot replace or silently fall back to CSV evidence; authenticated DKB FinTS acquisition remains disabled.</p></section></main></body></html>"""
         return body.encode("utf-8")
 
     def _redirect(self, location: str) -> None:
@@ -547,6 +594,35 @@ class DKBIngressHandler(BaseHTTPRequestHandler):
     def log_message(self, format: str, *args: Any) -> None:
         _LOGGER.info("DKB Gateway Ingress request completed")
 
+
+
+def _public_cash_csv_error(err: DkbCashCsvImportError) -> str:
+    """Return only bounded static cash-parser errors without uploaded private data."""
+    text = " ".join(str(err).split())
+    safe = {
+        "DKB cash CSV is empty or exceeds the 2 MiB safety limit",
+        "DKB cash CSV must use UTF-8 encoding",
+        "DKB cash CSV could not be parsed safely",
+        "DKB cash CSV is empty or contains too many rows",
+        "DKB cash CSV does not contain the required account, balance, and transaction-header rows",
+        "DKB cash CSV contains an ambiguous Girokonto account row",
+        "DKB cash CSV account row is invalid",
+        "DKB cash CSV contains an ambiguous current-balance row",
+        "DKB cash CSV current-balance row is invalid",
+        "DKB cash CSV does not contain exactly one supported transaction header",
+        "DKB cash CSV structural row order is invalid",
+        "DKB cash CSV contains a malformed transaction row",
+        "DKB cash CSV contains an invalid balance date",
+        "DKB cash CSV balance date is in the future",
+        "DKB cash CSV balance timestamp is in the future",
+        "DKB cash CSV current balance must be denominated in EUR",
+        "DKB cash CSV current balance is invalid",
+        "DKB cash CSV current balance is outside the allowed range",
+        "Import exactly one DKB Girokonto cash CSV",
+        "Import form session is invalid; reload the page and try again",
+        "Imported DKB cash CSV could not be activated",
+    }
+    return text if text in safe else "DKB cash CSV was rejected by the bounded importer"
 
 
 def _public_csv_error(err: DkbCsvImportError) -> str:

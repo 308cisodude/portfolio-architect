@@ -40,7 +40,7 @@ snapshot and the common REST/health server operates normally. Version 1.26.0 cha
 its boot policy to automatic because Portfolio Architect can now keep it configured
 as an ongoing REST contributor. Version 1.41.0 adds a separate `KONTOAUSZUG` cash-statement parser and private sibling cash state. The two Trade Republic evidence families remain independently fail-closed and are composed only into the existing additive REST-schema-1 cash fields; raw PDFs and transaction/account identity data are not persisted. DKB remains manual-only. Version 1.41.1 changes only the Home Assistant-side funded-route tie-break so sufficient execution-provider-local cash wins an otherwise identical cross-provider funding option; provider App acquisition and wire behavior are unchanged. Version 1.42.0 adds only Home Assistant-side normalized execution-path presentation and native reference-dashboard rendering; provider App acquisition and wire behavior remain unchanged. Version 1.43.0 adds only Home Assistant-side route-level execution evidence and native broker-editor capability; provider App acquisition and wire behavior remain unchanged. Version 1.44.0 adds only Home Assistant Configure edit-context/menu consistency; provider App acquisition and wire behavior remain unchanged. Version 1.28.0 added only
 a registration-gated anonymous FinTS BPD capability probe; its provider REST snapshot
-remains fail-closed for authenticated FinTS. v1.45.0 enables bounded local DKB CSV acquisition inside this provider Gateway; v1.45.1 added a bounded stale-snapshot migration read for the exact legacy cut-over; v1.46.0 removes that temporary migration surface after live acceptance and keeps DKB CSV acquisition solely inside the Gateway.
+remains fail-closed for authenticated FinTS. v1.45.0 enables bounded local DKB CSV acquisition inside this provider Gateway; v1.45.1 added a bounded stale-snapshot migration read for the exact legacy cut-over; v1.46.0 removes that temporary migration surface after live acceptance and keeps DKB CSV acquisition solely inside the Gateway; v1.47.0 adds an independent DKB Girokonto CSV cash-evidence family that composes through the existing optional schema-1 investment-cash fields without changing provider identity or wire schemas.
 
 ## Shared source and packaging rule
 
@@ -139,6 +139,12 @@ Trade-Republic-App-only, hash-pinned build dependency and is not introduced into
 Comdirect, DKB, the standalone Gateway, or the Home Assistant integration.
 
 The historical statement above predates v1.45.0. DKB holdings are now supplied by bounded local CSV acquisition inside the DKB Gateway; authenticated FinTS holdings remain a later provider-specific gate after product registration and authenticated user-capability validation.
+
+## DKB v1.47 Girokonto cash-evidence boundary
+
+Version 1.47.0 mirrors the established Trade Republic holdings/cash separation without introducing a remote DKB API. The DKB App accepts the native Girokonto `Umsatzliste` CSV through admin-only Ingress, extracts only the explicit dated EUR `Kontostand`, and persists only normalized balance/date evidence. Account identifiers, transaction rows, counterparties, references and raw CSV bytes remain transient.
+
+DKB depot holdings and Girokonto cash remain independently timestamped. Holdings keep `gateway_snapshot` freshness; cash uses the `imported_statement` freshness policy. A negative balance authorizes zero investment cash and no overdraft or credit facility is inferred. The common REST schema remains version 1 and FinTS remains isolated.
 
 ## v1.32 provider freshness and diagnostic foundation
 

@@ -21,6 +21,20 @@ def evidence_kind(provider: str) -> str:
     return "other"
 
 
+def cash_evidence_kind(provider: str) -> str:
+    """Return the evidence family that governs provider-scoped cash freshness."""
+    token = str(provider or "").strip().lower()
+    if token == "comdirect":
+        return "live_api"
+    if token in {"trade_republic", "dkb"}:
+        # Both providers currently obtain cash from explicit imported account
+        # evidence even though DKB holdings remain a canonical Gateway snapshot.
+        return "imported_statement"
+    if token == "local_rest_json":
+        return "gateway_snapshot"
+    return "other"
+
+
 def source_freshness_rows(
     source_summaries: Iterable[dict[str, Any]],
     *,

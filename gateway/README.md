@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway runtime v1.46.0
+# Portfolio Architect Gateway runtime v1.47.0
 
-Version 1.46.0 retires the completed DKB legacy-migration endpoint from the common runtime. Normal cached-snapshot age enforcement and the v1.45.1 schema-consistent expired-health behavior remain unchanged; provider-specific DKB CSV acquisition stays inside the DKB App.
+Version 1.47.0 keeps the common provider-neutral REST/health runtime unchanged while the DKB provider App adds independent Girokonto CSV cash evidence through the existing schema-1 optional investment-cash fields.
 
 The Gateway is a dedicated, Python-library-dependency-free service that converts one
 provider-specific portfolio source into provider-neutral Portfolio Architect REST
@@ -48,9 +48,9 @@ non-secret and carries no account/depot identity. Health schemas 1 through 5 rem
 available unchanged for older Portfolio Architect versions.
 
 The provider contract and official future App identities are documented in
-`docs/GATEWAY-PROVIDERS.md`. The common runtime remains provider-neutral in v1.46.0;
+`docs/GATEWAY-PROVIDERS.md`. The common runtime remains provider-neutral in v1.47.0;
 provider-specific acquisition continues to live only in the corresponding App package.
-The ISIN-first v1.26.1 hotfix is implemented in Portfolio Architect's Home Assistant calculation layer and does not change Gateway REST schema 1 or health schema 6. Version 1.46.0 retains the private-PKI HTTPS helper and v1.26.7 quantity-bearing cached-snapshot/ETag-precedence guarantees. Comdirect OAuth session maintenance is provider-specific; provider acquisition contracts and REST/health schemas are unchanged.
+The ISIN-first v1.26.1 hotfix is implemented in Portfolio Architect's Home Assistant calculation layer and does not change Gateway REST schema 1 or health schema 6. Version 1.47.0 retains the private-PKI HTTPS helper and v1.26.7 quantity-bearing cached-snapshot/ETag-precedence guarantees. Comdirect OAuth session maintenance is provider-specific; provider acquisition contracts and REST/health schemas are unchanged.
 
 ## Authorized investment cash
 
