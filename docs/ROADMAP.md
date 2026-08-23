@@ -568,6 +568,10 @@ from current portfolio value.
 - Keep the anonymous FinTS BPD probe independent and fail-closed. `HIWPDS` remains only bank-level evidence; authenticated user-capability/UPD validation is still required before authenticated FinTS holdings acquisition.
 - Preserve REST schema 1, health schema 6, private-PKI HTTPS, bearer authentication, source-set/LKG binding, provider isolation and the advisory/no-money-movement boundary.
 
+## v1.45.1 — stale legacy migration hotfix
+
+Live acceptance of v1.45.0 proved the exact atomic DKB source cut-over but exposed that an old legacy comparison snapshot could be older than the DKB Gateway's normal seven-day serving horizon. v1.45.1 keeps that normal runtime age gate intact, adds a DKB-only authenticated migration read of the already-normalized canonical snapshot, and makes expired Gateway health metadata schema-consistent.
+
 ## After v1.45.0 — provider acquisition cleanup
 
 - After DKB Gateway CSV migration is live-proven, retire the legacy PA-side `dkb_csv` parser/path without double counting or weakening rollback evidence.

@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.45.1
+
+- Fixes v1.45.0 legacy DKB CSV migration when the exact comparison export is older than the DKB Gateway's normal cached-snapshot serving horizon.
+- Adds a DKB-only, bearer-authenticated, verified-HTTPS read-only migration-snapshot endpoint that can expose only the already-normalized canonical snapshot for exact equivalence checking without making it available to normal runtime.
+- Makes expired Gateway health documents schema-consistent by withholding available-snapshot timestamp/age/integrity metadata while `snapshot_available` is false.
+- Preserves exact atomic source cut-over, normal seven-day DKB runtime freshness, private-PKI/DNS pinning, FinTS isolation, portfolio calculations and the advisory-only boundary.
+
 ## 1.45.0
 
 - Moves active DKB depot-CSV acquisition into the DKB Gateway App with strict bounded parsing, transient-only depot identity and canonical private snapshot persistence.

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.45.1
+
+- Package/version alignment for the v1.45.1 DKB migration hotfix.
+- Common Gateway health now reports expired cached snapshots as schema-consistent unavailable state. The DKB-only migration endpoint remains disabled in the Comdirect App; Comdirect OAuth/session/cash acquisition is unchanged.
+
 ## 1.45.0
 
 - Package/version alignment for the DKB Gateway CSV acquisition release; Comdirect acquisition, OAuth/session maintenance and cash authorization are unchanged.

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.45.1
+
+- Adds the authenticated read-only migration snapshot endpoint used only to compare an old legacy DKB CSV after the normal serving-age limit has expired.
+- Keeps `/api/v1/portfolio` fail-closed for the same expired snapshot; raw CSV, depot identity and FinTS state remain inaccessible.
+- Fixes expired health-document metadata consistency without changing DKB CSV parsing or authenticated-FinTS gating.
+
 ## 1.45.0
 
 - Adds bounded authoritative DKB depot-CSV batch acquisition inside the DKB Gateway; raw CSV and depot identity remain transient and only the normalized canonical snapshot persists.

@@ -201,10 +201,12 @@ from .rest_client import (
     GatewayTlsDiscovery,
     PortfolioRestAuthenticationError,
     PortfolioRestError,
+    PortfolioRestMigrationSnapshotUnavailableError,
     PortfolioRestTlsError,
     RestSourceConfig,
     SupplementalRestSourceConfig,
     async_fetch_gateway_health,
+    async_fetch_gateway_migration_snapshot,
     async_fetch_rest_snapshot,
 )
 from .schedule import validate_schedule_config
@@ -493,21 +495,46 @@ class PortfolioArchitectConfigFlow(ConfigFlow, domain=DOMAIN):
                 if (
                     health.health_schema_version < 6
                     or health.provider_id != GATEWAY_PROVIDER_DKB
-                    or health.status != "ok"
                     or health.reauthentication_required
-                    or not health.snapshot_available
                 ):
                     raise PortfolioRestError(
-                        "Discovered DKB Gateway is not ready for source migration"
+                        "Discovered DKB Gateway is not suitable for source migration"
                     )
-                result = await async_fetch_rest_snapshot(self.hass, candidate)
+
+                if health.snapshot_available:
+                    if health.status != "ok":
+                        raise PortfolioRestError(
+                            "Discovered DKB Gateway live snapshot is not healthy"
+                        )
+                    result = await async_fetch_rest_snapshot(self.hass, candidate)
+                else:
+                    # An old legacy CSV may be older than the Gateway's normal
+                    # serving-age policy. The dedicated endpoint returns only the
+                    # already-normalized canonical snapshot for this one exact
+                    # comparison; normal runtime availability remains fail-closed.
+                    if (
+                        health.status != "degraded"
+                        or health.operating_mode != "unavailable"
+                    ):
+                        raise PortfolioRestError(
+                            "Discovered DKB Gateway unavailable state is invalid"
+                        )
+                    result = await async_fetch_gateway_migration_snapshot(
+                        self.hass, candidate
+                    )
+
                 snapshot = result.snapshot
                 if (
                     snapshot is None
                     or result.snapshot_sha256 is None
                     or result.position_count is None
                     or result.position_count != len(snapshot.positions)
-                    or health.snapshot_generated_at is None
+                ):
+                    raise PortfolioRestError(
+                        "Discovered DKB Gateway migration snapshot lacks integrity metadata"
+                    )
+                if health.snapshot_available and (
+                    health.snapshot_generated_at is None
                     or health.snapshot_generated_at != snapshot.generated_at
                     or health.snapshot_position_count != len(snapshot.positions)
                     or health.snapshot_sha256 != result.snapshot_sha256
@@ -547,6 +574,8 @@ class PortfolioArchitectConfigFlow(ConfigFlow, domain=DOMAIN):
                     return self.async_abort(reason="dkb_gateway_migrated")
             except PortfolioRestAuthenticationError:
                 errors["base"] = "invalid_auth"
+            except PortfolioRestMigrationSnapshotUnavailableError:
+                errors["base"] = "dkb_gateway_migration_snapshot_unavailable"
             except PortfolioSourcePathError:
                 errors["base"] = "invalid_supplemental_source"
             except (OSError, ValueError, PortfolioRestError):

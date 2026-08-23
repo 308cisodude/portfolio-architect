@@ -147,18 +147,18 @@ def test_v1380_cash_context_and_copy_friendly_purchase_interaction_are_preserved
 
 
 def test_v1381_release_metadata_notes_and_wire_contracts_are_aligned() -> None:
-    assert 'version = "1.45.0"' in (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    assert 'version = "1.45.1"' in (ROOT / "pyproject.toml").read_text(encoding="utf-8")
     manifest = json.loads((COMPONENT / "manifest.json").read_text(encoding="utf-8"))
-    assert manifest["version"] == "1.45.0"
-    assert 'VERSION: Final = "1.45.0"' in (COMPONENT / "const.py").read_text(encoding="utf-8")
-    assert '__version__ = "1.45.0"' in (COMPONENT / "engine" / "__init__.py").read_text(encoding="utf-8")
+    assert manifest["version"] == "1.45.1"
+    assert 'VERSION: Final = "1.45.1"' in (COMPONENT / "const.py").read_text(encoding="utf-8")
+    assert '__version__ = "1.45.1"' in (COMPONENT / "engine" / "__init__.py").read_text(encoding="utf-8")
     for app in (
         "portfolio_architect_gateway",
         "portfolio_architect_gateway_dkb",
         "portfolio_architect_gateway_trade_republic",
     ):
         config = yaml.safe_load((ROOT / "home_assistant_app" / app / "config.yaml").read_text())
-        assert config["version"] == "1.45.0"
+        assert config["version"] == "1.45.1"
 
     assert (ROOT / "docs" / "UPGRADE-1.38.1.md").is_file()
     release_notes = (ROOT / "docs" / "RELEASE-NOTES.md").read_text(encoding="utf-8")
