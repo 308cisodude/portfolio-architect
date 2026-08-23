@@ -217,6 +217,7 @@ def _post_and_location(app, controller: _DummyController, path: str, fields: dic
         ("127.0.0.1", 0),
         state=object(),
         controller=controller,
+        provider=object(),
         api_token="test-token",
         allowed_sources=frozenset({"127.0.0.1"}),
         require_user_header=False,

@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway — Trade Republic v1.44.0
+# Portfolio Architect Gateway — Trade Republic v1.45.0
 
-Version 1.44.0 is package alignment for the Portfolio Architect Configure edit-context consistency release. The separate strict local `DEPOTAUSZUG` holdings and `KONTOAUSZUG` cash-statement imports introduced in v1.41.0 are unchanged.
+Version 1.45.0 is package alignment for the DKB Gateway CSV acquisition release. The strict local `DEPOTAUSZUG` holdings and `KONTOAUSZUG` cash-statement imports are unchanged.
 
 Verified HTTPS/private CA trust, bearer
 authentication, REST schema 1, health schema 6 and accepted snapshot serving are unchanged.

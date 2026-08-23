@@ -109,6 +109,16 @@
         "data_description": {
           "rest_api_token": "Dediziertes Bearer-Token dieses Gateways. HTTPS-Endpunkt und private CA werden über die Supervisor-Erkennung bereitgestellt."
         }
+      },
+      "hassio_migrate_dkb_csv_confirm": {
+        "title": "Alte DKB-CSV-Quelle zum DKB-Gateway migrieren",
+        "description": "Home Assistant hat das DKB-Gateway unter {gateway} erkannt. Portfolio Architect entfernt die {source_count} konfigurierten alten DKB-CSV-Pfade erst, nachdem der Gateway-Snapshot mit deren kanonischen Beständen, Stückzahlen, Instrumentenidentitäten und konservativem Quellzeitstempel exakt übereinstimmt. Bearer-Token des DKB-Gateways eingeben, um die Migration zu validieren.",
+        "data": {
+          "rest_api_token": "Bearer-Token des DKB-Gateways"
+        },
+        "data_description": {
+          "rest_api_token": "Dediziertes Bearer-Token aus der DKB-Gateway-App. HTTPS-Endpunkt und private CA stammen aus der Supervisor-Erkennung."
+        }
       }
     },
     "error": {
@@ -118,7 +128,8 @@
       "invalid_provider": "Einen unterstützten Quelladapter auswählen.",
       "invalid_csv_format": "Die CSV-Kopfzeile konnte mit diesen Formateinstellungen nicht gelesen werden.",
       "invalid_rest_source": "Das lokale REST-Gateway oder seine JSON-Antwort erfüllt den begrenzten Portfolio-Architect-Quellvertrag nicht.",
-      "invalid_auth": "Das lokale REST-Gateway hat das Bearer-Token abgelehnt."
+      "invalid_auth": "Das lokale REST-Gateway hat das Bearer-Token abgelehnt.",
+      "dkb_gateway_migration_mismatch": "Der Snapshot des DKB-Gateways stimmt nicht exakt mit den konfigurierten alten DKB-CSV-Beständen und dem Quellzeitstempel überein. Die Quellkonfiguration wurde nicht geändert."
     },
     "abort": {
       "already_configured": "Portfolio Architect ist bereits konfiguriert. Verwende bei der vorhandenen Integration „Neu konfigurieren“, um die Quelle zu ändern.",
@@ -132,7 +143,8 @@
       "tls_already_configured": "Dieses Gateway verwendet bereits das entdeckte verifizierte HTTPS-Vertrauen.",
       "tls_validation_failed": "Der entdeckte HTTPS-Endpunkt konnte mit der bereitgestellten privaten CA und dem vorhandenen Bearer-Token nicht validiert werden.",
       "tls_migrated": "Die passende Gateway-Quelle wurde erfolgreich auf verifiziertes HTTPS migriert.",
-      "tls_supplemental_added": "Das entdeckte Gateway wurde validiert und als zusätzliche verifizierte HTTPS-Quelle hinzugefügt."
+      "tls_supplemental_added": "Das entdeckte Gateway wurde validiert und als zusätzliche verifizierte HTTPS-Quelle hinzugefügt.",
+      "dkb_gateway_migrated": "Der Snapshot des DKB-Gateways stimmte exakt mit der alten DKB-CSV-Quelle überein. Portfolio Architect hat die alten CSV-Pfade atomar durch das verifizierte HTTPS-DKB-Gateway ersetzt."
     }
   },
   "entity": {

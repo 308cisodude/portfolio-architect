@@ -154,7 +154,7 @@ def verify_gateway_app_archive_layouts(directory: Path, release_version: str) ->
             "portfolio_architect_gateway_dkb",
             "experimental",
             "dkb",
-            "manual_only",
+            "auto",
         ),
         "portfolio-architect-gateway-trade-republic-app-v%s.zip" % release_version: (
             "portfolio_architect_gateway_trade_republic",
@@ -197,6 +197,14 @@ def verify_gateway_app_archive_layouts(directory: Path, release_version: str) ->
                 raise SystemExit(
                     f"{archive_name} contains provider-specific Comdirect modules: {leaked}"
                 )
+            if provider_id == "dkb":
+                for name in (
+                    "src/portfolio_architect_gateway/dkb_app.py",
+                    "src/portfolio_architect_gateway/dkb_csv.py",
+                    "src/portfolio_architect_gateway/dkb_fints.py",
+                ):
+                    if name not in payload:
+                        raise SystemExit(f"{archive_name} missing provider module: {name}")
             if provider_id == "trade_republic":
                 dependency = payload.get("requirements.txt")
                 if dependency is None:

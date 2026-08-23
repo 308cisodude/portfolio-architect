@@ -1,58 +1,41 @@
-# Portfolio Architect Gateway — DKB v1.44.0
+# Portfolio Architect Gateway — DKB v1.45.0
 
-Version 1.44.0 is package alignment for the Portfolio Architect Configure edit-context consistency release. DKB remains experimental, manual-only and non-live; the registered anonymous FinTS capability probe is unchanged.
+Version 1.45.0 makes the experimental DKB Gateway useful before authenticated FinTS is available. The App now owns strict local DKB depot-CSV acquisition and exposes one canonical `provider_id: dkb` snapshot through the established bearer-authenticated, verified-HTTPS Gateway contract.
 
-The probe stays fixed to DKB's documented FinTS endpoint and bank code. It sends only anonymous
-dialog-initialization segments and persists only bounded, non-private evidence.
+## DKB CSV acquisition
 
-## Registration gate
+Open the admin-only Home Assistant Ingress page and upload the current DKB depot CSV export(s) as one authoritative batch. Up to eight files are accepted. The importer:
 
-FinTS production access requires Portfolio Architect's own issued product registration
-identity. The live-accepted contract remains:
+- accepts the established UTF-8 semicolon DKB depot-export format;
+- applies the same bounded position parsing as the legacy Portfolio Architect `dkb_csv` adapter;
+- selects only the newest export per depot when multiple dated exports are supplied;
+- rejects ambiguous same-depot/same-date exports whose contents differ;
+- aggregates overlapping instruments by canonical ISIN-first identity;
+- uses the oldest selected export date as the conservative source timestamp;
+- keeps depot numbers and raw CSV bytes transient; and
+- persists only the normalized canonical provider snapshot in the App-private `/data` volume with restrictive permissions.
 
-- the ID must contain exactly 25 alphanumeric characters;
-- the complete value is sent exclusively as the product designation in `HKVVB`;
-- the separate bounded product-version field remains distinct; and
-- the ID remains stored only in App-private mode-`0600` state.
+Each successful batch replaces the complete DKB snapshot. For multiple DKB depots, upload all current exports together; the Gateway does not retain hidden per-depot identifiers or raw source documents between imports.
 
-The Web UI applies the same exact-length requirement. An in-place upgrade retains an
-already configured valid 25-character registration identity.
+The App auto-starts in v1.45.0 because the accepted canonical snapshot is an active portfolio source and must survive Home Assistant restarts.
 
-## Ingress-safe Web UI
+## Portfolio Architect migration
 
-Registration-storage and probe POST actions now redirect relatively to the App root. They
-therefore remain inside the Home Assistant Ingress namespace instead of navigating the
-iframe to Home Assistant's absolute `/` dashboard.
+Existing installations may still contain legacy HA-side `dkb_csv` supplemental paths. When Supervisor discovers the DKB Gateway, Portfolio Architect offers a dedicated migration rather than adding a duplicate source. The cut-over succeeds only when:
 
-## Persisted sanitized probe outcomes
+- private-CA HTTPS and the App bearer token validate;
+- Gateway health schema/provider identity and snapshot integrity validate;
+- the canonical Gateway holdings, quantities and instrument identities match the selected legacy CSV view exactly; and
+- the conservative source timestamp matches exactly.
 
-Successful BPD evidence contains only BPD version, observed parameter-segment identifiers,
-bounded four-digit return codes, bounded sanitized `HIRMG`/`HIRMS` return-message text,
-exact raw-response-body SHA-256/byte count, decoded-response SHA-256/byte count, timestamp and whether `HIWPDS` is advertised.
+Only then does one config-entry mutation add the `dkb` Gateway and remove the legacy `dkb_csv` paths. A mismatch leaves the existing source configuration unchanged. New PA-side legacy DKB CSV sources are no longer offered; the old parser remains only as a migration verifier for this bridge release.
 
-Expected unsuccessful attempts also persist a bounded outcome so reopening the Web UI does
-not falsely return to `ready / not probed`. A valid FinTS response with `HIRMG`/`HIRMS`
-return codes but no BPD is shown as `bank_rejected`; its recognized return codes and bounded
-sanitized operator-message text survive. The configured product ID is redacted if echoed,
-arbitrary/unknown segment payload is not persisted, and the raw/decoded SHA-256 plus byte counts
-allow correlation without retaining either response representation. HTTP, transport and strict-protocol
-failures use separate bounded states.
+## FinTS remains a separate research gate
 
-A newly issued product registration that has not yet propagated to an institute is only one
-possible explanation for `bank_rejected`. The App does not assert that interpretation from
-an unknown return code.
+The existing registration-gated anonymous BPD capability probe remains available in the same admin-only Ingress UI. It still uses the fixed DKB FinTS endpoint and only anonymous dialog-initialization segments. It does not request a DKB login name, PIN or TAN and does not issue holdings, balance, transaction, order, transfer, payment, debit or withdrawal operations.
 
-## Deliberate limits
+A FinTS probe cannot replace, refresh, or silently fall back to the CSV-backed canonical snapshot. Authenticated DKB FinTS acquisition remains disabled until the separate product-registration and authenticated user-capability gates are deliberately satisfied and implemented.
 
-A positive `HIWPDS` result is only bank-level capability evidence. It does **not** enable
-live DKB holdings and does not prove that an authenticated user's UPD advertises the same
-capability. Authenticated user-capability validation and DKB-App decoupled authentication
-remain later gates.
+## Security boundary
 
-The v1.44.0 DKB App requests no DKB login name, PIN or TAN and sends no holdings, balance,
-transaction, order, transfer, payment, debit or transaction-history business transaction.
-Its provider REST source remains fail-closed and cannot publish a DKB portfolio snapshot.
-
-Verified HTTPS/private CA trust, bearer authentication, REST schema 1, health schema 6,
-provider identity `dkb`, and the existing `dkb` versus `dkb_csv` collision rules remain
-unchanged. Upgrade in place to retain App-private state.
+The public Gateway REST surface remains read-only and bearer-authenticated over verified private-PKI HTTPS. The App has no host network, Docker, Home Assistant API, authentication API or Supervisor API access. The raw import is handled only through authenticated Home Assistant Ingress and is never persisted. Portfolio Architect remains advisory-only and cannot place orders or move money.

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.45.0
+
+- Package/version alignment for the DKB Gateway CSV acquisition release; Comdirect acquisition, OAuth/session maintenance and cash authorization are unchanged.
+
+
 ## 1.44.0
 
 - Package/version alignment for Portfolio Architect v1.44.0 Configure edit-context UX consistency; Comdirect acquisition/OAuth/cash behavior is unchanged.

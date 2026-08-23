@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.45.0
+
+- Package/version alignment for the DKB Gateway CSV acquisition release; Trade Republic holdings/cash statement acquisition is unchanged.
+
+
 ## 1.44.0
 
 - Package/version alignment for Portfolio Architect v1.44.0 Configure edit-context UX consistency; Trade Republic DEPOTAUSZUG/KONTOAUSZUG acquisition is unchanged.

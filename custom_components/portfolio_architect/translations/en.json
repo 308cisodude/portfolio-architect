@@ -109,6 +109,16 @@
         "data_description": {
           "rest_api_token": "Dedicated bearer token for this Gateway. The HTTPS endpoint and private CA are supplied through Supervisor discovery."
         }
+      },
+      "hassio_migrate_dkb_csv_confirm": {
+        "title": "Migrate legacy DKB CSV to the DKB Gateway",
+        "description": "Home Assistant discovered the DKB Gateway at {gateway}. Portfolio Architect will remove the {source_count} configured legacy DKB CSV path(s) only after the Gateway snapshot matches their canonical holdings, quantities, instrument identity and conservative source timestamp exactly. Enter the DKB Gateway bearer token to validate the migration.",
+        "data": {
+          "rest_api_token": "DKB Gateway bearer token"
+        },
+        "data_description": {
+          "rest_api_token": "Dedicated bearer token shown in the DKB Gateway App. The HTTPS endpoint and private CA come from Supervisor discovery."
+        }
       }
     },
     "error": {
@@ -118,7 +128,8 @@
       "invalid_provider": "Select a supported source adapter.",
       "invalid_csv_format": "The CSV header could not be read with these format settings.",
       "invalid_rest_source": "The local REST gateway or its JSON response did not satisfy the bounded Portfolio Architect source contract.",
-      "invalid_auth": "The local REST gateway rejected the bearer token."
+      "invalid_auth": "The local REST gateway rejected the bearer token.",
+      "dkb_gateway_migration_mismatch": "The DKB Gateway snapshot does not exactly match the configured legacy DKB CSV holdings and source timestamp. No source configuration was changed."
     },
     "abort": {
       "already_configured": "Portfolio Architect is already configured. Use Reconfigure on the existing integration entry to change its source.",
@@ -132,7 +143,8 @@
       "tls_already_configured": "This Gateway already uses the discovered verified HTTPS trust.",
       "tls_validation_failed": "The discovered HTTPS endpoint could not be validated with the supplied private CA and existing bearer token.",
       "tls_migrated": "The matching Gateway source was migrated to verified HTTPS successfully.",
-      "tls_supplemental_added": "The discovered Gateway was validated and added as a verified-HTTPS supplemental source."
+      "tls_supplemental_added": "The discovered Gateway was validated and added as a verified-HTTPS supplemental source.",
+      "dkb_gateway_migrated": "The DKB Gateway snapshot exactly matched the legacy DKB CSV source. Portfolio Architect atomically replaced the legacy CSV paths with the verified-HTTPS DKB Gateway."
     }
   },
   "entity": {
