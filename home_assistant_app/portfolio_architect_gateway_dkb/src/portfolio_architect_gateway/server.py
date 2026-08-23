@@ -46,7 +46,6 @@ HEALTH_V5_MEDIA_TYPE = "application/vnd.portfolio-architect.health+json;version=
 HEALTH_V6_MEDIA_TYPE = "application/vnd.portfolio-architect.health+json;version=6"
 REFRESH_TRIGGERS = frozenset({"startup", "scheduled", "manual", "bootstrap"})
 MANUAL_REFRESH_MIN_INTERVAL_SECONDS = 60
-MIGRATION_SNAPSHOT_PATH = "/api/v1/migration-snapshot"
 
 
 @dataclass(frozen=True, slots=True)
@@ -290,13 +289,13 @@ class GatewayState:
             self._recommended_action = recommended_action
             self._retry_after_seconds = retry_after
 
-    def snapshot_view(self, *, ignore_max_age: bool = False) -> SnapshotView | None:
+    def snapshot_view(self) -> SnapshotView | None:
         with self._lock:
             snapshot = self._snapshot
         if snapshot is None:
             return None
         maximum = self._config.max_cached_snapshot_age_seconds
-        if maximum and not ignore_max_age:
+        if maximum:
             age = (
                 datetime.now(timezone.utc)
                 - snapshot.generated_at.astimezone(timezone.utc)
@@ -461,12 +460,10 @@ class GatewayHttpServer(ThreadingHTTPServer):
         api_token: str,
         *,
         health_endpoint_enabled: bool,
-        migration_snapshot_enabled: bool = False,
     ) -> None:
         self.gateway_state = state
         self.api_token = api_token
         self.health_endpoint_enabled = health_endpoint_enabled
-        self.migration_snapshot_enabled = migration_snapshot_enabled
         super().__init__(server_address, GatewayRequestHandler)
 
 
@@ -495,15 +492,6 @@ class GatewayRequestHandler(BaseHTTPRequestHandler):
         if self.path in {"/api/v1/portfolio", "/v1/portfolio"}:
             self._serve_portfolio()
             return
-        if (
-            self.path == MIGRATION_SNAPSHOT_PATH
-            and self.gateway_server.migration_snapshot_enabled
-        ):
-            # This read-only endpoint exists solely so a bridge migration can
-            # compare an old canonical snapshot after the normal serving-age
-            # policy has expired. It never changes normal snapshot availability.
-            self._serve_portfolio(ignore_max_age=True)
-            return
         if self.path == "/healthz" and self.gateway_server.health_endpoint_enabled:
             self._serve_health()
             return
@@ -527,10 +515,8 @@ class GatewayRequestHandler(BaseHTTPRequestHandler):
     def do_OPTIONS(self) -> None:  # noqa: N802
         self._method_not_allowed()
 
-    def _serve_portfolio(self, *, ignore_max_age: bool = False) -> None:
-        view = self.gateway_server.gateway_state.snapshot_view(
-            ignore_max_age=ignore_max_age
-        )
+    def _serve_portfolio(self) -> None:
+        view = self.gateway_server.gateway_state.snapshot_view()
         if view is None:
             self._send_error(HTTPStatus.SERVICE_UNAVAILABLE, retry_after=60)
             return
@@ -653,8 +639,6 @@ class GatewayRequestHandler(BaseHTTPRequestHandler):
 def create_server(
     config: ServerConfig,
     state: GatewayState,
-    *,
-    migration_snapshot_enabled: bool = False,
 ) -> GatewayHttpServer:
     token = read_secret(
         config.api_token_file,
@@ -667,7 +651,6 @@ def create_server(
         state,
         token,
         health_endpoint_enabled=config.health_endpoint_enabled,
-        migration_snapshot_enabled=migration_snapshot_enabled,
     )
     if config.tls_cert_file and config.tls_key_file:
         context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)

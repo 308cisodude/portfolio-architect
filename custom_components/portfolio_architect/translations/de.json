@@ -10,7 +10,7 @@
           "config_directory": "Verzeichnis der Portfolio-Konfiguration"
         },
         "data_description": {
-          "source_provider": "Comdirect-CSV, DKB-Depot-CSV, eine zugeordnete allgemeine CSV oder den lokalen REST-JSON-Gateway-Vertrag auswählen.",
+          "source_provider": "Comdirect-CSV, eine zugeordnete allgemeine CSV oder den lokalen REST-JSON-Gateway-Vertrag auswählen.",
           "config_directory": "Relativ zu /config. Muss portfolio.yaml, policy.yaml, instruments.yaml und broker.yaml enthalten; exceptions.yaml ist optional."
         }
       },
@@ -22,7 +22,7 @@
           "config_directory": "Verzeichnis der Portfolio-Konfiguration"
         },
         "data_description": {
-          "source_provider": "Comdirect-CSV, DKB-Depot-CSV, eine zugeordnete allgemeine CSV oder den lokalen REST-JSON-Gateway-Vertrag auswählen.",
+          "source_provider": "Comdirect-CSV, eine zugeordnete allgemeine CSV oder den lokalen REST-JSON-Gateway-Vertrag auswählen.",
           "config_directory": "Relativ zu /config. Muss portfolio.yaml, policy.yaml, instruments.yaml und broker.yaml enthalten; exceptions.yaml ist optional."
         }
       },
@@ -109,16 +109,6 @@
         "data_description": {
           "rest_api_token": "Dediziertes Bearer-Token dieses Gateways. HTTPS-Endpunkt und private CA werden über die Supervisor-Erkennung bereitgestellt."
         }
-      },
-      "hassio_migrate_dkb_csv_confirm": {
-        "title": "Alte DKB-CSV-Quelle zum DKB-Gateway migrieren",
-        "description": "Home Assistant hat das DKB-Gateway unter {gateway} erkannt. Portfolio Architect entfernt die {source_count} konfigurierten alten DKB-CSV-Pfade erst, nachdem der Gateway-Snapshot mit deren kanonischen Beständen, Stückzahlen, Instrumentenidentitäten und konservativem Quellzeitstempel exakt übereinstimmt. Bearer-Token des DKB-Gateways eingeben, um die Migration zu validieren.",
-        "data": {
-          "rest_api_token": "Bearer-Token des DKB-Gateways"
-        },
-        "data_description": {
-          "rest_api_token": "Dediziertes Bearer-Token aus der DKB-Gateway-App. HTTPS-Endpunkt und private CA stammen aus der Supervisor-Erkennung."
-        }
       }
     },
     "error": {
@@ -128,9 +118,7 @@
       "invalid_provider": "Einen unterstützten Quelladapter auswählen.",
       "invalid_csv_format": "Die CSV-Kopfzeile konnte mit diesen Formateinstellungen nicht gelesen werden.",
       "invalid_rest_source": "Das lokale REST-Gateway oder seine JSON-Antwort erfüllt den begrenzten Portfolio-Architect-Quellvertrag nicht.",
-      "invalid_auth": "Das lokale REST-Gateway hat das Bearer-Token abgelehnt.",
-      "dkb_gateway_migration_mismatch": "Der Snapshot des DKB-Gateways stimmt nicht exakt mit den konfigurierten alten DKB-CSV-Beständen und dem Quellzeitstempel überein. Die Quellkonfiguration wurde nicht geändert.",
-      "dkb_gateway_migration_snapshot_unavailable": "Das DKB-Gateway kann seinen begrenzten Migrations-Snapshot nicht bereitstellen. Aktualisiere die DKB-Gateway-App auf v1.45.1 oder neuer und versuche es erneut. Die Quellkonfiguration wurde nicht geändert."
+      "invalid_auth": "Das lokale REST-Gateway hat das Bearer-Token abgelehnt."
     },
     "abort": {
       "already_configured": "Portfolio Architect ist bereits konfiguriert. Verwende bei der vorhandenen Integration „Neu konfigurieren“, um die Quelle zu ändern.",
@@ -144,8 +132,7 @@
       "tls_already_configured": "Dieses Gateway verwendet bereits das entdeckte verifizierte HTTPS-Vertrauen.",
       "tls_validation_failed": "Der entdeckte HTTPS-Endpunkt konnte mit der bereitgestellten privaten CA und dem vorhandenen Bearer-Token nicht validiert werden.",
       "tls_migrated": "Die passende Gateway-Quelle wurde erfolgreich auf verifiziertes HTTPS migriert.",
-      "tls_supplemental_added": "Das entdeckte Gateway wurde validiert und als zusätzliche verifizierte HTTPS-Quelle hinzugefügt.",
-      "dkb_gateway_migrated": "Der Snapshot des DKB-Gateways stimmte exakt mit der alten DKB-CSV-Quelle überein. Portfolio Architect hat die alten CSV-Pfade atomar durch das verifizierte HTTPS-DKB-Gateway ersetzt."
+      "tls_supplemental_added": "Das entdeckte Gateway wurde validiert und als zusätzliche verifizierte HTTPS-Quelle hinzugefügt."
     }
   },
   "entity": {
@@ -1242,7 +1229,6 @@
           "comdirect_csv": "Comdirect-CSV",
           "generic_csv": "Allgemeine CSV",
           "local_rest_json": "Lokales REST-JSON",
-          "dkb_csv": "DKB-CSV",
           "multi_source": "Portfolio aus mehreren Quellen"
         }
       },
@@ -2487,7 +2473,6 @@
         "title": "Portfolioquellen",
         "description": "Ergänzende Portfolioquellen verwalten. Jede Quelle wird vor der Aggregation normalisiert; providerspezifische Erfassung bleibt außerhalb von Portfolio Architect.",
         "menu_options": {
-          "dkb_sources": "DKB-CSV-Quellen",
           "rest_gateways": "Zusätzliche REST-Gateways"
         }
       },
@@ -2535,16 +2520,6 @@
           "manual_commission_pct": "Prozent des Orderwerts. Gib 0,25 für 0,25 % ein.",
           "manual_venue_fee_bps": "100 Basispunkte entsprechen 1 %. Gib 0,25 für 0,0025 % ein.",
           "manual_settlement_fee_eur": "Zusätzliches festes Abwicklungsentgelt der gewählten Ausführungsart."
-        }
-      },
-      "dkb_sources": {
-        "title": "DKB-CSV-Quellen",
-        "description": "Füge der Primärquelle DKB-Depotexporte hinzu, je relativer CSV-Pfad eine Zeile. Positionen werden anhand der ISIN konsolidiert; Depotnummern werden ignoriert.",
-        "data": {
-          "supplemental_dkb_csv_paths": "Pfade zu DKB-CSV-Dateien"
-        },
-        "data_description": {
-          "supplemental_dkb_csv_paths": "Relativ zu /config. Pro DKB-Depot sollte ein aktueller Export verwendet werden. Sind mehrere datierte Exporte desselben Depots konfiguriert, wird nur der neueste berücksichtigt. Bis zu 8 Pfade werden unterstützt."
         }
       },
       "rest_gateways": {
@@ -2836,7 +2811,6 @@
         "comdirect_csv": "Comdirect-Depot-CSV",
         "generic_csv": "Allgemeine zugeordnete CSV",
         "local_rest_json": "Lokales REST-JSON-Gateway",
-        "dkb_csv": "DKB-Depot-CSV",
         "multi_source": "Portfolio aus mehreren Quellen"
       }
     },

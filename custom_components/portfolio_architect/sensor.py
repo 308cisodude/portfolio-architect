@@ -32,7 +32,7 @@ from .allocation_overview import allocation_overview_state, build_allocation_ove
 from .decision_trace import PLAN_CHANGE_STATES
 from .coordinator import PortfolioArchitectCoordinator
 from .engine.aggregation import PROVIDER_MULTI_SOURCE
-from .engine.importers import PROVIDER_COMDIRECT, PROVIDER_DKB, PROVIDER_GENERIC_CSV
+from .engine.importers import PROVIDER_COMDIRECT, PROVIDER_GENERIC_CSV
 from .engine.rest import PROVIDER_LOCAL_REST_JSON
 from .execution_semantics import PLAN_ACTIONABILITY_STATES, derive_plan_actionability
 from .execution_path import EXECUTION_PATH_MODES, EXECUTION_PATH_SCHEMA_VERSION, build_execution_path
@@ -2484,7 +2484,6 @@ class PortfolioSourceProviderSensor(
     _attr_device_class = SensorDeviceClass.ENUM
     _attr_options = [
         PROVIDER_COMDIRECT,
-        PROVIDER_DKB,
         PROVIDER_GENERIC_CSV,
         PROVIDER_LOCAL_REST_JSON,
         PROVIDER_MULTI_SOURCE,
@@ -3653,12 +3652,6 @@ def _position_source_contributions(
         if isinstance(item, dict) and item.get("source_id")
     ]
     summaries = {str(item.get("source_id")): item for item in ordered_summaries}
-    dkb_ids = [
-        str(item.get("source_id"))
-        for item in ordered_summaries
-        if item.get("provider") == PROVIDER_DKB
-    ]
-    dkb_ordinals = {source_id: index for index, source_id in enumerate(dkb_ids, start=1)}
     rows: list[dict[str, Any]] = []
     for source_id, value_eur in position.source_values_eur:
         summary = summaries.get(source_id, {})
@@ -3666,12 +3659,6 @@ def _position_source_contributions(
         label = str(summary.get("label") or source_id)
         if provider == PROVIDER_LOCAL_REST_JSON:
             display_name = "Comdirect" if label == "Comdirect REST" else "Local REST"
-        elif provider == PROVIDER_DKB:
-            display_name = (
-                "DKB"
-                if len(dkb_ids) == 1
-                else f"DKB {dkb_ordinals.get(source_id, 1)}"
-            )
         else:
             display_name = label.replace(" REST", "").replace(" CSV", "")
         rows.append(

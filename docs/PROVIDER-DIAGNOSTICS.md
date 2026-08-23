@@ -23,7 +23,7 @@ A response fingerprint may be retained only when the provider-specific data clas
 
 The anonymous FinTS BPD probe has no customer login, PIN/TAN, account or holdings request. Its v1.31.2 diagnostic state therefore retains only bounded `HIRMG`/`HIRMS` return codes and sanitized return-message text, plus decoded-response SHA-256/byte count for correlation. The configured 25-character FinTS product registration identity is redacted if echoed. Raw FinTS response bytes and arbitrary segment payload are discarded.
 
-A successful BPD response replaces an earlier failure state. DKB CSV acquisition is active through the experimental auto-starting DKB Gateway; v1.45.1 adds only a migration-only stale canonical read and leaves normal age-based availability unchanged; authenticated FinTS remains disabled until later authenticated user-capability gates are separately implemented and accepted.
+A successful BPD response replaces an earlier failure state. DKB CSV acquisition is active through the experimental auto-starting DKB Gateway; v1.46.0 removes the completed legacy-migration-only read surface while leaving normal age-based availability unchanged. Authenticated FinTS remains disabled until later authenticated user-capability gates are separately implemented and accepted.
 
 ## Comdirect
 

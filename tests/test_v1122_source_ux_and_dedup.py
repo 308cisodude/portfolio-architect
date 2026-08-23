@@ -1,45 +1,65 @@
-"""v1.12.2 source UX and DKB snapshot selection contracts."""
+"""v1.12 DKB supersession semantics retained inside the DKB Gateway."""
 
 from pathlib import Path
+import importlib
+import importlib.util
 import sys
+
+import pytest
 import yaml
 
 ROOT = Path(__file__).parents[1]
 COMPONENT = ROOT / "custom_components" / "portfolio_architect"
-sys.path.insert(0, str(COMPONENT))
+PACKAGE = ROOT / "home_assistant_app" / "portfolio_architect_gateway_dkb" / "src" / "portfolio_architect_gateway"
+TEST_PACKAGE = "portfolio_architect_gateway_dkb_v1122_test"
 
-from engine.importers import select_latest_dkb_exports  # noqa: E402
+
+def _load_dkb_csv():
+    if TEST_PACKAGE not in sys.modules:
+        spec = importlib.util.spec_from_file_location(
+            TEST_PACKAGE,
+            PACKAGE / "__init__.py",
+            submodule_search_locations=[str(PACKAGE)],
+        )
+        assert spec is not None and spec.loader is not None
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[TEST_PACKAGE] = module
+        spec.loader.exec_module(module)
+    return importlib.import_module(f"{TEST_PACKAGE}.dkb_csv")
 
 
-def _write_dkb(path: Path, *, date: str, depot: str, price: str = "100,00 €") -> None:
-    path.write_text(
-        "Datum der Erstellung;Depotnummer;Wertpapierbezeichnung;WKN;ISIN;Einstiegskurs;Bewertungskurs;Stückzahl;Absoluter Gewinn;Relativer Gewinn;Assetklasse\n"
-        f"{date};{depot};X(IE)-MSCI WORLD 1C;A1XB5U;IE00BJ0KDQ92;\"141,76 €\";\"{price}\";2;-,--; -;ETFs\n",
-        encoding="utf-8",
+def _dkb(*, date: str, depot: str, price: str = "100,00") -> bytes:
+    return (
+        "Datum der Erstellung;Depotnummer;Wertpapierbezeichnung;WKN;ISIN;"
+        "Einstiegskurs;Bewertungskurs;Stückzahl;Absoluter Gewinn;Relativer Gewinn;Assetklasse\n"
+        f'{date};{depot};X(IE)-MSCI WORLD 1C;A1XB5U;IE00BJ0KDQ92;"141,76 €";'
+        f'"{price} €";2;-,--; -;ETFs\n'
+    ).encode("utf-8")
+
+
+def test_newest_export_for_same_dkb_depot_supersedes_older() -> None:
+    dkb_csv = _load_dkb_csv()
+    snapshot, summary = dkb_csv.parse_dkb_csv_batch(
+        (
+            _dkb(date="31.07.2026", depot="DEPOT-1"),
+            _dkb(date="01.08.2026", depot="DEPOT-1"),
+            _dkb(date="31.07.2026", depot="DEPOT-2"),
+        )
     )
+    assert summary.input_file_count == 3
+    assert summary.selected_depot_count == 2
+    assert len(snapshot.positions) == 1
 
 
-def test_newest_export_for_same_dkb_depot_supersedes_older(tmp_path: Path) -> None:
-    old = tmp_path / "old.csv"
-    new = tmp_path / "new.csv"
-    other = tmp_path / "other.csv"
-    _write_dkb(old, date="31.07.2026", depot="111111111")
-    _write_dkb(new, date="01.08.2026", depot="111111111")
-    _write_dkb(other, date="31.07.2026", depot="222222222")
-    assert select_latest_dkb_exports((old, new, other)) == (new, other)
-
-
-def test_same_depot_same_date_conflict_fails_closed(tmp_path: Path) -> None:
-    first = tmp_path / "first.csv"
-    second = tmp_path / "second.csv"
-    _write_dkb(first, date="31.07.2026", depot="111111111", price="100,00 €")
-    _write_dkb(second, date="31.07.2026", depot="111111111", price="101,00 €")
-    try:
-        select_latest_dkb_exports((first, second))
-    except ValueError as err:
-        assert "same depot and date" in str(err)
-    else:
-        raise AssertionError("ambiguous same-date DKB exports must be rejected")
+def test_same_depot_same_date_conflict_fails_closed() -> None:
+    dkb_csv = _load_dkb_csv()
+    with pytest.raises(dkb_csv.DkbCsvImportError, match="same depot and date"):
+        dkb_csv.parse_dkb_csv_batch(
+            (
+                _dkb(date="31.07.2026", depot="DEPOT-1", price="100,00"),
+                _dkb(date="31.07.2026", depot="DEPOT-1", price="101,00"),
+            )
+        )
 
 
 def test_provenance_uses_friendly_provider_labels() -> None:
@@ -47,13 +67,13 @@ def test_provenance_uses_friendly_provider_labels() -> None:
     coordinator = (COMPONENT / "coordinator.py").read_text()
     assert 'return "Comdirect REST"' in coordinator
     assert 'display_name = "Comdirect"' in sensor
-    assert '"DKB"' in sensor
+    assert '"dkb": "DKB"' in coordinator
     assert "_compact_source_summary" in sensor
     assert "local-portfolio-architect-gateway/api" not in sensor
 
 
 def test_outside_scope_holdings_use_bounded_native_dynamic_list() -> None:
-    dashboard = yaml.safe_load((ROOT / "dashboard/allocation-stack.yaml").read_text())
+    dashboard = yaml.safe_load((ROOT / "dashboard" / "allocation-stack.yaml").read_text())
     cards = dashboard["cards"]
     outside = next(
         item for item in cards

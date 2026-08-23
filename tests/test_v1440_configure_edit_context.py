@@ -1,4 +1,4 @@
-"""Regression coverage for the v1.45.1 Configure UX consistency pass."""
+"""Regression coverage for the v1.46.0 Configure UX consistency pass."""
 from __future__ import annotations
 
 import ast
@@ -60,6 +60,12 @@ def _menu_options_in_emission_order(function_name: str) -> list[str]:
         and node.func.attr == "async_show_menu"
     )
     keyword = next(item for item in show_menu.keywords if item.arg == "menu_options")
+    if isinstance(keyword.value, (ast.List, ast.Tuple)):
+        return [
+            item.value
+            for item in keyword.value.elts
+            if isinstance(item, ast.Constant) and isinstance(item.value, str)
+        ]
     assert isinstance(keyword.value, ast.Name)
     variable = keyword.value.id
 
@@ -109,6 +115,23 @@ def _menu_options_in_emission_order(function_name: str) -> list[str]:
         for value in values:
             if value not in result:
                 result.append(value)
+    for node in ast.walk(method):
+        if not (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and isinstance(node.func.value, ast.Name)
+            and node.func.value.id == variable
+            and node.func.attr == "insert"
+            and len(node.args) == 2
+            and isinstance(node.args[0], ast.Constant)
+            and isinstance(node.args[0].value, int)
+            and isinstance(node.args[1], ast.Constant)
+            and isinstance(node.args[1].value, str)
+        ):
+            continue
+        value = node.args[1].value
+        if value not in result:
+            result.insert(node.args[0].value, value)
     return result
 
 

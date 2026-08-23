@@ -75,14 +75,14 @@ async def async_migrate_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
 ) -> bool:
-    """Migrate a Portfolio Architect config entry to schema version 9."""
+    """Migrate a Portfolio Architect config entry to schema version 10."""
     _LOGGER.debug(
         "Migrating Portfolio Architect config entry from version %s.%s",
         entry.version,
         entry.minor_version,
     )
 
-    if entry.version > 9:
+    if entry.version > 10:
         _LOGGER.error(
             "Cannot migrate Portfolio Architect config entry from future version %s",
             entry.version,
@@ -224,6 +224,35 @@ async def async_migrate_entry(
         # state until the corresponding Gateway publishes verified TLS discovery.
         hass.config_entries.async_update_entry(entry, version=9)
         _LOGGER.info("Migrated Portfolio Architect to the verified-HTTPS transport schema")
+
+    if entry.version < 10:
+        # v1.46 retires the completed PA-side DKB CSV acquisition/migration bridge.
+        # Never silently discard a still-active legacy source: installations must
+        # complete the v1.45.1 verified DKB Gateway cut-over first.
+        legacy_primary = entry.data.get(CONF_SOURCE_PROVIDER) == "dkb_csv"
+        legacy_option_key = "supplemental_dkb_csv_paths"
+        raw_legacy_paths = entry.options.get(legacy_option_key)
+        legacy_supplemental = raw_legacy_paths not in (None, "", [])
+        if legacy_primary or legacy_supplemental:
+            _LOGGER.error(
+                "Cannot migrate Portfolio Architect to schema 10 while legacy "
+                "DKB CSV acquisition is still configured. Install v1.45.1, "
+                "migrate the DKB CSV source to Portfolio Architect Gateway — DKB, "
+                "verify provider_id dkb, then update to v1.46.0."
+            )
+            return False
+
+        options = dict(entry.options)
+        options.pop(legacy_option_key, None)
+        hass.config_entries.async_update_entry(
+            entry,
+            options=options,
+            version=10,
+        )
+        _LOGGER.info(
+            "Retired the completed legacy DKB CSV migration bridge from the "
+            "Portfolio Architect config entry"
+        )
 
     if migrated_entities:
         _LOGGER.info(

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.46.0
+
+- Package/version alignment for v1.46.0; removes the now-unused DKB migration-only common-server endpoint. Comdirect runtime semantics are unchanged.
+
 ## 1.45.1
 
 - Package/version alignment for the v1.45.1 DKB migration hotfix.

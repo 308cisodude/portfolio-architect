@@ -16,8 +16,6 @@ def evidence_kind(provider: str) -> str:
         return "live_api"
     if token == "trade_republic":
         return "imported_statement"
-    if token == "dkb_csv":
-        return "imported_csv"
     if token in {"dkb", "local_rest_json"}:
         return "gateway_snapshot"
     return "other"

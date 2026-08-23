@@ -572,9 +572,17 @@ from current portfolio value.
 
 Live acceptance of v1.45.0 proved the exact atomic DKB source cut-over but exposed that an old legacy comparison snapshot could be older than the DKB Gateway's normal seven-day serving horizon. v1.45.1 keeps that normal runtime age gate intact, adds a DKB-only authenticated migration read of the already-normalized canonical snapshot, and makes expired Gateway health metadata schema-consistent.
 
+
+## v1.46.0 — retire the completed PA-side DKB CSV bridge
+
+- Remove the provider-specific `dkb_csv` parser, supplemental path model and DKB migration UI from the Home Assistant integration after v1.45.1 live acceptance proved the Gateway cut-over.
+- Add schema-10 fail-closed migration: any installation that still has active legacy DKB CSV acquisition must complete the v1.45.1 Gateway migration before upgrading.
+- Remove the temporary DKB migration-only REST endpoint from the common Gateway/App surface; ordinary DKB Gateway CSV acquisition and the anonymous FinTS probe remain unchanged.
+- Preserve source-set/LKG behavior, schemas, private-PKI transport, cash routing, planner economics and dashboard behavior.
+
 ## After v1.45.0 — provider acquisition cleanup
 
-- After DKB Gateway CSV migration is live-proven, retire the legacy PA-side `dkb_csv` parser/path without double counting or weakening rollback evidence.
+- **Completed in v1.46.0:** retire the legacy PA-side `dkb_csv` parser/path after live-proven Gateway migration.
 - Next, move the existing Comdirect CSV adapter into the Comdirect Gateway alongside its live API acquisition, with explicit acquisition policy and no silent fallback from configured live acquisition to stale upload data.
 - Later introduce a deliberate generic import Gateway and move provider-neutral mapped CSV parsing out of Portfolio Architect itself.
 

@@ -8,10 +8,8 @@ logic therefore remain provider-neutral.
 from __future__ import annotations
 
 import csv
-import hashlib
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
-from datetime import datetime, time, timezone
 from pathlib import Path
 import re
 from typing import Any, Final
@@ -21,9 +19,8 @@ from .models import Position
 D = Decimal
 
 PROVIDER_COMDIRECT: Final = "comdirect_csv"
-PROVIDER_DKB: Final = "dkb_csv"
 PROVIDER_GENERIC_CSV: Final = "generic_csv"
-SUPPORTED_PROVIDERS: Final = (PROVIDER_COMDIRECT, PROVIDER_DKB, PROVIDER_GENERIC_CSV)
+SUPPORTED_PROVIDERS: Final = (PROVIDER_COMDIRECT, PROVIDER_GENERIC_CSV)
 
 CSV_ENCODING_AUTO: Final = "auto"
 CSV_ENCODINGS: Final = (
@@ -119,7 +116,7 @@ class CsvSourceConfig:
         provider = str(values.get("source_provider", PROVIDER_COMDIRECT))
         if provider not in SUPPORTED_PROVIDERS:
             raise ValueError("Unsupported portfolio source provider")
-        if provider in {PROVIDER_COMDIRECT, PROVIDER_DKB}:
+        if provider == PROVIDER_COMDIRECT:
             return cls(provider=provider)
 
         encoding = str(values.get("csv_encoding", DEFAULT_GENERIC_ENCODING))
@@ -185,8 +182,6 @@ def read_positions(csv_path: Path, config: CsvSourceConfig) -> dict[str, Positio
     """Dispatch one CSV file to its explicit provider adapter."""
     if config.provider == PROVIDER_COMDIRECT:
         return read_comdirect_positions(csv_path)
-    if config.provider == PROVIDER_DKB:
-        return read_dkb_positions(csv_path)
     if config.provider == PROVIDER_GENERIC_CSV:
         return read_generic_positions(csv_path, config)
     raise ValueError("Unsupported portfolio source provider")
@@ -266,178 +261,6 @@ def read_comdirect_positions(csv_path: Path) -> dict[str, Position]:
     if not result:
         raise ValueError("No valid securities positions found in Comdirect export")
     return result
-
-
-def read_dkb_positions(csv_path: Path) -> dict[str, Position]:
-    """Read a DKB depot export and derive exact EUR market values.
-
-    DKB exports valuation price and quantity instead of a market-value column.
-    Depot identifiers and performance columns are deliberately ignored.
-    """
-    rows = _read_csv_with_encoding(csv_path, "utf-8-sig", ";")
-    if not rows:
-        raise ValueError("DKB CSV is empty")
-    header = rows[0]
-    required = {
-        "Datum der Erstellung",
-        "Wertpapierbezeichnung",
-        "WKN",
-        "ISIN",
-        "Bewertungskurs",
-        "Stückzahl",
-        "Assetklasse",
-    }
-    if not required.issubset(set(header)):
-        raise ValueError("DKB CSV does not contain the required depot-export columns")
-    if len(set(header)) != len(header):
-        raise ValueError("DKB CSV contains duplicate header names")
-
-    result: dict[str, Position] = {}
-    for row_number, row in enumerate(rows[1:], start=2):
-        if not row or all(not str(value).strip() for value in row):
-            continue
-        if len(row) < len(header):
-            row = [*row, *( [""] * (len(header) - len(row)) )]
-        record = dict(zip(header, row, strict=False))
-        identifier = str(record.get("WKN", "")).strip().upper()
-        if not identifier:
-            continue
-        _validate_identifier(identifier, row_number=row_number)
-        isin = str(record.get("ISIN", "")).strip().upper()
-        _validate_isin(isin, row_number=row_number)
-        name = _clean_text(
-            record.get("Wertpapierbezeichnung", ""),
-            field=f"CSV row {row_number} name",
-            maximum=_MAX_NAME_LENGTH,
-            required=True,
-        )
-        source_type = _clean_text(
-            record.get("Assetklasse", "Other") or "Other",
-            field=f"CSV row {row_number} instrument type",
-            maximum=_MAX_SOURCE_TYPE_LENGTH,
-            required=True,
-        )
-        price = parse_number(record.get("Bewertungskurs", "0"), "comma_decimal")
-        quantity = parse_number(record.get("Stückzahl", "0"), "comma_decimal")
-        if price < 0 or quantity < 0:
-            raise ValueError(f"CSV row {row_number} contains a negative price or quantity")
-        value_eur = price * quantity
-        candidate = Position(
-            wkn=identifier,
-            isin=isin,
-            name=name,
-            instrument_type=_instrument_type(source_type),
-            source_type=source_type,
-            value_eur=value_eur,
-            quantity=quantity,
-        )
-        existing = result.get(identifier)
-        if existing is None:
-            if len(result) >= _MAX_POSITIONS:
-                raise ValueError(f"CSV may contain at most {_MAX_POSITIONS} positions")
-            if value_eur > _MAX_POSITION_VALUE_EUR:
-                raise ValueError(f"CSV row {row_number} position value is outside the allowed range")
-            result[identifier] = candidate
-            continue
-        if (
-            existing.isin != candidate.isin
-            or existing.instrument_type != candidate.instrument_type
-        ):
-            raise ValueError(
-                f"DKB CSV contains conflicting rows for instrument identifier {identifier}"
-            )
-        merged_value = existing.value_eur + candidate.value_eur
-        if merged_value > _MAX_POSITION_VALUE_EUR:
-            raise ValueError(f"CSV row {row_number} position value is outside the allowed range")
-        result[identifier] = Position(
-            wkn=existing.wkn,
-            isin=existing.isin,
-            name=existing.name,
-            instrument_type=existing.instrument_type,
-            source_type=existing.source_type,
-            value_eur=merged_value,
-            quantity=(existing.quantity or Decimal("0")) + (candidate.quantity or Decimal("0")),
-        )
-    if not result:
-        raise ValueError("No valid securities positions found in DKB export")
-    return result
-
-
-@dataclass(frozen=True, slots=True)
-class _DkbExportMetadata:
-    """Private identity and timestamp used only for safe export selection."""
-
-    generated_at: datetime
-    portfolio_key: str
-
-
-def _dkb_export_metadata(csv_path: Path) -> _DkbExportMetadata:
-    """Read the export date and depot identity without exposing either identifier."""
-    rows = _read_csv_with_encoding(csv_path, "utf-8-sig", ";")
-    if len(rows) < 2:
-        raise ValueError("DKB CSV is empty")
-    header = rows[0]
-    required = {"Datum der Erstellung", "Depotnummer"}
-    if not required.issubset(set(header)):
-        raise ValueError("DKB CSV does not contain export identity metadata")
-    date_index = header.index("Datum der Erstellung")
-    depot_index = header.index("Depotnummer")
-    dates: set[str] = set()
-    depots: set[str] = set()
-    for row in rows[1:]:
-        if not row or all(not str(value).strip() for value in row):
-            continue
-        if date_index < len(row) and row[date_index].strip():
-            dates.add(row[date_index].strip())
-        if depot_index < len(row) and row[depot_index].strip():
-            depots.add(row[depot_index].strip())
-    if len(dates) != 1 or len(depots) != 1:
-        raise ValueError("DKB CSV must describe exactly one depot and one export date")
-    token = next(iter(dates))
-    try:
-        parsed = datetime.strptime(token, "%d.%m.%Y").date()
-    except ValueError as err:
-        raise ValueError("DKB CSV contains an invalid export date") from err
-    return _DkbExportMetadata(
-        generated_at=datetime.combine(parsed, time.min, tzinfo=timezone.utc),
-        portfolio_key=next(iter(depots)),
-    )
-
-
-def dkb_export_timestamp(csv_path: Path) -> datetime:
-    """Return the source-owned DKB export date as a UTC timestamp."""
-    return _dkb_export_metadata(csv_path).generated_at
-
-
-def select_latest_dkb_exports(paths: tuple[Path, ...]) -> tuple[Path, ...]:
-    """Keep only the newest export for each DKB depot, preserving depot order.
-
-    The depot number is used only as an in-memory comparison key. It is never
-    returned, persisted, logged, or included in Portfolio Architect payloads.
-    """
-    selected: dict[str, tuple[Path, _DkbExportMetadata, str]] = {}
-    for path in paths:
-        metadata = _dkb_export_metadata(path)
-        digest = hashlib.sha256(path.read_bytes()).hexdigest()
-        existing = selected.get(metadata.portfolio_key)
-        if existing is None:
-            selected[metadata.portfolio_key] = (path, metadata, digest)
-            continue
-        existing_path, existing_metadata, existing_digest = existing
-        if metadata.generated_at > existing_metadata.generated_at:
-            selected[metadata.portfolio_key] = (path, metadata, digest)
-            continue
-        if metadata.generated_at < existing_metadata.generated_at:
-            continue
-        if digest != existing_digest:
-            raise ValueError(
-                "Multiple DKB exports for the same depot and date contain different data"
-            )
-        # Identical duplicate: retain the first configured path deterministically.
-        selected[metadata.portfolio_key] = (
-            existing_path, existing_metadata, existing_digest
-        )
-    return tuple(item[0] for item in selected.values())
 
 
 def read_generic_positions(

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.46.0
+
+- Removes the temporary migration-only canonical-snapshot endpoint after the PA-side legacy DKB CSV bridge was live-proven and retired. DKB CSV acquisition and FinTS probing are unchanged.
+
 ## 1.45.1
 
 - Adds the authenticated read-only migration snapshot endpoint used only to compare an old legacy DKB CSV after the normal serving-age limit has expired.

@@ -80,7 +80,6 @@ from .const import (
     CONF_PLAN_SCHEDULE_ENABLED,
     CONF_REVIEW_LEAD_DAYS,
     CONF_SOURCE_PROVIDER,
-    CONF_SUPPLEMENTAL_DKB_CSV_PATHS,
     CONF_SUPPLEMENTAL_REST_SOURCES,
     CONF_SOURCE_TYPE,
     DEFAULT_CONFIG_DIRECTORY,
@@ -102,7 +101,6 @@ from .const import (
     MAX_REVIEW_LEAD_DAYS,
     EXECUTION_POLICIES,
     EXECUTION_RESERVE_MODES,
-    MAX_SUPPLEMENTAL_SOURCES,
     MAX_SUPPLEMENTAL_REST_SOURCES,
     MIN_EXECUTION_MONTH,
     MIN_EXECUTION_MONTH_OFFSET,
@@ -136,11 +134,7 @@ from .broker_editor import (
     write_broker_document_atomic,
 )
 from .engine import calculate_portfolio_payload, calculate_portfolio_payload_from_positions
-from .gateway_provider_ids import (
-    GATEWAY_PROVIDER_COMDIRECT,
-    GATEWAY_PROVIDER_DKB,
-    gateway_provider_conflicts_with_dkb_csv,
-)
+from .gateway_provider_ids import GATEWAY_PROVIDER_COMDIRECT
 CONF_MANUAL_VENUE_FEE_BPS = "manual_venue_fee_bps"
 
 # Native broker editor fields intentionally remain local to the options flow. The
@@ -179,16 +173,12 @@ from .engine.importers import (
     DEFAULT_GENERIC_HEADER_ROW,
     MAX_GENERIC_HEADER_ROW,
     PROVIDER_COMDIRECT,
-    PROVIDER_DKB,
     PROVIDER_GENERIC_CSV,
     CsvSourceConfig,
     inspect_csv_headers,
-    dkb_export_timestamp,
     read_positions,
-    select_latest_dkb_exports,
 )
-from .engine.aggregation import PortfolioSourceSnapshot, aggregate_sources
-from .engine.rest import PROVIDER_LOCAL_REST_JSON, RestSnapshot
+from .engine.rest import PROVIDER_LOCAL_REST_JSON
 from .engine.targets import generate_target_id
 from .model import PortfolioArchitectDataError, parse_portfolio_data
 from .plan_editor import (
@@ -201,12 +191,10 @@ from .rest_client import (
     GatewayTlsDiscovery,
     PortfolioRestAuthenticationError,
     PortfolioRestError,
-    PortfolioRestMigrationSnapshotUnavailableError,
     PortfolioRestTlsError,
     RestSourceConfig,
     SupplementalRestSourceConfig,
     async_fetch_gateway_health,
-    async_fetch_gateway_migration_snapshot,
     async_fetch_rest_snapshot,
 )
 from .schedule import validate_schedule_config
@@ -214,7 +202,6 @@ from .source import (
     PortfolioSourcePathError,
     resolve_configuration_directory,
     resolve_local_source_paths,
-    resolve_supplemental_csv_paths,
 )
 
 
@@ -242,62 +229,16 @@ _GENERIC_KEYS = (
 
 _SUPPORTED_SOURCE_PROVIDERS = (
     PROVIDER_COMDIRECT,
-    PROVIDER_DKB,
     PROVIDER_GENERIC_CSV,
     PROVIDER_LOCAL_REST_JSON,
 )
 
 
-def _legacy_dkb_snapshot_for_migration(
-    resolved: tuple[Any, ...],
-) -> RestSnapshot:
-    """Calculate the exact canonical legacy DKB view without exposing depot identity."""
-    selected = select_latest_dkb_exports(tuple(item.path for item in resolved))
-    sources: list[PortfolioSourceSnapshot] = []
-    for index, path in enumerate(selected, start=1):
-        sources.append(
-            PortfolioSourceSnapshot(
-                source_id=f"dkb_{index}",
-                provider=PROVIDER_DKB,
-                label="DKB CSV",
-                generated_at=dkb_export_timestamp(path),
-                positions=read_positions(path, CsvSourceConfig(provider=PROVIDER_DKB)),
-            )
-        )
-    aggregate = aggregate_sources(sources)
-    return RestSnapshot(
-        generated_at=aggregate.oldest_generated_at,
-        positions=aggregate.positions,
-    )
-
-
-def _dkb_migration_snapshots_match(legacy: RestSnapshot, gateway: RestSnapshot) -> bool:
-    """Require exact holdings identity/economics/quantity and conservative timestamp parity."""
-    if legacy.generated_at != gateway.generated_at:
-        return False
-
-    def signature(snapshot: RestSnapshot) -> tuple[tuple[object, ...], ...]:
-        return tuple(
-            sorted(
-                (
-                    item.wkn,
-                    item.isin,
-                    item.name,
-                    item.instrument_type,
-                    item.value_eur,
-                    item.quantity,
-                )
-                for item in snapshot.positions.values()
-            )
-        )
-
-    return signature(legacy) == signature(gateway)
-
 
 class PortfolioArchitectConfigFlow(ConfigFlow, domain=DOMAIN):
     """Configure one explicit local CSV or local REST source adapter."""
 
-    VERSION = 9
+    VERSION = 10
     _source_draft: dict[str, Any]
     _existing_source_data: dict[str, Any]
     _generic_headers: tuple[str, ...]
@@ -369,14 +310,7 @@ class PortfolioArchitectConfigFlow(ConfigFlow, domain=DOMAIN):
         # A newly installed supplemental provider has no legacy HTTP source to
         # migrate. Discovery supplies network identity and public CA trust; adding
         # a provider still requires explicit user consent and the App-private bearer
-        # token. DKB is special in v1.45: an existing legacy dkb_csv configuration
-        # is eligible only for the exact, fail-closed migration step below.
-        raw_dkb_sources = entry.options.get(CONF_SUPPLEMENTAL_DKB_CSV_PATHS, [])
-        if gateway_provider_conflicts_with_dkb_csv(
-            discovery.provider_id, raw_dkb_sources
-        ):
-            self._hassio_discovery = discovery
-            return await self.async_step_hassio_migrate_dkb_csv_confirm()
+        # token. Provider-specific CSV acquisition is owned by its Gateway.
         if (
             entry.data.get(CONF_SOURCE_TYPE) == SOURCE_TYPE_REST_API
             and discovery.provider_id != GATEWAY_PROVIDER_COMDIRECT
@@ -432,168 +366,6 @@ class PortfolioArchitectConfigFlow(ConfigFlow, domain=DOMAIN):
             description_placeholders={"gateway": discovery.hostname},
         )
 
-    async def async_step_hassio_migrate_dkb_csv_confirm(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
-        """Atomically replace matching legacy DKB CSV sources with the DKB Gateway."""
-        discovery = self._hassio_discovery
-        if discovery is None or discovery.provider_id != GATEWAY_PROVIDER_DKB:
-            return self.async_abort(reason="invalid_tls_discovery")
-        entries = self.hass.config_entries.async_entries(DOMAIN)
-        if len(entries) != 1:
-            return self.async_abort(reason="tls_discovery_not_applicable")
-        entry = entries[0]
-        if entry.data.get(CONF_SOURCE_TYPE) != SOURCE_TYPE_REST_API:
-            return self.async_abort(reason="rest_gateways_require_rest_primary")
-
-        options = dict(entry.options)
-        raw_dkb_sources = options.get(CONF_SUPPLEMENTAL_DKB_CSV_PATHS, [])
-        if not gateway_provider_conflicts_with_dkb_csv(
-            discovery.provider_id, raw_dkb_sources
-        ):
-            return self.async_abort(reason="tls_discovery_not_applicable")
-
-        errors: dict[str, str] = {}
-        suggested = {CONF_REST_API_TOKEN: ""}
-        if user_input is not None:
-            suggested.update(user_input)
-            try:
-                candidate = RestSourceConfig.from_mapping(
-                    {
-                        CONF_REST_ENDPOINT_URL: discovery.endpoint_url,
-                        CONF_REST_API_TOKEN: user_input[CONF_REST_API_TOKEN],
-                        CONF_REST_TLS_CA_CERTIFICATE: discovery.ca_certificate,
-                    }
-                )
-                raw_rest = options.get(CONF_SUPPLEMENTAL_REST_SOURCES, [])
-                stored = raw_rest if isinstance(raw_rest, list) else []
-                existing = tuple(
-                    SupplementalRestSourceConfig.from_mapping(item)
-                    for item in stored
-                    if isinstance(item, dict)
-                )
-                if any(item.provider_id == GATEWAY_PROVIDER_DKB for item in existing):
-                    raise ValueError("DKB Gateway is already configured")
-                if any(item.endpoint_url == candidate.endpoint_url for item in existing):
-                    raise ValueError("Gateway endpoint is already configured")
-
-                primary = RestSourceConfig.from_mapping(dict(entry.data))
-                primary_health = await async_fetch_gateway_health(self.hass, primary)
-                if (
-                    primary_health.health_schema_version < 6
-                    or primary_health.provider_id is None
-                    or primary_health.status != "ok"
-                    or primary_health.reauthentication_required
-                    or not primary_health.snapshot_available
-                    or primary_health.provider_id == GATEWAY_PROVIDER_DKB
-                ):
-                    raise PortfolioRestError(
-                        "Primary Gateway is not ready for DKB source migration"
-                    )
-
-                health = await async_fetch_gateway_health(self.hass, candidate)
-                if (
-                    health.health_schema_version < 6
-                    or health.provider_id != GATEWAY_PROVIDER_DKB
-                    or health.reauthentication_required
-                ):
-                    raise PortfolioRestError(
-                        "Discovered DKB Gateway is not suitable for source migration"
-                    )
-
-                if health.snapshot_available:
-                    if health.status != "ok":
-                        raise PortfolioRestError(
-                            "Discovered DKB Gateway live snapshot is not healthy"
-                        )
-                    result = await async_fetch_rest_snapshot(self.hass, candidate)
-                else:
-                    # An old legacy CSV may be older than the Gateway's normal
-                    # serving-age policy. The dedicated endpoint returns only the
-                    # already-normalized canonical snapshot for this one exact
-                    # comparison; normal runtime availability remains fail-closed.
-                    if (
-                        health.status != "degraded"
-                        or health.operating_mode != "unavailable"
-                    ):
-                        raise PortfolioRestError(
-                            "Discovered DKB Gateway unavailable state is invalid"
-                        )
-                    result = await async_fetch_gateway_migration_snapshot(
-                        self.hass, candidate
-                    )
-
-                snapshot = result.snapshot
-                if (
-                    snapshot is None
-                    or result.snapshot_sha256 is None
-                    or result.position_count is None
-                    or result.position_count != len(snapshot.positions)
-                ):
-                    raise PortfolioRestError(
-                        "Discovered DKB Gateway migration snapshot lacks integrity metadata"
-                    )
-                if health.snapshot_available and (
-                    health.snapshot_generated_at is None
-                    or health.snapshot_generated_at != snapshot.generated_at
-                    or health.snapshot_position_count != len(snapshot.positions)
-                    or health.snapshot_sha256 != result.snapshot_sha256
-                ):
-                    raise PortfolioRestError(
-                        "Discovered DKB Gateway health does not match its verified snapshot"
-                    )
-
-                resolved = resolve_supplemental_csv_paths(
-                    self.hass,
-                    raw_dkb_sources,
-                    require_exists=True,
-                    maximum=MAX_SUPPLEMENTAL_SOURCES,
-                )
-                legacy = await self.hass.async_add_executor_job(
-                    _legacy_dkb_snapshot_for_migration, resolved
-                )
-                if not _dkb_migration_snapshots_match(legacy, snapshot):
-                    errors["base"] = "dkb_gateway_migration_mismatch"
-                else:
-                    configured = SupplementalRestSourceConfig(
-                        provider_id=GATEWAY_PROVIDER_DKB,
-                        endpoint_url=candidate.endpoint_url,
-                        api_token=candidate.api_token,
-                        tls_ca_certificate=discovery.ca_certificate,
-                    )
-                    # One config-entry mutation is the cut-over boundary. At no
-                    # point does the persisted configuration contain both DKB
-                    # representations, and the old source is never removed before
-                    # exact canonical equivalence has been proven.
-                    options[CONF_SUPPLEMENTAL_REST_SOURCES] = [
-                        *stored, configured.as_storage_dict()
-                    ]
-                    options.pop(CONF_SUPPLEMENTAL_DKB_CSV_PATHS, None)
-                    self.hass.config_entries.async_update_entry(entry, options=options)
-                    await self.hass.config_entries.async_reload(entry.entry_id)
-                    return self.async_abort(reason="dkb_gateway_migrated")
-            except PortfolioRestAuthenticationError:
-                errors["base"] = "invalid_auth"
-            except PortfolioRestMigrationSnapshotUnavailableError:
-                errors["base"] = "dkb_gateway_migration_snapshot_unavailable"
-            except PortfolioSourcePathError:
-                errors["base"] = "invalid_supplemental_source"
-            except (OSError, ValueError, PortfolioRestError):
-                if "base" not in errors:
-                    errors["base"] = "invalid_rest_gateway"
-
-        return self.async_show_form(
-            step_id="hassio_migrate_dkb_csv_confirm",
-            data_schema=self.add_suggested_values_to_schema(
-                vol.Schema({vol.Required(CONF_REST_API_TOKEN): str}), suggested
-            ),
-            errors=errors,
-            description_placeholders={
-                "gateway": discovery.hostname,
-                "source_count": str(len(raw_dkb_sources)),
-            },
-        )
-
     async def async_step_hassio_add_supplemental_confirm(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
@@ -615,12 +387,8 @@ class PortfolioArchitectConfigFlow(ConfigFlow, domain=DOMAIN):
             options = dict(entry.options)
             raw_sources = options.get(CONF_SUPPLEMENTAL_REST_SOURCES, [])
             stored = raw_sources if isinstance(raw_sources, list) else []
-            raw_dkb_sources = options.get(CONF_SUPPLEMENTAL_DKB_CSV_PATHS, [])
-            dkb_count = len(raw_dkb_sources) if isinstance(raw_dkb_sources, list) else 0
             if len(stored) >= MAX_SUPPLEMENTAL_REST_SOURCES:
                 errors["base"] = "too_many_rest_gateways"
-            elif len(stored) + dkb_count >= MAX_SUPPLEMENTAL_SOURCES:
-                errors["base"] = "too_many_sources"
             else:
                 try:
                     candidate = RestSourceConfig.from_mapping(
@@ -639,10 +407,6 @@ class PortfolioArchitectConfigFlow(ConfigFlow, domain=DOMAIN):
                         raise ValueError("duplicate provider")
                     if any(item.endpoint_url == candidate.endpoint_url for item in existing):
                         raise ValueError("duplicate endpoint")
-                    if gateway_provider_conflicts_with_dkb_csv(
-                        discovery.provider_id, raw_dkb_sources
-                    ):
-                        raise ValueError("provider already configured through DKB CSV")
 
                     primary = RestSourceConfig.from_mapping(dict(entry.data))
                     primary_health = await async_fetch_gateway_health(self.hass, primary)
@@ -1156,7 +920,9 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
     ) -> ConfigFlowResult:
         """Present native configuration areas."""
         del user_input
-        menu_options = ["plan", "plan_schedule", "execution", "execution_providers", "sources", "runtime"]
+        menu_options = ["plan", "plan_schedule", "execution", "execution_providers", "runtime"]
+        if self.config_entry.data.get(CONF_SOURCE_TYPE) == SOURCE_TYPE_REST_API:
+            menu_options.insert(4, "sources")
         if self.config_entry.options.get(CONF_PLAN_OVERRIDE_ENABLED):
             menu_options.append("reset_plan")
         return self.async_show_menu(
@@ -1169,72 +935,9 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
     ) -> ConfigFlowResult:
         """Choose which supplemental portfolio-source family to configure."""
         del user_input
-        menu: list[str] = []
-        legacy_dkb = self.config_entry.options.get(CONF_SUPPLEMENTAL_DKB_CSV_PATHS, [])
-        if isinstance(legacy_dkb, list) and legacy_dkb:
-            # Migration bridge only: existing legacy paths may still be reviewed
-            # or removed, but v1.45 no longer offers creation of new PA-side DKB
-            # CSV sources. New DKB CSV acquisition belongs to the DKB Gateway.
-            menu.append("dkb_sources")
-        if self.config_entry.data.get(CONF_SOURCE_TYPE) == SOURCE_TYPE_REST_API:
-            menu.append("rest_gateways")
-        return self.async_show_menu(step_id="sources", menu_options=menu)
-
-    async def async_step_dkb_sources(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
-        """Configure zero or more DKB CSV supplements, one path per line."""
-        options = dict(self.config_entry.options)
-        stored = options.get(CONF_SUPPLEMENTAL_DKB_CSV_PATHS, [])
-        suggested = {
-            CONF_SUPPLEMENTAL_DKB_CSV_PATHS: "\n".join(stored) if isinstance(stored, list) else ""
-        }
-        errors: dict[str, str] = {}
-        if user_input is not None:
-            suggested.update(user_input)
-            raw = str(user_input.get(CONF_SUPPLEMENTAL_DKB_CSV_PATHS, ""))
-            paths = [line.strip() for line in raw.splitlines() if line.strip()]
-            raw_rest_sources = options.get(CONF_SUPPLEMENTAL_REST_SOURCES, [])
-            rest_count = len(raw_rest_sources) if isinstance(raw_rest_sources, list) else 0
-            if len(paths) + rest_count > MAX_SUPPLEMENTAL_SOURCES:
-                errors["base"] = "too_many_sources"
-            else:
-                try:
-                    resolved = resolve_supplemental_csv_paths(
-                        self.hass, paths, require_exists=True, maximum=MAX_SUPPLEMENTAL_SOURCES
-                    )
-                    for item in resolved:
-                        await self.hass.async_add_executor_job(
-                            read_positions,
-                            item.path,
-                            CsvSourceConfig(provider=PROVIDER_DKB),
-                        )
-                    await self.hass.async_add_executor_job(
-                        select_latest_dkb_exports,
-                        tuple(item.path for item in resolved),
-                    )
-                except (OSError, ValueError, PortfolioSourcePathError):
-                    errors["base"] = "invalid_supplemental_source"
-                else:
-                    if paths:
-                        options[CONF_SUPPLEMENTAL_DKB_CSV_PATHS] = [item.relative for item in resolved]
-                    else:
-                        options.pop(CONF_SUPPLEMENTAL_DKB_CSV_PATHS, None)
-                    return self.async_create_entry(data=options)
-        return self.async_show_form(
-            step_id="dkb_sources",
-            data_schema=self.add_suggested_values_to_schema(
-                vol.Schema(
-                    {
-                        vol.Required(CONF_SUPPLEMENTAL_DKB_CSV_PATHS): TextSelector(
-                            TextSelectorConfig(multiline=True)
-                        )
-                    }
-                ),
-                suggested,
-            ),
-            errors=errors,
-        )
+        if self.config_entry.data.get(CONF_SOURCE_TYPE) != SOURCE_TYPE_REST_API:
+            return self.async_abort(reason="rest_gateways_require_rest_primary")
+        return self.async_show_menu(step_id="sources", menu_options=["rest_gateways"])
 
     async def async_step_rest_gateways(
         self, user_input: dict[str, Any] | None = None
@@ -1263,12 +966,8 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
         }
         if user_input is not None:
             suggested.update(user_input)
-            raw_dkb_sources = options.get(CONF_SUPPLEMENTAL_DKB_CSV_PATHS, [])
-            dkb_count = len(raw_dkb_sources) if isinstance(raw_dkb_sources, list) else 0
             if len(stored) >= MAX_SUPPLEMENTAL_REST_SOURCES:
                 errors["base"] = "too_many_rest_gateways"
-            elif len(stored) + dkb_count >= MAX_SUPPLEMENTAL_SOURCES:
-                errors["base"] = "too_many_sources"
             else:
                 try:
                     candidate_transport = RestSourceConfig.from_mapping(user_input)
@@ -1299,10 +998,6 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
                         raise PortfolioRestError("Additional Gateway is not ready for live use")
                     if any(item.provider_id == health.provider_id for item in existing):
                         raise ValueError("duplicate provider")
-                    if gateway_provider_conflicts_with_dkb_csv(
-                        health.provider_id, raw_dkb_sources
-                    ):
-                        raise ValueError("provider already configured through DKB CSV")
                     if self.config_entry.data.get(CONF_SOURCE_TYPE) == SOURCE_TYPE_REST_API:
                         primary = RestSourceConfig.from_mapping(dict(self.config_entry.data))
                         primary_health = await async_fetch_gateway_health(self.hass, primary)

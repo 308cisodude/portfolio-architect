@@ -55,7 +55,6 @@ from .const import (
     CONF_MANUAL_SETTLEMENT_FEE_EUR,
     CONF_REVIEW_LEAD_DAYS,
     CONF_SOURCE_ENTITY_ID,
-    CONF_SUPPLEMENTAL_DKB_CSV_PATHS,
     CONF_SUPPLEMENTAL_REST_SOURCES,
     CONF_SOURCE_TYPE,
     DEFAULT_CONFIG_DIRECTORY,
@@ -65,7 +64,6 @@ from .const import (
     DEFAULT_REVIEW_LEAD_DAYS,
     DEFAULT_SOURCE_ENTITY_ID,
     DEFAULT_UPDATE_INTERVAL_MINUTES,
-    MAX_SUPPLEMENTAL_SOURCES,
     MAX_SUPPLEMENTAL_REST_SOURCES,
     DOMAIN,
     MAX_FRESHNESS_HOURS,
@@ -99,10 +97,7 @@ from .engine.calculator import configuration_files
 from .engine.importers import (
     CsvSourceConfig,
     PROVIDER_COMDIRECT,
-    PROVIDER_DKB,
-    dkb_export_timestamp,
     read_positions,
-    select_latest_dkb_exports,
 )
 from .engine.models import Position
 from .engine.rest import PROVIDER_LOCAL_REST_JSON, RestInvestmentCash, RestSnapshot
@@ -141,11 +136,9 @@ from .schedule import (
 from .source import (
     LocalConfigurationPath,
     LocalSourcePaths,
-    SupplementalCsvPath,
     csv_source_config_from_data,
     resolve_configuration_directory,
     resolve_local_source_paths,
-    resolve_supplemental_csv_paths,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -187,22 +180,11 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
         self.source_conflicts: tuple[dict[str, Any], ...] = ()
         self.oldest_source_generated_at: datetime | None = None
         self.newest_source_generated_at: datetime | None = None
-        self.supplemental_dkb_paths: tuple[SupplementalCsvPath, ...] = resolve_supplemental_csv_paths(
-            hass,
-            entry.options.get(CONF_SUPPLEMENTAL_DKB_CSV_PATHS, []),
-            require_exists=False,
-            maximum=MAX_SUPPLEMENTAL_SOURCES,
-        )
         self.supplemental_rest_sources: tuple[SupplementalRestSourceConfig, ...] = (
             _supplemental_rest_sources_from_options(entry.options)
             if self.source_type == SOURCE_TYPE_REST_API
             else ()
         )
-        if (
-            len(self.supplemental_dkb_paths) + len(self.supplemental_rest_sources)
-            > MAX_SUPPLEMENTAL_SOURCES
-        ):
-            raise ValueError("At most 8 supplemental portfolio sources are supported")
         self.supplemental_gateway_health: dict[str, GatewayHealth] = {}
         self.supplemental_gateway_health_errors: dict[str, str] = {}
         self.supplemental_source_errors: dict[str, str] = {}
@@ -352,7 +334,6 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
                     _configuration_metadata,
                     self.configuration_path.config_directory,
                     self.plan_override,
-                    tuple(item.relative for item in self.supplemental_dkb_paths),
                     _supplemental_rest_identity_tokens(self.supplemental_rest_sources),
                 )
             )
@@ -413,7 +394,7 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
             label = self.source_summaries[0].get("label")
             if isinstance(label, str) and label:
                 return label
-        if self.supplemental_dkb_paths or self.supplemental_rest_sources:
+        if self.supplemental_rest_sources:
             return "Multi-source portfolio"
         if self.local_paths is not None:
             return self.local_paths.csv_relative
@@ -424,7 +405,7 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
     @property
     def source_provider(self) -> str:
         """Return the explicit provider adapter."""
-        if self.supplemental_dkb_paths or self.supplemental_rest_sources:
+        if self.supplemental_rest_sources:
             return PROVIDER_MULTI_SOURCE
         if self.rest_source_config is not None:
             return PROVIDER_LOCAL_REST_JSON
@@ -447,13 +428,11 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
             ]
             supplemental_source_count = len(supplemental_summaries)
         else:
-            supplemental_providers = [PROVIDER_DKB] * len(self.supplemental_dkb_paths) + [
-                item.provider_id for item in self.supplemental_rest_sources
-            ]
+            supplemental_providers = [item.provider_id for item in self.supplemental_rest_sources]
             supplemental_source_count = len(supplemental_providers)
         return {
             **base,
-            "configured_supplemental_path_count": len(self.supplemental_dkb_paths),
+            "configured_supplemental_path_count": 0,
             "supplemental_source_count": supplemental_source_count,
             "supplemental_providers": supplemental_providers,
             "configured_supplemental_rest_gateway_count": len(self.supplemental_rest_sources),
@@ -487,8 +466,6 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
         for item in self.supplemental_rest_sources:
             if item.provider_id not in providers:
                 providers.append(item.provider_id)
-        if self.supplemental_dkb_paths and PROVIDER_DKB not in providers:
-            providers.append(PROVIDER_DKB)
         return tuple(providers or (self.source_provider,))
 
     @property
@@ -1247,7 +1224,6 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
                 self.local_paths.config_directory,
                 self.plan_override,
                 self.csv_source_config,
-                self.supplemental_dkb_paths,
             )
             data = _parse_payload(payload)
         except (OSError, ValueError, PortfolioArchitectDataError) as err:
@@ -1279,7 +1255,6 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
                     _configuration_metadata,
                     self.configuration_path.config_directory,
                     self.plan_override,
-                    tuple(item.relative for item in self.supplemental_dkb_paths),
                     _supplemental_rest_identity_tokens(self.supplemental_rest_sources),
                 )
             )
@@ -1350,7 +1325,6 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
             reuse_existing_data = (
                 self._last_configuration_modified is not None
                 and configuration_modified <= self._last_configuration_modified
-                and not self.supplemental_dkb_paths
                 and not self.supplemental_rest_sources
             )
             positions = self.primary_positions
@@ -1481,7 +1455,6 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
                 self.plan_override,
                 generated_at,
                 self.rest_source_config.endpoint_url,
-                self.supplemental_dkb_paths,
                 supplemental_rest_snapshots,
                 (
                     self.gateway_health.provider_id
@@ -1499,7 +1472,7 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
             self.supplemental_source_errors = (
                 {err.source_id: err.failure_class}
                 if err.source_id is not None
-                else {"dkb_csv": err.failure_class}
+                else {"supplemental_rest": err.failure_class}
             )
             return self._use_home_assistant_last_known_good(
                 f"Supplemental portfolio source failed: {err}",
@@ -1981,48 +1954,6 @@ def _parse_payload(payload: dict[str, Any]) -> PortfolioData:
     )
 
 
-def _supplemental_snapshots(
-    supplemental_paths: tuple[SupplementalCsvPath, ...],
-) -> tuple[PortfolioSourceSnapshot, ...]:
-    configured_index = {
-        item.path: index for index, item in enumerate(supplemental_paths, start=1)
-    }
-    try:
-        selected_paths = select_latest_dkb_exports(
-            tuple(item.path for item in supplemental_paths)
-        )
-    except (OSError, ValueError) as err:
-        raise SupplementalPortfolioSourceError(
-            "A configured DKB CSV source is unavailable or invalid",
-            provider_id=PROVIDER_DKB,
-            source_id="dkb_csv",
-            failure_class="source_error",
-        ) from err
-    snapshots: list[PortfolioSourceSnapshot] = []
-    multiple = len(selected_paths) > 1
-    for index, path in enumerate(selected_paths, start=1):
-        configured = configured_index.get(path, index)
-        try:
-            positions = read_positions(path, CsvSourceConfig(provider=PROVIDER_DKB))
-            generated_at = dkb_export_timestamp(path)
-        except (OSError, ValueError) as err:
-            raise SupplementalPortfolioSourceError(
-                f"DKB CSV {configured} is unavailable or invalid",
-                provider_id=PROVIDER_DKB,
-                source_id=f"dkb_csv_{configured}",
-                failure_class="source_error",
-            ) from err
-        snapshots.append(
-            PortfolioSourceSnapshot(
-                source_id=f"dkb_{index}",
-                provider=PROVIDER_DKB,
-                label=(f"DKB CSV {index}" if multiple else "DKB CSV"),
-                generated_at=generated_at,
-                positions=positions,
-            )
-        )
-    return tuple(snapshots)
-
 
 def _aggregation_metadata(aggregation: AggregationResult) -> dict[str, Any]:
     provider_ids = tuple(dict.fromkeys(item.provider for item in aggregation.sources))
@@ -2044,42 +1975,32 @@ def _calculate_local_payload(
     config_directory: Path,
     plan_override: dict[str, Any] | None,
     source_config: CsvSourceConfig,
-    supplemental_paths: tuple[SupplementalCsvPath, ...],
 ) -> tuple[dict[str, Any], datetime, datetime, dict[str, Position], AggregationResult]:
-    """Run blocking local-file I/O, aggregation, and calculation."""
+    """Run blocking provider-neutral local-file I/O and calculation."""
     csv_modified = _mtime(csv_path)
-    primary_generated_at = (
-        dkb_export_timestamp(csv_path)
-        if source_config.provider == PROVIDER_DKB
-        else csv_modified
-    )
     primary_positions = read_positions(csv_path, source_config)
-    sources = (
-        PortfolioSourceSnapshot(
-            source_id="primary",
-            provider=source_config.provider,
-            label=csv_path.name,
-            generated_at=primary_generated_at,
-            positions=primary_positions,
-        ),
-        *_supplemental_snapshots(supplemental_paths),
+    source = PortfolioSourceSnapshot(
+        source_id="primary",
+        provider=source_config.provider,
+        label=csv_path.name,
+        generated_at=csv_modified,
+        positions=primary_positions,
     )
-    aggregation = aggregate_sources(sources)
-    provider = PROVIDER_MULTI_SOURCE if supplemental_paths else source_config.provider
+    aggregation = aggregate_sources((source,))
     payload = calculate_portfolio_payload_from_positions(
         aggregation.positions,
         config_directory,
-        evaluated_at=max(item.generated_at for item in sources),
+        evaluated_at=csv_modified,
         plan_override=plan_override,
-        source_provider=provider,
-        source_label=(f"{len(sources)} sources" if supplemental_paths else csv_path.name),
+        source_provider=source_config.provider,
+        source_label=csv_path.name,
         source_metadata=_aggregation_metadata(aggregation),
     )
-    input_times = [csv_modified, *(_mtime(item.path) for item in supplemental_paths)]
+    input_times = [csv_modified]
     for path in configuration_files(config_directory):
         if path.exists():
             input_times.append(_mtime(path))
-    return payload, primary_generated_at, max(input_times), primary_positions, aggregation
+    return payload, csv_modified, max(input_times), primary_positions, aggregation
 
 
 def _calculate_rest_payload(
@@ -2088,7 +2009,6 @@ def _calculate_rest_payload(
     plan_override: dict[str, Any] | None,
     generated_at: datetime,
     endpoint_url: str,
-    supplemental_paths: tuple[SupplementalCsvPath, ...],
     supplemental_rest_snapshots: tuple[PortfolioSourceSnapshot, ...],
     primary_provider_id: str,
     investment_reserve_eur,
@@ -2105,14 +2025,13 @@ def _calculate_rest_payload(
         positions=positions,
     )
     try:
-        supplements = _supplemental_snapshots(supplemental_paths)
-        sources = (primary, *supplemental_rest_snapshots, *supplements)
+        sources = (primary, *supplemental_rest_snapshots)
         aggregation = aggregate_sources(sources)
     except (OSError, ValueError) as err:
-        if supplemental_paths or supplemental_rest_snapshots:
+        if supplemental_rest_snapshots:
             raise SupplementalPortfolioSourceError(str(err)) from err
         raise
-    has_supplements = bool(supplemental_paths or supplemental_rest_snapshots)
+    has_supplements = bool(supplemental_rest_snapshots)
     provider = PROVIDER_MULTI_SOURCE if has_supplements else PROVIDER_LOCAL_REST_JSON
     provider_cash: dict[str, dict[str, Any]] = dict(supplemental_provider_cash)
     if (
@@ -2203,7 +2122,6 @@ def _latest_configuration_modified(config_directory: Path) -> datetime:
 def _configuration_metadata(
     config_directory: Path,
     plan_override: dict[str, Any] | None,
-    supplemental_paths: tuple[str, ...] = (),
     supplemental_rest_sources: tuple[str, ...] = (),
 ) -> tuple[datetime, str]:
     paths = tuple(configuration_files(config_directory))
@@ -2211,21 +2129,6 @@ def _configuration_metadata(
         raise ValueError("Portfolio configuration files are unavailable")
     modified = max(_mtime(path) for path in paths)
     fingerprint = configuration_fingerprint(config_directory, paths, plan_override)
-    if supplemental_paths:
-        import hashlib
-        import json
-
-        digest = hashlib.sha256()
-        digest.update(fingerprint.encode("ascii"))
-        digest.update(
-            json.dumps(
-                list(supplemental_paths),
-                ensure_ascii=False,
-                sort_keys=True,
-                separators=(",", ":"),
-            ).encode("utf-8")
-        )
-        fingerprint = digest.hexdigest()
     if supplemental_rest_sources:
         import hashlib
         import json

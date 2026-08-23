@@ -118,42 +118,6 @@ def resolve_local_source_paths(
 
 
 
-@dataclass(frozen=True, slots=True)
-class SupplementalCsvPath:
-    """One confined supplemental CSV source."""
-
-    relative: str
-    path: Path
-
-
-def resolve_supplemental_csv_paths(
-    hass: HomeAssistant,
-    values: object,
-    *,
-    require_exists: bool,
-    maximum: int = 8,
-) -> tuple[SupplementalCsvPath, ...]:
-    """Resolve a bounded list of distinct supplemental CSV paths under /config."""
-    if values in (None, "", []):
-        return ()
-    if not isinstance(values, list) or len(values) > maximum:
-        raise PortfolioSourcePathError("Supplemental CSV paths must be a bounded list")
-    root = Path(hass.config.path()).resolve()
-    result: list[SupplementalCsvPath] = []
-    seen: set[str] = set()
-    for value in values:
-        relative = normalise_relative_path(value, field="supplemental CSV path")
-        if relative in seen:
-            raise PortfolioSourcePathError("Supplemental CSV paths must be unique")
-        path = (root / relative).resolve(strict=False)
-        if not path.is_relative_to(root):
-            raise PortfolioSourcePathError("Supplemental CSV paths must remain inside /config")
-        if require_exists and not path.is_file():
-            raise PortfolioSourcePathError(f"Supplemental CSV does not exist: {Path(relative).name}")
-        result.append(SupplementalCsvPath(relative=relative, path=path))
-        seen.add(relative)
-    return tuple(result)
-
 def csv_source_config_from_data(data: dict[str, object]):
     """Return the strict provider adapter config stored in a config entry."""
     from .engine.importers import CsvSourceConfig

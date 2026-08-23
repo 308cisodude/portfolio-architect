@@ -6,7 +6,6 @@ from datetime import datetime, timezone
 from decimal import Decimal
 import importlib
 import importlib.util
-import json
 from pathlib import Path
 import stat
 import sys
@@ -19,7 +18,6 @@ COMPONENT = ROOT / "custom_components" / "portfolio_architect"
 APP = ROOT / "home_assistant_app" / "portfolio_architect_gateway_dkb"
 PACKAGE = APP / "src" / "portfolio_architect_gateway"
 TEST_PACKAGE = "portfolio_architect_gateway_dkb_v1450_test"
-ENGINE_PACKAGE = "portfolio_architect_engine_v1450_test"
 FIXTURE = ROOT / "tests" / "fixtures" / "dkb-depot.csv"
 
 
@@ -40,21 +38,6 @@ def _load_gateway_modules():
     )
 
 
-def _load_legacy_importers():
-    package_path = COMPONENT / "engine"
-    if ENGINE_PACKAGE not in sys.modules:
-        spec = importlib.util.spec_from_file_location(
-            ENGINE_PACKAGE,
-            package_path / "__init__.py",
-            submodule_search_locations=[str(package_path)],
-        )
-        assert spec is not None and spec.loader is not None
-        module = importlib.util.module_from_spec(spec)
-        sys.modules[ENGINE_PACKAGE] = module
-        spec.loader.exec_module(module)
-    return importlib.import_module(f"{ENGINE_PACKAGE}.importers")
-
-
 def _csv(*, date: str, depot: str, wkn: str, isin: str, price: str, quantity: str) -> bytes:
     return (
         "Datum der Erstellung;Depotnummer;Wertpapierbezeichnung;WKN;ISIN;"
@@ -63,23 +46,20 @@ def _csv(*, date: str, depot: str, wkn: str, isin: str, price: str, quantity: st
     ).encode("utf-8")
 
 
-def test_gateway_parser_is_exactly_equivalent_to_legacy_fixture() -> None:
+def test_gateway_parser_preserves_established_dkb_fixture_semantics() -> None:
     dkb_csv, _store = _load_gateway_modules()
-    legacy = _load_legacy_importers()
-
-    old = legacy.read_dkb_positions(FIXTURE)
     snapshot, summary = dkb_csv.parse_dkb_csv_batch((FIXTURE.read_bytes(),))
 
-    assert snapshot.generated_at == legacy.dkb_export_timestamp(FIXTURE)
-    assert summary.position_count == len(old) == len(snapshot.positions)
-    assert [
-        (item.identifier, item.isin, item.name, item.instrument_type, item.market_value_eur, item.quantity)
-        for item in snapshot.positions
-    ] == [
-        (item.wkn, item.isin, item.name, item.instrument_type, item.value_eur, item.quantity)
-        for item in old.values()
-    ]
-
+    assert snapshot.generated_at == datetime(2026, 7, 31, tzinfo=timezone.utc)
+    assert summary.position_count == 1
+    assert len(snapshot.positions) == 1
+    item = snapshot.positions[0]
+    assert item.identifier == "A1XB5U"
+    assert item.isin == "IE00BJ0KDQ92"
+    assert item.name == "X(IE)-MSCI WORLD 1C"
+    assert item.instrument_type == "etf"
+    assert item.market_value_eur == Decimal("273.36")
+    assert item.quantity == Decimal("2")
 
 def test_authoritative_batch_selects_newest_per_depot_and_uses_oldest_selected_date() -> None:
     dkb_csv, _store = _load_gateway_modules()
@@ -134,44 +114,30 @@ def test_dkb_app_is_autostart_csv_source_but_fints_stays_separate() -> None:
         assert forbidden not in fints
 
 
-def test_discovery_routes_legacy_dkb_to_exact_atomic_migration_not_normal_add() -> None:
-    source = (COMPONENT / "config_flow.py").read_text(encoding="utf-8")
-    discovery = source.split("async def async_step_hassio", 1)[1].split(
-        "async def async_step_hassio_confirm", 1
-    )[0]
-    migration = source.split("async def async_step_hassio_migrate_dkb_csv_confirm", 1)[1].split(
-        "async def async_step_hassio_add_supplemental_confirm", 1
-    )[0]
-    assert "gateway_provider_conflicts_with_dkb_csv" in discovery
-    assert "async_step_hassio_migrate_dkb_csv_confirm" in discovery
-    assert discovery.index("async_step_hassio_migrate_dkb_csv_confirm") < discovery.index(
-        "async_step_hassio_add_supplemental_confirm"
-    )
-    assert "_dkb_migration_snapshots_match" in migration
-    assert migration.index("_dkb_migration_snapshots_match") < migration.index(
-        "async_update_entry"
-    )
-    assert 'options.pop(CONF_SUPPLEMENTAL_DKB_CSV_PATHS, None)' in migration
-    assert 'provider_id=GATEWAY_PROVIDER_DKB' in migration
-    assert 'reason="dkb_gateway_migrated"' in migration
+def test_pa_side_dkb_csv_bridge_is_retired_after_live_proof() -> None:
+    importers = (COMPONENT / "engine" / "importers.py").read_text(encoding="utf-8")
+    flow = (COMPONENT / "config_flow.py").read_text(encoding="utf-8")
+    rest = (COMPONENT / "rest_client.py").read_text(encoding="utf-8")
+    assert "read_dkb_positions" not in importers
+    assert 'PROVIDER_DKB: Final = "dkb_csv"' not in importers
+    assert "async_step_dkb_sources" not in flow
+    assert "async_step_hassio_migrate_dkb_csv_confirm" not in flow
+    assert "migration-snapshot" not in rest
 
 
 def test_new_pa_side_dkb_csv_sources_are_no_longer_offered() -> None:
     source = (COMPONENT / "config_flow.py").read_text(encoding="utf-8")
-    options_sources = source.split("async def async_step_sources", 1)[1].split(
-        "async def async_step_dkb_sources", 1
-    )[0]
-    assert "legacy_dkb" in options_sources
-    assert 'menu.append("dkb_sources")' in options_sources
-    assert "and legacy_dkb" in options_sources
+    assert "dkb_sources" not in source
+    assert "supplemental_dkb_csv_paths" not in source
 
 
-def test_bilingual_migration_text_and_fail_closed_error_exist() -> None:
+def test_bilingual_current_ui_has_no_legacy_dkb_csv_controls() -> None:
+    import json
     for language in ("en", "de"):
         translation = json.loads(
             (COMPONENT / "translations" / f"{language}.json").read_text(encoding="utf-8")
         )
-        config = translation["config"]
-        assert "hassio_migrate_dkb_csv_confirm" in config["step"]
-        assert "dkb_gateway_migration_mismatch" in config["error"]
-        assert "dkb_gateway_migrated" in config["abort"]
+        encoded = json.dumps(translation, ensure_ascii=False)
+        assert "hassio_migrate_dkb_csv_confirm" not in encoded
+        assert "dkb_gateway_migration_mismatch" not in encoded
+        assert "supplemental_dkb_csv_paths" not in encoded
