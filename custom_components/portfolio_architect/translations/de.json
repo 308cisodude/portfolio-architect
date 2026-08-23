@@ -129,7 +129,8 @@
       "invalid_csv_format": "Die CSV-Kopfzeile konnte mit diesen Formateinstellungen nicht gelesen werden.",
       "invalid_rest_source": "Das lokale REST-Gateway oder seine JSON-Antwort erfüllt den begrenzten Portfolio-Architect-Quellvertrag nicht.",
       "invalid_auth": "Das lokale REST-Gateway hat das Bearer-Token abgelehnt.",
-      "dkb_gateway_migration_mismatch": "Der Snapshot des DKB-Gateways stimmt nicht exakt mit den konfigurierten alten DKB-CSV-Beständen und dem Quellzeitstempel überein. Die Quellkonfiguration wurde nicht geändert."
+      "dkb_gateway_migration_mismatch": "Der Snapshot des DKB-Gateways stimmt nicht exakt mit den konfigurierten alten DKB-CSV-Beständen und dem Quellzeitstempel überein. Die Quellkonfiguration wurde nicht geändert.",
+      "dkb_gateway_migration_snapshot_unavailable": "Das DKB-Gateway kann seinen begrenzten Migrations-Snapshot nicht bereitstellen. Aktualisiere die DKB-Gateway-App auf v1.45.1 oder neuer und versuche es erneut. Die Quellkonfiguration wurde nicht geändert."
     },
     "abort": {
       "already_configured": "Portfolio Architect ist bereits konfiguriert. Verwende bei der vorhandenen Integration „Neu konfigurieren“, um die Quelle zu ändern.",

@@ -547,3 +547,83 @@ def test_gateway_rejects_invalid_provider_runtime_metadata(tmp_path: Path) -> No
         assert "poll interval" in str(err)
     else:  # pragma: no cover - regression guard
         raise AssertionError("invalid provider cadence must fail closed")
+
+
+def test_expired_snapshot_stays_runtime_unavailable_but_can_be_read_for_migration(tmp_path: Path) -> None:
+    """The bridge endpoint must not weaken the normal cached-snapshot age policy."""
+    config = _config(tmp_path)
+    stale = PortfolioSnapshot(
+        generated_at=datetime(2020, 1, 1, tzinfo=timezone.utc),
+        positions=(
+            Position("A1XB5U", "ETF One", Decimal("123.45"), instrument_type="ETF"),
+        ),
+    )
+    save_snapshot(config.server.snapshot_file, stale)
+    state = GatewayState(config.server, NoNetworkClient())
+
+    assert state.snapshot_view() is None
+    migration_view = state.snapshot_view(ignore_max_age=True)
+    assert migration_view is not None
+    assert migration_view.generated_at == stale.generated_at
+
+    health = state.health_document(version=6)
+    assert health["status"] == "degraded"
+    assert health["operating_mode"] == "unavailable"
+    assert health["snapshot_available"] is False
+    assert health["snapshot_generated_at"] is None
+    assert health["snapshot_sha256"] is None
+    assert health["snapshot_position_count"] is None
+    assert health["snapshot_age_seconds"] is None
+    assert health["snapshot_expires_in_seconds"] is None
+
+    server = GatewayHttpServer(
+        ("127.0.0.1", 0),
+        state,
+        "g" * 64,
+        health_endpoint_enabled=True,
+        migration_snapshot_enabled=True,
+    )
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        connection = http.client.HTTPConnection(
+            "127.0.0.1", server.server_address[1], timeout=5
+        )
+        auth = {"Authorization": f"Bearer {'g' * 64}"}
+
+        connection.request("GET", "/api/v1/portfolio", headers=auth)
+        response = connection.getresponse()
+        assert response.status == 503
+        response.read()
+
+        connection.request("GET", "/api/v1/migration-snapshot", headers=auth)
+        response = connection.getresponse()
+        body = response.read()
+        assert response.status == 200
+        assert b'"schema_version":1' in body
+        assert response.getheader("X-Portfolio-Snapshot-SHA256")
+        assert response.getheader("X-Portfolio-Position-Count") == "1"
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=5)
+
+
+def test_migration_snapshot_endpoint_is_disabled_by_default(tmp_path: Path) -> None:
+    server, thread = _start(tmp_path)
+    try:
+        connection = http.client.HTTPConnection(
+            "127.0.0.1", server.server_address[1], timeout=5
+        )
+        connection.request(
+            "GET",
+            "/api/v1/migration-snapshot",
+            headers={"Authorization": f"Bearer {'g' * 64}"},
+        )
+        response = connection.getresponse()
+        assert response.status == 404
+        assert response.read() == b""
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=5)

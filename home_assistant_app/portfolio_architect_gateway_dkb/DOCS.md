@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway — DKB v1.45.0
+# Portfolio Architect Gateway — DKB v1.45.1
 
-Version 1.45.0 makes the experimental DKB Gateway useful before authenticated FinTS is available. The App now owns strict local DKB depot-CSV acquisition and exposes one canonical `provider_id: dkb` snapshot through the established bearer-authenticated, verified-HTTPS Gateway contract.
+Version 1.45.1 fixes legacy CSV migration when the exact comparison snapshot is older than the normal Gateway serving-age limit. A bearer-authenticated verified-HTTPS migration endpoint can expose only the already-normalized canonical snapshot for equivalence checking while the normal portfolio endpoint remains fail-closed.
 
 ## DKB CSV acquisition
 

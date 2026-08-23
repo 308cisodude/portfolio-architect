@@ -129,7 +129,8 @@
       "invalid_csv_format": "The CSV header could not be read with these format settings.",
       "invalid_rest_source": "The local REST gateway or its JSON response did not satisfy the bounded Portfolio Architect source contract.",
       "invalid_auth": "The local REST gateway rejected the bearer token.",
-      "dkb_gateway_migration_mismatch": "The DKB Gateway snapshot does not exactly match the configured legacy DKB CSV holdings and source timestamp. No source configuration was changed."
+      "dkb_gateway_migration_mismatch": "The DKB Gateway snapshot does not exactly match the configured legacy DKB CSV holdings and source timestamp. No source configuration was changed.",
+      "dkb_gateway_migration_snapshot_unavailable": "The DKB Gateway cannot expose its bounded migration snapshot. Update the DKB Gateway App to v1.45.1 or newer and retry. No source configuration was changed."
     },
     "abort": {
       "already_configured": "Portfolio Architect is already configured. Use Reconfigure on the existing integration entry to change its source.",
