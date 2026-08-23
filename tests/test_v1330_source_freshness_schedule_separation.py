@@ -33,10 +33,10 @@ SOURCES = (
         "generated_at": "2026-08-13T06:11:11+00:00",
     },
     {
-        "source_id": "dkb_1",
-        "provider": "dkb_csv",
-        "label": "DKB CSV",
-        "generated_at": "2026-07-31T00:00:00+00:00",
+        "source_id": "dkb",
+        "provider": "dkb",
+        "label": "DKB Gateway",
+        "generated_at": "2026-08-18T07:00:00+00:00",
     },
 )
 
@@ -49,7 +49,7 @@ def test_upgrade_without_explicit_provider_policy_keeps_legacy_fail_closed_resul
         threshold_hours_by_kind={},
     )
     assert [item["threshold_hours"] for item in rows] == [168, 168, 168]
-    assert tuple(item["source_id"] for item in freshness.stale_rows(rows)) == ("dkb_1",)
+    assert freshness.stale_rows(rows) == ()
 
 
 def test_explicit_evidence_kind_policy_can_treat_document_sources_differently() -> None:
@@ -68,7 +68,7 @@ def test_explicit_evidence_kind_policy_can_treat_document_sources_differently() 
     assert [(item["evidence_kind"], item["threshold_hours"]) for item in rows] == [
         ("live_api", 24),
         ("imported_statement", 168),
-        ("imported_csv", 744),
+        ("gateway_snapshot", 24),
     ]
     assert freshness.stale_rows(rows) == ()
 
@@ -91,9 +91,9 @@ def test_provider_aware_policy_still_fails_closed_per_source() -> None:
         },
     )
     blockers = freshness.stale_rows(rows)
-    assert tuple(item["source_id"] for item in blockers) == ("dkb_1",)
-    assert blockers[0]["threshold_hours"] == 744
-    assert "limit 31 days" in freshness.stale_summary(blockers)
+    assert tuple(item["source_id"] for item in blockers) == ("dkb",)
+    assert blockers[0]["threshold_hours"] == 24
+    assert "limit 1 day" in freshness.stale_summary(blockers)
 
 
 def _function_source(path: Path, name: str) -> str:

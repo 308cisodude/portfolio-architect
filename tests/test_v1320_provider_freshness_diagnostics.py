@@ -71,8 +71,8 @@ def test_live_three_source_topology_identifies_only_dkb_csv_as_stale() -> None:
             },
             {
                 "source_id": "dkb_1",
-                "provider": "dkb_csv",
-                "label": "DKB CSV",
+                "provider": "dkb",
+                "label": "DKB Gateway",
                 "generated_at": "2026-07-31T00:00:00+00:00",
             },
         ),
@@ -82,15 +82,15 @@ def test_live_three_source_topology_identifies_only_dkb_csv_as_stale() -> None:
     assert [item["evidence_kind"] for item in rows] == [
         "live_api",
         "imported_statement",
-        "imported_csv",
+        "gateway_snapshot",
     ]
     blockers = freshness.stale_rows(rows)
     assert tuple(item["source_id"] for item in blockers) == ("dkb_1",)
     assert freshness.stale_summary(blockers) == (
-        "DKB CSV · 17.9 days old · limit 7 days"
+        "DKB Gateway · 17.9 days old · limit 7 days"
     )
     assert freshness.stale_summary(blockers, german=True) == (
-        "DKB CSV · 17,9 Tage alt · Grenze 7 Tage"
+        "DKB Gateway · 17,9 Tage alt · Grenze 7 Tage"
     )
 
 
@@ -105,7 +105,7 @@ def test_future_or_invalid_source_timestamp_fails_observability_closed() -> None
             },
             {
                 "source_id": "invalid",
-                "provider": "dkb_csv",
+                "provider": "dkb",
                 "label": "Invalid source",
                 "generated_at": "not-a-time",
             },

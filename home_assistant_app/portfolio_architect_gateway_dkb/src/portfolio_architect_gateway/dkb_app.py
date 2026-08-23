@@ -824,9 +824,7 @@ def serve_dkb_probe_app(*, provider_id: str, provider_name: str, options: Pendin
     controller = DKBProbeController(data_directory)
     if not isinstance(provider_name, str) or not provider_name.strip() or len(provider_name.strip()) > 64:
         raise RuntimeError("Provider display name is invalid")
-    gateway_server = create_server(
-        server_config, state, migration_snapshot_enabled=True
-    )
+    gateway_server = create_server(server_config, state)
     ingress_server = DKBIngressServer(
         ingress_address,
         state=state,

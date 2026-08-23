@@ -7,7 +7,7 @@ from homeassistant.const import Platform
 DOMAIN: Final = "portfolio_architect"
 INSTANCE_UNIQUE_ID: Final = "portfolio_architect"
 NAME: Final = "Portfolio Architect"
-VERSION: Final = "1.45.1"
+VERSION: Final = "1.46.0"
 
 CONF_SOURCE_TYPE: Final = "source_type"
 
@@ -35,7 +35,6 @@ CONF_FRESHNESS_CSV_HOURS: Final = "freshness_csv_hours"
 CONF_FRESHNESS_OTHER_HOURS: Final = "freshness_other_hours"
 CONF_PLAN_EXECUTION_DAY: Final = "plan_execution_day"  # v1.0-v1.1 migration only
 CONF_REVIEW_LEAD_DAYS: Final = "review_lead_days"
-CONF_SUPPLEMENTAL_DKB_CSV_PATHS: Final = "supplemental_dkb_csv_paths"
 CONF_SUPPLEMENTAL_REST_SOURCES: Final = "supplemental_rest_sources"
 
 CONF_PLAN_OVERRIDE_ENABLED: Final = "plan_override_enabled"

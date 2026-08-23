@@ -1,13 +1,13 @@
-# Portfolio Architect Gateway — DKB v1.45.1
+# Portfolio Architect Gateway — DKB v1.46.0
 
-Version 1.45.1 fixes legacy CSV migration when the exact comparison snapshot is older than the normal Gateway serving-age limit. A bearer-authenticated verified-HTTPS migration endpoint can expose only the already-normalized canonical snapshot for equivalence checking while the normal portfolio endpoint remains fail-closed.
+Version 1.46.0 removes the temporary migration-only snapshot endpoint after the PA-side legacy DKB CSV bridge was live-proven and retired. Normal DKB CSV acquisition, cached-snapshot age enforcement, private canonical persistence and the isolated anonymous FinTS capability probe are unchanged.
 
 ## DKB CSV acquisition
 
 Open the admin-only Home Assistant Ingress page and upload the current DKB depot CSV export(s) as one authoritative batch. Up to eight files are accepted. The importer:
 
 - accepts the established UTF-8 semicolon DKB depot-export format;
-- applies the same bounded position parsing as the legacy Portfolio Architect `dkb_csv` adapter;
+- applies the established bounded provider-specific DKB position parsing inside this Gateway;
 - selects only the newest export per depot when multiple dated exports are supplied;
 - rejects ambiguous same-depot/same-date exports whose contents differ;
 - aggregates overlapping instruments by canonical ISIN-first identity;
@@ -18,17 +18,6 @@ Open the admin-only Home Assistant Ingress page and upload the current DKB depot
 Each successful batch replaces the complete DKB snapshot. For multiple DKB depots, upload all current exports together; the Gateway does not retain hidden per-depot identifiers or raw source documents between imports.
 
 The App auto-starts in v1.45.0 because the accepted canonical snapshot is an active portfolio source and must survive Home Assistant restarts.
-
-## Portfolio Architect migration
-
-Existing installations may still contain legacy HA-side `dkb_csv` supplemental paths. When Supervisor discovers the DKB Gateway, Portfolio Architect offers a dedicated migration rather than adding a duplicate source. The cut-over succeeds only when:
-
-- private-CA HTTPS and the App bearer token validate;
-- Gateway health schema/provider identity and snapshot integrity validate;
-- the canonical Gateway holdings, quantities and instrument identities match the selected legacy CSV view exactly; and
-- the conservative source timestamp matches exactly.
-
-Only then does one config-entry mutation add the `dkb` Gateway and remove the legacy `dkb_csv` paths. A mismatch leaves the existing source configuration unchanged. New PA-side legacy DKB CSV sources are no longer offered; the old parser remains only as a migration verifier for this bridge release.
 
 ## FinTS remains a separate research gate
 

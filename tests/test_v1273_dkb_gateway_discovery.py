@@ -1,10 +1,9 @@
-"""Regression coverage for v1.27.3 DKB Gateway discovery suppression."""
+"""Regression coverage for DKB Gateway discovery after legacy CSV retirement."""
 
 from __future__ import annotations
 
 from pathlib import Path
 import importlib.util
-import re
 
 import yaml
 
@@ -21,61 +20,32 @@ def _load_gateway_provider_ids():
     return module
 
 
-def _csv_dkb_provider_id() -> str:
-    source = (COMPONENT / "engine" / "importers.py").read_text(encoding="utf-8")
-    match = re.search(r'^PROVIDER_DKB: Final = "([^"]+)"$', source, re.MULTILINE)
-    assert match is not None
-    return match.group(1)
-
-
 def _step(source: str, name: str, next_name: str) -> str:
     return source.split(f"async def {name}", 1)[1].split(f"async def {next_name}", 1)[0]
 
 
-def test_dkb_gateway_and_csv_use_intentionally_distinct_provider_ids() -> None:
+def test_dkb_gateway_is_the_only_active_dkb_provider_identity() -> None:
     config = yaml.safe_load(
         (ROOT / "home_assistant_app" / "portfolio_architect_gateway_dkb" / "config.yaml").read_text(
             encoding="utf-8"
         )
     )
     provider_ids = _load_gateway_provider_ids()
-    csv_provider_dkb = _csv_dkb_provider_id()
+    importers = (COMPONENT / "engine" / "importers.py").read_text(encoding="utf-8")
     assert provider_ids.GATEWAY_PROVIDER_DKB == "dkb"
     assert config["environment"]["PA_PROVIDER_ID"] == provider_ids.GATEWAY_PROVIDER_DKB
-    assert csv_provider_dkb == "dkb_csv"
-    assert provider_ids.GATEWAY_PROVIDER_DKB != csv_provider_dkb
+    assert 'PROVIDER_DKB: Final = "dkb_csv"' not in importers
 
 
-def test_real_dkb_gateway_discovery_conflicts_with_existing_dkb_csv_scope() -> None:
-    provider_ids = _load_gateway_provider_ids()
-    configured_dkb_csv = ["portfolio/dkb/latest.csv"]
-    assert provider_ids.gateway_provider_conflicts_with_dkb_csv("dkb", configured_dkb_csv) is True
-    assert provider_ids.gateway_provider_conflicts_with_dkb_csv(
-        provider_ids.GATEWAY_PROVIDER_DKB, configured_dkb_csv
-    ) is True
-    assert provider_ids.gateway_provider_conflicts_with_dkb_csv(
-        _csv_dkb_provider_id(), configured_dkb_csv
-    ) is False
-    assert provider_ids.gateway_provider_conflicts_with_dkb_csv(
-        provider_ids.GATEWAY_PROVIDER_DKB, []
-    ) is False
-    assert provider_ids.gateway_provider_conflicts_with_dkb_csv(
-        "trade_republic", configured_dkb_csv
-    ) is False
-
-
-def test_hassio_discovery_routes_existing_dkb_csv_to_migration_before_add_card() -> None:
+def test_dkb_discovery_uses_normal_explicit_supplemental_gateway_path() -> None:
     source = (COMPONENT / "config_flow.py").read_text(encoding="utf-8")
     hassio = _step(source, "async_step_hassio", "async_step_hassio_confirm")
-    conflict = "gateway_provider_conflicts_with_dkb_csv(\n            discovery.provider_id, raw_dkb_sources\n        )"
-    assert conflict in hassio
-    assert hassio.index(conflict) < hassio.index("async_step_hassio_add_supplemental_confirm")
-    assert "async_step_hassio_migrate_dkb_csv_confirm" in hassio
-    assert hassio.index(conflict) < hassio.index("async_step_hassio_migrate_dkb_csv_confirm")
-    assert "discovery.provider_id == PROVIDER_DKB" not in hassio
+    assert "async_step_hassio_add_supplemental_confirm" in hassio
+    assert "gateway_provider_conflicts_with_dkb_csv" not in hassio
+    assert "async_step_hassio_migrate_dkb_csv_confirm" not in source
 
 
-def test_manual_and_discovered_supplemental_paths_share_same_dkb_collision_rule() -> None:
+def test_manual_and_discovered_gateway_paths_have_no_legacy_dkb_collision_rule() -> None:
     source = (COMPONENT / "config_flow.py").read_text(encoding="utf-8")
     discovered = _step(
         source,
@@ -83,7 +53,6 @@ def test_manual_and_discovered_supplemental_paths_share_same_dkb_collision_rule(
         "_async_migrate_primary_tls",
     )
     manual = _step(source, "async_step_add_rest_gateway", "async_step_remove_rest_gateway")
-    assert "gateway_provider_conflicts_with_dkb_csv(" in discovered
-    assert "gateway_provider_conflicts_with_dkb_csv(" in manual
-    assert "discovery.provider_id == PROVIDER_DKB" not in discovered
-    assert "health.provider_id == PROVIDER_DKB" not in manual
+    assert "gateway_provider_conflicts_with_dkb_csv" not in discovered
+    assert "gateway_provider_conflicts_with_dkb_csv" not in manual
+    assert "supplemental_dkb_csv_paths" not in source

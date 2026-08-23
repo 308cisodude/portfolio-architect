@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.46.0
+
+- Retires the live-proven Home Assistant-side DKB `dkb_csv` parser, supplemental-path source model and v1.45 discovery migration bridge; DKB CSV acquisition now lives only inside the DKB Gateway.
+- Adds fail-closed config-entry schema 10: an installation with active legacy DKB CSV configuration must complete the v1.45.1 Gateway cut-over before upgrading, preventing silent source loss.
+- Removes the temporary DKB migration-only REST endpoint after the bridge is retired while keeping normal DKB Gateway CSV acquisition, freshness enforcement and anonymous FinTS probing unchanged.
+- Preserves portfolio/planner economics, cash routing, Comdirect/TR acquisition, verified private-PKI transport, LKG/source atomicity, wire schemas and dashboard presentation.
+
 ## 1.45.1
 
 - Fixes v1.45.0 legacy DKB CSV migration when the exact comparison export is older than the DKB Gateway's normal cached-snapshot serving horizon.

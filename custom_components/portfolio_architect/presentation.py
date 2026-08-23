@@ -228,11 +228,6 @@ def unavailable_source_label(source_id: str, *, german: bool) -> str:
                 return "Trade-Republic-Gateway"
             return f"{provider}-Gateway"
         return f"{provider} Gateway"
-    if source_id.startswith("dkb_csv_"):
-        suffix = source_id.rsplit("_", 1)[-1]
-        return f"DKB CSV {suffix}" if not german else f"DKB-CSV {suffix}"
-    if source_id == "dkb_csv":
-        return "DKB CSV" if not german else "DKB-CSV"
     return "Supplemental source" if not german else "Zusätzliche Quelle"
 
 

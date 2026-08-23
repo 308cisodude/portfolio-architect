@@ -106,14 +106,14 @@ def test_source_unavailable_tiles_name_the_failed_sources_without_raw_state() ->
 
 
 def test_unavailable_source_summary_is_bounded_and_privacy_safe() -> None:
-    source_ids = ("gateway:trade_republic", "dkb_csv_2")
+    source_ids = ("gateway:trade_republic", "gateway:dkb")
     assert (
         unavailable_source_summary(source_ids, german=False)
-        == "Trade Republic Gateway · DKB CSV 2"
+        == "Trade Republic Gateway · DKB Gateway"
     )
     assert (
         unavailable_source_summary(source_ids, german=True)
-        == "Trade-Republic-Gateway · DKB-CSV 2"
+        == "Trade-Republic-Gateway · DKB-Gateway"
     )
     serialized = repr(
         {

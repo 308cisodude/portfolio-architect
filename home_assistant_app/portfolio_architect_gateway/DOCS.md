@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway — Comdirect v1.45.1
+# Portfolio Architect Gateway — Comdirect v1.46.0
 
-Version 1.45.1 is package alignment for the DKB legacy-migration hotfix. The common Gateway health document now represents expired cached snapshots consistently; the DKB-only migration snapshot endpoint is not enabled here. Comdirect OAuth/session maintenance, account selection, authorized cash and verified-HTTPS behavior are unchanged.
+Version 1.46.0 is package alignment for the Home Assistant-side DKB bridge-retirement release. The temporary DKB migration-only endpoint is removed from the common runtime. Comdirect OAuth/session maintenance, account selection, authorized cash, cached-snapshot behavior and verified-HTTPS serving are unchanged.
 
 Verified HTTPS/private CA trust, bearer authentication, PhotoTAN bootstrap, account
 selection, request-timeout behavior, REST schema 1, health schema 6, portfolio normalization,

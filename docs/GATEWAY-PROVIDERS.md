@@ -40,7 +40,7 @@ snapshot and the common REST/health server operates normally. Version 1.26.0 cha
 its boot policy to automatic because Portfolio Architect can now keep it configured
 as an ongoing REST contributor. Version 1.41.0 adds a separate `KONTOAUSZUG` cash-statement parser and private sibling cash state. The two Trade Republic evidence families remain independently fail-closed and are composed only into the existing additive REST-schema-1 cash fields; raw PDFs and transaction/account identity data are not persisted. DKB remains manual-only. Version 1.41.1 changes only the Home Assistant-side funded-route tie-break so sufficient execution-provider-local cash wins an otherwise identical cross-provider funding option; provider App acquisition and wire behavior are unchanged. Version 1.42.0 adds only Home Assistant-side normalized execution-path presentation and native reference-dashboard rendering; provider App acquisition and wire behavior remain unchanged. Version 1.43.0 adds only Home Assistant-side route-level execution evidence and native broker-editor capability; provider App acquisition and wire behavior remain unchanged. Version 1.44.0 adds only Home Assistant Configure edit-context/menu consistency; provider App acquisition and wire behavior remain unchanged. Version 1.28.0 added only
 a registration-gated anonymous FinTS BPD capability probe; its provider REST snapshot
-remains fail-closed for authenticated FinTS. v1.45.0 enables bounded local DKB CSV acquisition inside this provider Gateway; v1.45.1 adds only the bounded stale-snapshot migration read needed for exact legacy cut-over.
+remains fail-closed for authenticated FinTS. v1.45.0 enables bounded local DKB CSV acquisition inside this provider Gateway; v1.45.1 added a bounded stale-snapshot migration read for the exact legacy cut-over; v1.46.0 removes that temporary migration surface after live acceptance and keeps DKB CSV acquisition solely inside the Gateway.
 
 ## Shared source and packaging rule
 
@@ -126,9 +126,9 @@ any holdings request can be considered.
 
 The DKB App adds no external FinTS runtime library and no order, transfer, payment,
 debit or transaction-history operation. The common `PortfolioProvider` contract
-remains unchanged and provider-neutral. Existing DKB CSV identity `dkb_csv` stays
-distinct from Gateway identity `dkb`, so the established collision/discovery rules
-continue to prevent silent duplicate scope.
+remains unchanged and provider-neutral. The historical PA-side `dkb_csv` identity was
+kept distinct from Gateway identity `dkb` during migration; v1.46.0 retires that
+legacy source identity from the current runtime after the cut-over was live-proven.
 
 ## Trade Republic v1.25 import boundary
 
@@ -138,10 +138,7 @@ is stored under the App-private `/data/gateway` volume. `pypdf` is a
 Trade-Republic-App-only, hash-pinned build dependency and is not introduced into
 Comdirect, DKB, the standalone Gateway, or the Home Assistant integration.
 
-DKB live holdings remain a later provider-specific gate after the v1.28 anonymous
-BPD probe and authenticated user-capability validation. The established DKB CSV
-supplement can coexist with independent Comdirect and Trade Republic Gateway REST
-snapshots in the aggregate while the DKB Gateway itself remains non-live.
+The historical statement above predates v1.45.0. DKB holdings are now supplied by bounded local CSV acquisition inside the DKB Gateway; authenticated FinTS holdings remain a later provider-specific gate after product registration and authenticated user-capability validation.
 
 ## v1.32 provider freshness and diagnostic foundation
 

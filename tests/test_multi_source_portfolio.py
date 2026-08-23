@@ -1,4 +1,4 @@
-"""v1.12 native DKB CSV and multi-source aggregation contracts."""
+"""Provider-neutral multi-source aggregation contracts."""
 
 from datetime import datetime, timezone
 from decimal import Decimal
@@ -18,15 +18,9 @@ from engine.aggregation import (  # noqa: E402
     aggregate_sources,
 )
 from engine.calculator import calculate_portfolio_payload_from_positions  # noqa: E402
-from engine.importers import (  # noqa: E402
-    PROVIDER_DKB,
-    CsvSourceConfig,
-    dkb_export_timestamp,
-    read_positions,
-)
 from engine.models import Position  # noqa: E402
 
-FIXTURE = ROOT / "tests" / "fixtures" / "dkb-depot.csv"
+DKB_PROVIDER = "dkb"
 
 
 def _position(
@@ -45,6 +39,20 @@ def _position(
         source_type=instrument_type,
         value_eur=Decimal(value),
     )
+
+
+def _dkb_snapshot() -> dict[str, Position]:
+    return {
+        "A1XB5U": Position(
+            wkn="A1XB5U",
+            isin="IE00BJ0KDQ92",
+            name="X(IE)-MSCI WORLD 1C",
+            instrument_type="etf",
+            source_type="etf",
+            value_eur=Decimal("273.36"),
+            quantity=Decimal("2"),
+        )
+    }
 
 
 def _comdirect_snapshot() -> dict[str, Position]:
@@ -81,23 +89,19 @@ def _source_metadata(aggregation) -> dict[str, object]:
     }
 
 
-def test_realistic_dkb_export_derives_exact_market_value_and_ignores_depot_number() -> None:
-    positions = read_positions(FIXTURE, CsvSourceConfig(provider=PROVIDER_DKB))
-
+def test_dkb_gateway_snapshot_shape_is_provider_neutral() -> None:
+    positions = _dkb_snapshot()
     assert tuple(positions) == ("A1XB5U",)
     position = positions["A1XB5U"]
     assert position.isin == "IE00BJ0KDQ92"
     assert position.instrument_type == "etf"
     assert position.value_eur == Decimal("273.36")
-    assert dkb_export_timestamp(FIXTURE) == datetime(
-        2026, 7, 31, tzinfo=timezone.utc
-    )
-    assert "ANONYMIZED" not in repr(position)
+    assert position.quantity == Decimal("2")
 
 
 def test_overlapping_isin_is_consolidated_once_with_exact_provenance() -> None:
     generated_at = datetime(2026, 7, 31, tzinfo=timezone.utc)
-    dkb = read_positions(FIXTURE, CsvSourceConfig(provider=PROVIDER_DKB))
+    dkb = _dkb_snapshot()
     aggregation = aggregate_sources(
         (
             PortfolioSourceSnapshot(
@@ -113,8 +117,8 @@ def test_overlapping_isin_is_consolidated_once_with_exact_provenance() -> None:
             ),
             PortfolioSourceSnapshot(
                 source_id="dkb_1",
-                provider=PROVIDER_DKB,
-                label="DKB CSV 1",
+                provider=DKB_PROVIDER,
+                label="DKB Gateway",
                 generated_at=generated_at,
                 positions=dkb,
             ),
@@ -147,7 +151,7 @@ def test_cross_source_wkn_identity_collision_fails_closed() -> None:
                 ),
                 PortfolioSourceSnapshot(
                     "secondary",
-                    PROVIDER_DKB,
+                    DKB_PROVIDER,
                     "Secondary",
                     timestamp,
                     {"OTHER1": _position("OTHER1", "IE00BJ0KDQ92", "50")},
@@ -169,10 +173,10 @@ def test_supplied_overlap_changes_the_next_350_euro_distribution() -> None:
             ),
             PortfolioSourceSnapshot(
                 "dkb_1",
-                PROVIDER_DKB,
+                DKB_PROVIDER,
                 "DKB CSV 1",
                 generated_at,
-                read_positions(FIXTURE, CsvSourceConfig(provider=PROVIDER_DKB)),
+                _dkb_snapshot(),
             ),
         )
     )

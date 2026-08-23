@@ -49,7 +49,6 @@ SNAPSHOT_SHA256_HEADER: Final = "X-Portfolio-Snapshot-SHA256"
 SNAPSHOT_POSITION_COUNT_HEADER: Final = "X-Portfolio-Position-Count"
 TLS_DISCOVERY_SCHEMA_VERSION: Final = 1
 TLS_DISCOVERY_GATEWAY_PATH: Final = "/api/v1/portfolio"
-MIGRATION_SNAPSHOT_PATH: Final = "/api/v1/migration-snapshot"
 
 _TOKEN_RE = re.compile(r"^[\x21-\x7e]+$")
 _ALLOWED_IPV4_NETWORKS = tuple(
@@ -71,10 +70,6 @@ class PortfolioRestTlsError(PortfolioRestError):
 
 class PortfolioRestAuthenticationError(PortfolioRestError):
     """Raised when the local source rejects its bearer token."""
-
-
-class PortfolioRestMigrationSnapshotUnavailableError(PortfolioRestError):
-    """Raised when a Gateway cannot expose the bounded migration snapshot."""
 
 
 class PortfolioRestRateLimitError(PortfolioRestError):
@@ -989,26 +984,6 @@ async def async_fetch_rest_snapshot(
     )
 
 
-async def async_fetch_gateway_migration_snapshot(
-    hass: HomeAssistant,
-    config: RestSourceConfig,
-    *,
-    now: datetime | None = None,
-) -> RestFetchResult:
-    """Fetch one authenticated canonical snapshot for exact bridge migration only."""
-    parsed = urlsplit(config.endpoint_url)
-    migration_url = urlunsplit(
-        SplitResult(parsed.scheme, parsed.netloc, MIGRATION_SNAPSHOT_PATH, "", "")
-    )
-    return await _async_fetch_snapshot_url(
-        hass,
-        config,
-        migration_url,
-        now=now,
-        migration_snapshot=True,
-    )
-
-
 async def _async_fetch_snapshot_url(
     hass: HomeAssistant,
     config: RestSourceConfig,
@@ -1017,7 +992,6 @@ async def _async_fetch_snapshot_url(
     etag: str | None = None,
     last_modified: str | None = None,
     now: datetime | None = None,
-    migration_snapshot: bool = False,
 ) -> RestFetchResult:
     """Fetch one bounded snapshot from a fixed validated path on the configured origin."""
     resolved_endpoint = await async_validate_local_rest_endpoint(hass, snapshot_url)
@@ -1040,10 +1014,6 @@ async def _async_fetch_snapshot_url(
                 timeout=ClientTimeout(total=REST_REQUEST_TIMEOUT_SECONDS),
                 ssl=ssl_context,
             ) as response:
-                if migration_snapshot and response.status in {404, 503}:
-                    raise PortfolioRestMigrationSnapshotUnavailableError(
-                        "Gateway migration snapshot is unavailable"
-                    )
                 return await _async_process_response(response, now=now)
     except PortfolioRestError:
         raise

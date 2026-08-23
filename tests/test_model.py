@@ -169,7 +169,7 @@ def test_future_payload_schema_is_rejected() -> None:
         unallocated_contribution_eur=0,
         purchase_count=1,
         monthly_plan_ready=True,
-        payload_schema_version=999,
+        payload_schema_version=1099,
         engine_version="0.6.0",
         generated_at="2026-07-29T11:00:00+00:00",
     )
