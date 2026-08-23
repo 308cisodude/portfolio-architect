@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.47.0
+
+- Package/version alignment for DKB provider-scoped cash evidence. Comdirect OAuth/session maintenance, account selection and authorized cash behavior are unchanged.
+
 ## 1.46.0
 
 - Package/version alignment for v1.46.0; removes the now-unused DKB migration-only common-server endpoint. Comdirect runtime semantics are unchanged.

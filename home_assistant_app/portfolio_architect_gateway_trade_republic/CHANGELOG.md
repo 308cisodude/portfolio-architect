@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.47.0
+
+- Package/version alignment for DKB provider-scoped cash evidence. Trade Republic DEPOTAUSZUG/KONTOAUSZUG acquisition is unchanged.
+
 ## 1.46.0
 
 - Package/version alignment for v1.46.0; removes the now-unused DKB migration-only common-server endpoint. Trade Republic runtime semantics are unchanged.

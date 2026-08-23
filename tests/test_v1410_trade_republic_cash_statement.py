@@ -198,7 +198,7 @@ def test_tr_app_exposes_separate_bounded_statement_families() -> None:
 def test_home_assistant_gates_cash_freshness_separately_from_holdings() -> None:
     coordinator = (ROOT / "custom_components" / "portfolio_architect" / "coordinator.py").read_text(encoding="utf-8")
     assert "def _cash_timestamp_is_fresh" in coordinator
-    assert "source_evidence_kind(provider_id)" in coordinator
+    assert "cash_evidence_kind(provider_id)" in coordinator
     assert "cash_freshness_threshold_hours_by_kind=self.freshness_threshold_hours_by_kind" in coordinator
     assert "investment_reserve_eur = None" in coordinator
     rest = (ROOT / "custom_components" / "portfolio_architect" / "engine" / "rest.py").read_text(encoding="utf-8")

@@ -103,6 +103,7 @@ from .engine.models import Position
 from .engine.rest import PROVIDER_LOCAL_REST_JSON, RestInvestmentCash, RestSnapshot
 from .last_known_good import RestLastKnownGoodStore, configuration_fingerprint
 from .freshness import (
+    cash_evidence_kind,
     evidence_kind as source_evidence_kind,
     source_freshness_rows as build_source_freshness_rows,
     stale_rows as select_stale_rows,
@@ -1777,7 +1778,7 @@ def _cash_timestamp_is_fresh(
     """Fail closed when provider cash evidence is outside its evidence-kind window."""
     if threshold_hours_by_kind is None:
         return True
-    threshold = threshold_hours_by_kind.get(source_evidence_kind(provider_id))
+    threshold = threshold_hours_by_kind.get(cash_evidence_kind(provider_id))
     if isinstance(threshold, bool) or not isinstance(threshold, int):
         return False
     current = now.astimezone(timezone.utc)

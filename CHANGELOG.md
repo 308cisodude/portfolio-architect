@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.47.0
+
+- Adds independent DKB Girokonto `Umsatzliste` CSV cash evidence inside the DKB Gateway beside the established depot-CSV holdings acquisition.
+- Persists only normalized balance/date evidence; account identifiers, transaction rows, counterparties, references and raw cash CSV bytes remain transient.
+- Keeps DKB holdings and cash timestamps independent; DKB cash uses the imported-statement freshness policy while DKB holdings remain a Gateway snapshot.
+- Clamps zero/negative account balances to EUR 0 eligible/authorized investment cash and never infers overdraft or credit availability.
+- Preserves REST schema 1, health schema 6, FinTS isolation, Comdirect/TR acquisition, planner economics, private-PKI transport and dashboard presentation.
+
 ## 1.46.0
 
 - Retires the live-proven Home Assistant-side DKB `dkb_csv` parser, supplemental-path source model and v1.45 discovery migration bridge; DKB CSV acquisition now lives only inside the DKB Gateway.
