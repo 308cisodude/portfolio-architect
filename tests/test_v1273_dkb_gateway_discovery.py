@@ -64,12 +64,14 @@ def test_real_dkb_gateway_discovery_conflicts_with_existing_dkb_csv_scope() -> N
     ) is False
 
 
-def test_hassio_discovery_aborts_dkb_gateway_before_offering_add_card() -> None:
+def test_hassio_discovery_routes_existing_dkb_csv_to_migration_before_add_card() -> None:
     source = (COMPONENT / "config_flow.py").read_text(encoding="utf-8")
     hassio = _step(source, "async_step_hassio", "async_step_hassio_confirm")
     conflict = "gateway_provider_conflicts_with_dkb_csv(\n            discovery.provider_id, raw_dkb_sources\n        )"
     assert conflict in hassio
     assert hassio.index(conflict) < hassio.index("async_step_hassio_add_supplemental_confirm")
+    assert "async_step_hassio_migrate_dkb_csv_confirm" in hassio
+    assert hassio.index(conflict) < hassio.index("async_step_hassio_migrate_dkb_csv_confirm")
     assert "discovery.provider_id == PROVIDER_DKB" not in hassio
 
 

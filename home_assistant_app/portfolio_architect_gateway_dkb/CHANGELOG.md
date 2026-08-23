@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.45.0
+
+- Adds bounded authoritative DKB depot-CSV batch acquisition inside the DKB Gateway; raw CSV and depot identity remain transient and only the normalized canonical snapshot persists.
+- Auto-starts the experimental DKB App so its verified-HTTPS REST source survives Home Assistant restarts.
+- Keeps the anonymous FinTS capability probe isolated; authenticated FinTS acquisition, PIN/TAN, trading and money movement remain disabled.
+
+
 ## 1.44.0
 
 - Package/version alignment for Portfolio Architect v1.44.0 Configure edit-context UX consistency; DKB remains experimental/manual-only and its anonymous capability probe is unchanged.

@@ -182,11 +182,11 @@ def test_product_registration_and_probe_result_are_private_and_sanitized(tmp_pat
     assert controller.probe_view().state == "ready"
 
 
-def test_dkb_app_remains_manual_experimental_and_without_live_acquisition() -> None:
+def test_dkb_app_is_experimental_csv_source_without_authenticated_fints_acquisition() -> None:
     config = yaml.safe_load((APP / "config.yaml").read_text(encoding="utf-8"))
-    assert config["version"] == "1.44.0"
+    assert config["version"] == "1.45.0"
     assert config["stage"] == "experimental"
-    assert config["boot"] == "manual_only"
+    assert config["boot"] == "auto"
     assert config["environment"]["PA_PROVIDER_ID"] == "dkb"
     assert config["ports"]["8787/tcp"] is None
     assert config["host_network"] is False
@@ -195,11 +195,11 @@ def test_dkb_app_remains_manual_experimental_and_without_live_acquisition() -> N
     assert config["docker_api"] is False
 
     source = (PACKAGE / "dkb_app.py").read_text(encoding="utf-8")
-    assert "PendingProvider(provider_id)" in source
+    assert "DkbCsvProvider(server_config.snapshot_file)" in source
     assert 'state.refresh(trigger="startup")' in source
-    assert "run_refresh_loop" not in source
-    assert "fetch_snapshot(" not in source
+    assert "parse_dkb_csv_batch" in source
     assert "probe_dkb_bpd(product_id)" in source
+    assert "FinTS authenticated acquisition remains disabled" in source
     assert 'self.send_header("Allow", "GET, POST")' in source
     for method in ("do_PUT", "do_PATCH", "do_DELETE", "do_HEAD", "do_OPTIONS"):
         assert method in source

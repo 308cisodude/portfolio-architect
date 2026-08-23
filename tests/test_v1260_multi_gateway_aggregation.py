@@ -184,11 +184,11 @@ def test_supplemental_gateway_diagnostics_are_bounded_and_token_free() -> None:
     assert "endpoint_url" not in block
 
 
-def test_trade_republic_is_auto_start_but_dkb_remains_manual_only() -> None:
+def test_statement_and_csv_backed_provider_gateways_auto_start() -> None:
     tr = yaml.safe_load((ROOT / "home_assistant_app" / "portfolio_architect_gateway_trade_republic" / "config.yaml").read_text())
     dkb = yaml.safe_load((ROOT / "home_assistant_app" / "portfolio_architect_gateway_dkb" / "config.yaml").read_text())
     assert tr["boot"] == "auto"
-    assert dkb["boot"] == "manual_only"
+    assert dkb["boot"] == "auto"
     verify = (ROOT / "tools" / "verify_release.py").read_text(encoding="utf-8")
     assert '"trade_republic",\n            "auto"' in verify
-    assert '"dkb",\n            "manual_only"' in verify
+    assert '"dkb",\n            "auto"' in verify

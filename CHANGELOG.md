@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.45.0
+
+- Moves active DKB depot-CSV acquisition into the DKB Gateway App with strict bounded parsing, transient-only depot identity and canonical private snapshot persistence.
+- Adds an exact verified-HTTPS migration gate from legacy HA-side `dkb_csv` sources to `provider_id: dkb`; one atomic config-entry update removes the old paths only after holdings and conservative source timestamp match exactly.
+- Auto-starts the DKB App while retaining its experimental stage; the anonymous FinTS capability probe remains separate and no login/PIN/TAN, authenticated holdings, trading or money-movement capability is added.
+- Preserves payload/REST/health/presentation/broker schemas, single-entry architecture, Comdirect/TR acquisition, planner economics, v1.44 Configure UX and the advisory-only boundary.
+
 ## 1.44.0
 
 - Audits every native Configure menu and requires complete English/German labels plus translated destination titles, including the live-observed blank Edit funding transfer row.

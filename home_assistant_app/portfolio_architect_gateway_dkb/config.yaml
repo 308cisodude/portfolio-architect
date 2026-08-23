@@ -1,13 +1,13 @@
 name: Portfolio Architect Gateway — DKB
-version: 1.44.0
+version: 1.45.0
 slug: portfolio_architect_gateway_dkb
-description: Registration-gated anonymous DKB FinTS capability probe; live portfolio acquisition remains disabled.
+description: Bounded local DKB depot-CSV acquisition with isolated anonymous FinTS capability probe; authenticated FinTS remains disabled.
 url: https://developers.home-assistant.io/docs/apps/
 arch:
 - amd64
 - aarch64
 startup: application
-boot: manual_only
+boot: auto
 init: true
 homeassistant: 2026.7.0
 ingress: true

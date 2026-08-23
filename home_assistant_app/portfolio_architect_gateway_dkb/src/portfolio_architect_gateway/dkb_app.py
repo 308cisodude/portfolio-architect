@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from email import policy
+from email.parser import BytesHeaderParser
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from html import escape
@@ -18,6 +20,14 @@ from typing import Any, Final
 from urllib.parse import parse_qs, urlsplit
 
 from . import __version__
+from .dkb_csv import (
+    DkbCsvImportError,
+    DkbCsvProvider,
+    MAX_CSV_BATCH_BYTES,
+    MAX_CSV_FILE_BYTES,
+    MAX_CSV_FILES,
+    parse_dkb_csv_batch,
+)
 from .dkb_fints import (
     CapabilityProbeResult,
     DKB_BANK_CODE,
@@ -33,7 +43,7 @@ from .dkb_fints import (
     probe_dkb_bpd,
 )
 from .errors import GatewayError, ProtocolError, RemoteApiError
-from .pending_app import PendingAppOptions, PendingProvider, build_server_config
+from .pending_app import PendingAppOptions, build_server_config
 from .runtime_config import ensure_api_token
 from .server import GatewayState, create_server
 from .store import atomic_write, load_json_state, save_json_state
@@ -43,6 +53,8 @@ APP_DATA_DIRECTORY: Final = Path("/data/gateway")
 INGRESS_BIND: Final = "0.0.0.0"
 INGRESS_PORT: Final = 8099
 MAX_FORM_BYTES: Final = 8 * 1024
+MAX_MULTIPART_BYTES: Final = MAX_CSV_BATCH_BYTES + 256 * 1024
+MAX_BOUNDARY_BYTES: Final = 70
 MAX_HEADER_BYTES: Final = 32 * 1024
 PRODUCT_ID_FILE_NAME: Final = "dkb-fints-product-id"
 PROBE_STATE_FILE_NAME: Final = "dkb-fints-probe.json"
@@ -261,12 +273,24 @@ class DKBIngressServer(ThreadingHTTPServer):
     daemon_threads = True
     allow_reuse_address = True
 
-    def __init__(self, address: tuple[str, int], *, state: GatewayState, controller: DKBProbeController, api_token: str, allowed_sources: frozenset[str], require_user_header: bool) -> None:
+    def __init__(
+        self,
+        address: tuple[str, int],
+        *,
+        state: GatewayState,
+        controller: DKBProbeController,
+        provider: DkbCsvProvider,
+        api_token: str,
+        allowed_sources: frozenset[str],
+        require_user_header: bool,
+    ) -> None:
         self.gateway_state = state
         self.controller = controller
+        self.csv_provider = provider
         self.api_token = api_token
         self.allowed_sources = allowed_sources
         self.require_user_header = require_user_header
+        self.last_import_notice: tuple[str, str] | None = None
         super().__init__(address, DKBIngressHandler)
 
 
@@ -302,6 +326,46 @@ class DKBIngressHandler(BaseHTTPRequestHandler):
             self._empty(HTTPStatus.FORBIDDEN)
             return
         path = urlsplit(self.path).path
+
+        if path == "/import-csv":
+            try:
+                nonce, documents = self._read_csv_import_form()
+                if not secrets.compare_digest(nonce, self.app_server.controller.csrf_token):
+                    raise DkbCsvImportError("Import form session is invalid; reload the page and try again")
+                snapshot, summary = parse_dkb_csv_batch(documents)
+                previous = self.app_server.csv_provider.snapshot
+                self.app_server.csv_provider.replace_snapshot(snapshot)
+                if not self.app_server.gateway_state.refresh(trigger="manual"):
+                    self.app_server.csv_provider.replace_snapshot(previous)
+                    raise DkbCsvImportError("Imported DKB CSV batch could not be activated")
+                self.app_server.last_import_notice = (
+                    "accepted",
+                    f"DKB CSV batch accepted: {summary.position_count} positions from "
+                    f"{summary.selected_depot_count} selected depot export(s); snapshot timestamp "
+                    f"{summary.generated_at.isoformat(timespec='seconds')}.",
+                )
+                _LOGGER.info(
+                    "DKB CSV import activated a canonical snapshot: input_files=%s selected_exports=%s positions=%s",
+                    summary.input_file_count,
+                    summary.selected_depot_count,
+                    summary.position_count,
+                )
+            except DkbCsvImportError as err:
+                _LOGGER.warning("DKB CSV import rejected")
+                self.app_server.last_import_notice = ("rejected", _public_csv_error(err))
+                self._html_status(self._render_page(), HTTPStatus.BAD_REQUEST)
+                return
+            except Exception:
+                _LOGGER.exception("DKB CSV import failed internally")
+                self.app_server.last_import_notice = (
+                    "internal_error",
+                    "DKB CSV import failed internally; no new snapshot was activated.",
+                )
+                self._html_status(self._render_page(), HTTPStatus.INTERNAL_SERVER_ERROR)
+                return
+            self._html_status(self._render_page(), HTTPStatus.OK)
+            return
+
         try:
             form = self._read_form()
         except ValueError:
@@ -329,6 +393,34 @@ class DKBIngressHandler(BaseHTTPRequestHandler):
             self._redirect("./")
             return
         self._empty(HTTPStatus.NOT_FOUND)
+
+    def _read_csv_import_form(self) -> tuple[str, tuple[bytes, ...]]:
+        if sum(len(key) + len(value) for key, value in self.headers.items()) > MAX_HEADER_BYTES:
+            raise DkbCsvImportError("Import request headers are too large")
+        if self.headers.get_content_type() != "multipart/form-data":
+            raise DkbCsvImportError("Import request must use multipart/form-data")
+        boundary = self.headers.get_boundary()
+        if not boundary:
+            raise DkbCsvImportError("Import form boundary is missing")
+        try:
+            boundary_bytes = boundary.encode("ascii")
+        except UnicodeEncodeError as err:
+            raise DkbCsvImportError("Import form boundary is invalid") from err
+        if not 1 <= len(boundary_bytes) <= MAX_BOUNDARY_BYTES or any(
+            byte < 33 or byte > 126 for byte in boundary_bytes
+        ):
+            raise DkbCsvImportError("Import form boundary is invalid")
+        length_token = self.headers.get("Content-Length")
+        try:
+            length = int(length_token) if length_token is not None else -1
+        except ValueError as err:
+            raise DkbCsvImportError("Import request length is invalid") from err
+        if not 1 <= length <= MAX_MULTIPART_BYTES:
+            raise DkbCsvImportError("Import request is empty or too large")
+        body = self.rfile.read(length)
+        if len(body) != length:
+            raise DkbCsvImportError("Import request body is incomplete")
+        return _parse_csv_multipart_body(body, boundary_bytes)
 
     def do_PUT(self) -> None:  # noqa: N802
         self._method_not_allowed()
@@ -385,7 +477,20 @@ class DKBIngressHandler(BaseHTTPRequestHandler):
         bpd = str(result.bpd_version) if result and result.bpd_version is not None else "unknown"
         suffix = f"…{product[-6:]}" if product and len(product) > 6 else (product or "not configured")
         csrf = escape(controller.csrf_token, quote=True)
-        body = f"""<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Portfolio Architect Gateway — DKB</title><style>body{{font-family:system-ui,sans-serif;max-width:850px;margin:2rem auto;padding:0 1rem;background:#111;color:#eee}}section{{border:1px solid #444;border-radius:12px;padding:1rem;margin:1rem 0}}code{{word-break:break-all}}input{{width:min(34rem,95%);padding:.55rem}}button{{padding:.55rem .8rem;margin-top:.5rem}}.warn{{color:#ffca28}}.ok{{color:#66bb6a}}.small{{font-size:.9rem;color:#bbb}}</style></head><body><main><h1>Portfolio Architect Gateway — DKB</h1><section><h2>v{escape(__version__)} capability-probe milestone</h2><p class=\"warn\">Live DKB portfolio acquisition is deliberately not enabled in this release.</p><p>This App can perform only a registered, anonymous FinTS 3.0 BPD capability probe against DKB's fixed endpoint. It never asks for or stores a DKB login name, PIN or TAN and sends no holdings, order, transfer or payment business transaction.</p></section><section><h2>FinTS registration</h2><p>Fixed endpoint: <code>{escape(DKB_FINTS_ENDPOINT)}</code><br>Bank code: <code>{escape(DKB_BANK_CODE)}</code><br>Configured registration: <code>{escape(suffix)}</code></p><form method=\"post\" action=\"configure-product\"><input type=\"hidden\" name=\"csrf\" value=\"{csrf}\"><label for=\"product_id\">FinTS product registration number</label><br><input id=\"product_id\" name=\"product_id\" minlength=\"25\" maxlength=\"25\" pattern=\"[A-Za-z0-9]{{25}}\" autocomplete=\"off\" required><br><button type=\"submit\">Store registration number</button></form><p class=\"small\">Use the complete 25-character registration number issued for Portfolio Architect itself. It is transmitted only as the HKVVB product designation; a library/kernel registration must not be reused for production access.</p></section><section><h2>Anonymous BPD capability probe</h2><p>State: <strong>{escape(view.state)}</strong></p><p>{escape(view.message)}</p><form method=\"post\" action=\"probe\"><input type=\"hidden\" name=\"csrf\" value=\"{csrf}\"><button type=\"submit\" {'disabled' if product is None else ''}>Probe DKB FinTS capabilities</button></form><p>BPD version: <code>{escape(bpd)}</code><br>{HOLDINGS_PARAMETER_SEGMENT} advertised: <strong>{holdings}</strong><br>Observed parameter segments: <code>{escape(param)}</code><br>Bounded return codes: <code>{escape(codes)}</code></p><p>Sanitized bank return messages:</p>{bank_messages}<p>Raw response body SHA-256: <code>{escape(raw_response_fingerprint)}</code><br>Raw response body bytes: <code>{escape(raw_response_bytes)}</code><br>Decoded response SHA-256: <code>{escape(response_fingerprint)}</code><br>Decoded response bytes: <code>{escape(response_bytes)}</code></p><p class=\"small\">Only bounded HIRMG/HIRMS return-message text plus cryptographic response fingerprints and byte counts are retained for diagnostics. The configured product registration is redacted if echoed; arbitrary segment payload and the raw FinTS response are discarded after fingerprinting; exact raw/decoded response bytes never persist. A positive bank-level BPD result is only evidence to continue research; authenticated user-parameter validation is still required before holdings acquisition may be implemented.</p></section><section><h2>Gateway boundary</h2><p>Bearer token: <code>{escape(self.app_server.api_token)}</code></p><p class=\"small\">The token and FinTS registration state are App-private and survive in-place upgrades. The provider REST source remains fail-closed because no DKB snapshot acquisition exists yet.</p></section></main></body></html>"""
+        snapshot = self.app_server.csv_provider.snapshot
+        if snapshot is None:
+            snapshot_text = "No DKB depot CSV batch has been imported yet."
+        else:
+            snapshot_text = (
+                f"Active canonical snapshot: {len(snapshot.positions)} positions; "
+                f"timestamp {snapshot.generated_at.isoformat(timespec='seconds')}."
+            )
+        notice = ""
+        if self.app_server.last_import_notice is not None:
+            outcome, message = self.app_server.last_import_notice
+            css_class = "ok" if outcome == "accepted" else "warn"
+            notice = f'<p class="{css_class}">{escape(message)}</p>'
+        body = f"""<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Portfolio Architect Gateway — DKB</title><style>body{{font-family:system-ui,sans-serif;max-width:850px;margin:2rem auto;padding:0 1rem;background:#111;color:#eee}}section{{border:1px solid #444;border-radius:12px;padding:1rem;margin:1rem 0}}code{{word-break:break-all}}input{{width:min(34rem,95%);padding:.55rem}}button{{padding:.55rem .8rem;margin-top:.5rem}}.warn{{color:#ffca28}}.ok{{color:#66bb6a}}.small{{font-size:.9rem;color:#bbb}}</style></head><body><main><h1>Portfolio Architect Gateway — DKB</h1><section><h2>v{escape(__version__)} DKB acquisition</h2><p>DKB depot CSV is an active provider acquisition method. Uploaded exports are parsed only in memory; depot numbers and raw CSV content are never persisted. One authoritative upload batch produces one canonical DKB snapshot.</p>{notice}<p>{escape(snapshot_text)}</p><form method=\"post\" action=\"import-csv\" enctype=\"multipart/form-data\"><input type=\"hidden\" name=\"nonce\" value=\"{csrf}\"><label for=\"statement\">Current DKB depot CSV export(s)</label><input id=\"statement\" type=\"file\" name=\"statement\" accept=\"text/csv,.csv\" multiple required><br><button type=\"submit\">Import DKB CSV batch</button></form><p class=\"small\">Upload all current DKB depot exports together. Up to {MAX_CSV_FILES} files are accepted. If several dated exports of one depot are included, only the newest is counted. The batch replaces the complete DKB holdings snapshot.</p></section><section><h2>FinTS registration and research probe</h2><p>Fixed endpoint: <code>{escape(DKB_FINTS_ENDPOINT)}</code><br>Bank code: <code>{escape(DKB_BANK_CODE)}</code><br>Configured registration: <code>{escape(suffix)}</code></p><form method=\"post\" action=\"configure-product\"><input type=\"hidden\" name=\"csrf\" value=\"{csrf}\"><label for=\"product_id\">FinTS product registration number</label><br><input id=\"product_id\" name=\"product_id\" minlength=\"25\" maxlength=\"25\" pattern=\"[A-Za-z0-9]{{25}}\" autocomplete=\"off\" required><br><button type=\"submit\">Store registration number</button></form><p class=\"small\">Use the complete 25-character registration number issued for Portfolio Architect itself. It is transmitted only as the HKVVB product designation; a library/kernel registration must not be reused for production access.</p></section><section><h2>Anonymous BPD capability probe</h2><p>State: <strong>{escape(view.state)}</strong></p><p>{escape(view.message)}</p><form method=\"post\" action=\"probe\"><input type=\"hidden\" name=\"csrf\" value=\"{csrf}\"><button type=\"submit\" {'disabled' if product is None else ''}>Probe DKB FinTS capabilities</button></form><p>BPD version: <code>{escape(bpd)}</code><br>{HOLDINGS_PARAMETER_SEGMENT} advertised: <strong>{holdings}</strong><br>Observed parameter segments: <code>{escape(param)}</code><br>Bounded return codes: <code>{escape(codes)}</code></p><p>Sanitized bank return messages:</p>{bank_messages}<p>Raw response body SHA-256: <code>{escape(raw_response_fingerprint)}</code><br>Raw response body bytes: <code>{escape(raw_response_bytes)}</code><br>Decoded response SHA-256: <code>{escape(response_fingerprint)}</code><br>Decoded response bytes: <code>{escape(response_bytes)}</code></p><p class=\"small\">Only bounded HIRMG/HIRMS return-message text plus cryptographic response fingerprints and byte counts are retained for diagnostics. The configured product registration is redacted if echoed; arbitrary segment payload and the raw FinTS response are discarded after fingerprinting; exact raw/decoded response bytes never persist. A positive bank-level BPD result is only evidence to continue research; authenticated user-parameter validation is still required before holdings acquisition may be implemented.</p></section><section><h2>Gateway boundary</h2><p>Bearer token: <code>{escape(self.app_server.api_token)}</code></p><p class=\"small\">The token, normalized DKB snapshot, and FinTS registration state are App-private and survive in-place upgrades. FinTS cannot replace or silently fall back to the CSV snapshot; authenticated DKB FinTS acquisition remains disabled.</p></section></main></body></html>"""
         return body.encode("utf-8")
 
     def _redirect(self, location: str) -> None:
@@ -394,6 +499,13 @@ class DKBIngressHandler(BaseHTTPRequestHandler):
         self._security_headers("text/plain; charset=utf-8")
         self.send_header("Content-Length", "0")
         self.end_headers()
+
+    def _html_status(self, body: bytes, status: HTTPStatus) -> None:
+        self.send_response(status)
+        self._security_headers("text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
 
     def _html(self, body: bytes) -> None:
         self.send_response(HTTPStatus.OK)
@@ -433,8 +545,89 @@ class DKBIngressHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'self'; base-uri 'none'")
 
     def log_message(self, format: str, *args: Any) -> None:
-        _LOGGER.info("DKB capability-probe Ingress request completed")
+        _LOGGER.info("DKB Gateway Ingress request completed")
 
+
+
+def _public_csv_error(err: DkbCsvImportError) -> str:
+    """Return a bounded parser/form reason without uploaded content or identifiers."""
+    text = " ".join(str(err).split())
+    safe_prefixes = (
+        "Import ",
+        "DKB CSV ",
+        "No valid securities positions",
+        "Multiple DKB exports",
+        "Aggregated DKB position",
+        "Parsed DKB CSV batch",
+        "Imported DKB CSV batch",
+    )
+    if 1 <= len(text) <= 220 and text.startswith(safe_prefixes):
+        # Row numbers and fixed parser field labels are safe; provider data is never
+        # included by the parser's public exceptions.
+        return text
+    return "DKB CSV batch was rejected by the bounded import parser"
+
+
+def _parse_csv_multipart_body(body: bytes, boundary: bytes) -> tuple[str, tuple[bytes, ...]]:
+    """Parse one bounded multipart batch with one nonce and up to eight CSV parts."""
+    delimiter = b"--" + boundary
+    closing = delimiter + b"--"
+    if not body.startswith(delimiter + b"\r\n") or closing not in body:
+        raise DkbCsvImportError("Import form body is malformed")
+
+    nonce_payload: bytes | None = None
+    documents: list[bytes] = []
+    total_document_bytes = 0
+    for raw_part in body.split(delimiter)[1:]:
+        if raw_part.startswith(b"--"):
+            break
+        if not raw_part.startswith(b"\r\n"):
+            raise DkbCsvImportError("Import form part is malformed")
+        part = raw_part[2:]
+        if part.endswith(b"\r\n"):
+            part = part[:-2]
+        try:
+            header_blob, payload = part.split(b"\r\n\r\n", 1)
+        except ValueError as err:
+            raise DkbCsvImportError("Import form part headers are malformed") from err
+        if len(header_blob) > 8192:
+            raise DkbCsvImportError("Import form part headers are too large")
+        headers = BytesHeaderParser(policy=policy.default).parsebytes(header_blob + b"\r\n")
+        if headers.get_content_disposition() != "form-data":
+            raise DkbCsvImportError("Import form part disposition is invalid")
+        field = headers.get_param("name", header="content-disposition")
+        if field == "nonce":
+            if nonce_payload is not None or len(payload) > 256:
+                raise DkbCsvImportError("Import form session field is invalid")
+            nonce_payload = payload
+            continue
+        if field != "statement":
+            raise DkbCsvImportError("Import form contains an unexpected field")
+        if len(documents) >= MAX_CSV_FILES:
+            raise DkbCsvImportError(f"Import must contain at most {MAX_CSV_FILES} DKB CSV files")
+        content_type = headers.get_content_type()
+        if content_type not in {
+            "text/csv",
+            "text/plain",
+            "application/csv",
+            "application/vnd.ms-excel",
+            "application/octet-stream",
+        }:
+            raise DkbCsvImportError("Uploaded DKB export must be a CSV document")
+        if not payload or len(payload) > MAX_CSV_FILE_BYTES:
+            raise DkbCsvImportError("DKB CSV is empty or exceeds the 10 MiB per-file limit")
+        total_document_bytes += len(payload)
+        if total_document_bytes > MAX_CSV_BATCH_BYTES:
+            raise DkbCsvImportError("DKB CSV import batch exceeds the 20 MiB safety limit")
+        documents.append(payload)
+
+    if nonce_payload is None or not documents:
+        raise DkbCsvImportError("Import form is incomplete")
+    try:
+        nonce = nonce_payload.decode("ascii")
+    except UnicodeDecodeError as err:
+        raise DkbCsvImportError("Import form session field is invalid") from err
+    return nonce, tuple(documents)
 
 def _parse_persisted_probe(raw: dict[str, Any]) -> CapabilityProbeResult:
     schema = raw.get("schema_version")
@@ -618,28 +811,38 @@ def _parse_persisted_probe(raw: dict[str, Any]) -> CapabilityProbeResult:
 
 
 def serve_dkb_probe_app(*, provider_id: str, provider_name: str, options: PendingAppOptions | None = None, data_directory: Path = APP_DATA_DIRECTORY, ingress_address: tuple[str, int] = (INGRESS_BIND, INGRESS_PORT), allowed_ingress_sources: frozenset[str] = frozenset({"172.30.32.2"}), require_user_header: bool = True, ready_callback: Callable[[], None] | None = None, tls_cert_file: Path | None = None, tls_key_file: Path | None = None) -> None:
-    """Run the isolated DKB capability-probe App without portfolio acquisition."""
+    """Run DKB CSV acquisition with an isolated anonymous FinTS research probe."""
     data_directory.mkdir(mode=0o700, parents=True, exist_ok=True)
     options = options or PendingAppOptions.load()
     server_config = build_server_config(options, data_directory, tls_cert_file=tls_cert_file, tls_key_file=tls_key_file)
     api_token = ensure_api_token(server_config.api_token_file)
-    provider = PendingProvider(provider_id)
+    if provider_id != "dkb":
+        raise RuntimeError("DKB Gateway provider identity is invalid")
+    provider = DkbCsvProvider(server_config.snapshot_file)
     state = GatewayState(server_config, provider)
     state.refresh(trigger="startup")
     controller = DKBProbeController(data_directory)
     if not isinstance(provider_name, str) or not provider_name.strip() or len(provider_name.strip()) > 64:
         raise RuntimeError("Provider display name is invalid")
     gateway_server = create_server(server_config, state)
-    ingress_server = DKBIngressServer(ingress_address, state=state, controller=controller, api_token=api_token, allowed_sources=allowed_ingress_sources, require_user_header=require_user_header)
-    gateway_thread = threading.Thread(target=gateway_server.serve_forever, kwargs={"poll_interval": 0.5}, name="portfolio-dkb-probe-api", daemon=True)
+    ingress_server = DKBIngressServer(
+        ingress_address,
+        state=state,
+        controller=controller,
+        provider=provider,
+        api_token=api_token,
+        allowed_sources=allowed_ingress_sources,
+        require_user_header=require_user_header,
+    )
+    gateway_thread = threading.Thread(target=gateway_server.serve_forever, kwargs={"poll_interval": 0.5}, name="portfolio-dkb-api", daemon=True)
     gateway_thread.start()
-    _LOGGER.info("DKB capability-probe runtime initialized; live acquisition remains disabled")
+    _LOGGER.info("DKB CSV Gateway initialized; FinTS authenticated acquisition remains disabled")
     if ready_callback:
         ready_callback()
     try:
         ingress_server.serve_forever(poll_interval=0.5)
     except KeyboardInterrupt:
-        _LOGGER.info("DKB capability-probe shutdown requested")
+        _LOGGER.info("DKB Gateway shutdown requested")
     finally:
         ingress_server.shutdown()
         ingress_server.server_close()

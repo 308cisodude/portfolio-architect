@@ -559,9 +559,24 @@ from current portfolio value.
 - Keep all immutable provider/route/edge keys out of the editable schema while preserving existing editor validation and write behavior.
 - Preserve v1.43 route-evidence semantics, v1.41.1 local-cash routing, v1.42 execution-path presentation, provider acquisition, schemas, verified HTTPS and the advisory/no-money-movement boundary.
 
-## Deferred beyond v1.44.0
+## v1.45.0 — DKB CSV acquisition moves into the provider Gateway
 
-- **DKB authenticated acquisition:** remains gated on legitimate product registration/capability evidence and later authenticated user-capability/UPD validation; do not infer holdings support from generic or anonymous bank capability lists.
+- Move the established DKB depot-CSV parser/acquisition boundary from the Home Assistant integration into the experimental DKB Gateway App.
+- Treat one protected Ingress upload batch as authoritative, select newest exports per depot transiently, persist only one canonical provider-neutral snapshot and auto-start the App so accepted evidence survives restarts.
+- Migrate existing `dkb_csv` supplemental paths only after the verified-HTTPS `provider_id: dkb` snapshot matches canonical holdings, quantities, identity and conservative source timestamp exactly; perform the source swap in one config-entry mutation.
+- Stop offering creation of new PA-side DKB CSV sources; retain the legacy parser only as the v1.45 migration verifier until live acceptance proves the cut-over.
+- Keep the anonymous FinTS BPD probe independent and fail-closed. `HIWPDS` remains only bank-level evidence; authenticated user-capability/UPD validation is still required before authenticated FinTS holdings acquisition.
+- Preserve REST schema 1, health schema 6, private-PKI HTTPS, bearer authentication, source-set/LKG binding, provider isolation and the advisory/no-money-movement boundary.
+
+## After v1.45.0 — provider acquisition cleanup
+
+- After DKB Gateway CSV migration is live-proven, retire the legacy PA-side `dkb_csv` parser/path without double counting or weakening rollback evidence.
+- Next, move the existing Comdirect CSV adapter into the Comdirect Gateway alongside its live API acquisition, with explicit acquisition policy and no silent fallback from configured live acquisition to stale upload data.
+- Later introduce a deliberate generic import Gateway and move provider-neutral mapped CSV parsing out of Portfolio Architect itself.
+
+## Deferred beyond v1.45.0
+
+- **DKB authenticated FinTS acquisition:** remains gated on legitimate product registration/capability evidence and later authenticated user-capability/UPD validation; the v1.45 local CSV source does not weaken that gate.
 - The historical accepted-exception horizontal-overflow wart is no longer an outstanding item: the v1.36 native dynamic policy list replaced that old static presentation path.
 
-v1.41.1 retains bounded local Trade Republic cash-statement acquisition and changes only the funded-route tie-break; no new remote provider API or transaction capability is enabled. v1.42.0 adds only presentation of those already-decided instructions. v1.43.0 changes only Home Assistant-side execution-evidence governance/editing; v1.44.0 changes only Configure presentation/identity context. Neither enables a new remote provider API or transaction capability.
+v1.41.1 retains bounded local Trade Republic cash-statement acquisition and changes only the funded-route tie-break; no new remote provider API or transaction capability is enabled. v1.42.0 adds only presentation of those already-decided instructions. v1.43.0 changes only Home Assistant-side execution-evidence governance/editing; v1.44.0 changes only Configure presentation/identity context. v1.45.0 adds local DKB CSV acquisition inside the DKB Gateway but no new remote bank API or transaction capability.
