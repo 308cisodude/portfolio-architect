@@ -12,6 +12,18 @@ import yaml
 
 ROOT = Path(__file__).parents[1]
 COMPONENT = ROOT / "custom_components" / "portfolio_architect"
+REFERENCE_SOURCE_CONFIG = {
+    "source_provider": "generic_csv",
+    "csv_encoding": "iso-8859-1",
+    "csv_delimiter": "semicolon",
+    "csv_header_row": 1,
+    "csv_decimal_format": "comma_decimal",
+    "csv_column_identifier": "WKN",
+    "csv_column_name": "Bezeichnung",
+    "csv_column_value": "Wert in EUR",
+    "csv_column_isin": "ISIN",
+    "csv_column_type": "Typ",
+}
 CURRENT_PLAN = ROOT / "examples" / "current-plan"
 
 OUTSIDE_ALLOCATION_IDS = {
@@ -56,6 +68,7 @@ def test_missing_target_has_defined_zero_whole_portfolio_allocation() -> None:
         ROOT / "tests" / "fixtures" / "comdirect-depot-sanitized.csv",
         CURRENT_PLAN,
         evaluated_at=datetime(2026, 8, 18, 19, 30, tzinfo=timezone.utc),
+        source_config=REFERENCE_SOURCE_CONFIG,
     )
     robotics = next(
         item for item in payload["recommendations"] if item["isin"] == "IE00BYZK4552"

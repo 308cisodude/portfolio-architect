@@ -615,9 +615,16 @@ Live acceptance of v1.45.0 proved the exact atomic DKB source cut-over but expos
 - Preserve conservative fallback when acquisition mode is absent/unknown and keep every v1.48.1 threshold/default unchanged.
 - Preserve provider acquisition/no-fallback semantics, independent holdings/cash clocks, private-PKI transport, source-set/LKG behavior, planner economics, and the advisory/no-money-movement boundary.
 
-## After v1.48.0 — provider acquisition cleanup
+## v1.49.0 — retire the completed PA-side Comdirect CSV bridge
 
-- Retire the one-release PA-side Comdirect CSV migration parser/path after v1.48 live acceptance proves the Gateway cut-over.
+- Remove the one-release Home Assistant-side `comdirect_csv` parser and exact-equivalence discovery migration flow after the v1.48 Gateway cut-over and freshness follow-ups are live-proven.
+- Add fail-closed config-entry schema 11 so a still-active legacy Comdirect CSV source must complete the v1.48.2 verified Gateway migration before upgrading.
+- Remove current `comdirect_csv` source-provider/translation/icon surfaces while retaining the provider-neutral mapped generic CSV adapter.
+- Keep Comdirect Gateway `live_api`/`csv` arbitration, DKB CSV, Trade Republic PDF acquisition, v1.48 freshness, private-PKI transport, LKG/source atomicity and planner economics unchanged.
+
+## After v1.49.0 — source architecture cleanup
+
+- Make the Portfolio sources Configure UX explicitly model the single primary source and coherent Add/Edit/Remove flows for supplemental REST Gateways without changing the single-entry architecture.
 - Later introduce a deliberate generic import Gateway and move provider-neutral mapped CSV parsing out of Portfolio Architect itself.
 
 ## Deferred beyond v1.45.0

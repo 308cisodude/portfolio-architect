@@ -96,7 +96,7 @@ from .engine.aggregation import (
 from .engine.calculator import configuration_files
 from .engine.importers import (
     CsvSourceConfig,
-    PROVIDER_COMDIRECT,
+    PROVIDER_GENERIC_CSV,
     read_positions,
 )
 from .engine.models import Position
@@ -174,7 +174,7 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
         self.local_paths: LocalSourcePaths | None = None
         self.configuration_path: LocalConfigurationPath | None = None
         self.csv_source_config: CsvSourceConfig = CsvSourceConfig(
-            provider=PROVIDER_COMDIRECT
+            provider=PROVIDER_GENERIC_CSV
         )
         self.rest_source_config: RestSourceConfig | None = None
         self.positions: dict[str, Position] = {}

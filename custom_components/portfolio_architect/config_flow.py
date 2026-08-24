@@ -173,7 +173,6 @@ from .engine.importers import (
     DEFAULT_GENERIC_ENCODING,
     DEFAULT_GENERIC_HEADER_ROW,
     MAX_GENERIC_HEADER_ROW,
-    PROVIDER_COMDIRECT,
     PROVIDER_GENERIC_CSV,
     CsvSourceConfig,
     inspect_csv_headers,
@@ -229,7 +228,6 @@ _GENERIC_KEYS = (
 
 
 _SUPPORTED_SOURCE_PROVIDERS = (
-    PROVIDER_COMDIRECT,
     PROVIDER_GENERIC_CSV,
     PROVIDER_LOCAL_REST_JSON,
 )
@@ -243,7 +241,7 @@ _NEW_SOURCE_PROVIDERS = (
 class PortfolioArchitectConfigFlow(ConfigFlow, domain=DOMAIN):
     """Configure one explicit local CSV or local REST source adapter."""
 
-    VERSION = 10
+    VERSION = 11
     _source_draft: dict[str, Any]
     _existing_source_data: dict[str, Any]
     _generic_headers: tuple[str, ...]
@@ -290,14 +288,6 @@ class PortfolioArchitectConfigFlow(ConfigFlow, domain=DOMAIN):
                     # existing private CA or system-PKI trust decision.
                     return self.async_abort(reason="tls_trust_changed")
                 return await self._async_migrate_primary_tls(entry, discovery)
-
-        if (
-            entry.data.get(CONF_SOURCE_TYPE) == SOURCE_TYPE_LOCAL_FILES
-            and entry.data.get(CONF_SOURCE_PROVIDER) == PROVIDER_COMDIRECT
-            and discovery.provider_id == GATEWAY_PROVIDER_COMDIRECT
-        ):
-            self._hassio_discovery = discovery
-            return await self.async_step_hassio_migrate_comdirect_csv_confirm()
 
         raw_sources = entry.options.get(CONF_SUPPLEMENTAL_REST_SOURCES, [])
         if isinstance(raw_sources, list):
@@ -374,112 +364,6 @@ class PortfolioArchitectConfigFlow(ConfigFlow, domain=DOMAIN):
             step_id="hassio_confirm",
             data_schema=self.add_suggested_values_to_schema(
                 _hassio_rest_source_schema(), suggested
-            ),
-            errors=errors,
-            description_placeholders={"gateway": discovery.hostname},
-        )
-
-    async def async_step_hassio_migrate_comdirect_csv_confirm(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
-        """Atomically migrate one legacy PA-side Comdirect CSV primary to its Gateway."""
-        discovery = self._hassio_discovery
-        entries = self.hass.config_entries.async_entries(DOMAIN)
-        if (
-            discovery is None
-            or discovery.provider_id != GATEWAY_PROVIDER_COMDIRECT
-            or len(entries) != 1
-        ):
-            return self.async_abort(reason="invalid_tls_discovery")
-        entry = entries[0]
-        if (
-            entry.data.get(CONF_SOURCE_TYPE) != SOURCE_TYPE_LOCAL_FILES
-            or entry.data.get(CONF_SOURCE_PROVIDER) != PROVIDER_COMDIRECT
-        ):
-            return self.async_abort(reason="tls_discovery_not_applicable")
-
-        errors: dict[str, str] = {}
-        suggested = {CONF_REST_API_TOKEN: ""}
-        if user_input is not None:
-            suggested.update(user_input)
-            try:
-                candidate = RestSourceConfig.from_mapping(
-                    {
-                        CONF_REST_ENDPOINT_URL: discovery.endpoint_url,
-                        CONF_REST_API_TOKEN: user_input[CONF_REST_API_TOKEN],
-                        CONF_REST_TLS_CA_CERTIFICATE: discovery.ca_certificate,
-                    }
-                )
-                health = await async_fetch_gateway_health(self.hass, candidate)
-                if (
-                    health.health_schema_version < 7
-                    or health.provider_id != GATEWAY_PROVIDER_COMDIRECT
-                    or health.acquisition_mode != "csv"
-                    or health.status != "ok"
-                    or health.reauthentication_required
-                    or not health.snapshot_available
-                ):
-                    raise PortfolioRestError(
-                        "Comdirect Gateway must be healthy in explicit CSV acquisition mode"
-                    )
-                result = await async_fetch_rest_snapshot(self.hass, candidate)
-                snapshot = result.snapshot
-                if (
-                    snapshot is None
-                    or result.snapshot_sha256 is None
-                    or result.position_count is None
-                    or result.position_count != len(snapshot.positions)
-                    or health.snapshot_generated_at != snapshot.generated_at
-                    or health.snapshot_position_count != len(snapshot.positions)
-                    or health.snapshot_sha256 != result.snapshot_sha256
-                ):
-                    raise PortfolioRestError(
-                        "Comdirect Gateway health does not match its verified CSV snapshot"
-                    )
-                paths = resolve_local_source_paths(
-                    self.hass,
-                    entry.data[CONF_CSV_PATH],
-                    entry.data[CONF_CONFIG_DIRECTORY],
-                    require_exists=True,
-                )
-                legacy_positions = await self.hass.async_add_executor_job(
-                    read_positions,
-                    paths.csv_path,
-                    CsvSourceConfig.from_mapping(dict(entry.data)),
-                )
-                if legacy_positions != snapshot.positions:
-                    raise ValueError("Comdirect Gateway CSV holdings differ from legacy source")
-                payload = await self.hass.async_add_executor_job(
-                    _calculate_rest_source_payload,
-                    snapshot.positions,
-                    paths.config_directory,
-                    snapshot.generated_at,
-                    candidate.endpoint_url,
-                )
-                _validate_calculated_payload(payload)
-            except PortfolioRestAuthenticationError:
-                errors["base"] = "invalid_auth"
-            except PortfolioSourcePathError:
-                errors["base"] = "invalid_path"
-            except (OSError, ValueError, PortfolioRestError, PortfolioArchitectDataError):
-                errors["base"] = "comdirect_gateway_migration_mismatch"
-            else:
-                data = {
-                    CONF_SOURCE_TYPE: SOURCE_TYPE_REST_API,
-                    CONF_SOURCE_PROVIDER: PROVIDER_LOCAL_REST_JSON,
-                    CONF_CONFIG_DIRECTORY: paths.config_relative,
-                    CONF_REST_ENDPOINT_URL: candidate.endpoint_url,
-                    CONF_REST_API_TOKEN: candidate.api_token,
-                    CONF_REST_TLS_CA_CERTIFICATE: discovery.ca_certificate,
-                }
-                self.hass.config_entries.async_update_entry(entry, data=data)
-                await self.hass.config_entries.async_reload(entry.entry_id)
-                return self.async_abort(reason="comdirect_gateway_migrated")
-
-        return self.async_show_form(
-            step_id="hassio_migrate_comdirect_csv_confirm",
-            data_schema=self.add_suggested_values_to_schema(
-                vol.Schema({vol.Required(CONF_REST_API_TOKEN): str}), suggested
             ),
             errors=errors,
             description_placeholders={"gateway": discovery.hostname},
@@ -968,9 +852,6 @@ class PortfolioArchitectConfigFlow(ConfigFlow, domain=DOMAIN):
             adapter,
         )
         _validate_calculated_payload(payload)
-        if adapter.provider == PROVIDER_COMDIRECT:
-            for key in _GENERIC_KEYS:
-                cleaned.pop(key, None)
         cleaned.pop(CONF_REST_ENDPOINT_URL, None)
         cleaned.pop(CONF_REST_API_TOKEN, None)
         cleaned.pop(CONF_REST_TLS_CA_CERTIFICATE, None)

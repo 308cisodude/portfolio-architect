@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.49.0
+
+- Retires the completed Home Assistant-side Comdirect `comdirect_csv` parser and one-release exact-equivalence migration bridge after the v1.48 Gateway cut-over was live-proven.
+- Adds fail-closed config-entry schema 11: a still-active legacy Comdirect CSV source must complete the v1.48.2 verified Gateway migration before upgrading and is never silently reinterpreted or discarded.
+- Removes the current `comdirect_csv` source-provider/config-flow/translation/icon surfaces while keeping the provider-neutral mapped generic CSV adapter.
+- Leaves Comdirect Gateway `live_api`/`csv` acquisition, DKB CSV, Trade Republic PDF acquisition, v1.48 freshness policy, planner economics and all wire/security contracts unchanged.
+
 ## 1.48.2
 
 - preserve health-schema-7 `acquisition_mode` in the coordinator source summaries used by live freshness evaluation instead of overwriting it with acquisition-neutral aggregation metadata

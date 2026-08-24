@@ -1,156 +1,48 @@
 # Portfolio source adapters
 
-Portfolio Architect normalizes every provider into the same canonical position
-model before policy and investment-plan calculations begin.
+Portfolio Architect consumes canonical provider-neutral positions before policy and investment-plan calculations begin. Provider-specific acquisition belongs to the provider Gateway Apps; the Home Assistant integration retains only the provider-neutral mapped-CSV escape hatch until a dedicated generic import Gateway replaces it in a later milestone.
 
-## Comdirect REST
+## Comdirect Gateway
 
-The stable Gateway App exposes a read-only authenticated local REST snapshot.
-The integration validates the schema, timestamp, position count, SHA-256 digest,
-and ETag before accepting it.
+**Portfolio Architect Gateway — Comdirect** owns both supported Comdirect acquisition modes:
 
-## Comdirect CSV
+- **Live API** — authenticated read-only Comdirect acquisition with the established OAuth/session/PhotoTAN boundary and provider-scoped authorized cash.
+- **Static CSV** — explicit depot-CSV holdings plus optional Girokonto Umsatz CSV cash. Holdings and cash retain independent evidence clocks.
 
-The adapter reads the securities table from the German Comdirect depot export.
-It imports all valid security types and uses the explicit `Wert in EUR` value.
+The modes are mutually exclusive and never silently fall back to one another. Raw CSV bytes, filenames, account/depot identifiers, transaction descriptions, counterparties and transaction rows remain transient; only normalized provider state and bounded evidence timestamps persist in the App-private volume.
 
-## DKB CSV
+Portfolio Architect no longer contains a provider-specific Comdirect CSV adapter or migration parser as of v1.49.0.
 
-The DKB depot export provides `Bewertungskurs` and `Stückzahl`, not an explicit
-market-value column. Portfolio Architect calculates each position with exact
-Decimal arithmetic:
+## DKB Gateway
 
-```text
-market value = valuation price × quantity
-```
+**Portfolio Architect Gateway — DKB** owns DKB depot-CSV holdings and independent Girokonto CSV cash acquisition. Uploaded documents are parsed inside the provider App and only normalized evidence is served through the canonical authenticated REST snapshot.
 
-The adapter preserves WKN and ISIN, maps DKB asset classes into canonical types,
-and deliberately ignores depot number, entry price, and performance columns.
-The source timestamp is the export date contained in the DKB file.
+Authenticated DKB FinTS holdings acquisition remains disabled. The isolated capability probe is research-only and cannot replace or silently fall back from CSV evidence.
+
+## Trade Republic Gateway
+
+**Portfolio Architect Gateway — Trade Republic** owns the documented local `DEPOTAUSZUG` holdings and `KONTOAUSZUG` cash statement families. PDFs remain transient private input; only normalized holdings/cash evidence is persisted and served through the canonical authenticated REST snapshot.
 
 ## Generic EUR CSV
 
-The generic adapter requires explicit mappings for identifier, name, and market
-value. Optional mappings cover ISIN, type, and currency. It does not derive values
-from price and quantity and does not perform currency conversion.
+The remaining Home Assistant-side local-file adapter is provider-neutral. It requires explicit mappings for identifier, name and EUR market value. Optional mappings cover ISIN, type and currency. It does not derive values from price and quantity and does not perform currency conversion.
+
+This generic adapter is deliberately not a Comdirect/DKB/Trade Republic parser. A later roadmap milestone will move this mapped-CSV capability into a dedicated generic import Gateway as well.
 
 ## Multi-source consolidation
 
-One primary source can be combined with up to eight supplemental DKB exports.
-The sources are validated independently and consolidated using these rules:
+A primary Gateway/local generic source can be combined with additional provider Gateways. Every configured source is validated independently and the complete set is aggregated atomically:
 
 1. ISIN is the canonical cross-source identity when present.
 2. WKN is used only when no ISIN is available.
 3. EUR values are summed without intermediate rounding.
-4. The primary source supplies the canonical display name and WKN.
-5. WKN or instrument-type discrepancies become diagnostic conflicts.
-6. The oldest contributing source timestamp controls freshness.
-7. A failed supplemental source does not replace the latest validated aggregate;
-   the Home Assistant-side last-known-good calculation remains available.
+4. Provider/source provenance remains attached to the aggregate.
+5. Identity/type discrepancies become bounded diagnostic conflicts.
+6. A configured provider failure never silently drops that provider and recalculates a smaller portfolio.
+7. A matching complete Home Assistant last-known-good aggregate may remain informationally available, while new investment actionability fails closed until the full configured source set is healthy again.
 
-Supplemental paths are stored as confined paths relative to `/config`. Filenames,
-account identifiers, and depot numbers are not used as public source identities.
-
-## DKB dated exports
-
-Multiple configured files from the same DKB depot are treated as dated snapshots, not separate portfolios. Only the newest export date contributes. Different depots remain independent sources.
+Verified private-PKI HTTPS, bearer authentication, DNS pinning and snapshot-integrity checks remain mandatory for official Gateway sources.
 
 ## Optional authorized investment cash in REST schema 1
 
-A conforming local REST source may continue to publish the established
-compatibility object:
-
-```json
-{
-  "investment_reserve": {
-    "available_eur": "100",
-    "as_of": "2026-08-10T20:59:00Z"
-  }
-}
-```
-
-Both fields are required when the object is present. `available_eur` is the amount
-Portfolio Architect is authorized to allocate. It must be a canonical
-non-negative decimal string; `as_of` must be a timezone-aware bounded timestamp.
-
-Version 1.19.0 adds an optional explanatory object without changing the schema
-version:
-
-```json
-{
-  "investment_cash": {
-    "account_balance_eur": "8601.53",
-    "eligible_eur": "8601.53",
-    "authorized_eur": "100",
-    "policy": "capped",
-    "cap_eur": "100",
-    "as_of": "2026-08-10T20:59:00Z"
-  }
-}
-```
-
-`account_balance_eur` may be signed. The other amounts are non-negative. Policy is
-`all_available` or `capped`; `cap_eur` is required only for `capped`. The
-authorized amount may not exceed eligible cash and must equal eligible cash for
-`all_available`, or `min(eligible_eur, cap_eur)` for `capped`.
-
-When `investment_cash` is present, the compatibility `investment_reserve` object
-is also required, with the same timestamp and an `available_eur` value equal to
-`authorized_eur`. Portfolio Architect rejects inconsistent pairs. Older supported
-REST sources may omit `investment_cash` entirely.
-
-Numeric JSON values, partial objects, inconsistent policies, invalid decimals,
-naive timestamps, and implausibly future timestamps are rejected.
-
-## Additional Gateway REST sources (v1.26)
-
-For an installation whose primary source is already a local Gateway REST endpoint,
-Portfolio Architect can persist a bounded set of additional independent Gateway
-connections in the Home Assistant config-entry options. Each connection contains a
-local-only endpoint, a private bearer token, and the bounded provider ID proven by
-Gateway health schema 6.
-
-The provider App owns acquisition. Portfolio Architect does not know whether a
-Gateway snapshot came from a broker API, a local PDF import, or another future
-provider mechanism. Before saving an additional Gateway, the integration validates
-bearer authentication, provider identity, live snapshot availability and matching
-snapshot integrity evidence.
-
-At refresh time every configured Gateway is read before aggregation. The resulting
-canonical positions are merged by the same ISIN-first aggregation engine used for
-CSV supplements. A configured Gateway cannot silently disappear from a live
-calculation: failure retains a matching previously validated complete aggregate as
-non-actionable Home Assistant LKG or fails closed when no such aggregate exists.
-
-Source instances and provider identities are separate. `source_count` counts every
-independent source instance; `provider_count` and `provider_ids` represent the
-distinct bounded providers contributing to the accepted aggregate.
-
-## ISIN-first instrument identity (v1.26.1)
-
-Portfolio Architect treats ISIN as the canonical instrument identity whenever it is
-available. WKN remains supported as secondary German-market metadata and as a
-fallback only when one side of an otherwise valid match has no ISIN. The internal
-REST-schema-1 `identifier` field is not assumed to be a WKN; an ISIN-only provider
-such as the supported Trade Republic statement importer therefore remains an
-ISIN-only source after parsing.
-
-Identity evidence is fail-closed. A WKN must never override a contradictory ISIN,
-two different WKN values may not claim the same ISIN, and one WKN may not map to
-multiple ISINs. Ambiguous or contradictory identity evidence aborts the aggregate
-rather than merging or matching a position heuristically. This rule is
-provider-neutral and applies equally to REST and CSV source combinations.
-
-## Unavailable-source presentation (v1.26.2)
-
-A source that prevents a live aggregate can expose only a bounded presentation
-identity. Additional Gateways use their health-schema-6 provider ID to derive labels
-such as `Trade Republic Gateway`; DKB CSV supplements use bounded instance labels
-such as `DKB CSV 2`. Private bearer tokens, endpoint URLs and filesystem paths are
-never source labels.
-
-Additional REST Gateway failures are collected across the configured supplemental
-Gateway set so multiple failed source identities can be shown together. This is
-only diagnostic collection: aggregation remains atomic, so the successful subset is
-not accepted as a live portfolio while any configured source is unavailable or
-invalid.
+A conforming provider Gateway may publish the established optional `investment_reserve` / `investment_cash` evidence through REST portfolio schema 1. Provider-scoped cash remains separate between providers and may be used by Portfolio Architect only within the explicit advisory execution/funding model. Portfolio Architect never initiates transfers, payments or orders.

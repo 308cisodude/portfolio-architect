@@ -1,4 +1,4 @@
-"""v1.48.2 native dynamic portfolio-presentation contracts."""
+"""v1.49.0 native dynamic portfolio-presentation contracts."""
 
 from __future__ import annotations
 
@@ -13,6 +13,18 @@ import yaml
 
 ROOT = Path(__file__).parents[1]
 COMPONENT = ROOT / "custom_components" / "portfolio_architect"
+REFERENCE_SOURCE_CONFIG = {
+    "source_provider": "generic_csv",
+    "csv_encoding": "iso-8859-1",
+    "csv_delimiter": "semicolon",
+    "csv_header_row": 1,
+    "csv_decimal_format": "comma_decimal",
+    "csv_column_identifier": "WKN",
+    "csv_column_name": "Bezeichnung",
+    "csv_column_value": "Wert in EUR",
+    "csv_column_isin": "ISIN",
+    "csv_column_type": "Typ",
+}
 CURRENT_PLAN = ROOT / "examples" / "current-plan"
 DASHBOARD = ROOT / "dashboard" / "bilingual-dashboard.yaml"
 
@@ -61,6 +73,7 @@ def test_presentation_schema2_slots_reconcile_with_validated_current_state() -> 
         ROOT / "tests" / "fixtures" / "comdirect-depot-sanitized.csv",
         CURRENT_PLAN,
         evaluated_at=datetime(2026, 8, 19, 12, 0, tzinfo=timezone.utc),
+        source_config=REFERENCE_SOURCE_CONFIG,
     )
     data = model.parse_portfolio_data(
         payload["recommendations"], payload["summary"], payload["policy_findings"], holdings=payload["holdings"]
@@ -105,7 +118,7 @@ def test_reference_dashboard_uses_only_native_dynamic_cards() -> None:
     lowered = source.casefold()
     assert "type: entity-filter" in source
     assert "type: entities" in source
-    # v1.48.2 retains native dynamic presentation while replacing the live-broken
+    # v1.49.0 retains native dynamic presentation while replacing the live-broken
     # entity-filter → Distribution composition with native Entities lists.
     assert "type: distribution" not in source
     assert "type: glance" in source
@@ -147,14 +160,14 @@ def test_presentation_slots_are_explicitly_ephemeral_diagnostic_projection() -> 
 
 
 def test_current_version_metadata_is_aligned() -> None:
-    assert 'version = "1.48.2"' in (ROOT / "pyproject.toml").read_text()
-    assert '"version": "1.48.2"' in (COMPONENT / "manifest.json").read_text()
-    assert 'VERSION: Final = "1.48.2"' in (COMPONENT / "const.py").read_text()
-    assert '__version__ = "1.48.2"' in (COMPONENT / "engine" / "__init__.py").read_text()
+    assert 'version = "1.49.0"' in (ROOT / "pyproject.toml").read_text()
+    assert '"version": "1.49.0"' in (COMPONENT / "manifest.json").read_text()
+    assert 'VERSION: Final = "1.49.0"' in (COMPONENT / "const.py").read_text()
+    assert '__version__ = "1.49.0"' in (COMPONENT / "engine" / "__init__.py").read_text()
     for app in (
         "portfolio_architect_gateway",
         "portfolio_architect_gateway_dkb",
         "portfolio_architect_gateway_trade_republic",
     ):
         config = yaml.safe_load((ROOT / "home_assistant_app" / app / "config.yaml").read_text())
-        assert config["version"] == "1.48.2"
+        assert config["version"] == "1.49.0"

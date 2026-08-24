@@ -13,10 +13,16 @@ import pytest
 ROOT = Path(__file__).parents[1]
 COMPONENT = ROOT / "custom_components" / "portfolio_architect"
 sys.path.insert(0, str(COMPONENT))
+sys.path.insert(0, str(ROOT / "tests"))
+
+from reference_portfolio import (  # noqa: E402
+    REFERENCE_LABEL,
+    REFERENCE_PROVIDER,
+    read_reference_positions,
+)
 
 from engine.aggregation import PortfolioSourceSnapshot, aggregate_sources  # noqa: E402
 from engine.calculator import calculate_portfolio_payload_from_positions  # noqa: E402
-from engine.importers import CsvSourceConfig, PROVIDER_COMDIRECT, read_positions  # noqa: E402
 from engine.models import Position  # noqa: E402
 
 MODEL_PATH = COMPONENT / "model.py"
@@ -34,10 +40,7 @@ D = Decimal
 
 def _live_failure_payload() -> dict:
     """Reproduce the v1.31.0 live topology that exposed the parser mismatch."""
-    comdirect = read_positions(
-        ROOT / "tests" / "fixtures" / "comdirect-depot-sanitized.csv",
-        CsvSourceConfig(provider=PROVIDER_COMDIRECT),
-    )
+    comdirect = read_reference_positions()
     # The live distributing Robotics purchase exists only in Trade Republic.
     # Remove the historical synthetic Comdirect copy from this fixture so no WKN
     # evidence exists for the ISIN during aggregation.

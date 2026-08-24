@@ -7,6 +7,18 @@ import sys
 
 ROOT=Path(__file__).parents[1]
 ENGINE_ROOT=ROOT/'custom_components'/'portfolio_architect'
+REFERENCE_SOURCE_CONFIG = {
+    "source_provider": "generic_csv",
+    "csv_encoding": "iso-8859-1",
+    "csv_delimiter": "semicolon",
+    "csv_header_row": 1,
+    "csv_decimal_format": "comma_decimal",
+    "csv_column_identifier": "WKN",
+    "csv_column_name": "Bezeichnung",
+    "csv_column_value": "Wert in EUR",
+    "csv_column_isin": "ISIN",
+    "csv_column_type": "Typ",
+}
 sys.path.insert(0,str(ENGINE_ROOT))
 from engine import calculate_portfolio_payload
 MODEL_PATH=ROOT/'custom_components/portfolio_architect/model.py'
@@ -21,6 +33,7 @@ def test_current_reference_depot_scope_contract():
         depot,
         ROOT/'examples'/'current-plan',
         evaluated_at=datetime(2026,8,17,12,0,tzinfo=timezone.utc),
+        source_config=REFERENCE_SOURCE_CONFIG,
     )
     summary=payload['summary']
     assert payload['schema_version']==8

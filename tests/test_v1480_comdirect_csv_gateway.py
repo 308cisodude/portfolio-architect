@@ -227,7 +227,7 @@ def test_comdirect_static_evidence_uses_csv_freshness_class() -> None:
     assert rows[0]["within_age_threshold"] is True
 
 
-def test_new_pa_setup_no_longer_offers_legacy_comdirect_csv_but_bridge_remains() -> None:
+def test_new_pa_setup_does_not_offer_legacy_comdirect_csv_and_bridge_can_retire() -> None:
     flow = (ROOT / "custom_components" / "portfolio_architect" / "config_flow.py").read_text(
         encoding="utf-8"
     )
@@ -235,20 +235,11 @@ def test_new_pa_setup_no_longer_offers_legacy_comdirect_csv_but_bridge_remains()
     assert "PROVIDER_COMDIRECT" not in new_provider_block
     assert "PROVIDER_GENERIC_CSV" in new_provider_block
     assert "PROVIDER_LOCAL_REST_JSON" in new_provider_block
-    assert "async_step_hassio_migrate_comdirect_csv_confirm" in flow
-    migration = flow.split("async def async_step_hassio_migrate_comdirect_csv_confirm", 1)[1].split(
-        "async def async_step_hassio_add_supplemental_confirm", 1
-    )[0]
-    assert "health.health_schema_version < 7" in migration
-    assert 'health.acquisition_mode != "csv"' in migration
-    assert "legacy_positions != snapshot.positions" in migration
-    assert "async_update_entry" in migration
-    assert "async_reload" in migration
-    assert "st_mtime" not in migration
-    assert "stat().st_mtime" not in migration
+    assert "async_step_hassio_migrate_comdirect_csv_confirm" not in flow
+    assert "legacy_positions != snapshot.positions" not in flow
 
 
-def test_bilingual_comdirect_migration_bridge_is_explained_fail_closed() -> None:
+def test_bilingual_current_config_flow_has_no_comdirect_csv_migration_strings() -> None:
     import json
 
     for language in ("en", "de"):
@@ -257,6 +248,6 @@ def test_bilingual_comdirect_migration_bridge_is_explained_fail_closed() -> None
                 encoding="utf-8"
             )
         )
-        assert "hassio_migrate_comdirect_csv_confirm" in data["config"]["step"]
-        assert "comdirect_gateway_migration_mismatch" in data["config"]["error"]
-        assert "comdirect_gateway_migrated" in data["config"]["abort"]
+        assert "hassio_migrate_comdirect_csv_confirm" not in data["config"]["step"]
+        assert "comdirect_gateway_migration_mismatch" not in data["config"]["error"]
+        assert "comdirect_gateway_migrated" not in data["config"]["abort"]

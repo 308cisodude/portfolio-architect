@@ -10,9 +10,15 @@ import pytest
 ROOT = Path(__file__).parents[1]
 COMPONENT = ROOT / "custom_components" / "portfolio_architect"
 sys.path.insert(0, str(COMPONENT))
+sys.path.insert(0, str(ROOT / "tests"))
+
+from reference_portfolio import (  # noqa: E402
+    REFERENCE_LABEL,
+    REFERENCE_PROVIDER,
+    read_reference_positions,
+)
 
 from engine import calculate_portfolio_payload_from_positions  # noqa: E402
-from engine.importers import CsvSourceConfig, PROVIDER_COMDIRECT, read_positions  # noqa: E402
 from engine.rest import (  # noqa: E402
     MAX_REST_POSITIONS,
     PROVIDER_LOCAL_REST_JSON,
@@ -120,9 +126,7 @@ def test_rest_schema_is_bounded_and_source_timestamped() -> None:
 
 
 def test_rest_positions_use_the_same_stable_schema_8_engine() -> None:
-    positions = read_positions(
-        ROOT / "tests" / "fixtures" / "comdirect-depot-sanitized.csv", CsvSourceConfig(provider=PROVIDER_COMDIRECT)
-    )
+    positions = read_reference_positions()
     payload = calculate_portfolio_payload_from_positions(
         positions,
         ROOT / "examples" / "current-plan",

@@ -23,6 +23,7 @@ from .const import (
     DEFAULT_CSV_PATH,
     DEFAULT_SOURCE_ENTITY_ID,
     DEFAULT_SOURCE_PROVIDER,
+    LEGACY_COMDIRECT_CSV_PROVIDER,
     DOMAIN,
     INSTANCE_UNIQUE_ID,
     PLAN_FREQUENCY_MONTHLY,
@@ -75,14 +76,14 @@ async def async_migrate_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
 ) -> bool:
-    """Migrate a Portfolio Architect config entry to schema version 10."""
+    """Migrate a Portfolio Architect config entry to schema version 11."""
     _LOGGER.debug(
         "Migrating Portfolio Architect config entry from version %s.%s",
         entry.version,
         entry.minor_version,
     )
 
-    if entry.version > 10:
+    if entry.version > 11:
         _LOGGER.error(
             "Cannot migrate Portfolio Architect config entry from future version %s",
             entry.version,
@@ -194,7 +195,7 @@ async def async_migrate_entry(
     if entry.version < 6:
         data = dict(entry.data)
         if data.get(CONF_SOURCE_TYPE) == SOURCE_TYPE_LOCAL_FILES:
-            data.setdefault(CONF_SOURCE_PROVIDER, DEFAULT_SOURCE_PROVIDER)
+            data.setdefault(CONF_SOURCE_PROVIDER, LEGACY_COMDIRECT_CSV_PROVIDER)
         hass.config_entries.async_update_entry(
             entry,
             data=data,
@@ -238,7 +239,7 @@ async def async_migrate_entry(
                 "Cannot migrate Portfolio Architect to schema 10 while legacy "
                 "DKB CSV acquisition is still configured. Install v1.45.1, "
                 "migrate the DKB CSV source to Portfolio Architect Gateway — DKB, "
-                "verify provider_id dkb, then update to v1.48.2."
+                "verify provider_id dkb, then update to v1.49.0."
             )
             return False
 
@@ -251,6 +252,29 @@ async def async_migrate_entry(
         )
         _LOGGER.info(
             "Retired the completed legacy DKB CSV migration bridge from the "
+            "Portfolio Architect config entry"
+        )
+
+    if entry.version < 11:
+        # v1.49 retires the one-release PA-side Comdirect CSV migration oracle.
+        # Never reinterpret or discard a still-active legacy Comdirect CSV source.
+        # It must be migrated through the verified v1.48.2 Gateway cut-over first.
+        if (
+            entry.data.get(CONF_SOURCE_TYPE) == SOURCE_TYPE_LOCAL_FILES
+            and entry.data.get(CONF_SOURCE_PROVIDER) == LEGACY_COMDIRECT_CSV_PROVIDER
+        ):
+            _LOGGER.error(
+                "Cannot migrate Portfolio Architect to schema 11 while legacy "
+                "Comdirect CSV acquisition is still configured. Install v1.48.2, "
+                "migrate the source to Portfolio Architect Gateway — Comdirect in "
+                "explicit csv mode, verify the Gateway-backed source, then update "
+                "to v1.49.0."
+            )
+            return False
+
+        hass.config_entries.async_update_entry(entry, version=11)
+        _LOGGER.info(
+            "Retired the completed legacy Comdirect CSV migration bridge from the "
             "Portfolio Architect config entry"
         )
 
