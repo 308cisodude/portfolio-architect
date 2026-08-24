@@ -231,10 +231,11 @@ def test_new_pa_setup_does_not_offer_legacy_comdirect_csv_and_bridge_can_retire(
     flow = (ROOT / "custom_components" / "portfolio_architect" / "config_flow.py").read_text(
         encoding="utf-8"
     )
-    new_provider_block = flow.split("_NEW_SOURCE_PROVIDERS = (", 1)[1].split(")", 1)[0]
-    assert "PROVIDER_COMDIRECT" not in new_provider_block
-    assert "PROVIDER_GENERIC_CSV" in new_provider_block
-    assert "PROVIDER_LOCAL_REST_JSON" in new_provider_block
+    assert "_NEW_SOURCE_PROVIDERS = _SUPPORTED_SOURCE_PROVIDERS" in flow
+    supported_provider_block = flow.split("_SUPPORTED_SOURCE_PROVIDERS = (", 1)[1].split(")", 1)[0]
+    assert "PROVIDER_COMDIRECT" not in supported_provider_block
+    assert "PROVIDER_GENERIC_CSV" not in supported_provider_block
+    assert "PROVIDER_LOCAL_REST_JSON" in supported_provider_block
     assert "async_step_hassio_migrate_comdirect_csv_confirm" not in flow
     assert "legacy_positions != snapshot.positions" not in flow
 

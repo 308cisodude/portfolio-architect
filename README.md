@@ -1,4 +1,4 @@
-# Portfolio Architect v1.50.0
+# Portfolio Architect v1.51.0
 
 Portfolio Architect is a Home Assistant-native portfolio overview, policy-check,
 and deterministic investment-planning system. It supports provider-isolated acquisition, multi-source consolidation, cost-aware recommendations, and separate read-only Gateway Apps, including DKB depot-CSV acquisition inside the DKB Gateway and simultaneous aggregation of multiple local Gateway REST snapshots.
@@ -34,7 +34,7 @@ transfer, payment, or account-transaction capability.
 
 ## Provider Gateway Apps
 
-Version 1.50.0 makes Portfolio sources explicitly model the single primary REST Gateway plus optional provider-isolated supplemental Gateways, adds native Add/Edit/Remove management for supplements, and records a persisted server-side DKB FinTS probe-dispatch timestamp for operator observability. Provider acquisition, freshness, planner economics and wire/security contracts remain unchanged.
+Version 1.51.0 completes the current acquisition-boundary cleanup by moving provider-neutral mapped CSV import into a dedicated Generic Import Gateway. Portfolio Architect itself now consumes provider snapshots rather than local acquisition formats. The DKB probe timestamp remains canonical UTC and uses a standards-based browser-local display fallback in Ingress instead of a hard-coded timezone. Official provider acquisition, freshness, planner economics and wire/security contracts remain unchanged.
 
 Version 1.48.1 makes freshness acquisition-aware: live sources keep a 24-hour default while unconfigured static CSV/PDF evidence defaults to 5 days for weekly plans and 14 days for monthly-or-slower plans. Existing explicit freshness thresholds are preserved.
 

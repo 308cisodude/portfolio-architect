@@ -20,9 +20,7 @@ from .const import (
     CONF_SOURCE_PROVIDER,
     CONF_SOURCE_TYPE,
     DEFAULT_CONFIG_DIRECTORY,
-    DEFAULT_CSV_PATH,
     DEFAULT_SOURCE_ENTITY_ID,
-    DEFAULT_SOURCE_PROVIDER,
     LEGACY_COMDIRECT_CSV_PROVIDER,
     DOMAIN,
     INSTANCE_UNIQUE_ID,
@@ -32,9 +30,7 @@ from .const import (
     SOURCE_TYPE_LOCAL_FILES,
 )
 from .coordinator import PortfolioArchitectCoordinator
-from .engine.calculator import validate_local_source
 from .entity_ids import plan_legacy_entity_id_migrations
-from .source import resolve_local_source_paths
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -76,14 +72,14 @@ async def async_migrate_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
 ) -> bool:
-    """Migrate a Portfolio Architect config entry to schema version 11."""
+    """Migrate a Portfolio Architect config entry to schema version 12."""
     _LOGGER.debug(
         "Migrating Portfolio Architect config entry from version %s.%s",
         entry.version,
         entry.minor_version,
     )
 
-    if entry.version > 11:
+    if entry.version > 12:
         _LOGGER.error(
             "Cannot migrate Portfolio Architect config entry from future version %s",
             entry.version,
@@ -95,48 +91,26 @@ async def async_migrate_entry(
         migrated_entities = _migrate_legacy_entity_ids(hass, entry)
 
     if entry.version < 3:
+        # The historical local-file engine is no longer part of Portfolio Architect.
+        # Preserve the old sensor reference rather than silently interpreting local
+        # files with acquisition code that the current integration intentionally does
+        # not contain. The operator can then reconfigure to a verified Gateway.
         old_source = entry.data.get(
             CONF_SOURCE_ENTITY_ID,
             DEFAULT_SOURCE_ENTITY_ID,
         )
-        local_paths = resolve_local_source_paths(
-            hass,
-            DEFAULT_CSV_PATH,
-            DEFAULT_CONFIG_DIRECTORY,
-            require_exists=False,
-        )
-        try:
-            await hass.async_add_executor_job(
-                validate_local_source,
-                local_paths.csv_path,
-                local_paths.config_directory,
-            )
-        except (OSError, ValueError) as err:
-            new_data = {
-                CONF_SOURCE_TYPE: SOURCE_TYPE_LEGACY_SENSOR,
-                CONF_SOURCE_ENTITY_ID: old_source,
-            }
-            _LOGGER.warning(
-                "Could not automatically migrate to the self-contained local-file "
-                "source; retaining the deprecated source sensor until the integration "
-                "is reconfigured: %s",
-                err,
-            )
-        else:
-            new_data = {
-                CONF_SOURCE_TYPE: SOURCE_TYPE_LOCAL_FILES,
-                CONF_CSV_PATH: DEFAULT_CSV_PATH,
-                CONF_CONFIG_DIRECTORY: DEFAULT_CONFIG_DIRECTORY,
-            }
-            _LOGGER.info(
-                "Migrated Portfolio Architect from the command-line source sensor "
-                "to the self-contained local-file engine"
-            )
-
         hass.config_entries.async_update_entry(
             entry,
-            data=new_data,
+            data={
+                CONF_SOURCE_TYPE: SOURCE_TYPE_LEGACY_SENSOR,
+                CONF_SOURCE_ENTITY_ID: old_source,
+            },
             version=3,
+        )
+        _LOGGER.warning(
+            "Retained the deprecated source sensor while migrating this historical "
+            "entry because Portfolio Architect no longer performs local-file "
+            "acquisition; reconfigure the entry to a verified REST Gateway"
         )
 
     if entry.version < 4:
@@ -239,7 +213,7 @@ async def async_migrate_entry(
                 "Cannot migrate Portfolio Architect to schema 10 while legacy "
                 "DKB CSV acquisition is still configured. Install v1.45.1, "
                 "migrate the DKB CSV source to Portfolio Architect Gateway — DKB, "
-                "verify provider_id dkb, then update to v1.50.0."
+                "verify provider_id dkb, then update to v1.51.0."
             )
             return False
 
@@ -276,6 +250,31 @@ async def async_migrate_entry(
         _LOGGER.info(
             "Retired the completed legacy Comdirect CSV migration bridge from the "
             "Portfolio Architect config entry"
+        )
+
+    if entry.version < 12:
+        # v1.51 retires the remaining provider-neutral mapped CSV acquisition path
+        # from the Home Assistant integration. Never discard or reinterpret an
+        # active local-file source: move it explicitly to the Generic Import Gateway
+        # while still running v1.50.0, verify the Gateway-backed snapshot, and only
+        # then upgrade.
+        if entry.data.get(CONF_SOURCE_TYPE) == SOURCE_TYPE_LOCAL_FILES:
+            provider = entry.data.get(CONF_SOURCE_PROVIDER, "generic_csv")
+            _LOGGER.error(
+                "Cannot migrate Portfolio Architect to schema 12 while local CSV "
+                "acquisition is still configured (provider %s). Stay on v1.50.0, "
+                "install Portfolio Architect Gateway — Generic Import v1.51.0, "
+                "import and verify the mapped CSV there, reconfigure Portfolio "
+                "Architect to that verified REST Gateway, then retry the v1.51.0 "
+                "upgrade.",
+                provider,
+            )
+            return False
+
+        hass.config_entries.async_update_entry(entry, version=12)
+        _LOGGER.info(
+            "Retired provider-neutral local CSV acquisition from the Portfolio "
+            "Architect config entry; acquisition is Gateway-only in schema 12"
         )
 
     if migrated_entities:

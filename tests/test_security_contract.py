@@ -51,10 +51,14 @@ def test_monthly_money_and_schema_are_bounded() -> None:
 
 
 def test_local_file_sizes_and_paths_are_bounded() -> None:
-    csv_source = (ENGINE_DIR / "importers.py").read_text(encoding="utf-8")
+    generic_csv = (
+        ROOT / "home_assistant_app" / "portfolio_architect_gateway_import" / "src"
+        / "portfolio_architect_gateway" / "generic_csv.py"
+    ).read_text(encoding="utf-8")
     yaml_source = (ENGINE_DIR / "io.py").read_text(encoding="utf-8")
     source = (ROOT / "custom_components" / "portfolio_architect" / "source.py").read_text(encoding="utf-8")
-    assert "_MAX_CSV_FILE_SIZE = 10 * 1024 * 1024" in csv_source
+    assert "MAX_CSV_FILE_BYTES: Final = 10 * 1024 * 1024" in generic_csv
+    assert not (ENGINE_DIR / "importers.py").exists()
     assert "_MAX_YAML_FILE_SIZE = 1024 * 1024" in yaml_source
     assert "_MAX_RELATIVE_PATH_LENGTH = 255" in source
     assert "Configured paths must remain inside" in source

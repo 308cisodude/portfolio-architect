@@ -87,15 +87,15 @@ def test_v1201_version_alignment_and_wire_compatibility() -> None:
         encoding="utf-8"
     )
 
-    assert manifest["version"] == "1.50.0"
-    assert app["version"] == "1.50.0"
-    assert 'VERSION: Final = "1.50.0"' in const
-    assert '__version__ = "1.50.0"' in engine
-    assert '__version__ = "1.50.0"' in gateway
+    assert manifest["version"] == "1.51.0"
+    assert app["version"] == "1.51.0"
+    assert 'VERSION: Final = "1.51.0"' in const
+    assert '__version__ = "1.51.0"' in engine
+    assert '__version__ = "1.51.0"' in gateway
     assert app["stage"] == "stable"
 
     # v1.20.1 is propagation/repair hygiene only. No payload or wire-schema bump.
     integration_init = (COMPONENT / "__init__.py").read_text(encoding="utf-8")
     rest_client = (COMPONENT / "rest_client.py").read_text(encoding="utf-8")
-    assert "schema version 11" in integration_init
+    assert "schema version 12" in integration_init
     assert '"requested_health_schema_version": 7' in rest_client

@@ -14,26 +14,26 @@ def test_engine_is_bundled_inside_custom_component() -> None:
     assert not (ROOT / "portfolio-architect").exists()
 
 
-def test_local_file_coordinator_replaces_command_line_transport() -> None:
+def test_gateway_coordinator_preserves_self_contained_calculation_runtime() -> None:
     coordinator = (COMPONENT / "coordinator.py").read_text(encoding="utf-8")
     setup = (COMPONENT / "__init__.py").read_text(encoding="utf-8")
     assert "calculate_portfolio_payload" in coordinator
     assert "async_add_executor_job" in coordinator
-    assert "SOURCE_TYPE_LOCAL_FILES" in coordinator
+    assert "SOURCE_TYPE_LOCAL_FILES" not in coordinator
     assert "DEFAULT_UPDATE_INTERVAL_MINUTES" in coordinator
-    assert "Migrated Portfolio Architect from the command-line source sensor" in setup
+    assert "Cannot migrate Portfolio Architect to schema 12 while local CSV" in setup
 
 
-def test_config_flow_supports_local_paths_and_reconfigure() -> None:
+def test_config_flow_is_gateway_only_but_retains_safe_reconfigure() -> None:
     flow = (COMPONENT / "config_flow.py").read_text(encoding="utf-8")
     source = (COMPONENT / "source.py").read_text(encoding="utf-8")
-    assert "CONF_CSV_PATH" in flow
-    assert "CONF_CONFIG_DIRECTORY" in flow
+    setup = (COMPONENT / "__init__.py").read_text(encoding="utf-8")
+    assert "CONF_CSV_PATH" not in flow
     assert "async_step_reconfigure" in flow
     assert "async_update_reload_and_abort" in flow
-    assert "resolve_local_source_paths" in flow
-    assert "is_relative_to(root)" in source
-    assert '".storage", "custom_components"' in source
+    assert "resolve_local_source_paths" not in flow
+    assert "SOURCE_TYPE_LOCAL_FILES" not in source
+    assert "Cannot migrate Portfolio Architect to schema 12 while local CSV" in setup
 
 
 def test_snapshot_timestamp_comes_from_csv_mtime() -> None:

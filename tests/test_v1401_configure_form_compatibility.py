@@ -47,7 +47,8 @@ def test_all_number_selector_steps_respect_home_assistant_floor() -> None:
         )
         seen += 1
 
-    assert seen >= 10
+    # v1.51 retires the local mapped-CSV Configure selectors from PA itself.
+    assert seen >= 9
 
 
 def test_broker_evidence_dates_use_native_date_selectors_and_local_today_defaults() -> None:

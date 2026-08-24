@@ -12,18 +12,8 @@ import yaml
 
 ROOT = Path(__file__).parents[1]
 COMPONENT = ROOT / "custom_components" / "portfolio_architect"
-REFERENCE_SOURCE_CONFIG = {
-    "source_provider": "generic_csv",
-    "csv_encoding": "iso-8859-1",
-    "csv_delimiter": "semicolon",
-    "csv_header_row": 1,
-    "csv_decimal_format": "comma_decimal",
-    "csv_column_identifier": "WKN",
-    "csv_column_name": "Bezeichnung",
-    "csv_column_value": "Wert in EUR",
-    "csv_column_isin": "ISIN",
-    "csv_column_type": "Typ",
-}
+sys.path.insert(0, str(ROOT / "tests"))
+from reference_portfolio import read_reference_positions
 
 
 def _load_schedule():
@@ -124,12 +114,13 @@ def test_ui_budget_is_split_per_period_and_schema_8_is_validated():
         "executions_per_period": 2,
         "instruments": portfolio["portfolio"]["allocation"],
     }
-    payload = engine.calculate_portfolio_payload(
-        csv_path,
+    payload = engine.calculate_portfolio_payload_from_positions(
+        read_reference_positions(),
         config_dir,
         evaluated_at=datetime(2026, 8, 17, 12, 0, tzinfo=timezone.utc),
-        source_config=REFERENCE_SOURCE_CONFIG,
         plan_override=override,
+        source_provider="generic_csv",
+        source_label="Sanitized test fixture",
     )
     summary = payload["summary"]
     assert payload["schema_version"] == 8

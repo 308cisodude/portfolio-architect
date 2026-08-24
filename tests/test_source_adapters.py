@@ -1,6 +1,11 @@
-"""CSV provider-adapter compatibility contract tests."""
+"""v1.51 Generic Import Gateway acquisition-boundary contract tests."""
 
+from __future__ import annotations
+
+from datetime import datetime, timezone
 from decimal import Decimal
+import importlib
+import importlib.util
 from pathlib import Path
 import sys
 
@@ -8,33 +13,43 @@ import pytest
 
 ROOT = Path(__file__).parents[1]
 COMPONENT = ROOT / "custom_components" / "portfolio_architect"
-sys.path.insert(0, str(COMPONENT))
-sys.path.insert(0, str(ROOT / "tests"))
-
-from engine.importers import (  # noqa: E402
-    CsvSourceConfig,
-    PROVIDER_GENERIC_CSV,
-    inspect_csv_headers,
-    read_positions,
-)
+APP = ROOT / "home_assistant_app" / "portfolio_architect_gateway_import"
+PACKAGE = APP / "src" / "portfolio_architect_gateway"
+TEST_PACKAGE = "portfolio_architect_gateway_generic_import_adapter_test"
 
 
-def test_generic_adapter_is_the_only_current_local_csv_provider() -> None:
-    assert CsvSourceConfig().provider == PROVIDER_GENERIC_CSV
-    with pytest.raises(ValueError, match="Unsupported portfolio source provider"):
-        CsvSourceConfig.from_mapping({"source_provider": "comdirect_csv"})
+def _generic():
+    if TEST_PACKAGE not in sys.modules:
+        spec = importlib.util.spec_from_file_location(
+            TEST_PACKAGE,
+            PACKAGE / "__init__.py",
+            submodule_search_locations=[str(PACKAGE)],
+        )
+        assert spec is not None and spec.loader is not None
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[TEST_PACKAGE] = module
+        spec.loader.exec_module(module)
+    return importlib.import_module(f"{TEST_PACKAGE}.generic_csv")
 
 
-def test_generic_csv_mapping_supports_utf8_comma_and_isin_identifier(tmp_path: Path) -> None:
-    path = tmp_path / "portfolio.csv"
-    path.write_text(
+def test_generic_adapter_is_gateway_only() -> None:
+    assert not (COMPONENT / "engine" / "importers.py").exists()
+    flow = (COMPONENT / "config_flow.py").read_text(encoding="utf-8")
+    assert "async_step_generic_format" not in flow
+    assert "async_step_generic_mapping" not in flow
+    assert "inspect_csv_headers" not in flow
+    assert "CsvSourceConfig" not in flow
+    assert "SOURCE_TYPE_LOCAL_FILES" not in flow
+
+
+def test_generic_csv_mapping_supports_utf8_comma_and_isin_identifier() -> None:
+    generic = _generic()
+    body = (
         "Identifier,Security,Market Value,Currency,ISIN,Asset Type\n"
         'A1XB5U,ETF One,"1,234.56",EUR,IE00BJ0KDQ92,ETF\n'
-        "DE0005557508,Telekom,200.00,EUR,DE0005557508,Stock\n",
-        encoding="utf-8",
-    )
-    config = CsvSourceConfig(
-        provider=PROVIDER_GENERIC_CSV,
+        "DE0005557508,Telekom,200.00,EUR,DE0005557508,Stock\n"
+    ).encode()
+    config = generic.GenericCsvConfig(
         encoding="utf-8",
         delimiter="comma",
         header_row=1,
@@ -46,142 +61,61 @@ def test_generic_csv_mapping_supports_utf8_comma_and_isin_identifier(tmp_path: P
         type_column="Asset Type",
         currency_column="Currency",
     )
-    assert inspect_csv_headers(path, config) == (
-        "Identifier",
-        "Security",
-        "Market Value",
-        "Currency",
-        "ISIN",
-        "Asset Type",
+    assert generic.inspect_csv_headers(body, config) == (
+        "Identifier", "Security", "Market Value", "Currency", "ISIN", "Asset Type"
     )
-    positions = read_positions(path, config)
-    assert positions["A1XB5U"].value_eur == Decimal("1234.56")
+    snapshot, summary = generic.parse_generic_csv(
+        body, config, generated_at=datetime(2026, 8, 24, 18, 0, tzinfo=timezone.utc)
+    )
+    positions = {item.identifier: item for item in snapshot.positions}
+    assert summary.position_count == 2
+    assert positions["A1XB5U"].market_value_eur == Decimal("1234.56")
     assert positions["DE0005557508"].instrument_type == "stock"
+    assert snapshot.generated_at == datetime(2026, 8, 24, 18, 0, tzinfo=timezone.utc)
 
 
-def test_generic_csv_auto_detects_semicolon_and_german_numbers(tmp_path: Path) -> None:
-    path = tmp_path / "portfolio.csv"
-    path.write_text(
-        "Kennung;Name;Wert;Währung\n"
-        "A1XB5U;ETF One;1.234,56;EUR\n",
-        encoding="utf-8",
+def test_generic_csv_auto_detects_semicolon_and_german_numbers() -> None:
+    generic = _generic()
+    body = "Kennung;Name;Wert;Währung\nA1XB5U;ETF One;1.234,56;EUR\n".encode()
+    config = generic.GenericCsvConfig(
+        encoding="auto", delimiter="auto", decimal_format="auto",
+        identifier_column="Kennung", name_column="Name", value_column="Wert",
+        isin_column=None, type_column=None, currency_column="Währung",
     )
-    config = CsvSourceConfig(
-        provider=PROVIDER_GENERIC_CSV,
-        encoding="auto",
-        delimiter="auto",
-        header_row=1,
-        decimal_format="auto",
-        identifier_column="Kennung",
-        name_column="Name",
-        value_column="Wert",
-        currency_column="Währung",
+    snapshot, _ = generic.parse_generic_csv(body, config)
+    assert snapshot.positions[0].market_value_eur == Decimal("1234.56")
+
+
+def test_generic_csv_rejects_non_eur_rows() -> None:
+    generic = _generic()
+    body = b"Identifier,Name,Value,Currency\nA1XB5U,ETF One,100.00,USD\n"
+    config = generic.GenericCsvConfig(
+        encoding="utf-8", delimiter="comma", decimal_format="dot_decimal",
+        identifier_column="Identifier", name_column="Name", value_column="Value",
+        isin_column=None, type_column=None, currency_column="Currency",
     )
-    positions = read_positions(path, config)
-    assert positions["A1XB5U"].value_eur == Decimal("1234.56")
+    with pytest.raises(generic.GenericCsvImportError, match="not denominated in EUR"):
+        generic.parse_generic_csv(body, config)
 
 
-def test_generic_csv_rejects_non_eur_rows(tmp_path: Path) -> None:
-    path = tmp_path / "portfolio.csv"
-    path.write_text(
-        "Identifier,Name,Value,Currency\nA1XB5U,ETF One,100.00,USD\n",
-        encoding="utf-8",
+def test_generic_csv_rejects_duplicate_headers_and_identifiers() -> None:
+    generic = _generic()
+    partial = generic.GenericCsvConfig(
+        encoding="utf-8", delimiter="comma", decimal_format="auto",
+        identifier_column="ID", name_column="Name", value_column="Value",
+        isin_column=None, type_column=None, currency_column=None,
     )
-    config = CsvSourceConfig(
-        provider=PROVIDER_GENERIC_CSV,
-        encoding="utf-8",
-        delimiter="comma",
-        header_row=1,
-        decimal_format="dot_decimal",
-        identifier_column="Identifier",
-        name_column="Name",
-        value_column="Value",
-        currency_column="Currency",
-    )
-    with pytest.raises(ValueError, match="not denominated in EUR"):
-        read_positions(path, config)
+    with pytest.raises(generic.GenericCsvImportError, match="header names must be unique"):
+        generic.inspect_csv_headers(b"ID,Name,Name\nA1XB5U,One,100\n", partial)
+    with pytest.raises(generic.GenericCsvImportError, match="duplicate instrument identifier"):
+        generic.parse_generic_csv(
+            b"ID,Name,Value\nA1XB5U,One,100\nA1XB5U,Two,200\n", partial
+        )
 
 
-def test_generic_csv_rejects_duplicate_headers_and_identifiers(tmp_path: Path) -> None:
-    duplicate_headers = tmp_path / "headers.csv"
-    duplicate_headers.write_text("ID,Name,Name\nA1XB5U,One,100\n", encoding="utf-8")
-    partial = CsvSourceConfig(
-        provider=PROVIDER_GENERIC_CSV,
-        encoding="utf-8",
-        delimiter="comma",
-        header_row=1,
-        decimal_format="auto",
-    )
-    with pytest.raises(ValueError, match="header names must be unique"):
-        inspect_csv_headers(duplicate_headers, partial)
-
-    duplicate_ids = tmp_path / "ids.csv"
-    duplicate_ids.write_text(
-        "ID,Name,Value\nA1XB5U,One,100\nA1XB5U,Two,200\n",
-        encoding="utf-8",
-    )
-    config = CsvSourceConfig(
-        provider=PROVIDER_GENERIC_CSV,
-        encoding="utf-8",
-        delimiter="comma",
-        header_row=1,
-        decimal_format="auto",
-        identifier_column="ID",
-        name_column="Name",
-        value_column="Value",
-    )
-    with pytest.raises(ValueError, match="duplicate instrument identifier"):
-        read_positions(duplicate_ids, config)
-
-
-def test_config_flow_exposes_provider_format_mapping_and_reconfigure() -> None:
-    flow = (COMPONENT / "config_flow.py").read_text(encoding="utf-8")
+def test_schema_12_migration_is_fail_closed_for_active_local_csv() -> None:
     setup = (COMPONENT / "__init__.py").read_text(encoding="utf-8")
-    assert "async_step_generic_format" in flow
-    assert "async_step_generic_mapping" in flow
-    assert "CONF_SOURCE_PROVIDER" in flow
-    assert "inspect_csv_headers" in flow
-    assert "CsvSourceConfig.from_mapping" in flow
-    assert "entry.version < 6" in setup
-    assert "entry.version < 7" in setup
-    assert "LEGACY_COMDIRECT_CSV_PROVIDER" in setup
-    assert "entry.version < 11" in setup
-
-
-def test_generic_adapter_produces_same_schema_8_calculation(tmp_path: Path) -> None:
-    import csv
-    from engine import calculate_portfolio_payload
-
-    from reference_portfolio import read_reference_positions
-
-    comdirect = read_reference_positions()
-    path = tmp_path / "generic.csv"
-    with path.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.writer(handle)
-        writer.writerow(["Identifier", "Name", "Value", "Currency", "ISIN", "Type"])
-        for item in comdirect.values():
-            writer.writerow(
-                [item.wkn, item.name, str(item.value_eur), "EUR", item.isin, item.source_type]
-            )
-    config = CsvSourceConfig(
-        provider=PROVIDER_GENERIC_CSV,
-        encoding="utf-8",
-        delimiter="comma",
-        header_row=1,
-        decimal_format="dot_decimal",
-        identifier_column="Identifier",
-        name_column="Name",
-        value_column="Value",
-        currency_column="Currency",
-        isin_column="ISIN",
-        type_column="Type",
-    )
-    payload = calculate_portfolio_payload(
-        path, ROOT / "examples" / "current-plan", source_config=config
-    )
-    assert payload["schema_version"] == 8
-    assert payload["summary"]["payload_schema_version"] == 8
-    assert payload["summary"]["source_provider"] == PROVIDER_GENERIC_CSV
-    assert payload["summary"]["whole_portfolio_value_eur"] == Decimal("14053.01")
-    assert len(payload["holdings"]) == 13
-    assert len(payload["recommendations"]) == 7
+    assert "entry.version < 12" in setup
+    assert "Generic Import v1.51.0" in setup
+    assert "Cannot migrate Portfolio Architect to schema 12 while local CSV" in setup
+    assert "return False" in setup

@@ -17,7 +17,6 @@ from pathlib import Path
 import secrets
 import threading
 from typing import Any, Final
-from zoneinfo import ZoneInfo
 from urllib.parse import parse_qs, urlsplit
 
 from . import __version__
@@ -62,8 +61,25 @@ MAX_HEADER_BYTES: Final = 32 * 1024
 PRODUCT_ID_FILE_NAME: Final = "dkb-fints-product-id"
 PROBE_STATE_FILE_NAME: Final = "dkb-fints-probe.json"
 PROBE_SENT_AT_FILE_NAME: Final = "dkb-fints-probe-sent-at"
-_BERLIN: Final = ZoneInfo("Europe/Berlin")
 _PARAMETER_SEGMENT_RE: Final = re.compile(r"^HI[A-Z0-9]{3}S$")
+_PROBE_TIME_SCRIPT: Final = b"""(() => {
+  const element = document.getElementById('probe-sent-local');
+  if (!element) return;
+  const value = element.dataset.utc || '';
+  if (!value) return;
+  const instant = new Date(value);
+  if (Number.isNaN(instant.getTime())) return;
+  try {
+    element.textContent = new Intl.DateTimeFormat(undefined, {
+      year: 'numeric', month: 'short', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit',
+      timeZoneName: 'short'
+    }).format(instant);
+  } catch (_error) {
+    element.textContent = value;
+  }
+})();
+"""
 
 
 @dataclass(frozen=True, slots=True)
@@ -341,6 +357,9 @@ class DKBIngressHandler(BaseHTTPRequestHandler):
         if path in {"", "/"}:
             self._html(self._render_page())
             return
+        if path == "/probe-time.js":
+            self._javascript_status(_PROBE_TIME_SCRIPT, HTTPStatus.OK)
+            return
         if path == "/status":
             self._json(self.app_server.controller.status_document(self.app_server.gateway_state))
             return
@@ -524,10 +543,12 @@ class DKBIngressHandler(BaseHTTPRequestHandler):
         if probe_sent_at is None:
             probe_sent_display = "not recorded yet"
             probe_sent_utc = "not recorded yet"
+            probe_sent_data = ""
         else:
             parsed_sent_at = datetime.fromisoformat(probe_sent_at)
-            probe_sent_display = parsed_sent_at.astimezone(_BERLIN).strftime("%Y-%m-%d %H:%M:%S %Z")
             probe_sent_utc = parsed_sent_at.astimezone(timezone.utc).isoformat(timespec="seconds")
+            probe_sent_display = probe_sent_utc
+            probe_sent_data = probe_sent_utc
         param = ", ".join(result.parameter_segments) if result and result.parameter_segments else "none recorded"
         codes = ", ".join(result.return_codes) if result and result.return_codes else "none recorded"
         if result and result.return_messages:
@@ -571,8 +592,28 @@ class DKBIngressHandler(BaseHTTPRequestHandler):
             outcome, message = self.app_server.last_import_notice
             css_class = "ok" if outcome == "accepted" else "warn"
             notice = f'<p class="{css_class}">{escape(message)}</p>'
-        body = f"""<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Portfolio Architect Gateway — DKB</title><style>body{{font-family:system-ui,sans-serif;max-width:850px;margin:2rem auto;padding:0 1rem;background:#111;color:#eee}}section{{border:1px solid #444;border-radius:12px;padding:1rem;margin:1rem 0}}.static-card{{border:2px solid #14b8a6aa;background:#14b8a612}}.live-card{{border:2px solid #3b82f6aa;background:#3b82f612}}.mode-head{{display:flex;justify-content:space-between;align-items:center;gap:12px}}.badge{{font-size:.78rem;font-weight:800;padding:4px 9px;border-radius:999px;border:1px solid currentColor}}.static-card .badge{{color:#2dd4bf}}.live-card .badge{{color:#60a5fa}}code{{word-break:break-all}}input{{width:min(34rem,95%);padding:.55rem}}button{{padding:.55rem .8rem;margin-top:.5rem}}.warn{{color:#ffca28}}.ok{{color:#66bb6a}}.small{{font-size:.9rem;color:#bbb}}</style></head><body><main><h1>Portfolio Architect Gateway — DKB</h1><section class="static-card"><div class="mode-head"><h2>Static acquisition · DKB CSV</h2><span class="badge">ACTIVE</span></div><p>Portfolio Architect v{escape(__version__)} keeps DKB depot holdings and Girokonto cash are independent evidence families. Uploaded CSVs are parsed only in memory; depot/account identifiers, transaction rows, and raw CSV content are never persisted. Only bounded normalized provider state survives.</p>{notice}<h3>Depot holdings</h3><p>{escape(snapshot_text)}</p><form method=\"post\" action=\"import-csv\" enctype=\"multipart/form-data\"><input type=\"hidden\" name=\"nonce\" value=\"{csrf}\"><label for=\"statement\">Current DKB depot CSV export(s)</label><input id=\"statement\" type=\"file\" name=\"statement\" accept=\"text/csv,.csv\" multiple required><br><button type=\"submit\">Import DKB depot CSV batch</button></form><p class=\"small\">Upload all current DKB depot exports together. Up to {MAX_CSV_FILES} files are accepted. If several dated exports of one depot are included, only the newest is counted. The batch replaces only the DKB holdings evidence.</p><h3>Investment cash</h3><p>{escape(cash_text)}</p><form method=\"post\" action=\"import-cash\" enctype=\"multipart/form-data\"><input type=\"hidden\" name=\"nonce\" value=\"{csrf}\"><label for=\"cash-statement\">DKB Girokonto Umsatzliste CSV</label><input id=\"cash-statement\" type=\"file\" name=\"statement\" accept=\"text/csv,.csv\" required><br><button type=\"submit\">Import DKB cash CSV</button></form><p class=\"small\">The importer uses only the explicit dated EUR Kontostand as cash evidence. Transaction rows and account identifiers are discarded. A negative balance authorizes EUR 0; no overdraft or credit facility is inferred. Importing cash does not refresh holdings evidence, and importing holdings does not refresh cash evidence.</p></section><section class="live-card"><div class="mode-head"><h2>Live acquisition · DKB FinTS</h2><span class="badge">UNAVAILABLE · RESEARCH ONLY</span></div><p>Authenticated FinTS acquisition is not enabled. The controls below are isolated bank-level capability research and cannot replace or fall back from CSV evidence.</p><h3>FinTS registration and research probe</h3><p>Fixed endpoint: <code>{escape(DKB_FINTS_ENDPOINT)}</code><br>Bank code: <code>{escape(DKB_BANK_CODE)}</code><br>Configured registration: <code>{escape(suffix)}</code></p><form method=\"post\" action=\"configure-product\"><input type=\"hidden\" name=\"csrf\" value=\"{csrf}\"><label for=\"product_id\">FinTS product registration number</label><br><input id=\"product_id\" name=\"product_id\" minlength=\"25\" maxlength=\"25\" pattern=\"[A-Za-z0-9]{{25}}\" autocomplete=\"off\" required><br><button type=\"submit\">Store registration number</button></form><p class=\"small\">Use the complete 25-character registration number issued for Portfolio Architect itself. It is transmitted only as the HKVVB product designation; a library/kernel registration must not be reused for production access.</p></section><section class="live-card"><h2>Anonymous BPD capability probe</h2><p>State: <strong>{escape(view.state)}</strong><br>Last probe sent: <strong>{escape(probe_sent_display)}</strong><br><span class="small">Server-side dispatch timestamp · UTC: <code>{escape(probe_sent_utc)}</code></span></p><p>{escape(view.message)}</p><form method=\"post\" action=\"probe\"><input type=\"hidden\" name=\"csrf\" value=\"{csrf}\"><button type=\"submit\" {'disabled' if product is None else ''}>Probe DKB FinTS capabilities</button></form><p>BPD version: <code>{escape(bpd)}</code><br>{HOLDINGS_PARAMETER_SEGMENT} advertised: <strong>{holdings}</strong><br>Observed parameter segments: <code>{escape(param)}</code><br>Bounded return codes: <code>{escape(codes)}</code></p><p>Sanitized bank return messages:</p>{bank_messages}<p>Raw response body SHA-256: <code>{escape(raw_response_fingerprint)}</code><br>Raw response body bytes: <code>{escape(raw_response_bytes)}</code><br>Decoded response SHA-256: <code>{escape(response_fingerprint)}</code><br>Decoded response bytes: <code>{escape(response_bytes)}</code></p><p class=\"small\">Only bounded HIRMG/HIRMS return-message text plus cryptographic response fingerprints and byte counts are retained for diagnostics. The configured product registration is redacted if echoed; arbitrary segment payload and the raw FinTS response are discarded after fingerprinting; exact raw/decoded response bytes never persist. A positive bank-level BPD result is only evidence to continue research; authenticated user-parameter validation is still required before holdings acquisition may be implemented.</p></section><section><h2>Gateway boundary</h2><p>Acquisition mode: <strong>csv</strong></p><p>Bearer token: <code>{escape(self.app_server.api_token)}</code></p><p class=\"small\">The token, normalized DKB holdings/cash state, and FinTS registration state are App-private and survive in-place upgrades. FinTS cannot replace or silently fall back to CSV evidence; authenticated DKB FinTS acquisition remains disabled.</p></section></main></body></html>"""
+        body = f"""<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Portfolio Architect Gateway — DKB</title><style>body{{font-family:system-ui,sans-serif;max-width:850px;margin:2rem auto;padding:0 1rem;background:#111;color:#eee}}section{{border:1px solid #444;border-radius:12px;padding:1rem;margin:1rem 0}}.static-card{{border:2px solid #14b8a6aa;background:#14b8a612}}.live-card{{border:2px solid #3b82f6aa;background:#3b82f612}}.mode-head{{display:flex;justify-content:space-between;align-items:center;gap:12px}}.badge{{font-size:.78rem;font-weight:800;padding:4px 9px;border-radius:999px;border:1px solid currentColor}}.static-card .badge{{color:#2dd4bf}}.live-card .badge{{color:#60a5fa}}code{{word-break:break-all}}input{{width:min(34rem,95%);padding:.55rem}}button{{padding:.55rem .8rem;margin-top:.5rem}}.warn{{color:#ffca28}}.ok{{color:#66bb6a}}.small{{font-size:.9rem;color:#bbb}}</style></head><body><main><h1>Portfolio Architect Gateway — DKB</h1><section class="static-card"><div class="mode-head"><h2>Static acquisition · DKB CSV</h2><span class="badge">ACTIVE</span></div><p>Portfolio Architect v{escape(__version__)} keeps DKB depot holdings and Girokonto cash are independent evidence families. Uploaded CSVs are parsed only in memory; depot/account identifiers, transaction rows, and raw CSV content are never persisted. Only bounded normalized provider state survives.</p>{notice}<h3>Depot holdings</h3><p>{escape(snapshot_text)}</p><form method=\"post\" action=\"import-csv\" enctype=\"multipart/form-data\"><input type=\"hidden\" name=\"nonce\" value=\"{csrf}\"><label for=\"statement\">Current DKB depot CSV export(s)</label><input id=\"statement\" type=\"file\" name=\"statement\" accept=\"text/csv,.csv\" multiple required><br><button type=\"submit\">Import DKB depot CSV batch</button></form><p class=\"small\">Upload all current DKB depot exports together. Up to {MAX_CSV_FILES} files are accepted. If several dated exports of one depot are included, only the newest is counted. The batch replaces only the DKB holdings evidence.</p><h3>Investment cash</h3><p>{escape(cash_text)}</p><form method=\"post\" action=\"import-cash\" enctype=\"multipart/form-data\"><input type=\"hidden\" name=\"nonce\" value=\"{csrf}\"><label for=\"cash-statement\">DKB Girokonto Umsatzliste CSV</label><input id=\"cash-statement\" type=\"file\" name=\"statement\" accept=\"text/csv,.csv\" required><br><button type=\"submit\">Import DKB cash CSV</button></form><p class=\"small\">The importer uses only the explicit dated EUR Kontostand as cash evidence. Transaction rows and account identifiers are discarded. A negative balance authorizes EUR 0; no overdraft or credit facility is inferred. Importing cash does not refresh holdings evidence, and importing holdings does not refresh cash evidence.</p></section><section class="live-card"><div class="mode-head"><h2>Live acquisition · DKB FinTS</h2><span class="badge">UNAVAILABLE · RESEARCH ONLY</span></div><p>Authenticated FinTS acquisition is not enabled. The controls below are isolated bank-level capability research and cannot replace or fall back from CSV evidence.</p><h3>FinTS registration and research probe</h3><p>Fixed endpoint: <code>{escape(DKB_FINTS_ENDPOINT)}</code><br>Bank code: <code>{escape(DKB_BANK_CODE)}</code><br>Configured registration: <code>{escape(suffix)}</code></p><form method=\"post\" action=\"configure-product\"><input type=\"hidden\" name=\"csrf\" value=\"{csrf}\"><label for=\"product_id\">FinTS product registration number</label><br><input id=\"product_id\" name=\"product_id\" minlength=\"25\" maxlength=\"25\" pattern=\"[A-Za-z0-9]{{25}}\" autocomplete=\"off\" required><br><button type=\"submit\">Store registration number</button></form><p class=\"small\">Use the complete 25-character registration number issued for Portfolio Architect itself. It is transmitted only as the HKVVB product designation; a library/kernel registration must not be reused for production access.</p></section><section class="live-card"><h2>Anonymous BPD capability probe</h2><p>State: <strong>{escape(view.state)}</strong><br>Last probe sent: <strong id="probe-sent-local" data-utc="{escape(probe_sent_data, quote=True)}">{escape(probe_sent_display)}</strong><br><span class="small">Displayed in the viewing browser's local timezone when available; authoritative server-side dispatch timestamp · UTC: <code>{escape(probe_sent_utc)}</code></span></p><p>{escape(view.message)}</p><form method=\"post\" action=\"probe\"><input type=\"hidden\" name=\"csrf\" value=\"{csrf}\"><button type=\"submit\" {'disabled' if product is None else ''}>Probe DKB FinTS capabilities</button></form><p>BPD version: <code>{escape(bpd)}</code><br>{HOLDINGS_PARAMETER_SEGMENT} advertised: <strong>{holdings}</strong><br>Observed parameter segments: <code>{escape(param)}</code><br>Bounded return codes: <code>{escape(codes)}</code></p><p>Sanitized bank return messages:</p>{bank_messages}<p>Raw response body SHA-256: <code>{escape(raw_response_fingerprint)}</code><br>Raw response body bytes: <code>{escape(raw_response_bytes)}</code><br>Decoded response SHA-256: <code>{escape(response_fingerprint)}</code><br>Decoded response bytes: <code>{escape(response_bytes)}</code></p><p class=\"small\">Only bounded HIRMG/HIRMS return-message text plus cryptographic response fingerprints and byte counts are retained for diagnostics. The configured product registration is redacted if echoed; arbitrary segment payload and the raw FinTS response are discarded after fingerprinting; exact raw/decoded response bytes never persist. A positive bank-level BPD result is only evidence to continue research; authenticated user-parameter validation is still required before holdings acquisition may be implemented.</p></section><section><h2>Gateway boundary</h2><p>Acquisition mode: <strong>csv</strong></p><p>Bearer token: <code>{escape(self.app_server.api_token)}</code></p><p class=\"small\">The token, normalized DKB holdings/cash state, and FinTS registration state are App-private and survive in-place upgrades. FinTS cannot replace or silently fall back to CSV evidence; authenticated DKB FinTS acquisition remains disabled.</p></section></main><script src="probe-time.js" defer></script></body></html>"""
         return body.encode("utf-8")
+
+    def _security_headers(self, content_type: str) -> None:
+        self.send_header("Content-Type", content_type)
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("Pragma", "no-cache")
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("Referrer-Policy", "no-referrer")
+        self.send_header("X-Frame-Options", "SAMEORIGIN")
+        self.send_header(
+            "Content-Security-Policy",
+            "default-src 'none'; style-src 'unsafe-inline'; script-src 'self'; "
+            "form-action 'self'; frame-ancestors 'self'; base-uri 'none'",
+        )
+
+    def _javascript_status(self, body: bytes, status: HTTPStatus) -> None:
+        self.send_response(status)
+        self._security_headers("text/javascript; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
 
     def _redirect(self, location: str) -> None:
         self.send_response(HTTPStatus.SEE_OTHER)

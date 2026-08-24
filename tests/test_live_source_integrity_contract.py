@@ -15,11 +15,11 @@ def test_component_versions_are_compatible() -> None:
     engine = (COMPONENT / "engine" / "__init__.py").read_text()
     app = yaml.safe_load((APP / "config.yaml").read_text())
     gateway = (APP / "src" / "portfolio_architect_gateway" / "__init__.py").read_text()
-    assert manifest["version"] == "1.50.0"
-    assert 'VERSION: Final = "1.50.0"' in const
-    assert '__version__ = "1.50.0"' in engine
-    assert app["version"] == "1.50.0"
-    assert '__version__ = "1.50.0"' in gateway
+    assert manifest["version"] == "1.51.0"
+    assert 'VERSION: Final = "1.51.0"' in const
+    assert '__version__ = "1.51.0"' in engine
+    assert app["version"] == "1.51.0"
+    assert '__version__ = "1.51.0"' in gateway
     assert app["stage"] == "stable"
 
 

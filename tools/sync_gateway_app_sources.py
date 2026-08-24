@@ -8,9 +8,11 @@ MASTER=ROOT/"gateway"/"src"/"portfolio_architect_gateway"
 COMDIRECT=ROOT/"home_assistant_app"/"portfolio_architect_gateway"/"src"/"portfolio_architect_gateway"
 DKB=ROOT/"home_assistant_app"/"portfolio_architect_gateway_dkb"/"src"/"portfolio_architect_gateway"
 TRADE_REPUBLIC=ROOT/"home_assistant_app"/"portfolio_architect_gateway_trade_republic"/"src"/"portfolio_architect_gateway"
+GENERIC_IMPORT=ROOT/"home_assistant_app"/"portfolio_architect_gateway_import"/"src"/"portfolio_architect_gateway"
 SHELL_FILES={"__init__.py","errors.py","human_input.py","models.py","provider.py","runtime_config.py","server.py","store.py","pending_app.py","supervisor_tls.py"}
 DKB_PROVIDER_FILES={"dkb_app.py","dkb_cash_csv.py","dkb_csv.py","dkb_fints.py"}
 TR_PROVIDER_FILES={"trade_republic_app.py","trade_republic_statement.py","trade_republic_cash_statement.py","trade_republic_pdf.py"}
+GENERIC_IMPORT_PROVIDER_FILES={"generic_import_app.py","generic_csv.py"}
 
 
 def _sync_shell(target: Path, *, provider_files: set[str]) -> None:
@@ -29,6 +31,7 @@ def main():
         shutil.copy2(p,COMDIRECT/p.name)
     _sync_shell(DKB, provider_files=DKB_PROVIDER_FILES)
     _sync_shell(TRADE_REPUBLIC, provider_files=TR_PROVIDER_FILES)
+    _sync_shell(GENERIC_IMPORT, provider_files=GENERIC_IMPORT_PROVIDER_FILES)
 
 
 if __name__=="__main__":

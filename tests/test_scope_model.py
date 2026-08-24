@@ -7,20 +7,10 @@ import sys
 
 ROOT=Path(__file__).parents[1]
 ENGINE_ROOT=ROOT/'custom_components'/'portfolio_architect'
-REFERENCE_SOURCE_CONFIG = {
-    "source_provider": "generic_csv",
-    "csv_encoding": "iso-8859-1",
-    "csv_delimiter": "semicolon",
-    "csv_header_row": 1,
-    "csv_decimal_format": "comma_decimal",
-    "csv_column_identifier": "WKN",
-    "csv_column_name": "Bezeichnung",
-    "csv_column_value": "Wert in EUR",
-    "csv_column_isin": "ISIN",
-    "csv_column_type": "Typ",
-}
+sys.path.insert(0,str(ROOT/'tests'))
+from reference_portfolio import read_reference_positions
 sys.path.insert(0,str(ENGINE_ROOT))
-from engine import calculate_portfolio_payload
+from engine import calculate_portfolio_payload_from_positions
 MODEL_PATH=ROOT/'custom_components/portfolio_architect/model.py'
 SPEC=importlib.util.spec_from_file_location('scope_model',MODEL_PATH)
 assert SPEC and SPEC.loader
@@ -29,11 +19,12 @@ MODEL=importlib.util.module_from_spec(SPEC);sys.modules[SPEC.name]=MODEL;SPEC.lo
 
 def test_current_reference_depot_scope_contract():
     depot=ROOT/'tests'/'fixtures'/'comdirect-depot-sanitized.csv'
-    payload=calculate_portfolio_payload(
-        depot,
+    payload=calculate_portfolio_payload_from_positions(
+        read_reference_positions(),
         ROOT/'examples'/'current-plan',
         evaluated_at=datetime(2026,8,17,12,0,tzinfo=timezone.utc),
-        source_config=REFERENCE_SOURCE_CONFIG,
+        source_provider="generic_csv",
+        source_label="Sanitized test fixture",
     )
     summary=payload['summary']
     assert payload['schema_version']==8

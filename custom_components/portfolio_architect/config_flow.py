@@ -35,17 +35,6 @@ from homeassistant.helpers.selector import (
 
 from .const import (
     CONF_CONFIG_DIRECTORY,
-    CONF_CSV_COLUMN_CURRENCY,
-    CONF_CSV_COLUMN_IDENTIFIER,
-    CONF_CSV_COLUMN_ISIN,
-    CONF_CSV_COLUMN_NAME,
-    CONF_CSV_COLUMN_TYPE,
-    CONF_CSV_COLUMN_VALUE,
-    CONF_CSV_DECIMAL_FORMAT,
-    CONF_CSV_DELIMITER,
-    CONF_CSV_ENCODING,
-    CONF_CSV_HEADER_ROW,
-    CONF_CSV_PATH,
     CONF_REST_API_TOKEN,
     CONF_REST_ENDPOINT_URL,
     CONF_REST_TLS_CA_CERTIFICATE,
@@ -83,7 +72,6 @@ from .const import (
     CONF_SUPPLEMENTAL_REST_SOURCES,
     CONF_SOURCE_TYPE,
     DEFAULT_CONFIG_DIRECTORY,
-    DEFAULT_CSV_PATH,
     DEFAULT_REST_ENDPOINT_URL,
     DEFAULT_FRESHNESS_HOURS,
     DEFAULT_PLAN_BUDGET_BASIS,
@@ -114,7 +102,6 @@ from .const import (
     PLAN_FREQUENCY_QUARTERLY,
     PLAN_FREQUENCY_WEEKLY,
     PLAN_FREQUENCY_YEARLY,
-    SOURCE_TYPE_LOCAL_FILES,
     SOURCE_TYPE_REST_API,
 )
 from .broker_editor import (
@@ -133,7 +120,7 @@ from .broker_editor import (
     upsert_savings_plan,
     write_broker_document_atomic,
 )
-from .engine import calculate_portfolio_payload, calculate_portfolio_payload_from_positions
+from .engine import calculate_portfolio_payload_from_positions
 from .gateway_provider_ids import GATEWAY_PROVIDER_COMDIRECT
 from .freshness import default_freshness_thresholds
 CONF_MANUAL_VENUE_FEE_BPS = "manual_venue_fee_bps"
@@ -164,27 +151,12 @@ CONF_BROKER_TRANSFER_AS_OF = "broker_transfer_as_of"
 
 
 from .engine.execution import ExecutionConfig
-from .engine.importers import (
-    CSV_DELIMITERS,
-    CSV_ENCODINGS,
-    DECIMAL_FORMATS,
-    DEFAULT_GENERIC_DECIMAL_FORMAT,
-    DEFAULT_GENERIC_DELIMITER,
-    DEFAULT_GENERIC_ENCODING,
-    DEFAULT_GENERIC_HEADER_ROW,
-    MAX_GENERIC_HEADER_ROW,
-    PROVIDER_GENERIC_CSV,
-    CsvSourceConfig,
-    inspect_csv_headers,
-    read_positions,
-)
 from .engine.rest import PROVIDER_LOCAL_REST_JSON
 from .engine.targets import generate_target_id
 from .model import PortfolioArchitectDataError, parse_portfolio_data
 from .plan_editor import (
     PlanCandidate,
     PlanEditorContext,
-    load_plan_editor_context,
     load_plan_editor_context_from_positions,
 )
 from .rest_client import (
@@ -201,7 +173,6 @@ from .schedule import validate_schedule_config
 from .source import (
     PortfolioSourcePathError,
     resolve_configuration_directory,
-    resolve_local_source_paths,
 )
 
 
@@ -213,38 +184,17 @@ _PLAN_OVERRIDE_OPTION_KEYS = (
     CONF_PLAN_INSTRUMENTS,
 )
 
-_GENERIC_KEYS = (
-    CONF_CSV_ENCODING,
-    CONF_CSV_DELIMITER,
-    CONF_CSV_HEADER_ROW,
-    CONF_CSV_DECIMAL_FORMAT,
-    CONF_CSV_COLUMN_IDENTIFIER,
-    CONF_CSV_COLUMN_NAME,
-    CONF_CSV_COLUMN_VALUE,
-    CONF_CSV_COLUMN_ISIN,
-    CONF_CSV_COLUMN_TYPE,
-    CONF_CSV_COLUMN_CURRENCY,
-)
-
-
-_SUPPORTED_SOURCE_PROVIDERS = (
-    PROVIDER_GENERIC_CSV,
-    PROVIDER_LOCAL_REST_JSON,
-)
-_NEW_SOURCE_PROVIDERS = (
-    PROVIDER_GENERIC_CSV,
-    PROVIDER_LOCAL_REST_JSON,
-)
+_SUPPORTED_SOURCE_PROVIDERS = (PROVIDER_LOCAL_REST_JSON,)
+_NEW_SOURCE_PROVIDERS = _SUPPORTED_SOURCE_PROVIDERS
 
 
 
 class PortfolioArchitectConfigFlow(ConfigFlow, domain=DOMAIN):
-    """Configure one explicit local CSV or local REST source adapter."""
+    """Configure the single canonical REST Gateway source architecture."""
 
-    VERSION = 11
+    VERSION = 12
     _source_draft: dict[str, Any]
     _existing_source_data: dict[str, Any]
-    _generic_headers: tuple[str, ...]
     _reconfigure_mode: bool = False
     _hassio_discovery: GatewayTlsDiscovery | None = None
 
@@ -652,57 +602,13 @@ class PortfolioArchitectConfigFlow(ConfigFlow, domain=DOMAIN):
                         CONF_SOURCE_PROVIDER: provider,
                         CONF_CONFIG_DIRECTORY: config_path.config_relative,
                     }
-                    if provider == PROVIDER_LOCAL_REST_JSON:
-                        return await self.async_step_rest_source()
-                    return await self.async_step_csv_source()
+                    return await self.async_step_rest_source()
         return self.async_show_form(
             step_id=step_id,
             data_schema=self.add_suggested_values_to_schema(
                 _provider_schema(
                     _SUPPORTED_SOURCE_PROVIDERS if entry is not None else _NEW_SOURCE_PROVIDERS
                 ), suggested
-            ),
-            errors=errors,
-        )
-
-    async def async_step_csv_source(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
-        suggested = {
-            CONF_CSV_PATH: self._existing_source_data.get(
-                CONF_CSV_PATH, DEFAULT_CSV_PATH
-            )
-        }
-        errors: dict[str, str] = {}
-        if user_input is not None:
-            suggested.update(user_input)
-            self._source_draft.update(
-                {
-                    CONF_SOURCE_TYPE: SOURCE_TYPE_LOCAL_FILES,
-                    CONF_CSV_PATH: user_input[CONF_CSV_PATH],
-                }
-            )
-            if self._source_draft[CONF_SOURCE_PROVIDER] == PROVIDER_GENERIC_CSV:
-                for key in _GENERIC_KEYS:
-                    if key in self._existing_source_data:
-                        self._source_draft[key] = self._existing_source_data[key]
-                return await self.async_step_generic_format()
-            try:
-                cleaned = await self._async_validate_csv_source_data(
-                    self._source_draft
-                )
-            except PortfolioSourcePathError:
-                errors["base"] = "invalid_path"
-            except FileNotFoundError:
-                errors["base"] = "source_unavailable"
-            except (OSError, ValueError, PortfolioArchitectDataError):
-                errors["base"] = "invalid_source"
-            else:
-                return self._finish_source(cleaned)
-        return self.async_show_form(
-            step_id="csv_source",
-            data_schema=self.add_suggested_values_to_schema(
-                _csv_source_schema(), suggested
             ),
             errors=errors,
         )
@@ -745,117 +651,6 @@ class PortfolioArchitectConfigFlow(ConfigFlow, domain=DOMAIN):
             ),
             errors=errors,
         )
-
-    async def async_step_generic_format(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
-        suggested = {
-            CONF_CSV_ENCODING: self._source_draft.get(
-                CONF_CSV_ENCODING, DEFAULT_GENERIC_ENCODING
-            ),
-            CONF_CSV_DELIMITER: self._source_draft.get(
-                CONF_CSV_DELIMITER, DEFAULT_GENERIC_DELIMITER
-            ),
-            CONF_CSV_HEADER_ROW: self._source_draft.get(
-                CONF_CSV_HEADER_ROW, DEFAULT_GENERIC_HEADER_ROW
-            ),
-            CONF_CSV_DECIMAL_FORMAT: self._source_draft.get(
-                CONF_CSV_DECIMAL_FORMAT, DEFAULT_GENERIC_DECIMAL_FORMAT
-            ),
-        }
-        errors: dict[str, str] = {}
-        if user_input is not None:
-            suggested.update(user_input)
-            self._source_draft.update(user_input)
-            try:
-                paths = resolve_local_source_paths(
-                    self.hass,
-                    self._source_draft[CONF_CSV_PATH],
-                    self._source_draft[CONF_CONFIG_DIRECTORY],
-                    require_exists=False,
-                )
-                partial = CsvSourceConfig(
-                    provider=PROVIDER_GENERIC_CSV,
-                    encoding=str(self._source_draft[CONF_CSV_ENCODING]),
-                    delimiter=str(self._source_draft[CONF_CSV_DELIMITER]),
-                    header_row=int(self._source_draft[CONF_CSV_HEADER_ROW]),
-                    decimal_format=str(
-                        self._source_draft[CONF_CSV_DECIMAL_FORMAT]
-                    ),
-                )
-                self._generic_headers = await self.hass.async_add_executor_job(
-                    inspect_csv_headers, paths.csv_path, partial
-                )
-            except PortfolioSourcePathError:
-                errors["base"] = "invalid_path"
-            except (OSError, ValueError):
-                errors["base"] = "invalid_csv_format"
-            else:
-                return await self.async_step_generic_mapping()
-        return self.async_show_form(
-            step_id="generic_format",
-            data_schema=self.add_suggested_values_to_schema(
-                _generic_format_schema(), suggested
-            ),
-            errors=errors,
-        )
-
-    async def async_step_generic_mapping(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
-        suggested = _mapping_suggestions(self._source_draft, self._generic_headers)
-        errors: dict[str, str] = {}
-        if user_input is not None:
-            suggested.update(user_input)
-            self._source_draft.update(user_input)
-            try:
-                cleaned = await self._async_validate_csv_source_data(
-                    self._source_draft
-                )
-            except PortfolioSourcePathError:
-                errors["base"] = "invalid_path"
-            except FileNotFoundError:
-                errors["base"] = "source_unavailable"
-            except (OSError, ValueError, PortfolioArchitectDataError):
-                errors["base"] = "invalid_source"
-            else:
-                return self._finish_source(cleaned)
-        return self.async_show_form(
-            step_id="generic_mapping",
-            data_schema=self.add_suggested_values_to_schema(
-                _generic_mapping_schema(self._generic_headers), suggested
-            ),
-            errors=errors,
-            description_placeholders={
-                "column_count": str(len(self._generic_headers)),
-                "header_row": str(self._source_draft[CONF_CSV_HEADER_ROW]),
-            },
-        )
-
-    async def _async_validate_csv_source_data(
-        self, data: dict[str, Any]
-    ) -> dict[str, Any]:
-        paths = resolve_local_source_paths(
-            self.hass,
-            data[CONF_CSV_PATH],
-            data[CONF_CONFIG_DIRECTORY],
-            require_exists=False,
-        )
-        cleaned = dict(data)
-        cleaned[CONF_CSV_PATH] = paths.csv_relative
-        cleaned[CONF_CONFIG_DIRECTORY] = paths.config_relative
-        adapter = CsvSourceConfig.from_mapping(cleaned)
-        payload = await self.hass.async_add_executor_job(
-            _calculate_source_payload,
-            paths.csv_path,
-            paths.config_directory,
-            adapter,
-        )
-        _validate_calculated_payload(payload)
-        cleaned.pop(CONF_REST_ENDPOINT_URL, None)
-        cleaned.pop(CONF_REST_API_TOKEN, None)
-        cleaned.pop(CONF_REST_TLS_CA_CERTIFICATE, None)
-        return cleaned
 
     async def _async_validate_rest_source_data(
         self, data: dict[str, Any], *, require_https: bool = True
@@ -2548,41 +2343,28 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
             "instruments": self._draft_instruments,
         }
         try:
-            if self.config_entry.data.get(CONF_SOURCE_TYPE) == SOURCE_TYPE_REST_API:
-                configuration = resolve_configuration_directory(
-                    self.hass,
-                    self.config_entry.data[CONF_CONFIG_DIRECTORY],
-                    require_exists=True,
-                )
-                coordinator = self.config_entry.runtime_data
-                positions = getattr(coordinator, "positions", None)
-                generated_at = getattr(coordinator, "data_timestamp", None)
-                if not isinstance(positions, dict) or not positions:
-                    raise ValueError("REST source has no validated positions")
-                if generated_at is None:
-                    raise ValueError("REST source has no validated snapshot timestamp")
-                payload = await self.hass.async_add_executor_job(
-                    _calculate_positions_with_override,
-                    dict(positions),
-                    configuration.config_directory,
-                    generated_at,
-                    plan_override,
-                    self.config_entry.data[CONF_REST_ENDPOINT_URL],
-                )
-            else:
-                paths = resolve_local_source_paths(
-                    self.hass,
-                    self.config_entry.data[CONF_CSV_PATH],
-                    self.config_entry.data[CONF_CONFIG_DIRECTORY],
-                    require_exists=False,
-                )
-                payload = await self.hass.async_add_executor_job(
-                    _calculate_with_override,
-                    paths.csv_path,
-                    paths.config_directory,
-                    plan_override,
-                    CsvSourceConfig.from_mapping(dict(self.config_entry.data)),
-                )
+            if self.config_entry.data.get(CONF_SOURCE_TYPE) != SOURCE_TYPE_REST_API:
+                raise ValueError("Only REST Gateway sources are supported in schema 12")
+            configuration = resolve_configuration_directory(
+                self.hass,
+                self.config_entry.data[CONF_CONFIG_DIRECTORY],
+                require_exists=True,
+            )
+            coordinator = self.config_entry.runtime_data
+            positions = getattr(coordinator, "positions", None)
+            generated_at = getattr(coordinator, "data_timestamp", None)
+            if not isinstance(positions, dict) or not positions:
+                raise ValueError("REST source has no validated positions")
+            if generated_at is None:
+                raise ValueError("REST source has no validated snapshot timestamp")
+            payload = await self.hass.async_add_executor_job(
+                _calculate_positions_with_override,
+                dict(positions),
+                configuration.config_directory,
+                generated_at,
+                plan_override,
+                self.config_entry.data[CONF_REST_ENDPOINT_URL],
+            )
             _validate_calculated_payload(payload)
         except (OSError, ValueError, PortfolioArchitectDataError, PortfolioSourcePathError):
             return self.async_abort(reason="invalid_plan")
@@ -2600,38 +2382,25 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
     async def _async_plan_context(self) -> PlanEditorContext:
         if self._context is not None:
             return self._context
+        if self.config_entry.data.get(CONF_SOURCE_TYPE) != SOURCE_TYPE_REST_API:
+            raise ValueError("Only REST Gateway sources are supported in schema 12")
         configured = self.config_entry.options.get(CONF_PLAN_INSTRUMENTS)
         configured_instruments = configured if isinstance(configured, list) else None
-        if self.config_entry.data.get(CONF_SOURCE_TYPE) == SOURCE_TYPE_REST_API:
-            configuration = resolve_configuration_directory(
-                self.hass,
-                self.config_entry.data[CONF_CONFIG_DIRECTORY],
-                require_exists=True,
-            )
-            coordinator = self.config_entry.runtime_data
-            positions = getattr(coordinator, "positions", None)
-            if not isinstance(positions, dict) or not positions:
-                raise ValueError("REST source has no validated positions")
-            self._context = await self.hass.async_add_executor_job(
-                load_plan_editor_context_from_positions,
-                dict(positions),
-                configuration.config_directory,
-                configured_instruments,
-            )
-        else:
-            paths = resolve_local_source_paths(
-                self.hass,
-                self.config_entry.data[CONF_CSV_PATH],
-                self.config_entry.data[CONF_CONFIG_DIRECTORY],
-                require_exists=False,
-            )
-            self._context = await self.hass.async_add_executor_job(
-                load_plan_editor_context,
-                paths.csv_path,
-                paths.config_directory,
-                configured_instruments,
-                CsvSourceConfig.from_mapping(dict(self.config_entry.data)),
-            )
+        configuration = resolve_configuration_directory(
+            self.hass,
+            self.config_entry.data[CONF_CONFIG_DIRECTORY],
+            require_exists=True,
+        )
+        coordinator = self.config_entry.runtime_data
+        positions = getattr(coordinator, "positions", None)
+        if not isinstance(positions, dict) or not positions:
+            raise ValueError("REST source has no validated positions")
+        self._context = await self.hass.async_add_executor_job(
+            load_plan_editor_context_from_positions,
+            dict(positions),
+            configuration.config_directory,
+            configured_instruments,
+        )
         return self._context
 
 
@@ -2650,17 +2419,6 @@ def _provider_schema(providers: tuple[str, ...] = _SUPPORTED_SOURCE_PROVIDERS) -
             ),
         }
     )
-
-
-def _csv_source_schema() -> vol.Schema:
-    return vol.Schema(
-        {
-            vol.Required(CONF_CSV_PATH): TextSelector(
-                TextSelectorConfig(multiline=False)
-            )
-        }
-    )
-
 
 
 def _hassio_rest_source_schema() -> vol.Schema:
@@ -2709,109 +2467,6 @@ def _reauth_schema() -> vol.Schema:
             )
         }
     )
-
-
-def _generic_format_schema() -> vol.Schema:
-    return vol.Schema(
-        {
-            vol.Required(CONF_CSV_ENCODING): SelectSelector(
-                SelectSelectorConfig(
-                    options=list(CSV_ENCODINGS),
-                    mode=SelectSelectorMode.DROPDOWN,
-                    translation_key="csv_encoding",
-                )
-            ),
-            vol.Required(CONF_CSV_DELIMITER): SelectSelector(
-                SelectSelectorConfig(
-                    options=list(CSV_DELIMITERS),
-                    mode=SelectSelectorMode.DROPDOWN,
-                    translation_key="csv_delimiter",
-                )
-            ),
-            vol.Required(CONF_CSV_HEADER_ROW): NumberSelector(
-                NumberSelectorConfig(
-                    min=1,
-                    max=MAX_GENERIC_HEADER_ROW,
-                    step=1,
-                    mode=NumberSelectorMode.BOX,
-                )
-            ),
-            vol.Required(CONF_CSV_DECIMAL_FORMAT): SelectSelector(
-                SelectSelectorConfig(
-                    options=list(DECIMAL_FORMATS),
-                    mode=SelectSelectorMode.DROPDOWN,
-                    translation_key="csv_decimal_format",
-                )
-            ),
-        }
-    )
-
-
-def _generic_mapping_schema(headers: tuple[str, ...]) -> vol.Schema:
-    required_options = list(headers)
-    optional_options = [{"value": "", "label": "—"}] + [
-        {"value": value, "label": value} for value in headers
-    ]
-    return vol.Schema(
-        {
-            vol.Required(CONF_CSV_COLUMN_IDENTIFIER): SelectSelector(
-                SelectSelectorConfig(options=required_options, mode=SelectSelectorMode.DROPDOWN)
-            ),
-            vol.Required(CONF_CSV_COLUMN_NAME): SelectSelector(
-                SelectSelectorConfig(options=required_options, mode=SelectSelectorMode.DROPDOWN)
-            ),
-            vol.Required(CONF_CSV_COLUMN_VALUE): SelectSelector(
-                SelectSelectorConfig(options=required_options, mode=SelectSelectorMode.DROPDOWN)
-            ),
-            vol.Optional(CONF_CSV_COLUMN_ISIN, default=""): SelectSelector(
-                SelectSelectorConfig(options=optional_options, mode=SelectSelectorMode.DROPDOWN)
-            ),
-            vol.Optional(CONF_CSV_COLUMN_TYPE, default=""): SelectSelector(
-                SelectSelectorConfig(options=optional_options, mode=SelectSelectorMode.DROPDOWN)
-            ),
-            vol.Optional(CONF_CSV_COLUMN_CURRENCY, default=""): SelectSelector(
-                SelectSelectorConfig(options=optional_options, mode=SelectSelectorMode.DROPDOWN)
-            ),
-        }
-    )
-
-
-def _mapping_suggestions(
-    stored: dict[str, Any], headers: tuple[str, ...]
-) -> dict[str, Any]:
-    aliases = {value.casefold(): value for value in headers}
-
-    def pick(key: str, candidates: tuple[str, ...], *, required: bool) -> str:
-        existing = stored.get(key)
-        if existing in headers:
-            return str(existing)
-        for candidate in candidates:
-            match = aliases.get(candidate.casefold())
-            if match is not None:
-                return match
-        return headers[0] if required else ""
-
-    return {
-        CONF_CSV_COLUMN_IDENTIFIER: pick(
-            CONF_CSV_COLUMN_IDENTIFIER, ("WKN", "ISIN", "Identifier", "Symbol"), required=True
-        ),
-        CONF_CSV_COLUMN_NAME: pick(
-            CONF_CSV_COLUMN_NAME, ("Bezeichnung", "Name", "Instrument", "Security"), required=True
-        ),
-        CONF_CSV_COLUMN_VALUE: pick(
-            CONF_CSV_COLUMN_VALUE, ("Wert in EUR", "Market Value", "Value", "Amount"), required=True
-        ),
-        CONF_CSV_COLUMN_ISIN: pick(
-            CONF_CSV_COLUMN_ISIN, ("ISIN",), required=False
-        ),
-        CONF_CSV_COLUMN_TYPE: pick(
-            CONF_CSV_COLUMN_TYPE, ("Typ", "Type", "Asset Type"), required=False
-        ),
-        CONF_CSV_COLUMN_CURRENCY: pick(
-            CONF_CSV_COLUMN_CURRENCY, ("Währung", "Currency", "CCY"), required=False
-        ),
-    }
-
 
 
 def _plan_schema(context: PlanEditorContext) -> vol.Schema:
@@ -3215,21 +2870,6 @@ def _normalise_targets(instruments: list[dict[str, Any]]) -> list[dict[str, Any]
         clone["target_pct"] = float(Decimal(basis_points) / Decimal("100"))
         result.append(clone)
     return result
-
-
-def _calculate_with_override(csv_path, config_directory, plan_override, source_config):
-    return calculate_portfolio_payload(
-        csv_path,
-        config_directory,
-        plan_override=plan_override,
-        source_config=source_config,
-    )
-
-
-def _calculate_source_payload(csv_path, config_directory, source_config):
-    return calculate_portfolio_payload(
-        csv_path, config_directory, source_config=source_config
-    )
 
 
 def _calculate_positions_with_override(

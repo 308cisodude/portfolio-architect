@@ -630,9 +630,17 @@ Live acceptance of v1.45.0 proved the exact atomic DKB source cut-over but expos
 - Persist a server-side UTC dispatch timestamp for each explicit DKB anonymous BPD probe and render `Last probe sent` in Ingress so cryptographically identical responses cannot obscure whether a new probe was initiated.
 - Preserve provider acquisition, v1.48 freshness, source-set/LKG behavior, planner economics, schemas, private-PKI transport and the advisory/no-money-movement boundary.
 
-## After v1.50.0 — source architecture cleanup
+## v1.51.0 — Generic Import Gateway and final acquisition-boundary cleanup
 
-- Introduce a deliberate generic Import Gateway and move provider-neutral mapped CSV parsing out of Portfolio Architect itself.
+- Introduce a dedicated Generic Import Gateway with fixed provider identity `generic_csv` and move provider-neutral mapped CSV parsing out of Portfolio Architect itself.
+- Retire the remaining local-file acquisition/config-flow path with fail-closed schema-12 migration for any still-active local mapped CSV source.
+- Keep raw generic CSV bytes transient; persist only canonical holdings evidence, bounded mapping configuration and privacy-safe import status.
+- Remove the DKB probe UI's hard-coded Europe/Berlin conversion; keep UTC authoritative and use a stable browser-local fallback because supported Ingress metadata does not expose the per-user frontend timezone.
+- Preserve all official-provider acquisition, freshness, planner, private-PKI, LKG and advisory-only contracts.
+
+## After v1.51.0 — provider acquisition architecture
+
+- Provider-specific and provider-neutral acquisition formats now live outside Portfolio Architect. Future source work should extend isolated Gateway providers rather than reintroduce acquisition logic into the Home Assistant integration.
 
 ## Deferred beyond v1.45.0
 

@@ -45,7 +45,8 @@ jobs:
           for app in \
             portfolio_architect_gateway \
             portfolio_architect_gateway_dkb \
-            portfolio_architect_gateway_trade_republic
+            portfolio_architect_gateway_trade_republic \
+            portfolio_architect_gateway_import
           do
             docker build \
               --build-arg BUILD_VERSION="${version}" \
@@ -66,6 +67,7 @@ jobs:
             docker rm -f \
               portfolio-architect-portfolio_architect_gateway_dkb-smoke \
               portfolio-architect-portfolio_architect_gateway_trade_republic-smoke \
+              portfolio-architect-portfolio_architect_gateway_import-smoke \
               >/dev/null 2>&1 || true
             docker network rm "${network}" >/dev/null 2>&1 || true
             rm -f "${mock_supervisor}"
@@ -134,7 +136,8 @@ jobs:
 
           for app in \
             portfolio_architect_gateway_dkb \
-            portfolio_architect_gateway_trade_republic
+            portfolio_architect_gateway_trade_republic \
+            portfolio_architect_gateway_import
           do
             name="portfolio-architect-${app}-smoke"
             image="portfolio-architect-${app}:validation"

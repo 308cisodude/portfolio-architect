@@ -1,0 +1,9 @@
+configuration:
+  max_cached_snapshot_age_seconds:
+    name: Maximales Alter des zwischengespeicherten Snapshots
+    description: Maximales Alter in Sekunden für den zuletzt importierten kanonischen Snapshot im Gateway.
+  health_endpoint_enabled:
+    name: Health-Endpunkt aktivieren
+    description: Begrenztes authentifiziertes Health-Dokument für Portfolio Architect bereitstellen.
+network:
+  8787/tcp: Verifizierter HTTPS-REST-Endpunkt für Portfolio Architect; Host-Port nicht freigeben
