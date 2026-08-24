@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.50.0
+
+- add a persisted server-side `Last probe sent` timestamp to the anonymous BPD research UI and bounded status document
+- keep DKB CSV holdings/cash acquisition, response fingerprinting and the authenticated-FinTS gate unchanged; align package metadata with Portfolio Architect v1.50.0
+
 ## 1.49.0
 
 - align package metadata with Portfolio Architect v1.49.0

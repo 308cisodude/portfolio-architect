@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.50.0
+
+- Makes Portfolio sources explicitly model the single primary REST Gateway separately from optional provider-isolated supplemental Gateways.
+- Adds native Add/Edit/Remove management for supplemental REST Gateways and a guarded primary REST editor with immutable provider identity, verified-HTTPS health and snapshot-integrity validation.
+- Adds a persisted server-side DKB anonymous FinTS `Last probe sent` dispatch timestamp to Ingress and bounded status diagnostics so identical bank responses can still be distinguished operationally.
+- Leaves provider acquisition, v1.48 freshness, planner economics, wire/security schemas, source-set atomicity/LKG and the advisory-only boundary unchanged.
+
 ## 1.49.0
 
 - Retires the completed Home Assistant-side Comdirect `comdirect_csv` parser and one-release exact-equivalence migration bridge after the v1.48 Gateway cut-over was live-proven.

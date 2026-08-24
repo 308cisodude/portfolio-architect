@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway — DKB v1.49.0
+# Portfolio Architect Gateway — DKB v1.50.0
 
-Version 1.49.0 aligns the DKB App package with Portfolio Architect’s Home Assistant-side Comdirect CSV migration-bridge retirement. DKB CSV acquisition, independent cash evidence, FinTS research boundary and Ingress UX are unchanged from the live-accepted v1.48.2 baseline.
+Version 1.50.0 adds only a persisted server-side “Last probe sent” timestamp to the anonymous DKB FinTS research UI while aligning with Portfolio Architect’s source-management UX milestone. DKB CSV acquisition, independent cash evidence, cryptographic probe diagnostics and the authenticated-FinTS gate are unchanged from the live-accepted v1.49.0 baseline.
 
 Version 1.48.1 aligns the DKB App package with Portfolio Architect’s acquisition-aware freshness correction. DKB CSV acquisition, independent cash evidence, FinTS research boundary and Ingress UX are unchanged from v1.48.0.
 

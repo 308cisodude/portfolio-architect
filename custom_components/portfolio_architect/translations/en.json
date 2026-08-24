@@ -2470,8 +2470,9 @@
       },
       "sources": {
         "title": "Portfolio sources",
-        "description": "Manage supplemental portfolio sources. Every source is normalized before aggregation; provider-specific acquisition stays outside Portfolio Architect.",
+        "description": "Portfolio Architect has exactly one primary source. Additional REST Gateways are optional provider-isolated supplements and never replace the primary source implicitly.",
         "menu_options": {
+          "primary_rest_gateway": "Primary REST Gateway",
           "rest_gateways": "Additional REST Gateways"
         }
       },
@@ -2523,9 +2524,10 @@
       },
       "rest_gateways": {
         "title": "Additional REST Gateways",
-        "description": "Add or remove independent local Portfolio Architect Gateways. Each Gateway remains separately authenticated and provider-isolated.",
+        "description": "Manage optional provider-isolated supplements to the single primary source. Add, edit or remove one exact Gateway without changing the primary source.",
         "menu_options": {
           "add_rest_gateway": "Add REST Gateway",
+          "edit_rest_gateway": "Edit REST Gateway",
           "remove_rest_gateway": "Remove REST Gateway"
         }
       },
@@ -2727,6 +2729,37 @@
           "broker_settlement_business_days": "Settlement time",
           "broker_transfer_source": "Evidence source",
           "broker_transfer_as_of": "Evidence date"
+        }
+      },
+      "primary_rest_gateway": {
+        "title": "Primary REST Gateway",
+        "description": "**Primary source:** {provider} · `{endpoint}`\n\nEdit the transport endpoint or bearer token for the one primary Gateway. A changed endpoint must resolve to the same provider identity; Portfolio Architect validates verified HTTPS, health and snapshot integrity before saving.",
+        "data": {
+          "rest_endpoint_url": "Local Gateway URL",
+          "rest_api_token": "Gateway bearer token"
+        },
+        "data_description": {
+          "rest_endpoint_url": "Verified HTTPS portfolio endpoint for the existing primary provider.",
+          "rest_api_token": "Dedicated low-privilege bearer token. Existing private-CA trust is retained automatically while the endpoint is unchanged."
+        }
+      },
+      "edit_rest_gateway": {
+        "title": "Edit REST Gateway",
+        "description": "Select one configured supplemental Gateway. Its provider identity remains immutable.",
+        "data": {
+          "provider_id": "Provider"
+        }
+      },
+      "edit_rest_gateway_details": {
+        "title": "Edit REST Gateway",
+        "description": "**Editing:** {provider} (`{provider_id}`) · `{endpoint}`\n\nEdit only the transport/authentication details. The provider identity is immutable and the edited Gateway must pass verified-HTTPS health and snapshot-integrity validation before saving.",
+        "data": {
+          "rest_endpoint_url": "Local Gateway URL",
+          "rest_api_token": "Gateway bearer token"
+        },
+        "data_description": {
+          "rest_endpoint_url": "Verified HTTPS portfolio endpoint for this same provider.",
+          "rest_api_token": "Dedicated low-privilege bearer token. Existing private-CA trust is retained automatically while the endpoint is unchanged."
         }
       }
     },
