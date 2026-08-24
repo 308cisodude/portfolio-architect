@@ -5,6 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from html import escape
+from email import policy
+from email.parser import BytesHeaderParser
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
@@ -17,6 +19,9 @@ from typing import Any, Callable, Final
 from urllib.parse import parse_qs, urlsplit
 
 from .cash_policy import MODE_ALL_AVAILABLE, MODE_CAPPED, MODE_RETAIN, parse_policy_input
+from .acquisition import ComdirectAcquisitionProvider, MODE_CSV, MODE_LIVE_API
+from .comdirect_csv import ComdirectCsvImportError, parse_comdirect_holdings_csv
+from .comdirect_cash_csv import ComdirectCashCsvImportError, parse_comdirect_cash_csv
 from .comdirect import AccountBalanceCandidate, ComdirectClient
 from .config import ComdirectConfig, GatewayConfig
 from .runtime_config import ServerConfig, atomic_secret, ensure_api_token
@@ -30,6 +35,8 @@ INGRESS_BIND: Final = "0.0.0.0"
 INGRESS_PORT: Final = 8099
 GATEWAY_PORT: Final = 8787
 MAX_FORM_BYTES: Final = 16 * 1024
+MAX_MULTIPART_BYTES: Final = 11 * 1024 * 1024
+MAX_BOUNDARY_BYTES: Final = 128
 MAX_HEADER_BYTES: Final = 32 * 1024
 MAX_CHUNK_LINE_BYTES: Final = 128
 LOCAL_ENDPOINT: Final = (
@@ -187,10 +194,12 @@ class AppController:
         state: GatewayState,
         api_token: str,
         endpoint_url: str = LOCAL_ENDPOINT,
+        acquisition: ComdirectAcquisitionProvider | None = None,
     ) -> None:
         self.config = config
         self.client = client
         self.gateway_state = state
+        self.acquisition = acquisition
         self.api_token = api_token
         self.endpoint_url = endpoint_url
         self.csrf_token = secrets.token_urlsafe(32)
@@ -217,6 +226,9 @@ class AppController:
         bootstrap = self.bootstrap_view()
         account = self.account_view()
         policy = self.client.investment_cash_policy()
+        acquisition_mode = self.acquisition.acquisition_mode if self.acquisition else MODE_LIVE_API
+        holdings = self.acquisition.holdings_snapshot() if self.acquisition else None
+        cash = self.acquisition.cash_snapshot() if self.acquisition else None
         return {
             "bootstrap": {
                 "state": bootstrap.state,
@@ -240,7 +252,16 @@ class AppController:
                     else {}
                 ),
             },
-            "gateway": self.gateway_state.health_document(version=6),
+            "gateway": self.gateway_state.health_document(version=7),
+            "acquisition": {
+                "mode": acquisition_mode,
+                "static_holdings_available": holdings is not None,
+                "static_holdings_as_of": (
+                    holdings.generated_at.isoformat(timespec="seconds") if holdings else None
+                ),
+                "static_cash_available": cash is not None,
+                "static_cash_as_of": cash.as_of.isoformat(timespec="seconds") if cash else None,
+            },
             "client_credentials_configured": (
                 self.config.comdirect.client_id_file.is_file()
                 and self.config.comdirect.client_secret_file.is_file()
@@ -353,6 +374,42 @@ class AppController:
         if not refreshed:
             _LOGGER.warning("Investment cash policy saved, but the live refresh did not complete")
 
+    def import_static_holdings(self, document: bytes) -> None:
+        if self.acquisition is None:
+            raise ComdirectCsvImportError("Static Comdirect acquisition is unavailable")
+        snapshot = parse_comdirect_holdings_csv(document)
+        previous = self.acquisition.holdings_snapshot()
+        self.acquisition.persist_holdings(snapshot)
+        if self.acquisition.acquisition_mode == MODE_CSV:
+            if not self.gateway_state.refresh(trigger="manual"):
+                self.acquisition.persist_holdings(previous)
+                raise ComdirectCsvImportError("Imported Comdirect depot CSV could not be activated")
+
+    def import_static_cash(self, document: bytes) -> None:
+        if self.acquisition is None:
+            raise ComdirectCashCsvImportError("Static Comdirect acquisition is unavailable")
+        cash = parse_comdirect_cash_csv(document)
+        previous = self.acquisition.cash_snapshot()
+        self.acquisition.persist_cash(cash)
+        if self.acquisition.acquisition_mode == MODE_CSV:
+            if not self.gateway_state.refresh(trigger="manual"):
+                self.acquisition.persist_cash(previous)
+                raise ComdirectCashCsvImportError("Imported Comdirect cash CSV could not be activated")
+
+    def set_acquisition_mode(self, mode: str) -> None:
+        if self.acquisition is None:
+            if mode != MODE_LIVE_API:
+                raise ValueError("Static Comdirect acquisition is unavailable")
+            return
+        previous = self.acquisition.acquisition_mode
+        if mode == previous:
+            return
+        self.acquisition.set_mode(mode)
+        if not self.gateway_state.refresh(trigger="manual"):
+            self.acquisition.restore_mode(previous)
+            self.gateway_state.refresh(trigger="manual")
+            raise ValueError("Requested Comdirect acquisition mode could not be activated")
+
     def start_bootstrap(
         self,
         *,
@@ -432,8 +489,12 @@ class AppController:
                 name="Comdirect client secret",
                 maximum=1024,
             )
-            if not self.gateway_state.refresh(trigger="bootstrap"):
-                raise RuntimeError("Authentication succeeded but the portfolio refresh failed")
+            if (
+                self.acquisition is None
+                or self.acquisition.acquisition_mode == MODE_LIVE_API
+            ):
+                if not self.gateway_state.refresh(trigger="bootstrap"):
+                    raise RuntimeError("Authentication succeeded but the portfolio refresh failed")
         except GatewayError as err:
             if isinstance(err, RemoteApiError):
                 _LOGGER.warning(
@@ -453,7 +514,11 @@ class AppController:
         else:
             self._set_bootstrap(
                 "success",
-                "Authentication and the first portfolio refresh completed successfully.",
+                (
+                    "Authentication and the first live portfolio refresh completed successfully."
+                    if self.acquisition is None or self.acquisition.acquisition_mode == MODE_LIVE_API
+                    else "Authentication prepared successfully; static CSV acquisition remains active."
+                ),
             )
         finally:
             # Python cannot guarantee zeroisation of immutable strings. Keeping them only
@@ -569,9 +634,33 @@ class IngressRequestHandler(BaseHTTPRequestHandler):
             "/select-account",
             "/clear-account",
             "/set-cash-policy",
+            "/set-acquisition-mode",
+            "/import-holdings",
+            "/import-cash",
         }:
             self._empty(HTTPStatus.NOT_FOUND)
             return
+        if path in {"/import-holdings", "/import-cash"}:
+            try:
+                csrf, document = self._read_csv_import_form()
+                if not secrets.compare_digest(csrf, self.ingress_server.controller.csrf_token):
+                    self._empty(HTTPStatus.FORBIDDEN)
+                    return
+                if path == "/import-holdings":
+                    self.ingress_server.controller.import_static_holdings(document)
+                else:
+                    self.ingress_server.controller.import_static_cash(document)
+            except (ComdirectCsvImportError, ComdirectCashCsvImportError, ValueError):
+                _LOGGER.warning("Comdirect static CSV import rejected")
+                self._empty(HTTPStatus.BAD_REQUEST)
+                return
+            except Exception:
+                _LOGGER.exception("Comdirect static CSV import failed internally")
+                self._empty(HTTPStatus.INTERNAL_SERVER_ERROR)
+                return
+            self._see_other("./")
+            return
+
         content_type = self.headers.get("Content-Type", "").split(";", 1)[0].strip()
         if content_type != "application/x-www-form-urlencoded":
             self._empty(HTTPStatus.UNSUPPORTED_MEDIA_TYPE)
@@ -644,6 +733,11 @@ class IngressRequestHandler(BaseHTTPRequestHandler):
                     self._see_other("./?cash_policy_error=invalid_amount")
                     return
                 accepted = True
+            elif path == "/set-acquisition-mode":
+                if set(values) != {"csrf", "mode"}:
+                    raise ValueError("Unexpected acquisition-mode form field")
+                self.ingress_server.controller.set_acquisition_mode(_single(values, "mode"))
+                accepted = True
             else:
                 if set(values) != {"csrf"}:
                     raise ValueError("Unexpected account-clear form field")
@@ -665,6 +759,34 @@ class IngressRequestHandler(BaseHTTPRequestHandler):
         self._security_headers("text/plain; charset=utf-8")
         self.send_header("Content-Length", "0")
         self.end_headers()
+
+    def _read_csv_import_form(self) -> tuple[str, bytes]:
+        if sum(len(key) + len(value) for key, value in self.headers.items()) > MAX_HEADER_BYTES:
+            raise ValueError("Import request headers are too large")
+        if self.headers.get_content_type() != "multipart/form-data":
+            raise ValueError("Import request must use multipart/form-data")
+        boundary = self.headers.get_boundary()
+        if not boundary:
+            raise ValueError("Import form boundary is missing")
+        try:
+            boundary_bytes = boundary.encode("ascii")
+        except UnicodeEncodeError as err:
+            raise ValueError("Import form boundary is invalid") from err
+        if not 1 <= len(boundary_bytes) <= MAX_BOUNDARY_BYTES or any(
+            byte < 33 or byte > 126 for byte in boundary_bytes
+        ):
+            raise ValueError("Import form boundary is invalid")
+        length_token = self.headers.get("Content-Length")
+        try:
+            length = int(length_token) if length_token is not None else -1
+        except ValueError as err:
+            raise ValueError("Import request length is invalid") from err
+        if not 1 <= length <= MAX_MULTIPART_BYTES:
+            raise ValueError("Import request is empty or too large")
+        body = self.rfile.read(length)
+        if len(body) != length:
+            raise ValueError("Import request body is incomplete")
+        return _parse_csv_multipart_body(body, boundary_bytes)
 
     def _see_other(self, location: str) -> None:
         """Return one bounded relative Ingress redirect."""
@@ -815,45 +937,52 @@ class IngressRequestHandler(BaseHTTPRequestHandler):
             if account.get("selected")
             else ""
         )
+        acquisition = document["acquisition"]
+        acquisition_mode = str(acquisition.get("mode") or MODE_LIVE_API)
+        live_active = acquisition_mode == MODE_LIVE_API
+        csv_active = acquisition_mode == MODE_CSV
+        live_badge = "ACTIVE" if live_active else "INACTIVE"
+        csv_badge = "ACTIVE" if csv_active else "INACTIVE"
+        static_holdings_text = (
+            f"Imported holdings available · evidence {acquisition['static_holdings_as_of']}"
+            if acquisition.get("static_holdings_available")
+            else "No Comdirect depot CSV has been imported yet."
+        )
+        static_cash_text = (
+            f"Imported cash evidence available · evidence {acquisition['static_cash_as_of']}"
+            if acquisition.get("static_cash_available")
+            else "No supported Comdirect cash CSV has been imported yet."
+        )
+        activate_live = (
+            f'<form method="post" action="set-acquisition-mode" autocomplete="off"><input type="hidden" name="csrf" value="{csrf}"><input type="hidden" name="mode" value="live_api"><button type="submit">Activate live API mode</button></form>'
+            if not live_active else ""
+        )
+        activate_csv = (
+            f'<form method="post" action="set-acquisition-mode" autocomplete="off"><input type="hidden" name="csrf" value="{csrf}"><input type="hidden" name="mode" value="csv"><button type="submit">Activate static CSV mode</button></form>'
+            if not csv_active and acquisition.get("static_holdings_available") else ""
+        )
         html = f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Portfolio Architect Gateway</title>
+<title>Portfolio Architect Gateway — Comdirect</title>
 <style>
-:root{{color-scheme:light dark;font-family:system-ui,sans-serif}}body{{margin:0;padding:24px;background:var(--ha-card-background,#111827);color:var(--primary-text-color,#e5e7eb)}}main{{max-width:900px;margin:auto}}h1{{font-size:1.55rem}}section{{border:1px solid #64748b55;border-radius:14px;padding:18px;margin:16px 0;background:#64748b12}}label{{display:block;margin-top:12px;font-weight:650}}input,select{{box-sizing:border-box;width:100%;padding:10px;margin-top:5px;border-radius:8px;border:1px solid #64748b;background:transparent;color:inherit}}button{{margin-top:16px;padding:10px 16px;border:0;border-radius:8px;font-weight:700;cursor:pointer}}code{{display:block;white-space:pre-wrap;word-break:break-all;padding:10px;border-radius:8px;background:#02061755}}.ok{{color:#22c55e}}.warn{{color:#f59e0b}}.small{{font-size:.9rem;opacity:.82}}.grid{{display:grid;grid-template-columns:1fr 1fr;gap:14px}}@media(max-width:700px){{.grid{{grid-template-columns:1fr}}}}
+:root{{color-scheme:light dark;font-family:system-ui,sans-serif}}body{{margin:0;padding:24px;background:var(--ha-card-background,#111827);color:var(--primary-text-color,#e5e7eb)}}main{{max-width:920px;margin:auto}}h1{{font-size:1.55rem}}section{{border:1px solid #64748b55;border-radius:14px;padding:18px;margin:16px 0;background:#64748b12}}.live-card{{border:2px solid #3b82f6aa;background:#3b82f612}}.static-card{{border:2px solid #14b8a6aa;background:#14b8a612}}.mode-head{{display:flex;align-items:center;justify-content:space-between;gap:12px}}.badge{{font-size:.78rem;font-weight:800;letter-spacing:.06em;padding:4px 9px;border-radius:999px;border:1px solid currentColor}}.live-card .badge{{color:#60a5fa}}.static-card .badge{{color:#2dd4bf}}label{{display:block;margin-top:12px;font-weight:650}}input,select{{box-sizing:border-box;width:100%;padding:10px;margin-top:5px;border-radius:8px;border:1px solid #64748b;background:transparent;color:inherit}}input[type=file]{{display:block}}button{{margin-top:16px;padding:10px 16px;border:0;border-radius:8px;font-weight:700;cursor:pointer}}code{{display:block;white-space:pre-wrap;word-break:break-all;padding:10px;border-radius:8px;background:#02061755}}.ok{{color:#22c55e}}.warn{{color:#f59e0b}}.small{{font-size:.9rem;opacity:.82}}.grid{{display:grid;grid-template-columns:1fr 1fr;gap:14px}}.subsection{{border-top:1px solid #64748b44;margin-top:18px;padding-top:14px}}@media(max-width:700px){{.grid{{grid-template-columns:1fr}}.mode-head{{align-items:flex-start;flex-direction:column}}}}
 </style></head><body><main>
-<h1>Portfolio Architect Gateway</h1>
-<section><h2>Runtime status</h2><p>Gateway: <strong id="gateway-status" class="{status_class}">{escape(str(gateway['status']))}</strong></p><p>Operating mode: <strong id="operating-mode" class="{status_class}">{operating_mode}</strong></p><p>Refresh state: <strong id="refresh-state">{escape(refresh_state)}</strong></p><p>Last refresh trigger: <strong id="refresh-trigger">{escape(str(refresh_trigger))}</strong></p><p>Last refresh duration: <strong id="refresh-duration">{escape(refresh_duration_text)}</strong></p><p>Next scheduled refresh: <strong id="next-refresh">{escape(str(next_refresh))}</strong></p><p>Snapshot age: <strong id="snapshot-age">{escape(snapshot_age_text)}</strong></p><p>Consecutive refresh failures: <strong id="refresh-failures">{escape(str(refresh_failures if refresh_failures is not None else 'unavailable'))}</strong></p><p>Last failure class: <strong id="failure-class">{escape(str(failure_class))}</strong></p><p>Last failure at: <strong id="failure-at">{escape(str(last_failure))}</strong></p><p>Recommended action: <strong id="recommended-action">{escape(str(recommended_action))}</strong></p><p>Retry after: <strong id="retry-after">{escape(retry_after_text)}</strong></p><p>Snapshot integrity: <strong id="snapshot-integrity" class="{status_class}">{snapshot_integrity}</strong></p><p>Snapshot positions: <strong id="snapshot-count">{escape(str(snapshot_count if snapshot_count is not None else 'unavailable'))}</strong></p><p>Snapshot fingerprint: <code id="snapshot-fingerprint">{escape(snapshot_fingerprint)}</code></p><p>Bootstrap: <strong id="bootstrap-state">{state}</strong></p><p id="bootstrap-message">{message}</p><p class="small">The CSV fallback remains untouched after switching Portfolio Architect to live REST data.</p></section>
-<section><h2>Home Assistant connection</h2><label>Endpoint</label><code>{endpoint}</code><label>Bearer token</label><code>{token}</code><p class="small">Portfolio Architect v1.27 discovers the verified HTTPS endpoint and public CA through Supervisor; the dedicated bearer token remains the separate authentication factor.</p></section>
-<section><h2>Live portfolio refresh</h2><form method="post" action="refresh" autocomplete="off">
-<input type="hidden" name="csrf" value="{csrf}">
-<button type="submit">Refresh portfolio now</button></form>
-<p class="small">The action is protected by Home Assistant admin Ingress, never exposes the Gateway token, does not alter the configured schedule, and is rate-limited to one request per minute.</p></section>
-<section><h2>Dedicated investment account</h2><p>State: <strong id="investment-account-state">{account_state}</strong></p><p id="investment-account-message">{account_message}</p><p>Selected: <strong id="investment-account-selected">{selected_label}</strong></p>
-<form method="post" action="discover-accounts" autocomplete="off"><input type="hidden" name="csrf" value="{csrf}"><button type="submit">Discover eligible EUR accounts</button></form>
-{selection_form}{clear_form}
-<p class="small">Only a masked account label, raw EUR balance, eligible non-borrowed cash and timestamp are shown in this admin-only page. The account identifier stays in App-private storage and is never sent to Home Assistant.</p></section>
-<section><h2>Investment cash authorization</h2>
-{cash_policy_error_html}
-<form method="post" action="set-cash-policy" autocomplete="off">
-<input type="hidden" name="csrf" value="{csrf}">
-<label for="cash-policy-mode">Authorization policy</label><select id="cash-policy-mode" name="mode" required>
-<option value="all_available"{all_available_selected}>All eligible cash</option>
-<option value="capped"{capped_selected}>Cap authorized cash</option>
-<option value="retain"{retain_selected}>Keep cash reserve</option></select>
-<label for="cash-policy-cap">Authorization cap in EUR</label><input id="cash-policy-cap" name="cap_eur" inputmode="decimal" maxlength="16" value="{escape(cash_policy_cap, quote=True)}">
-<label for="cash-policy-retain">Cash reserve to keep unallocated in EUR</label><input id="cash-policy-retain" name="retain_eur" inputmode="decimal" maxlength="16" value="{escape(cash_policy_retain, quote=True)}">
-<button type="submit">Save authorization policy</button></form>
-<p class="small">The Gateway first excludes unavailable, pending or credit-funded cash. All eligible cash authorizes the full eligible amount; Cap authorized cash limits the maximum allocation; Keep cash reserve authorizes only the amount above the retained EUR reserve. If eligible cash is below the retained reserve, authorized cash is zero. EUR amount fields accept common decimal/grouping styles such as 1024,00, 1024.00, 1.024,00 and 1,024.00; values are normalized server-side before private persistence.</p></section>
-<section><h2>Comdirect bootstrap / reauthentication</h2><form method="post" action="bootstrap" autocomplete="off">
-<input type="hidden" name="csrf" value="{csrf}">
-<div class="grid"><div><label for="client_id">API client ID</label><input id="client_id" name="client_id" maxlength="512" required></div><div><label for="client_secret">API client secret</label><input id="client_secret" name="client_secret" type="password" maxlength="1024" required></div></div>
-<div class="grid"><div><label for="username">Comdirect username</label><input id="username" name="username" maxlength="256" required></div><div><label for="password">Comdirect password</label><input id="password" name="password" type="password" maxlength="512" required></div></div>
-<button type="submit">Start PhotoTAN bootstrap</button></form>
-<p class="small">Username and password are used by the bootstrap thread only and are not written to App options, files, logs, or diagnostics. The API client ID and secret are retained in the App-private data directory because token renewal requires them.</p></section>
+<h1>Portfolio Architect Gateway — Comdirect</h1>
+<section><h2>Runtime status</h2><p>Gateway: <strong id="gateway-status" class="{status_class}">{escape(str(gateway['status']))}</strong></p><p>Gateway operating mode: <strong id="operating-mode" class="{status_class}">{operating_mode}</strong></p><p>Acquisition mode: <strong id="acquisition-mode">{escape(acquisition_mode)}</strong></p><p>Refresh state: <strong id="refresh-state">{escape(refresh_state)}</strong></p><p>Last refresh trigger: <strong id="refresh-trigger">{escape(str(refresh_trigger))}</strong></p><p>Last refresh duration: <strong id="refresh-duration">{escape(refresh_duration_text)}</strong></p><p>Next scheduled refresh: <strong id="next-refresh">{escape(str(next_refresh))}</strong></p><p>Snapshot age: <strong id="snapshot-age">{escape(snapshot_age_text)}</strong></p><p>Consecutive refresh failures: <strong id="refresh-failures">{escape(str(refresh_failures if refresh_failures is not None else 'unavailable'))}</strong></p><p>Last failure class: <strong id="failure-class">{escape(str(failure_class))}</strong></p><p>Last failure at: <strong id="failure-at">{escape(str(last_failure))}</strong></p><p>Recommended action: <strong id="recommended-action">{escape(str(recommended_action))}</strong></p><p>Retry after: <strong id="retry-after">{escape(retry_after_text)}</strong></p><p>Snapshot integrity: <strong id="snapshot-integrity" class="{status_class}">{snapshot_integrity}</strong></p><p>Snapshot positions: <strong id="snapshot-count">{escape(str(snapshot_count if snapshot_count is not None else 'unavailable'))}</strong></p><p>Snapshot fingerprint: <code id="snapshot-fingerprint">{escape(snapshot_fingerprint)}</code></p></section>
+<section class="live-card"><div class="mode-head"><h2>Live acquisition · Comdirect API</h2><span class="badge">{live_badge}</span></div><p>The authenticated Comdirect API is authoritative for both holdings and investment cash while this mode is active. A failed API refresh never falls back to imported CSV evidence.</p>{activate_live}
+<div class="subsection"><h3>Live portfolio refresh</h3><form method="post" action="refresh" autocomplete="off"><input type="hidden" name="csrf" value="{csrf}"><button type="submit">Refresh portfolio now</button></form><p class="small">Manual refresh is an explicit API action and is rate-limited to one request per minute.</p></div>
+<div class="subsection"><h3>Dedicated investment account</h3><p>State: <strong id="investment-account-state">{account_state}</strong></p><p id="investment-account-message">{account_message}</p><p>Selected: <strong id="investment-account-selected">{selected_label}</strong></p><form method="post" action="discover-accounts" autocomplete="off"><input type="hidden" name="csrf" value="{csrf}"><button type="submit">Discover eligible EUR accounts</button></form>{selection_form}{clear_form}<p class="small">Account discovery is an explicit live API action. The account identifier remains App-private.</p></div>
+<div class="subsection"><h3>Comdirect bootstrap / reauthentication</h3><p>Bootstrap: <strong id="bootstrap-state">{state}</strong></p><p id="bootstrap-message">{message}</p><form method="post" action="bootstrap" autocomplete="off"><input type="hidden" name="csrf" value="{csrf}"><div class="grid"><div><label for="client_id">API client ID</label><input id="client_id" name="client_id" maxlength="512" required></div><div><label for="client_secret">API client secret</label><input id="client_secret" name="client_secret" type="password" maxlength="1024" required></div></div><div class="grid"><div><label for="username">Comdirect username</label><input id="username" name="username" maxlength="256" required></div><div><label for="password">Comdirect password</label><input id="password" name="password" type="password" maxlength="512" required></div></div><button type="submit">Start PhotoTAN bootstrap</button></form><p class="small">Bootstrap remains available as an explicit operator action even while static CSV mode is active. It may prepare live credentials, but it never changes the active acquisition mode.</p></div></section>
+<section class="static-card"><div class="mode-head"><h2>Static acquisition · Comdirect CSV</h2><span class="badge">{csv_badge}</span></div><p>Static mode is completely local: depot holdings and Girokonto cash are imported independently. Automatic API polling and OAuth session maintenance are disabled while static mode is active.</p>{activate_csv}
+<div class="subsection"><h3>Depot holdings CSV</h3><p>{escape(static_holdings_text)}</p><form method="post" action="import-holdings" enctype="multipart/form-data"><input type="hidden" name="csrf" value="{csrf}"><label for="holdings-statement">Comdirect depot CSV</label><input id="holdings-statement" type="file" name="statement" accept="text/csv,.csv" required><button type="submit">Import holdings CSV</button></form><p class="small">The raw CSV and filename are discarded. The supported securities table is normalized in memory; import time is the evidence timestamp because this CSV family has no trustworthy bank-issued export timestamp.</p></div>
+<div class="subsection"><h3>Investment cash CSV</h3><p>{escape(static_cash_text)}</p><form method="post" action="import-cash" enctype="multipart/form-data"><input type="hidden" name="csrf" value="{csrf}"><label for="cash-statement">Comdirect Girokonto transactions CSV</label><input id="cash-statement" type="file" name="statement" accept="text/csv,.csv" required><button type="submit">Import cash CSV</button></form><p class="small">Only an explicit closing/current balance is accepted as cash evidence. Transaction rows are structurally validated and discarded; Portfolio Architect never reconstructs a balance by summing transaction history. If the export omits an explicit closing balance, it is rejected fail-closed.</p></div>
+<p class="warn">Importing files while live API mode is active only stages static evidence. It cannot silently activate CSV mode. Likewise, static mode never calls the API as a fallback.</p></section>
+<section><h2>Investment cash authorization</h2>{cash_policy_error_html}<form method="post" action="set-cash-policy" autocomplete="off"><input type="hidden" name="csrf" value="{csrf}"><label for="cash-policy-mode">Authorization policy</label><select id="cash-policy-mode" name="mode" required><option value="all_available"{all_available_selected}>All eligible cash</option><option value="capped"{capped_selected}>Cap authorized cash</option><option value="retain"{retain_selected}>Keep cash reserve</option></select><label for="cash-policy-cap">Authorization cap in EUR</label><input id="cash-policy-cap" name="cap_eur" inputmode="decimal" maxlength="16" value="{escape(cash_policy_cap, quote=True)}"><label for="cash-policy-retain">Cash reserve to keep unallocated in EUR</label><input id="cash-policy-retain" name="retain_eur" inputmode="decimal" maxlength="16" value="{escape(cash_policy_retain, quote=True)}"><button type="submit">Save authorization policy</button></form><p class="small">This provider-owned policy applies to whichever acquisition mode is active. Static CSV cash uses the explicit positive account balance as eligible cash; a zero or negative balance authorizes EUR 0.</p></section>
+<section><h2>Home Assistant connection</h2><label>Endpoint</label><code>{endpoint}</code><label>Bearer token</label><code>{token}</code><p class="small">Verified private-PKI HTTPS and the dedicated bearer token are independent trust factors. The token and normalized state remain App-private.</p></section>
 <script>
 function syncCashPolicy(){{const mode=document.getElementById('cash-policy-mode');const cap=document.getElementById('cash-policy-cap');const retain=document.getElementById('cash-policy-retain');const capped=mode.value==='capped';const retained=mode.value==='retain';cap.disabled=!capped;cap.required=capped;retain.disabled=!retained;retain.required=retained;if(!capped)cap.value='';if(!retained)retain.value='';}}
-function setRuntime(id,text,healthy){{const e=document.getElementById(id);e.textContent=text;e.classList.toggle('ok',healthy===true);e.classList.toggle('warn',healthy===false);}}
-async function update(){{try{{const r=await fetch('status',{{cache:'no-store'}});if(!r.ok)return;const d=await r.json();const g=d.gateway;const gatewayOk=g.status==='ok';const live=g.operating_mode==='live';setRuntime('gateway-status',g.status||'unavailable',gatewayOk);setRuntime('operating-mode',g.operating_mode||'unavailable',live);document.getElementById('bootstrap-state').textContent=d.bootstrap.state;document.getElementById('bootstrap-message').textContent=d.bootstrap.message;document.getElementById('investment-account-state').textContent=d.investment_account.state;document.getElementById('investment-account-message').textContent=d.investment_account.message;document.getElementById('investment-account-selected').textContent=d.investment_account.selected_label||'None selected';document.getElementById('refresh-state').textContent=g.refresh_in_progress?'running':'idle';document.getElementById('refresh-trigger').textContent=g.last_refresh_trigger||'unavailable';document.getElementById('refresh-duration').textContent=g.last_refresh_duration_ms===null?'unavailable':(g.last_refresh_duration_ms/1000).toFixed(3)+' seconds';document.getElementById('next-refresh').textContent=g.next_refresh_due_at||'unavailable';document.getElementById('snapshot-age').textContent=g.snapshot_age_seconds===null?'unavailable':g.snapshot_age_seconds+' seconds';document.getElementById('refresh-failures').textContent=g.consecutive_refresh_failures===null?'unavailable':g.consecutive_refresh_failures;document.getElementById('failure-class').textContent=g.last_refresh_failure_class||'none';document.getElementById('failure-at').textContent=g.last_refresh_failure_at||'unavailable';document.getElementById('recommended-action').textContent=g.recommended_action||'none';document.getElementById('retry-after').textContent=g.retry_after_seconds===null?'unavailable':g.retry_after_seconds+' seconds';const verified=!!g.snapshot_sha256;setRuntime('snapshot-integrity',verified?'verified':'unavailable',verified);document.getElementById('snapshot-count').textContent=g.snapshot_position_count===null?'unavailable':g.snapshot_position_count;document.getElementById('snapshot-fingerprint').textContent=g.snapshot_sha256?g.snapshot_sha256.slice(0,12)+'…':'unavailable';}}catch(e){{}}}}const cashPolicyMode=document.getElementById('cash-policy-mode');cashPolicyMode.addEventListener('change',syncCashPolicy);syncCashPolicy();update();setInterval(update,2000);
+function setRuntime(id,text,healthy){{const e=document.getElementById(id);if(!e)return;e.textContent=text;e.classList.toggle('ok',healthy===true);e.classList.toggle('warn',healthy===false);}}
+async function update(){{try{{const r=await fetch('status',{{cache:'no-store'}});if(!r.ok)return;const d=await r.json();const g=d.gateway;const gatewayOk=g.status==='ok';const live=g.operating_mode==='live';setRuntime('gateway-status',g.status||'unavailable',gatewayOk);setRuntime('operating-mode',g.operating_mode||'unavailable',live);setRuntime('acquisition-mode',d.acquisition.mode||'unavailable',true);document.getElementById('bootstrap-state').textContent=d.bootstrap.state;document.getElementById('bootstrap-message').textContent=d.bootstrap.message;document.getElementById('investment-account-state').textContent=d.investment_account.state;document.getElementById('investment-account-message').textContent=d.investment_account.message;document.getElementById('investment-account-selected').textContent=d.investment_account.selected_label||'None selected';document.getElementById('refresh-state').textContent=g.refresh_in_progress?'running':'idle';document.getElementById('refresh-trigger').textContent=g.last_refresh_trigger||'unavailable';document.getElementById('refresh-duration').textContent=g.last_refresh_duration_ms===null?'unavailable':(g.last_refresh_duration_ms/1000).toFixed(3)+' seconds';document.getElementById('next-refresh').textContent=g.next_refresh_due_at||'unavailable';document.getElementById('snapshot-age').textContent=g.snapshot_age_seconds===null?'unavailable':g.snapshot_age_seconds+' seconds';document.getElementById('refresh-failures').textContent=g.consecutive_refresh_failures===null?'unavailable':g.consecutive_refresh_failures;document.getElementById('failure-class').textContent=g.last_refresh_failure_class||'none';document.getElementById('failure-at').textContent=g.last_refresh_failure_at||'unavailable';document.getElementById('recommended-action').textContent=g.recommended_action||'none';document.getElementById('retry-after').textContent=g.retry_after_seconds===null?'unavailable':g.retry_after_seconds+' seconds';const verified=!!g.snapshot_sha256;setRuntime('snapshot-integrity',verified?'verified':'unavailable',verified);document.getElementById('snapshot-count').textContent=g.snapshot_position_count===null?'unavailable':g.snapshot_position_count;document.getElementById('snapshot-fingerprint').textContent=g.snapshot_sha256?g.snapshot_sha256.slice(0,12)+'…':'unavailable';}}catch(e){{}}}}const cashPolicyMode=document.getElementById('cash-policy-mode');cashPolicyMode.addEventListener('change',syncCashPolicy);syncCashPolicy();update();setInterval(update,2000);
 </script></main></body></html>"""
         return html.encode("utf-8")
 
@@ -968,6 +1097,50 @@ def _read_chunked_body(stream: Any) -> bytearray:
         _wipe(body)
         raise
 
+def _parse_csv_multipart_body(body: bytes, boundary: bytes) -> tuple[str, bytes]:
+    delimiter = b"--" + boundary
+    closing = delimiter + b"--"
+    if not body.startswith(delimiter + b"\r\n") or closing not in body:
+        raise ValueError("Import form body is malformed")
+    fields: dict[str, bytes] = {}
+    for raw_part in body.split(delimiter)[1:]:
+        if raw_part.startswith(b"--"):
+            break
+        if not raw_part.startswith(b"\r\n"):
+            raise ValueError("Import form part is malformed")
+        part = raw_part[2:]
+        if part.endswith(b"\r\n"):
+            part = part[:-2]
+        try:
+            header_blob, payload = part.split(b"\r\n\r\n", 1)
+        except ValueError as err:
+            raise ValueError("Import form part headers are malformed") from err
+        if len(header_blob) > 8192:
+            raise ValueError("Import form part headers are too large")
+        headers = BytesHeaderParser(policy=policy.default).parsebytes(header_blob + b"\r\n")
+        if headers.get_content_disposition() != "form-data":
+            raise ValueError("Import form part disposition is invalid")
+        field = headers.get_param("name", header="content-disposition")
+        if field not in {"csrf", "statement"} or field in fields:
+            raise ValueError("Import form contains unexpected or duplicate fields")
+        if field == "statement":
+            content_type = headers.get_content_type()
+            if content_type not in {"text/csv", "application/csv", "application/vnd.ms-excel", "application/octet-stream"}:
+                raise ValueError("Uploaded statement must be a CSV document")
+            if not payload or len(payload) > 10 * 1024 * 1024:
+                raise ValueError("CSV is empty or exceeds the 10 MiB import limit")
+        elif len(payload) > 256:
+            raise ValueError("Import form session field is invalid")
+        fields[str(field)] = payload
+    if set(fields) != {"csrf", "statement"}:
+        raise ValueError("Import form is incomplete")
+    try:
+        csrf = fields["csrf"].decode("ascii")
+    except UnicodeDecodeError as err:
+        raise ValueError("Import form session field is invalid") from err
+    return csrf, fields["statement"]
+
+
 def _single(values: dict[str, list[str]], key: str) -> str:
     value = values.get(key)
     if value is None or len(value) != 1:
@@ -1006,9 +1179,12 @@ def serve_app(
     )
     api_token = ensure_api_token(config.server.api_token_file)
     client = ComdirectClient(config.comdirect)
-    state = GatewayState(config.server, client)
+    acquisition = ComdirectAcquisitionProvider(
+        client, data_directory, config.comdirect.investment_cash_policy_file
+    )
+    state = GatewayState(config.server, acquisition)
     controller = AppController(
-        config, client, state, api_token, endpoint_url=gateway_endpoint_url
+        config, client, state, api_token, endpoint_url=gateway_endpoint_url, acquisition=acquisition
     )
 
     stop_event = threading.Event()
@@ -1026,7 +1202,7 @@ def serve_app(
         daemon=True,
     )
     session_maintenance_thread = threading.Thread(
-        target=client.run_session_maintenance_loop,
+        target=acquisition.run_session_maintenance_loop,
         args=(stop_event,),
         name="comdirect-session-maintenance",
         daemon=True,

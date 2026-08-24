@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway — DKB v1.47.0
+# Portfolio Architect Gateway — DKB v1.48.0
 
-Version 1.47.0 adds independent DKB **Girokonto Umsatzliste CSV** cash evidence beside the established depot-CSV holdings acquisition. The two evidence families remain provider-private, independently timestamped, and are composed only into the existing provider-neutral REST schema-1 snapshot.
+Version 1.48.0 keeps DKB CSV/FinTS acquisition semantics unchanged and makes the existing boundary visually explicit: static DKB CSV acquisition is separated from the unavailable/research-only authenticated FinTS live section.
 
 ## DKB depot CSV holdings
 

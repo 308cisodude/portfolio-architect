@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway — Trade Republic v1.47.0
+# Portfolio Architect Gateway — Trade Republic v1.48.0
 
-Version 1.47.0 is package alignment for DKB provider-scoped Girokonto cash evidence. Trade Republic holdings/cash statement acquisition and verified-HTTPS snapshot serving are unchanged.
+Version 1.48.0 keeps Trade Republic statement acquisition unchanged and makes the acquisition boundary visually explicit: the active static PDF statement path is separated from an explicitly unavailable live/private-API section.
 
 Verified HTTPS/private CA trust, bearer
 authentication, REST schema 1, health schema 6 and accepted snapshot serving are unchanged.

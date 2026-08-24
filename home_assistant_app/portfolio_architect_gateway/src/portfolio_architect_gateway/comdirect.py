@@ -308,6 +308,36 @@ class ComdirectClient:
             self._ensure_access_token_locked()
             return True
 
+    def run_session_maintenance_iteration(self) -> bool:
+        """Run one bounded maintenance iteration and contain ordinary failures."""
+        try:
+            refreshed = self.maintain_session()
+        except ReauthenticationRequired:
+            _LOGGER.warning("Comdirect session maintenance requires reauthentication")
+            return False
+        except RemoteApiError as err:
+            _LOGGER.warning(
+                "Comdirect session maintenance remote API failure: status=%s operation=%s",
+                err.status,
+                err.operation or "unknown",
+            )
+            return False
+        except (AuthenticationError, ConfigurationError, ProtocolError) as err:
+            _LOGGER.warning("Comdirect session maintenance failed: %s", type(err).__name__)
+            return False
+        except Exception as err:
+            # A long-lived maintenance worker must survive an unexpected single
+            # iteration failure. Keep diagnostics bounded to the exception type;
+            # exception text from provider/transport code is not safe to log here.
+            _LOGGER.error(
+                "Comdirect session maintenance contained unexpected failure: %s",
+                type(err).__name__,
+            )
+            return False
+        if refreshed:
+            _LOGGER.info("Comdirect OAuth session refreshed by maintenance loop")
+        return refreshed
+
     def run_session_maintenance_loop(
         self,
         stop_event: threading.Event,
@@ -317,38 +347,8 @@ class ComdirectClient:
         """Keep Comdirect OAuth renewal independent of portfolio polling cadence."""
         if not 60 <= interval_seconds <= 900:
             raise ValueError("Comdirect session-maintenance interval is invalid")
-        reauthentication_reported = False
         while not stop_event.wait(interval_seconds):
-            try:
-                refreshed = self.maintain_session()
-            except ReauthenticationRequired:
-                if not reauthentication_reported:
-                    _LOGGER.warning(
-                        "Comdirect session maintenance requires reauthentication"
-                    )
-                reauthentication_reported = True
-            except RemoteApiError as err:
-                _LOGGER.warning(
-                    "Comdirect session maintenance remote API failure: status=%s operation=%s",
-                    err.status,
-                    err.operation or "unknown",
-                )
-            except (AuthenticationError, ConfigurationError, ProtocolError) as err:
-                _LOGGER.warning(
-                    "Comdirect session maintenance failed: %s", type(err).__name__
-                )
-            except Exception as err:
-                # A long-lived maintenance worker must survive an unexpected single
-                # iteration failure. Keep diagnostics bounded to the exception type;
-                # exception text from provider/transport code is not safe to log here.
-                _LOGGER.error(
-                    "Comdirect session maintenance contained unexpected failure: %s",
-                    type(err).__name__,
-                )
-            else:
-                reauthentication_reported = False
-                if refreshed:
-                    _LOGGER.info("Comdirect OAuth session refreshed by maintenance loop")
+            self.run_session_maintenance_iteration()
 
     def _ensure_access_token_locked(self) -> str:
         if self._reauthentication_required:

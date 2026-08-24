@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.48.0
+
+- Moves Comdirect provider-specific depot CSV parsing into the Comdirect Gateway and adds a complete explicit static mode with independent holdings and cash CSV evidence.
+- Adds strict `live_api`/`csv` arbitration with no silent cross-mode fallback; CSV mode disables automatic API acquisition and OAuth/session maintenance while explicit PhotoTAN preparation remains possible.
+- Adds fail-closed legacy PA-side Comdirect CSV migration after verified-HTTPS, health-schema-7, explicit-mode, integrity and exact canonical holdings checks.
+- Adds Gateway health schema 7 with bounded `acquisition_mode`; schemas 1–6 and REST portfolio schema 1 remain compatible.
+- Makes live/static acquisition optically distinct in Comdirect, DKB and Trade Republic Ingress pages without changing DKB/TR acquisition semantics or the advisory-only boundary.
+
 ## 1.47.0
 
 - Adds independent DKB Girokonto `Umsatzliste` CSV cash evidence inside the DKB Gateway beside the established depot-CSV holdings acquisition.

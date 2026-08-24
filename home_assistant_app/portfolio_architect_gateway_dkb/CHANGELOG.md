@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.48.0
+
+- Package/version alignment plus optically distinct static DKB CSV and live FinTS sections; authenticated FinTS remains unavailable/research-only and CSV acquisition semantics are unchanged.
+- Common health schema 7 reports bounded acquisition mode `csv`; schemas 1–6 remain compatible.
+
 ## 1.47.0
 
 - Adds a separate bounded DKB Girokonto `Umsatzliste` CSV importer for provider-scoped cash beside the existing depot-CSV holdings importer.

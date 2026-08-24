@@ -181,7 +181,8 @@ def test_provider_specific_maintenance_thread_is_wired_only_into_comdirect_runti
     provider = (
         ROOT / "gateway" / "src" / "portfolio_architect_gateway" / "provider.py"
     ).read_text(encoding="utf-8")
-    assert "client.run_session_maintenance_loop" in app
+    assert "acquisition.run_session_maintenance_loop" in app
+    assert "ComdirectAcquisitionProvider" in app
     assert "target=client.run_session_maintenance_loop" in cli
     assert "session" not in provider.lower()
     assert "oauth" not in provider.lower()

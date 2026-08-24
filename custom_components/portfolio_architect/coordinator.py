@@ -1462,6 +1462,12 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
                     if self.gateway_health is not None and self.gateway_health.provider_id is not None
                     else PROVIDER_LOCAL_REST_JSON
                 ),
+                self.gateway_health.acquisition_mode if self.gateway_health is not None else None,
+                {
+                    provider_id: health.acquisition_mode
+                    for provider_id, health in supplemental_health.items()
+                    if health.acquisition_mode is not None
+                },
                 self._rest_investment_reserve_eur,
                 self._rest_investment_reserve_as_of,
                 self._rest_investment_cash,
@@ -1774,11 +1780,12 @@ def _cash_timestamp_is_fresh(
     *,
     now: datetime,
     threshold_hours_by_kind: dict[str, int] | None,
+    acquisition_mode: str | None = None,
 ) -> bool:
     """Fail closed when provider cash evidence is outside its evidence-kind window."""
     if threshold_hours_by_kind is None:
         return True
-    threshold = threshold_hours_by_kind.get(cash_evidence_kind(provider_id))
+    threshold = threshold_hours_by_kind.get(cash_evidence_kind(provider_id, acquisition_mode))
     if isinstance(threshold, bool) or not isinstance(threshold, int):
         return False
     current = now.astimezone(timezone.utc)
@@ -1793,6 +1800,7 @@ def _provider_cash_metadata(
     *,
     now: datetime | None = None,
     threshold_hours_by_kind: dict[str, int] | None = None,
+    acquisition_mode: str | None = None,
 ) -> dict[str, Any] | None:
     """Return bounded fresh provider-scoped cash evidence without changing REST schema 1."""
 
@@ -1803,6 +1811,7 @@ def _provider_cash_metadata(
         snapshot.investment_reserve_as_of,
         now=now or dt_util.utcnow(),
         threshold_hours_by_kind=threshold_hours_by_kind,
+        acquisition_mode=acquisition_mode,
     ):
         return None
     result: dict[str, Any] = {
@@ -1915,6 +1924,7 @@ async def _async_fetch_supplemental_rest_snapshots(
                     result.snapshot,
                     now=now,
                     threshold_hours_by_kind=cash_freshness_threshold_hours_by_kind,
+                    acquisition_mode=health.acquisition_mode,
                 )
                 if cash_metadata is not None:
                     provider_cash[config.provider_id] = cash_metadata
@@ -1956,14 +1966,24 @@ def _parse_payload(payload: dict[str, Any]) -> PortfolioData:
 
 
 
-def _aggregation_metadata(aggregation: AggregationResult) -> dict[str, Any]:
+def _aggregation_metadata(
+    aggregation: AggregationResult,
+    acquisition_modes: dict[str, str] | None = None,
+) -> dict[str, Any]:
     provider_ids = tuple(dict.fromkeys(item.provider for item in aggregation.sources))
+    summaries = [item.to_dict() for item in aggregation.sources]
+    modes = acquisition_modes or {}
+    for item in summaries:
+        provider = item.get("provider")
+        mode = modes.get(str(provider))
+        if mode:
+            item["acquisition_mode"] = mode
     return {
         "source_count": len(aggregation.sources),
         "source_providers": [item.provider for item in aggregation.sources],
         "provider_count": len(provider_ids),
         "provider_ids": list(provider_ids),
-        "source_summaries": [item.to_dict() for item in aggregation.sources],
+        "source_summaries": summaries,
         "source_conflict_count": len(aggregation.conflicts),
         "source_conflicts": [item.to_dict() for item in aggregation.conflicts],
         "oldest_source_generated_at": aggregation.oldest_generated_at.isoformat(),
@@ -2012,6 +2032,8 @@ def _calculate_rest_payload(
     endpoint_url: str,
     supplemental_rest_snapshots: tuple[PortfolioSourceSnapshot, ...],
     primary_provider_id: str,
+    primary_acquisition_mode: str | None,
+    supplemental_acquisition_modes: dict[str, str],
     investment_reserve_eur,
     investment_reserve_as_of: datetime | None,
     investment_cash: RestInvestmentCash | None,
@@ -2043,6 +2065,7 @@ def _calculate_rest_payload(
             investment_reserve_as_of,
             now=dt_util.utcnow(),
             threshold_hours_by_kind=cash_freshness_threshold_hours_by_kind,
+            acquisition_mode=primary_acquisition_mode,
         )
     ):
         investment_reserve_eur = None
@@ -2075,7 +2098,13 @@ def _calculate_rest_payload(
         source_provider=provider,
         source_label=(f"{len(sources)} sources" if has_supplements else _provider_display_name(primary_provider_id)),
         source_metadata={
-            **_aggregation_metadata(aggregation),
+            **_aggregation_metadata(
+                aggregation,
+                {
+                    primary_provider_id: primary_acquisition_mode or "unknown",
+                    **supplemental_acquisition_modes,
+                },
+            ),
             "provider_investment_cash": [
                 provider_cash[key] for key in sorted(provider_cash)
             ],

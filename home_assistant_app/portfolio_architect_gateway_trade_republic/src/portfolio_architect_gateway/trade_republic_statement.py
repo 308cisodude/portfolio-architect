@@ -95,6 +95,10 @@ class TradeRepublicStatementProvider:
         return PROVIDER_ID
 
     @property
+    def acquisition_mode(self) -> str:
+        return "pdf"
+
+    @property
     def poll_interval_seconds(self) -> int:
         # Imports are explicit user actions; no remote polling is performed.
         return 86400

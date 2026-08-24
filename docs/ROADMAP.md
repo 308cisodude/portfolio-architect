@@ -588,11 +588,20 @@ Live acceptance of v1.45.0 proved the exact atomic DKB source cut-over but expos
 - Clamp negative balances to zero eligible/authorized cash and never infer overdraft or credit facilities.
 - Preserve REST schema 1, DKB FinTS isolation, provider identity, private-PKI transport, source-set/LKG semantics and the advisory/no-money-movement boundary.
 
-## After v1.47.0 — provider acquisition cleanup
+## v1.48.0 — complete Comdirect CSV acquisition inside the provider Gateway
 
-- **Completed in v1.46.0:** retire the legacy PA-side `dkb_csv` parser/path after live-proven Gateway migration.
-- **Completed in v1.47.0:** give the DKB Gateway independent provider-scoped cash evidence equivalent to the established Trade Republic holdings/cash split.
-- Next, move the existing Comdirect CSV adapter into the Comdirect Gateway alongside its live API acquisition, with explicit acquisition policy and no silent fallback from configured live acquisition to stale upload data.
+- Move provider-specific Comdirect depot-CSV parsing/acquisition into **Portfolio Architect Gateway — Comdirect** while retaining the established live Comdirect API path.
+- Make `live_api` and `csv` explicit mutually exclusive acquisition modes; `live_api` remains the backward-compatible default and neither mode may silently fall back to the other.
+- Give static Comdirect operation two independent evidence families: depot CSV holdings and Girokonto Umsatz CSV cash. Require an explicit opening and closing balance plus exact transaction reconciliation for cash; never reconstruct a balance when those invariants are absent.
+- Keep uploaded CSVs, filenames, account/depot identifiers, transaction descriptions, counterparties and transaction rows transient; persist only normalized provider state and bounded evidence timestamps.
+- Retain the Home Assistant-side legacy `comdirect_csv` parser only as a one-release exact-equivalence migration oracle; stop offering new PA-side Comdirect CSV creation.
+- Add bounded health-schema-7 `acquisition_mode` while retaining schemas 1–6 compatibility and REST portfolio schema 1.
+- Make live/online acquisition optically distinct from static CSV/PDF import in all three official provider Ingress UIs.
+- Preserve private-PKI HTTPS, bearer authentication, source-set/LKG behavior, planner economics and the advisory/no-money-movement boundary.
+
+## After v1.48.0 — provider acquisition cleanup
+
+- Retire the one-release PA-side Comdirect CSV migration parser/path after v1.48 live acceptance proves the Gateway cut-over.
 - Later introduce a deliberate generic import Gateway and move provider-neutral mapped CSV parsing out of Portfolio Architect itself.
 
 ## Deferred beyond v1.45.0

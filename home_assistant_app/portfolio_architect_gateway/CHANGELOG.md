@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.48.0
+
+- Adds explicit `live_api` and `csv` acquisition modes with `live_api` as the backward-compatible default and no silent cross-mode fallback.
+- Adds bounded private Comdirect depot-holdings and Girokonto-cash CSV import; static cash requires explicit opening/closing balances plus exact transaction reconciliation and never invents cash from transaction history.
+- Disables automatic API polling/OAuth maintenance in CSV mode while retaining explicit operator-triggered PhotoTAN preparation.
+- Adds health schema 7 acquisition-mode reporting and a strongly separated live/static Ingress UX.
+
 ## 1.47.0
 
 - Package/version alignment for DKB provider-scoped cash evidence. Comdirect OAuth/session maintenance, account selection and authorized cash behavior are unchanged.

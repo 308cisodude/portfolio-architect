@@ -1,56 +1,74 @@
-# Portfolio Architect 1.47.0
+# Portfolio Architect 1.48.0
 
-Portfolio Architect v1.47.0 gives **Portfolio Architect Gateway — DKB** the same provider-side holdings/cash separation already established for Trade Republic. DKB depot CSV remains the holdings evidence family; a native DKB Girokonto `Umsatzliste` CSV can now supply independent provider-scoped investment cash.
+Portfolio Architect v1.48.0 moves provider-specific Comdirect CSV acquisition into **Portfolio Architect Gateway — Comdirect** and makes acquisition policy explicit. The Comdirect Gateway now has two mutually exclusive modes: `live_api` and `csv`. Portfolio Architect continues to consume only the same provider-neutral REST portfolio snapshot.
 
-## Independent DKB Girokonto cash evidence
+## Complete static Comdirect acquisition
 
-The DKB Gateway Ingress UI now has a separate cash-import control for the supported native Girokonto CSV export. The bounded parser:
+The Comdirect Gateway can now operate without automatic Comdirect API acquisition when the operator deliberately selects `csv` mode:
 
-- requires the recognized `Girokonto` export structure;
-- requires exactly one dated `Kontostand vom DD.MM.YYYY:` row;
-- accepts only an explicit EUR balance and parses it as an exact Decimal;
-- validates the expected transaction-table shape without retaining transaction contents;
-- rejects malformed, ambiguous, oversized, non-EUR or future-dated exports fail-closed;
-- treats positive balance as eligible/authorized cash under the existing `all_available` provider policy;
-- clamps zero or negative balance to EUR 0 eligible/authorized cash; and
-- never infers an overdraft, credit line, pending-credit amount, or cash value from transaction arithmetic.
+- depot CSV supplies holdings;
+- Girokonto transaction CSV may supply independent provider-scoped investment cash, but only when the export contains exactly one explicit opening balance and one explicit closing/current balance that reconcile exactly through the transaction deltas;
+- transaction rows are validated structurally but never summed to invent a balance;
+- holdings and cash uploads are parsed in memory and raw CSV bytes, filenames, depot/account identifiers and transaction contents are never persisted;
+- only normalized holdings, normalized cash and bounded evidence timestamps survive in the App-private data volume; and
+- static holdings and cash have independent evidence clocks. Importing one cannot refresh the other.
 
-The raw CSV, account identifier, transaction rows, counterparties, payment references and other transaction-level fields never persist. Only normalized balance/date state is written to the App-private data volume.
+The supported Comdirect depot CSV has no trustworthy bank-issued snapshot timestamp in its securities table. Static holdings therefore use the explicit Gateway import time as evidence. The cash importer likewise uses import time and fails closed unless the explicit opening balance, transaction deltas and explicit closing/current balance reconcile exactly.
 
-## Holdings and cash clocks remain independent
+## Explicit acquisition arbitration
 
-A DKB depot CSV import replaces only holdings evidence. A Girokonto cash import replaces only cash evidence.
+`live_api` remains the backward-compatible default. CSV uploads can be staged while live API mode is active, but they cannot become authoritative without an explicit operator mode switch.
 
-The canonical DKB REST snapshot composes the most recently accepted holdings and cash evidence without changing the holdings `generated_at`. DKB holdings remain freshness-classified as `gateway_snapshot`; DKB cash is freshness-gated using the `imported_statement` policy family, matching Trade Republic cash. Re-importing the same dated cash file cannot refresh its evidence age merely because the upload happened later.
+There is no cross-mode fallback:
 
-## Provider-neutral wire contract remains unchanged
+- an API refresh failure never consults staged CSV evidence;
+- CSV mode never performs automatic holdings/cash API acquisition;
+- the Comdirect OAuth/session-maintenance worker is inactive while CSV mode is selected; and
+- a missing/stale/invalid static evidence family never triggers a live API fallback.
 
-The DKB Gateway publishes cash through the existing optional REST-schema-1 fields:
+An explicit operator-triggered PhotoTAN bootstrap remains possible while CSV mode is active so live credentials can be prepared. It does not change the active source. Mode changes validate the requested source before persistence and roll back if the new mode cannot publish a valid snapshot.
 
-- `investment_reserve.available_eur` + `as_of`; and
-- `investment_cash` with account balance, eligible cash, authorized cash, `all_available` policy and `as_of`.
+The existing Comdirect investment-cash authorization policy is acquisition-neutral: when static cash is active, the same all-available/cap/retain policy is applied to the explicit imported balance. A non-positive balance never authorizes overdraft or credit.
 
-No new REST or health schema version is introduced. Portfolio Architect's existing provider-scoped cash aggregation, funding topology and route-selection logic consume the DKB cash automatically when it is fresh.
+## Legacy Comdirect CSV migration bridge
 
-## FinTS boundary unchanged
+New Home Assistant-side `comdirect_csv` source creation is no longer offered. A still-configured legacy primary Comdirect CSV can migrate through Supervisor discovery only when the discovered Comdirect Gateway:
 
-The anonymous registration/BPD capability probe remains isolated. No DKB login, PIN/TAN, authenticated FinTS holdings/balance/transaction request, order, transfer, payment, sell or withdrawal capability is introduced. FinTS cannot replace or silently fall back to either CSV evidence family.
+- uses verified private-CA HTTPS and the expected bearer authentication;
+- reports provider identity `comdirect` through health schema 7;
+- reports explicit `acquisition_mode: csv` and healthy snapshot state;
+- passes snapshot hash/count/timestamp transport-integrity checks; and
+- produces canonical holdings exactly equal to the existing legacy parser result.
+
+The historical local filesystem mtime is deliberately not treated as bank evidence and is not required to equal the Gateway import timestamp. Only an exact holdings match completes one atomic config-entry cut-over; every mismatch leaves the existing source untouched.
+
+## Gateway acquisition UX
+
+All three provider Apps now make acquisition boundaries visually obvious:
+
+- Comdirect has separate, optically distinct **Live acquisition · Comdirect API** and **Static acquisition · Comdirect CSV** cards with ACTIVE/INACTIVE state;
+- DKB separates **Static acquisition · DKB CSV** from **Live acquisition · DKB FinTS**, explicitly marking authenticated FinTS as unavailable/research-only; and
+- Trade Republic separates its active static statement-import family from an explicitly unavailable live-acquisition section.
+
+This is presentation of the existing security boundary, not a relaxation of it.
+
+## Health and freshness
+
+Gateway health schema **7** adds one bounded `acquisition_mode` field. Health schemas 1–6 remain accepted for compatibility. REST portfolio schema 1 is unchanged.
+
+Comdirect static holdings and cash are freshness-classified as CSV evidence rather than live API evidence. `live_api` retains the existing live freshness semantics. DKB and Trade Republic acquisition behavior/freshness are otherwise unchanged.
 
 ## Historical compatibility contracts retained
 
-The v1.33.0 source-freshness and plan-schedule separation remains intact: recurring scheduling is anchored to the latest valid Portfolio Architect evaluation, and this release does not change any configured freshness threshold. The historical v1.39 colourful allocation view was not included in v1.38.1; that sequencing remains documented. The historical v1.19.0-rc2 brokerage-probe state remains historical and is not promoted by this release. Trade Republic provider-specific statement parsing remains in its Gateway; this release does not move PDF parsing into Portfolio Architect. authenticated DKB FinTS acquisition remains disabled. No trading, order, transfer, payment, or transaction-history capability is introduced.
+The v1.33.0 source-freshness and plan-schedule separation remains anchored to the latest valid Portfolio Architect evaluation; this release does not change any configured freshness threshold. The historical v1.19.0-rc2 brokerage-probe state remains historical and is not promoted by this release. The historical v1.39 colourful allocation view was not included in v1.38.1; that sequencing remains documented. Trade Republic provider-specific statement parsing remains in its Gateway; this release does not move PDF parsing into Portfolio Architect. authenticated DKB FinTS acquisition remains disabled. No trading, order, transfer, payment, or transaction-history capability is introduced.
 
-## Preserved contracts
+## Preserved boundaries
 
 - portfolio payload schema 8: unchanged;
 - REST portfolio schema 1: unchanged;
-- Gateway health schema 6: unchanged; schemas 1–5 remain supported;
+- Gateway health schema 7 current; schemas 1–6 remain supported;
 - presentation schema 2 and broker schemas 1/2/3: unchanged;
-- DKB depot CSV parsing/newest-per-depot/conflict semantics: unchanged;
-- Comdirect live acquisition, OAuth/session maintenance and authorized-cash behavior: unchanged;
-- Trade Republic DEPOTAUSZUG/KONTOAUSZUG acquisition: unchanged;
-- source-set atomicity, Home Assistant LKG, planner economics and advisory funding topology: unchanged;
+- source-set atomicity, Home Assistant LKG, planner economics, funding topology and execution-path behavior: unchanged;
 - verified private-PKI HTTPS, bearer authentication, Supervisor trust discovery, DNS pinning and no-plaintext fallback: unchanged;
+- no trading, order, transfer, payment, transaction-history, sell or withdrawal capability is added; and
 - no dashboard YAML replacement is required.
-
-The next provider-acquisition architecture milestone remains moving the existing Comdirect CSV adapter into **Portfolio Architect Gateway — Comdirect**, with explicit live-API/CSV arbitration and no silent fallback.
