@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.50.0
+
+- align package metadata with Portfolio Architect v1.50.0 source-management UX
+- Comdirect `live_api`/`csv` acquisition, OAuth/session maintenance, static parsing and live/static Ingress semantics are unchanged from v1.49.0
+
 ## 1.49.0
 
 - align package metadata with Portfolio Architect v1.49.0

@@ -2470,8 +2470,9 @@
       },
       "sources": {
         "title": "Portfolioquellen",
-        "description": "Ergänzende Portfolioquellen verwalten. Jede Quelle wird vor der Aggregation normalisiert; providerspezifische Erfassung bleibt außerhalb von Portfolio Architect.",
+        "description": "Portfolio Architect hat genau eine Primärquelle. Zusätzliche REST-Gateways sind optionale providerisolierte Ergänzungen und ersetzen die Primärquelle niemals implizit.",
         "menu_options": {
+          "primary_rest_gateway": "Primäres REST-Gateway",
           "rest_gateways": "Zusätzliche REST-Gateways"
         }
       },
@@ -2523,9 +2524,10 @@
       },
       "rest_gateways": {
         "title": "Zusätzliche REST-Gateways",
-        "description": "Unabhängige lokale Portfolio-Architect-Gateways hinzufügen oder entfernen. Jedes Gateway bleibt separat authentifiziert und providerisoliert.",
+        "description": "Optionale providerisolierte Ergänzungen zur einen Primärquelle verwalten. Ein konkretes Gateway kann hinzugefügt, bearbeitet oder entfernt werden, ohne die Primärquelle zu ändern.",
         "menu_options": {
           "add_rest_gateway": "REST-Gateway hinzufügen",
+          "edit_rest_gateway": "REST-Gateway bearbeiten",
           "remove_rest_gateway": "REST-Gateway entfernen"
         }
       },
@@ -2727,6 +2729,37 @@
           "broker_settlement_business_days": "Abwicklungszeit",
           "broker_transfer_source": "Evidenzquelle",
           "broker_transfer_as_of": "Evidenzdatum"
+        }
+      },
+      "primary_rest_gateway": {
+        "title": "Primäres REST-Gateway",
+        "description": "**Primärquelle:** {provider} · `{endpoint}`\n\nTransport-Endpunkt oder Bearer-Token des einen primären Gateways bearbeiten. Ein geänderter Endpunkt muss dieselbe Provider-Identität liefern; Portfolio Architect validiert verifiziertes HTTPS, Health und Snapshot-Integrität vor dem Speichern.",
+        "data": {
+          "rest_endpoint_url": "URL des lokalen Gateways",
+          "rest_api_token": "Bearer-Token des Gateways"
+        },
+        "data_description": {
+          "rest_endpoint_url": "Verifizierter HTTPS-Portfolio-Endpunkt für denselben primären Provider.",
+          "rest_api_token": "Dediziertes Bearer-Token mit minimalen Rechten. Bei unverändertem Endpunkt bleibt das vorhandene private CA-Vertrauen automatisch erhalten."
+        }
+      },
+      "edit_rest_gateway": {
+        "title": "REST-Gateway bearbeiten",
+        "description": "Ein konfiguriertes ergänzendes Gateway auswählen. Seine Provider-Identität bleibt unveränderlich.",
+        "data": {
+          "provider_id": "Provider"
+        }
+      },
+      "edit_rest_gateway_details": {
+        "title": "REST-Gateway bearbeiten",
+        "description": "**Bearbeitet:** {provider} (`{provider_id}`) · `{endpoint}`\n\nNur Transport- und Authentifizierungsdaten bearbeiten. Die Provider-Identität ist unveränderlich; vor dem Speichern muss das bearbeitete Gateway die Prüfungen für verifiziertes HTTPS, Health und Snapshot-Integrität bestehen.",
+        "data": {
+          "rest_endpoint_url": "URL des lokalen Gateways",
+          "rest_api_token": "Bearer-Token des Gateways"
+        },
+        "data_description": {
+          "rest_endpoint_url": "Verifizierter HTTPS-Portfolio-Endpunkt für denselben Provider.",
+          "rest_api_token": "Dediziertes Bearer-Token mit minimalen Rechten. Bei unverändertem Endpunkt bleibt das vorhandene private CA-Vertrauen automatisch erhalten."
         }
       }
     },

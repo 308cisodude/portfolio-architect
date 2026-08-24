@@ -622,10 +622,17 @@ Live acceptance of v1.45.0 proved the exact atomic DKB source cut-over but expos
 - Remove current `comdirect_csv` source-provider/translation/icon surfaces while retaining the provider-neutral mapped generic CSV adapter.
 - Keep Comdirect Gateway `live_api`/`csv` arbitration, DKB CSV, Trade Republic PDF acquisition, v1.48 freshness, private-PKI transport, LKG/source atomicity and planner economics unchanged.
 
-## After v1.49.0 — source architecture cleanup
+## v1.50.0 — source architecture UX and DKB probe observability
 
-- Make the Portfolio sources Configure UX explicitly model the single primary source and coherent Add/Edit/Remove flows for supplemental REST Gateways without changing the single-entry architecture.
-- Later introduce a deliberate generic import Gateway and move provider-neutral mapped CSV parsing out of Portfolio Architect itself.
+- Make Portfolio sources explicitly model the single primary REST Gateway separately from optional provider-isolated supplemental Gateways.
+- Add guarded native editing for the primary REST transport while preserving provider identity, verified-HTTPS trust and snapshot integrity; never expose a Remove-primary operation.
+- Give supplemental REST Gateways coherent Add/Edit/Remove flows with immutable provider identity, duplicate rejection and full health/snapshot validation.
+- Persist a server-side UTC dispatch timestamp for each explicit DKB anonymous BPD probe and render `Last probe sent` in Ingress so cryptographically identical responses cannot obscure whether a new probe was initiated.
+- Preserve provider acquisition, v1.48 freshness, source-set/LKG behavior, planner economics, schemas, private-PKI transport and the advisory/no-money-movement boundary.
+
+## After v1.50.0 — source architecture cleanup
+
+- Introduce a deliberate generic Import Gateway and move provider-neutral mapped CSV parsing out of Portfolio Architect itself.
 
 ## Deferred beyond v1.45.0
 

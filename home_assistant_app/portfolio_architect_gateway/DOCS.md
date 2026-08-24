@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway — Comdirect v1.49.0
+# Portfolio Architect Gateway — Comdirect v1.50.0
 
-Version 1.49.0 aligns the Comdirect App package with Portfolio Architect’s Home Assistant-side Comdirect CSV migration-bridge retirement. Comdirect `live_api`/`csv` acquisition, static parsers, OAuth/session behavior and Ingress UX are unchanged from the live-accepted v1.48.2 baseline; no re-import or reauthentication is required solely for this package alignment.
+Version 1.50.0 aligns the Comdirect App package with Portfolio Architect’s source-management UX milestone. Comdirect `live_api`/`csv` acquisition, static parsers, OAuth/session behavior and the live/static Ingress distinction are unchanged from the live-accepted v1.49.0 baseline.
 
 Version 1.48.1 aligns the Comdirect App package with Portfolio Architect’s acquisition-aware freshness correction. Comdirect `live_api`/`csv` arbitration, static parsers, OAuth/session behavior and Ingress UX are unchanged from v1.48.0.
 

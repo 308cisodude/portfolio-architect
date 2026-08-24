@@ -1,4 +1,4 @@
-"""Regression coverage for the v1.49.0 Configure UX consistency pass."""
+"""Regression coverage for the v1.50.0 Configure UX consistency pass."""
 from __future__ import annotations
 
 import ast
@@ -29,6 +29,7 @@ EDIT_CONTEXT_KEYS = {
         "to_provider_name",
         "to_provider_id",
     },
+    "edit_rest_gateway_details": {"provider", "provider_id", "endpoint"},
 }
 
 

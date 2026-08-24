@@ -916,6 +916,7 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
     _broker_provider_id: str | None = None
     _broker_route_token: str | None = None
     _broker_funding_token: str | None = None
+    _rest_gateway_provider_id: str | None = None
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
@@ -935,11 +936,124 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
     async def async_step_sources(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Choose which supplemental portfolio-source family to configure."""
+        """Model the one primary REST source separately from supplemental Gateways."""
         del user_input
         if self.config_entry.data.get(CONF_SOURCE_TYPE) != SOURCE_TYPE_REST_API:
             return self.async_abort(reason="rest_gateways_require_rest_primary")
-        return self.async_show_menu(step_id="sources", menu_options=["rest_gateways"])
+        return self.async_show_menu(
+            step_id="sources",
+            menu_options=["primary_rest_gateway", "rest_gateways"],
+        )
+
+    def _supplemental_rest_sources(self) -> list[SupplementalRestSourceConfig]:
+        """Return the currently configured supplemental REST Gateways."""
+        raw_sources = self.config_entry.options.get(CONF_SUPPLEMENTAL_REST_SOURCES, [])
+        if not isinstance(raw_sources, list):
+            return []
+        return [
+            SupplementalRestSourceConfig.from_mapping(item)
+            for item in raw_sources
+            if isinstance(item, dict)
+        ]
+
+    @staticmethod
+    def _rest_edit_candidate(
+        user_input: dict[str, Any],
+        existing: RestSourceConfig,
+    ) -> RestSourceConfig:
+        """Build an edited REST source while retaining trust for an unchanged endpoint."""
+        first = RestSourceConfig.from_mapping(user_input)
+        mapping = dict(user_input)
+        if (
+            first.endpoint_url == existing.endpoint_url
+            and existing.tls_ca_certificate is not None
+        ):
+            mapping[CONF_REST_TLS_CA_CERTIFICATE] = existing.tls_ca_certificate
+        return RestSourceConfig.from_mapping(mapping)
+
+    async def async_step_primary_rest_gateway(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Edit the single primary REST Gateway without changing its provider identity."""
+        if self.config_entry.data.get(CONF_SOURCE_TYPE) != SOURCE_TYPE_REST_API:
+            return self.async_abort(reason="rest_gateways_require_rest_primary")
+        existing = RestSourceConfig.from_mapping(dict(self.config_entry.data))
+        supplemental = self._supplemental_rest_sources()
+        current_provider_id: str | None = None
+        try:
+            current_health = await async_fetch_gateway_health(self.hass, existing)
+        except PortfolioRestError:
+            current_health = None
+        if current_health is not None:
+            current_provider_id = current_health.provider_id
+        errors: dict[str, str] = {}
+        suggested = {
+            CONF_REST_ENDPOINT_URL: existing.endpoint_url,
+            CONF_REST_API_TOKEN: existing.api_token,
+        }
+        if user_input is not None:
+            suggested.update(user_input)
+            try:
+                candidate = self._rest_edit_candidate(user_input, existing)
+                if urlsplit(candidate.endpoint_url).scheme != "https":
+                    raise PortfolioRestTlsError("Primary Gateway must use verified HTTPS")
+                if any(item.endpoint_url == candidate.endpoint_url for item in supplemental):
+                    raise ValueError("duplicate endpoint")
+                health = await async_fetch_gateway_health(self.hass, candidate)
+                if (
+                    health.health_schema_version < 6
+                    or health.provider_id is None
+                    or health.status != "ok"
+                    or health.reauthentication_required
+                    or not health.snapshot_available
+                ):
+                    raise PortfolioRestError("Primary Gateway is not ready for live use")
+                if any(item.provider_id == health.provider_id for item in supplemental):
+                    raise ValueError("duplicate provider")
+                if candidate.endpoint_url != existing.endpoint_url:
+                    if current_provider_id is None or health.provider_id != current_provider_id:
+                        raise ValueError("primary provider identity changed")
+                elif current_provider_id is not None and health.provider_id != current_provider_id:
+                    raise ValueError("primary provider identity changed")
+                result = await async_fetch_rest_snapshot(self.hass, candidate)
+                snapshot = result.snapshot
+                if (
+                    snapshot is None
+                    or result.snapshot_sha256 is None
+                    or result.position_count is None
+                    or result.position_count != len(snapshot.positions)
+                    or health.snapshot_generated_at is None
+                    or health.snapshot_generated_at != snapshot.generated_at
+                    or health.snapshot_position_count != len(snapshot.positions)
+                    or health.snapshot_sha256 != result.snapshot_sha256
+                ):
+                    raise PortfolioRestError("Primary Gateway health does not match its live snapshot")
+            except PortfolioRestAuthenticationError:
+                errors["base"] = "invalid_auth"
+            except (OSError, ValueError, PortfolioRestError):
+                errors["base"] = "invalid_rest_gateway"
+            else:
+                data = dict(self.config_entry.data)
+                data[CONF_REST_ENDPOINT_URL] = candidate.endpoint_url
+                data[CONF_REST_API_TOKEN] = candidate.api_token
+                if candidate.tls_ca_certificate is None:
+                    data.pop(CONF_REST_TLS_CA_CERTIFICATE, None)
+                else:
+                    data[CONF_REST_TLS_CA_CERTIFICATE] = candidate.tls_ca_certificate
+                self.hass.config_entries.async_update_entry(self.config_entry, data=data)
+                return self.async_create_entry(data=dict(self.config_entry.options))
+        provider_label = (current_provider_id or "unknown").replace("_", " ").title()
+        return self.async_show_form(
+            step_id="primary_rest_gateway",
+            data_schema=self.add_suggested_values_to_schema(
+                _rest_source_schema(), suggested
+            ),
+            errors=errors,
+            description_placeholders={
+                "provider": provider_label,
+                "endpoint": existing.endpoint_url,
+            },
+        )
 
     async def async_step_rest_gateways(
         self, user_input: dict[str, Any] | None = None
@@ -948,11 +1062,131 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
         del user_input
         if self.config_entry.data.get(CONF_SOURCE_TYPE) != SOURCE_TYPE_REST_API:
             return self.async_abort(reason="rest_gateways_require_rest_primary")
-        stored = self.config_entry.options.get(CONF_SUPPLEMENTAL_REST_SOURCES, [])
+        stored = self._supplemental_rest_sources()
         menu = ["add_rest_gateway"]
-        if isinstance(stored, list) and stored:
-            menu.append("remove_rest_gateway")
+        if stored:
+            menu.extend(["edit_rest_gateway", "remove_rest_gateway"])
         return self.async_show_menu(step_id="rest_gateways", menu_options=menu)
+
+    async def async_step_edit_rest_gateway(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Select one supplemental Gateway for editing."""
+        stored = self._supplemental_rest_sources()
+        if not stored:
+            return self.async_abort(reason="no_rest_gateways")
+        provider_ids = [item.provider_id for item in stored]
+        if user_input is not None:
+            selected = str(user_input["provider_id"])
+            if selected not in provider_ids:
+                return self.async_abort(reason="no_rest_gateways")
+            self._rest_gateway_provider_id = selected
+            return await self.async_step_edit_rest_gateway_details()
+        return self.async_show_form(
+            step_id="edit_rest_gateway",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("provider_id"): SelectSelector(
+                        SelectSelectorConfig(
+                            options=provider_ids,
+                            mode=SelectSelectorMode.DROPDOWN,
+                        )
+                    )
+                }
+            ),
+        )
+
+    async def async_step_edit_rest_gateway_details(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Edit transport/authentication for one immutable supplemental provider."""
+        selected = self._rest_gateway_provider_id
+        stored = self._supplemental_rest_sources()
+        existing = next((item for item in stored if item.provider_id == selected), None)
+        if existing is None:
+            return self.async_abort(reason="no_rest_gateways")
+        existing_transport = existing.rest_config
+        suggested = {
+            CONF_REST_ENDPOINT_URL: existing.endpoint_url,
+            CONF_REST_API_TOKEN: existing.api_token,
+        }
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            suggested.update(user_input)
+            try:
+                candidate = self._rest_edit_candidate(user_input, existing_transport)
+                if urlsplit(candidate.endpoint_url).scheme != "https":
+                    raise PortfolioRestTlsError("Additional Gateways must use verified HTTPS")
+                primary = RestSourceConfig.from_mapping(dict(self.config_entry.data))
+                if candidate.endpoint_url == primary.endpoint_url or any(
+                    item.provider_id != existing.provider_id
+                    and item.endpoint_url == candidate.endpoint_url
+                    for item in stored
+                ):
+                    raise ValueError("duplicate endpoint")
+                health = await async_fetch_gateway_health(self.hass, candidate)
+                if (
+                    health.health_schema_version < 6
+                    or health.provider_id != existing.provider_id
+                    or health.status != "ok"
+                    or health.reauthentication_required
+                    or not health.snapshot_available
+                ):
+                    raise PortfolioRestError("Edited Gateway is not ready for live use")
+                primary_health = await async_fetch_gateway_health(self.hass, primary)
+                if (
+                    primary_health.health_schema_version < 6
+                    or primary_health.provider_id is None
+                    or primary_health.status != "ok"
+                    or primary_health.reauthentication_required
+                    or not primary_health.snapshot_available
+                    or primary_health.provider_id == health.provider_id
+                ):
+                    raise PortfolioRestError("Primary Gateway is not ready for multi-Gateway configuration")
+                result = await async_fetch_rest_snapshot(self.hass, candidate)
+                snapshot = result.snapshot
+                if (
+                    snapshot is None
+                    or result.snapshot_sha256 is None
+                    or result.position_count is None
+                    or result.position_count != len(snapshot.positions)
+                    or health.snapshot_generated_at is None
+                    or health.snapshot_generated_at != snapshot.generated_at
+                    or health.snapshot_position_count != len(snapshot.positions)
+                    or health.snapshot_sha256 != result.snapshot_sha256
+                ):
+                    raise PortfolioRestError("Edited Gateway health does not match its live snapshot")
+            except PortfolioRestAuthenticationError:
+                errors["base"] = "invalid_auth"
+            except (OSError, ValueError, PortfolioRestError):
+                errors["base"] = "invalid_rest_gateway"
+            else:
+                configured = SupplementalRestSourceConfig(
+                    provider_id=existing.provider_id,
+                    endpoint_url=candidate.endpoint_url,
+                    api_token=candidate.api_token,
+                    tls_ca_certificate=candidate.tls_ca_certificate,
+                )
+                options = dict(self.config_entry.options)
+                options[CONF_SUPPLEMENTAL_REST_SOURCES] = [
+                    configured.as_storage_dict()
+                    if item.provider_id == existing.provider_id
+                    else item.as_storage_dict()
+                    for item in stored
+                ]
+                return self.async_create_entry(data=options)
+        return self.async_show_form(
+            step_id="edit_rest_gateway_details",
+            data_schema=self.add_suggested_values_to_schema(
+                _rest_source_schema(), suggested
+            ),
+            errors=errors,
+            description_placeholders={
+                "provider": existing.provider_id.replace("_", " ").title(),
+                "provider_id": existing.provider_id,
+                "endpoint": existing.endpoint_url,
+            },
+        )
 
     async def async_step_add_rest_gateway(
         self, user_input: dict[str, Any] | None = None

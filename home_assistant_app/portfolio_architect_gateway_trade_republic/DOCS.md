@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway — Trade Republic v1.49.0
+# Portfolio Architect Gateway — Trade Republic v1.50.0
 
-Version 1.49.0 aligns the Trade Republic App package with Portfolio Architect’s Home Assistant-side Comdirect CSV migration-bridge retirement. DEPOTAUSZUG/KONTOAUSZUG parsing, static persistence and Ingress UX are unchanged from the live-accepted v1.48.2 baseline.
+Version 1.50.0 aligns the Trade Republic App package with Portfolio Architect’s source-management UX milestone. DEPOTAUSZUG/KONTOAUSZUG parsing, static persistence and the live/static Ingress distinction are unchanged from the live-accepted v1.49.0 baseline.
 
 Version 1.48.1 aligns the Trade Republic App package with Portfolio Architect’s acquisition-aware freshness correction. DEPOTAUSZUG/KONTOAUSZUG parsing, static persistence and Ingress UX are unchanged from v1.48.0.
 
