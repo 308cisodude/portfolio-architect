@@ -10,7 +10,7 @@ APP = ROOT / "home_assistant_app" / "portfolio_architect_gateway"
 
 def test_gateway_app_is_stable_and_versioned() -> None:
     config = yaml.safe_load((APP / "config.yaml").read_text(encoding="utf-8"))
-    assert config["version"] == "1.51.0"
+    assert config["version"] == "1.51.1"
     assert config["stage"] == "stable"
 
 

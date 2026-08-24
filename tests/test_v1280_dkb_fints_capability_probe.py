@@ -184,7 +184,7 @@ def test_product_registration_and_probe_result_are_private_and_sanitized(tmp_pat
 
 def test_dkb_app_is_experimental_csv_source_without_authenticated_fints_acquisition() -> None:
     config = yaml.safe_load((APP / "config.yaml").read_text(encoding="utf-8"))
-    assert config["version"] == "1.51.0"
+    assert config["version"] == "1.51.1"
     assert config["stage"] == "experimental"
     assert config["boot"] == "auto"
     assert config["environment"]["PA_PROVIDER_ID"] == "dkb"

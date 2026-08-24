@@ -638,6 +638,13 @@ Live acceptance of v1.45.0 proved the exact atomic DKB source cut-over but expos
 - Remove the DKB probe UI's hard-coded Europe/Berlin conversion; keep UTC authoritative and use a stable browser-local fallback because supported Ingress metadata does not expose the per-user frontend timezone.
 - Preserve all official-provider acquisition, freshness, planner, private-PKI, LKG and advisory-only contracts.
 
+## v1.51.1 — remove stale local-source coordinator attributes
+
+- Fix the live-observed v1.51.0 entity-state regression caused by `configuration_label` referencing the removed `local_paths` member after the Generic Import migration.
+- Remove the remaining dead coordinator references to retired local-file acquisition state without reintroducing parsing/acquisition into Portfolio Architect.
+- Add executable schema-12 all-Gateway source-attribute coverage so entity evaluation is proven without any `local_paths` member.
+- Keep all Gateway acquisition, freshness, planner, schema, private-PKI/LKG and advisory-only contracts unchanged.
+
 ## After v1.51.0 — provider acquisition architecture
 
 - Provider-specific and provider-neutral acquisition formats now live outside Portfolio Architect. Future source work should extend isolated Gateway providers rather than reintroduce acquisition logic into the Home Assistant integration.

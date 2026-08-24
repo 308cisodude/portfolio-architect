@@ -1,4 +1,4 @@
-# Portfolio Architect v1.51.0
+# Portfolio Architect v1.51.1
 
 Portfolio Architect is a Home Assistant-native portfolio overview, policy-check,
 and deterministic investment-planning system. It supports provider-isolated acquisition, multi-source consolidation, cost-aware recommendations, and separate read-only Gateway Apps, including DKB depot-CSV acquisition inside the DKB Gateway and simultaneous aggregation of multiple local Gateway REST snapshots.
@@ -13,7 +13,7 @@ transfer, payment, or account-transaction capability.
 - Deterministic allocation, policy, and cost-aware investment recommendations.
 - Private two-evaluation Plan Delta & Decision Trace with bounded reason codes and recorder-safe attributes.
 - Explicit Comdirect acquisition through the credential-isolated **Portfolio Architect Gateway — Comdirect** App: live API by default or a complete operator-selected static CSV path for holdings and cash, with no silent cross-mode fallback.
-- Provider-neutral consolidation across Comdirect, DKB and Trade Republic Gateway REST snapshots plus the provider-neutral generic mapped CSV escape hatch.
+- Provider-neutral consolidation across Comdirect, DKB and Trade Republic Gateway REST snapshots plus the provider-neutral generic mapped CSV escape hatch through its dedicated Generic Import Gateway.
 - Provider-owned authorized investment cash with conservative eligibility and optional Gateway caps or retained cash reserves.
 - Explicit provider-scoped funding topology that keeps cash pools separate and combines funding source with execution-route economics without moving money.
 - Bounded graceful degradation: trusted LKG holdings stay informationally available while stale bank cash and new investment actions fail closed.
@@ -34,7 +34,7 @@ transfer, payment, or account-transaction capability.
 
 ## Provider Gateway Apps
 
-Version 1.51.0 completes the current acquisition-boundary cleanup by moving provider-neutral mapped CSV import into a dedicated Generic Import Gateway. Portfolio Architect itself now consumes provider snapshots rather than local acquisition formats. The DKB probe timestamp remains canonical UTC and uses a standards-based browser-local display fallback in Ingress instead of a hard-coded timezone. Official provider acquisition, freshness, planner economics and wire/security contracts remain unchanged.
+Version 1.51.1 is the narrow correctness hotfix for the v1.51.0 acquisition-boundary cleanup. Provider-neutral mapped CSV import remains isolated in the dedicated Generic Import Gateway; the Home Assistant integration fixes only a stale coordinator reference to retired local-file state. The DKB probe timestamp remains canonical UTC with browser-local display fallback. Official provider acquisition, freshness, planner economics and wire/security contracts remain unchanged.
 
 Version 1.48.1 makes freshness acquisition-aware: live sources keep a 24-hour default while unconfigured static CSV/PDF evidence defaults to 5 days for weekly plans and 14 days for monthly-or-slower plans. Existing explicit freshness thresholds are preserved.
 

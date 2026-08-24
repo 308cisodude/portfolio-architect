@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.51.1
+
+- Fixes the live-observed v1.51.0 Home Assistant entity regression where `configuration_label` still referenced the removed coordinator `local_paths` member and caused source-dependent entities to become unavailable.
+- Removes the remaining dead `local_paths` / `csv_source_config` coordinator references without restoring any Home Assistant-side CSV acquisition.
+- Adds executable regression coverage for schema-12 all-Gateway source attributes with no `local_paths` member.
+- Leaves the Generic Import Gateway, official provider acquisition, freshness, planner economics, schemas, private-PKI/LKG behavior and advisory-only boundary unchanged.
+
 ## 1.51.0
 
 - Moves the remaining provider-neutral mapped CSV acquisition/parser out of the Home Assistant integration into the dedicated Portfolio Architect Gateway — Generic Import App.

@@ -54,6 +54,7 @@ from .const import (
     CONF_MANUAL_SETTLEMENT_FEE_EUR,
     CONF_REVIEW_LEAD_DAYS,
     CONF_SOURCE_ENTITY_ID,
+    CONF_SOURCE_PROVIDER,
     CONF_SUPPLEMENTAL_REST_SOURCES,
     CONF_SOURCE_TYPE,
     DEFAULT_CONFIG_DIRECTORY,
@@ -160,6 +161,9 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
         )
 
         self.source_entity_id: str | None = None
+        self.legacy_source_provider = str(
+            entry.data.get(CONF_SOURCE_PROVIDER, "generic_csv")
+        )
         self.configuration_path: LocalConfigurationPath | None = None
         self.rest_source_config: RestSourceConfig | None = None
         self.positions: dict[str, Position] = {}
@@ -389,8 +393,6 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
                 return label
         if self.supplemental_rest_sources:
             return "Multi-source portfolio"
-        if self.local_paths is not None:
-            return self.local_paths.csv_relative
         if self.rest_source_config is not None:
             return _endpoint_source_label(self.rest_source_config.endpoint_url)
         return self.source_entity_id or "unconfigured"
@@ -402,7 +404,7 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
             return PROVIDER_MULTI_SOURCE
         if self.rest_source_config is not None:
             return PROVIDER_LOCAL_REST_JSON
-        return self.csv_source_config.provider
+        return self.legacy_source_provider
 
     @property
     def source_adapter_diagnostics(self) -> dict[str, Any]:
@@ -410,7 +412,10 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
         base = (
             self.rest_source_config.as_public_dict()
             if self.rest_source_config is not None
-            else self.csv_source_config.as_public_dict()
+            else {
+                "source_type": SOURCE_TYPE_LEGACY_SENSOR,
+                "provider": self.legacy_source_provider,
+            }
         )
         if self.source_summaries:
             supplemental_summaries = tuple(self.source_summaries[1:])
@@ -454,8 +459,8 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
         if self.rest_source_config is not None and self.gateway_health is not None:
             provider = self.gateway_health.provider_id or PROVIDER_LOCAL_REST_JSON
             providers.append(provider)
-        elif self.local_paths is not None:
-            providers.append(self.csv_source_config.provider)
+        elif self.source_type == SOURCE_TYPE_LEGACY_SENSOR:
+            providers.append(self.legacy_source_provider)
         for item in self.supplemental_rest_sources:
             if item.provider_id not in providers:
                 providers.append(item.provider_id)
@@ -923,8 +928,6 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
     @property
     def configuration_label(self) -> str | None:
         """Return the relative local YAML configuration directory."""
-        if self.local_paths is not None:
-            return self.local_paths.config_relative
         if self.configuration_path is not None:
             return self.configuration_path.config_relative
         return None
