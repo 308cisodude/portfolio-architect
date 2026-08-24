@@ -17,28 +17,26 @@ def _text(path: Path) -> str:
 
 
 def test_pa_runtime_no_longer_contains_comdirect_specific_csv_acquisition() -> None:
-    importers = _text(COMPONENT / "engine" / "importers.py")
+    importers = COMPONENT / "engine" / "importers.py"
     io = _text(COMPONENT / "engine" / "io.py")
     coordinator = _text(COMPONENT / "coordinator.py")
-    assert "PROVIDER_COMDIRECT" not in importers
-    assert "read_comdirect_positions" not in importers
-    assert "Comdirect securities table" not in importers
+    # v1.49 removed Comdirect-specific CSV acquisition; v1.51 subsequently
+    # removes the remaining provider-neutral importer module entirely.
+    assert not importers.exists()
     assert "read_comdirect_positions" not in io
     assert "PROVIDER_COMDIRECT" not in coordinator
-    assert 'PROVIDER_GENERIC_CSV: Final = "generic_csv"' in importers
-    assert "SUPPORTED_PROVIDERS: Final = (PROVIDER_GENERIC_CSV,)" in importers
 
 
 def test_config_flow_no_longer_contains_comdirect_csv_migration_or_selection() -> None:
     flow = _text(COMPONENT / "config_flow.py")
-    assert "VERSION = 11" in flow
+    assert "VERSION = 12" in flow
     assert "async_step_hassio_migrate_comdirect_csv_confirm" not in flow
     assert "comdirect_gateway_migration_mismatch" not in flow
     assert "legacy_positions != snapshot.positions" not in flow
     current_provider_block = flow.split("_SUPPORTED_SOURCE_PROVIDERS = (", 1)[1].split(")", 1)[0]
-    assert "PROVIDER_GENERIC_CSV" in current_provider_block
     assert "PROVIDER_LOCAL_REST_JSON" in current_provider_block
     assert "PROVIDER_COMDIRECT" not in current_provider_block
+    assert "PROVIDER_GENERIC_CSV" not in current_provider_block
 
 
 def test_schema_11_fails_closed_if_legacy_comdirect_csv_is_still_active() -> None:

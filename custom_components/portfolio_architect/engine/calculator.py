@@ -22,8 +22,7 @@ from .identity import (
     normalized_isin,
     normalized_wkn,
 )
-from .io import load_yaml, read_positions
-from .importers import CsvSourceConfig
+from .io import load_yaml
 from .models import Holding, Position
 from .plan import apply_plan_override
 from .policy import evaluate
@@ -93,39 +92,6 @@ def validate_configuration_source(config_directory: Path) -> None:
         path = config_directory / name
         if not path.is_file():
             raise ValueError(f"Required portfolio configuration file is missing: {name}")
-
-
-def validate_local_source(csv_path: Path, config_directory: Path) -> None:
-    """Validate the configured local CSV and YAML source."""
-    if not csv_path.is_file():
-        raise ValueError(f"Portfolio CSV does not exist: {csv_path.name}")
-    validate_configuration_source(config_directory)
-
-
-def calculate_portfolio_payload(
-    csv_path: Path,
-    config_directory: Path,
-    *,
-    evaluated_at: datetime | None = None,
-    plan_override: dict[str, Any] | None = None,
-    source_config: dict[str, Any] | CsvSourceConfig | None = None,
-) -> dict[str, Any]:
-    """Calculate one schema-8 payload from an explicit CSV adapter."""
-    validate_local_source(csv_path, config_directory)
-    adapter = (
-        source_config
-        if isinstance(source_config, CsvSourceConfig)
-        else CsvSourceConfig.from_mapping(source_config)
-    )
-    positions = read_positions(csv_path, adapter)
-    return calculate_portfolio_payload_from_positions(
-        positions,
-        config_directory,
-        evaluated_at=evaluated_at or _file_timestamp(csv_path),
-        plan_override=plan_override,
-        source_provider=adapter.provider,
-        source_label=csv_path.name,
-    )
 
 
 def calculate_portfolio_payload_from_positions(

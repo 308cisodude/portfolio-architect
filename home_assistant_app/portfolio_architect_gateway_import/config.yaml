@@ -1,0 +1,43 @@
+name: Portfolio Architect Gateway — Generic Import
+version: 1.51.0
+slug: portfolio_architect_gateway_import
+description: Isolated provider-neutral mapped CSV import Gateway with verified private-PKI HTTPS and canonical read-only portfolio snapshots.
+url: https://developers.home-assistant.io/docs/apps/
+arch:
+- amd64
+- aarch64
+startup: application
+boot: auto
+init: true
+homeassistant: 2026.7.0
+ingress: true
+ingress_port: 8099
+ingress_stream: false
+panel_icon: mdi:file-delimited-outline
+panel_title: Portfolio Gateway — Generic Import
+panel_admin: true
+host_network: false
+hassio_api: false
+homeassistant_api: false
+auth_api: false
+docker_api: false
+discovery:
+- portfolio_architect
+apparmor: true
+tmpfs: true
+backup: cold
+ports:
+  8787/tcp: null
+ports_description:
+  8787/tcp: Verified-HTTPS Portfolio Architect REST endpoint; leave host mapping disabled
+watchdog: tcp://[HOST]:[PORT:8787]
+stage: experimental
+environment:
+  PA_PROVIDER_ID: generic_csv
+  PA_PROVIDER_NAME: Generic Import
+options:
+  max_cached_snapshot_age_seconds: 1209600
+  health_endpoint_enabled: true
+schema:
+  max_cached_snapshot_age_seconds: int(0,2592000)
+  health_endpoint_enabled: bool

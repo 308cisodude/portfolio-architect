@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.51.0
+
+- Moves the remaining provider-neutral mapped CSV acquisition/parser out of the Home Assistant integration into the dedicated Portfolio Architect Gateway — Generic Import App.
+- Adds fail-closed config-entry schema 12 so a still-active local mapped CSV must be explicitly cut over to the verified Generic Import Gateway before upgrading.
+- Keeps raw generic CSV bytes transient and persists only the canonical holdings snapshot, bounded mapping configuration and privacy-safe import diagnostic; the App has fixed provider ID `generic_csv`, no provider credentials and no cash or transaction capability.
+- Replaces the DKB probe UI's hard-coded Europe/Berlin conversion with browser-local standards-based rendering while retaining canonical/visible UTC and avoiding undocumented Home Assistant frontend internals.
+- Leaves official provider acquisition, freshness, planner economics, wire/security schemas, source-set atomicity/LKG and the advisory-only boundary unchanged.
+
 ## 1.50.0
 
 - Makes Portfolio sources explicitly model the single primary REST Gateway separately from optional provider-isolated supplemental Gateways.

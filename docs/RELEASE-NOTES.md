@@ -1,44 +1,35 @@
-# Portfolio Architect 1.50.0
+# Portfolio Architect 1.51.0
 
-Portfolio Architect v1.50.0 is the source-architecture UX milestone after the live-accepted v1.49.0 provider-acquisition cleanup. It does not change portfolio acquisition or planning mathematics. Instead, Configure now presents the source model the way the runtime has worked since multi-Gateway support: exactly one primary REST Gateway, plus optional provider-isolated supplemental Gateways.
+Portfolio Architect v1.51.0 completes the current provider-acquisition cleanup. The Home Assistant integration no longer parses or acquires any provider-neutral mapped CSV itself. That explicit escape hatch now lives in a fourth isolated App, **Portfolio Architect Gateway — Generic Import**, which exposes the same canonical read-only REST snapshot contract as the official provider Apps.
 
-## Explicit primary-source model
+## Generic Import Gateway
 
-**Configure → Portfolio sources** now separates **Primary REST Gateway** from **Additional REST Gateways**. The primary editor shows immutable provider/endpoint context and permits only transport/authentication changes. A changed endpoint must use verified HTTPS, must remain the same provider identity, must not collide with any supplement, and must expose a healthy snapshot whose timestamp, position count and SHA-256 integrity metadata agree with health before the config entry is updated.
+The new App has fixed provider identity `generic_csv` and acquisition mode `csv`. It accepts one explicitly mapped CSV through admin-only Ingress, with bounded encoding, delimiter, header-row, decimal-format and column mapping. Raw uploaded bytes are transient. Only the validated canonical holdings snapshot, bounded mapping configuration and privacy-safe import outcome are persisted. It does not import provider cash, perform currency conversion, accept provider credentials or expose any transaction capability.
 
-There is deliberately no Remove-primary action. The single-entry architecture and primary/supplemental distinction remain structural rather than merely visual.
+Successful import time is the evidence timestamp because the generic format has no standardized institution-issued portfolio timestamp. Re-import is therefore an explicit operator action that refreshes the static evidence clock.
 
-## Coherent supplemental Add/Edit/Remove
+Config-entry schema 12 fails closed if an older installation still actively uses the Home Assistant-side local generic CSV source. Such an installation must remain on v1.50.0, import into the Generic Import Gateway, explicitly reconfigure Portfolio Architect to that verified REST source, verify it, and then upgrade.
 
-Additional REST Gateways now expose native **Add**, **Edit** and **Remove** actions. Editing a supplement keeps its provider ID immutable, retains existing private-CA trust when its endpoint is unchanged, rejects endpoint/provider collisions, and performs the same verified-HTTPS health and snapshot-integrity checks used when a source is first added.
+## DKB probe timestamp display
 
-No source is silently added, replaced, removed or reclassified.
-
-## DKB probe observability
-
-The DKB anonymous FinTS BPD research UI now records and persists **Last probe sent** immediately before each explicit probe attempt. The UI renders the server-side timestamp in DKB-local Europe/Berlin time and includes the authoritative UTC timestamp; the bounded `/status` document exposes `probe_sent_at` as well.
-
-This solves the operational ambiguity of two cryptographically identical DKB rejection responses: an operator can now prove that a new probe was actually initiated even when every response fingerprint and bank return message remains unchanged. Changing the FinTS product registration clears both old probe evidence and its dispatch timestamp.
-
-The probe itself is unchanged. It remains anonymous, registration-gated, read-only capability research. No DKB login, PIN/TAN, authenticated holdings/balance/transaction request, order, transfer, payment, sell or withdrawal capability is introduced.
+The DKB App continues to persist `probe_sent_at` as timezone-aware UTC immediately before the explicit anonymous BPD network request and exposes that exact value through `/status`. The Ingress UI no longer assumes `Europe/Berlin`. Because the supported Ingress request contract does not provide the App with the viewing Home Assistant user's frontend timezone, v1.51.0 uses browser `Intl.DateTimeFormat` as a conservative local-display fallback and continues to show authoritative UTC alongside it. No undocumented parent-frontend access or Home Assistant API permission is introduced.
 
 ## Preserved architecture
 
-Comdirect `live_api`/`csv` arbitration, DKB CSV holdings/cash evidence, Trade Republic statement acquisition, v1.48 cadence-aware freshness, independent holdings/cash clocks, provider-scoped cash, funding topology, planner economics, private-PKI transport, DNS pinning, configured-source atomicity and Home Assistant LKG all remain unchanged.
+Comdirect `live_api`/`csv` arbitration, DKB CSV holdings/cash evidence, Trade Republic statement acquisition, v1.48 cadence-aware freshness, independent holdings/cash clocks, provider-scoped cash, funding topology, planner economics, private-PKI transport, DNS pinning, configured-source atomicity and Home Assistant LKG all remain unchanged. Trade Republic provider-specific statement parsing remains in its Gateway; this release does not move PDF parsing into Portfolio Architect.
 
-The provider-neutral mapped generic CSV adapter remains inside Portfolio Architect for now. A deliberate generic Import Gateway remains the later source-architecture milestone.
+The integration retains exactly one config entry with one primary REST Gateway plus optional validated supplemental REST Gateways. Generic Import is just another isolated canonical snapshot producer when deliberately configured.
 
-No dashboard YAML replacement is required.
+The historical v1.19.0-rc2 brokerage-probe state remains historical and is not promoted by this release.
+
+The v1.33.0 source-freshness and plan-schedule separation remains anchored to the latest valid Portfolio Architect evaluation; v1.51.0 does not change any configured freshness threshold. The historical v1.39 colourful allocation view was not included in v1.38.1; that sequencing remains documented.
 
 Compatibility remains explicit:
 
-- portfolio payload schema 8: unchanged;
-- REST portfolio schema 1: unchanged;
-- Gateway health schema 7 current; schemas 1–6 remain supported;
-- presentation schema 2 and broker schemas 1/2/3: unchanged.
+- payload schema 8: unchanged
+- REST portfolio schema 1: unchanged
+- Gateway health schema 7 current; schemas 1–6 remain supported
+- presentation schema 2: unchanged
+- broker schemas 1/2/3: unchanged
 
-The v1.33.0 source-freshness and plan-schedule separation remains anchored to the latest valid Portfolio Architect evaluation; v1.50.0 does not change any configured freshness threshold. The historical v1.39 colourful allocation view was not included in v1.38.1; that sequencing remains documented. The historical v1.19.0-rc2 brokerage-probe state remains historical and is not promoted by this release. No trading, order, transfer, payment, or transaction-history capability is introduced; sell and withdrawal capability remain absent as well.
-
-authenticated DKB FinTS acquisition remains disabled; the anonymous BPD probe remains a separate research gate.
-
-Trade Republic provider-specific statement parsing remains in its Gateway; this release does not move PDF parsing into Portfolio Architect.
+No trading, order, transfer, payment, or transaction-history capability is introduced; sell and withdrawal capability remain absent. authenticated DKB FinTS acquisition remains disabled.

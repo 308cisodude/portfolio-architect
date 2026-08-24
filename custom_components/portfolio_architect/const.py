@@ -7,7 +7,7 @@ from homeassistant.const import Platform
 DOMAIN: Final = "portfolio_architect"
 INSTANCE_UNIQUE_ID: Final = "portfolio_architect"
 NAME: Final = "Portfolio Architect"
-VERSION: Final = "1.50.0"
+VERSION: Final = "1.51.0"
 
 CONF_SOURCE_TYPE: Final = "source_type"
 
@@ -70,7 +70,7 @@ SOURCE_TYPE_LEGACY_SENSOR: Final = "legacy_sensor"
 DEFAULT_CSV_PATH: Final = "portfolio/depot.csv"
 DEFAULT_REST_ENDPOINT_URL: Final = "https://local-portfolio-architect-gateway:8787/api/v1/portfolio"
 LEGACY_COMDIRECT_CSV_PROVIDER: Final = "comdirect_csv"
-DEFAULT_SOURCE_PROVIDER: Final = "generic_csv"
+DEFAULT_SOURCE_PROVIDER: Final = "local_rest_json"
 DEFAULT_CONFIG_DIRECTORY: Final = "portfolio-architect"
 DEFAULT_SOURCE_ENTITY_ID: Final = "sensor.portfolio_architect"
 DEFAULT_FRESHNESS_HOURS: Final = 24

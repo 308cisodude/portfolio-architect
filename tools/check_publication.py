@@ -253,6 +253,7 @@ def validate(root: Path, strict: bool) -> None:
         "/home_assistant_app/portfolio_architect_gateway/",
         "/home_assistant_app/portfolio_architect_gateway_dkb/",
         "/home_assistant_app/portfolio_architect_gateway_trade_republic/",
+        "/home_assistant_app/portfolio_architect_gateway_import/",
         "/gateway/",
     ):
         require(

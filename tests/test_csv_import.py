@@ -1,19 +1,43 @@
-"""Provider-neutral mapped CSV import security and instrument-scope tests."""
+"""Generic Import Gateway mapped-CSV security and instrument-scope tests."""
 
+from __future__ import annotations
+
+from decimal import Decimal
+import importlib
+import importlib.util
 from pathlib import Path
 import sys
 
 import pytest
 
-ENGINE_ROOT = Path(__file__).parents[1] / "custom_components" / "portfolio_architect"
-sys.path.insert(0, str(ENGINE_ROOT))
+ROOT = Path(__file__).parents[1]
+PACKAGE = (
+    ROOT
+    / "home_assistant_app"
+    / "portfolio_architect_gateway_import"
+    / "src"
+    / "portfolio_architect_gateway"
+)
+TEST_PACKAGE = "portfolio_architect_gateway_generic_import_csv_test"
 
-from engine.importers import CsvSourceConfig, PROVIDER_GENERIC_CSV, read_positions  # noqa:E402
+
+def _modules():
+    if TEST_PACKAGE not in sys.modules:
+        spec = importlib.util.spec_from_file_location(
+            TEST_PACKAGE,
+            PACKAGE / "__init__.py",
+            submodule_search_locations=[str(PACKAGE)],
+        )
+        assert spec is not None and spec.loader is not None
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[TEST_PACKAGE] = module
+        spec.loader.exec_module(module)
+    return importlib.import_module(f"{TEST_PACKAGE}.generic_csv")
 
 
-def _config() -> CsvSourceConfig:
-    return CsvSourceConfig(
-        provider=PROVIDER_GENERIC_CSV,
+def _config():
+    generic = _modules()
+    return generic.GenericCsvConfig(
         encoding="iso-8859-1",
         delimiter="semicolon",
         header_row=1,
@@ -23,34 +47,31 @@ def _config() -> CsvSourceConfig:
         value_column="Wert in EUR",
         isin_column="ISIN",
         type_column="Typ",
+        currency_column=None,
     )
 
 
-def _write(path: Path, body: str) -> None:
-    path.write_bytes(body.encode("iso-8859-1"))
-
-
-def test_all_security_types_are_imported(tmp_path: Path) -> None:
-    path = tmp_path / "mapped.csv"
-    _write(
-        path,
+def test_all_security_types_are_imported() -> None:
+    generic = _modules()
+    body = (
         "Bezeichnung;WKN;Typ;Wert in EUR;ISIN\n"
         "ETF One;A1XB5U;ETF;100,00;IE00BJ0KDQ92\n"
-        "Stock One;555750;Aktie;200,00;DE0005557508\n",
-    )
-    positions = read_positions(path, _config())
+        "Stock One;555750;Aktie;200,00;DE0005557508\n"
+    ).encode("iso-8859-1")
+    snapshot, _summary = generic.parse_generic_csv(body, _config())
+    positions = {item.identifier: item for item in snapshot.positions}
     assert set(positions) == {"A1XB5U", "555750"}
     assert positions["A1XB5U"].instrument_type == "etf"
     assert positions["555750"].instrument_type == "stock"
+    assert positions["A1XB5U"].market_value_eur == Decimal("100.00")
 
 
-def test_duplicate_identifier_is_rejected(tmp_path: Path) -> None:
-    path = tmp_path / "mapped.csv"
-    _write(
-        path,
+def test_duplicate_identifier_is_rejected() -> None:
+    generic = _modules()
+    body = (
         "Bezeichnung;WKN;Typ;Wert in EUR;ISIN\n"
         "One;555750;Aktie;100,00;DE0005557508\n"
-        "Two;555750;Aktie;200,00;DE0005557508\n",
-    )
-    with pytest.raises(ValueError, match="duplicate instrument identifier"):
-        read_positions(path, _config())
+        "Two;555750;Aktie;200,00;DE0005557508\n"
+    ).encode("iso-8859-1")
+    with pytest.raises(generic.GenericCsvImportError, match="duplicate instrument identifier"):
+        generic.parse_generic_csv(body, _config())

@@ -163,6 +163,13 @@ def verify_gateway_app_archive_layouts(directory: Path, release_version: str) ->
             "trade_republic",
             "auto",
         ),
+        "portfolio-architect-gateway-import-app-v%s.zip" % release_version: (
+            "portfolio_architect_gateway_import",
+            "portfolio_architect_gateway_import",
+            "experimental",
+            "generic_csv",
+            "auto",
+        ),
     }
     for archive_name, (root, slug, stage, provider_id, expected_boot) in specs.items():
         path = directory / archive_name
@@ -205,6 +212,13 @@ def verify_gateway_app_archive_layouts(directory: Path, release_version: str) ->
                 ):
                     if name not in payload:
                         raise SystemExit(f"{archive_name} missing provider module: {name}")
+            if provider_id == "generic_csv":
+                for name in (
+                    "src/portfolio_architect_gateway/generic_import_app.py",
+                    "src/portfolio_architect_gateway/generic_csv.py",
+                ):
+                    if name not in payload:
+                        raise SystemExit(f"{archive_name} missing provider module: {name}")
             if provider_id == "trade_republic":
                 dependency = payload.get("requirements.txt")
                 if dependency is None:
@@ -238,6 +252,7 @@ def verify_expected_files(directory: Path, release_version: str) -> None:
         f"portfolio-architect-gateway-app-v{release_version}.zip",
         f"portfolio-architect-gateway-dkb-app-v{release_version}.zip",
         f"portfolio-architect-gateway-trade-republic-app-v{release_version}.zip",
+        f"portfolio-architect-gateway-import-app-v{release_version}.zip",
         f"portfolio-architect-v{release_version}.zip",
         f"portfolio-architect-v{release_version}-bilingual-dashboard.yaml",
         f"portfolio-architect-v{release_version}-upgrade-guide.md",

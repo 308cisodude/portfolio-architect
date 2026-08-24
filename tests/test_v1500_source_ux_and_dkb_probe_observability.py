@@ -1,4 +1,4 @@
-"""v1.50.0 source-architecture UX and DKB probe observability contracts."""
+"""v1.51.0 source-architecture UX and DKB probe observability contracts."""
 from __future__ import annotations
 
 import ast
@@ -177,9 +177,11 @@ def test_dkb_probe_ingress_displays_persisted_last_sent_timestamp_without_changi
     source = (DKB_PACKAGE / "dkb_app.py").read_text(encoding="utf-8")
     assert 'PROBE_SENT_AT_FILE_NAME: Final = "dkb-fints-probe-sent-at"' in source
     assert "Last probe sent:" in source
-    assert 'ZoneInfo("Europe/Berlin")' in source
-    assert 'strftime("%Y-%m-%d %H:%M:%S %Z")' in source
-    assert "Server-side dispatch timestamp" in source
+    assert 'ZoneInfo("Europe/Berlin")' not in source
+    assert "Intl.DateTimeFormat" in source
+    assert 'id="probe-sent-local"' in source
+    assert 'data-utc=' in source
+    assert "authoritative server-side dispatch timestamp" in source
     assert '"probe_sent_at": self.last_probe_sent_at()' in source
     assert "Authenticated FinTS acquisition is not enabled" in source
     assert "cannot replace or fall back from CSV evidence" in source

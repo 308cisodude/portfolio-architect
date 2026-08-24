@@ -24,7 +24,6 @@ from .const import (
     ATTR_RECOMMENDATIONS,
     ATTR_SUMMARY,
     CONF_CONFIG_DIRECTORY,
-    CONF_CSV_PATH,
     CONF_FRESHNESS_HOURS,
     CONF_FRESHNESS_LIVE_API_HOURS,
     CONF_FRESHNESS_STATEMENT_HOURS,
@@ -58,7 +57,6 @@ from .const import (
     CONF_SUPPLEMENTAL_REST_SOURCES,
     CONF_SOURCE_TYPE,
     DEFAULT_CONFIG_DIRECTORY,
-    DEFAULT_CSV_PATH,
     DEFAULT_FRESHNESS_HOURS,
     DEFAULT_HOME_ASSISTANT_LKG_MAX_AGE_SECONDS,
     DEFAULT_REVIEW_LEAD_DAYS,
@@ -74,7 +72,6 @@ from .const import (
     PLAN_BUDGET_BASIS_PERIOD,
     PLAN_FREQUENCY_MONTHLY,
     SOURCE_TYPE_LEGACY_SENSOR,
-    SOURCE_TYPE_LOCAL_FILES,
     SOURCE_TYPE_REST_API,
 )
 from .decision_trace import (
@@ -94,11 +91,6 @@ from .engine.aggregation import (
     aggregate_sources,
 )
 from .engine.calculator import configuration_files
-from .engine.importers import (
-    CsvSourceConfig,
-    PROVIDER_GENERIC_CSV,
-    read_positions,
-)
 from .engine.models import Position
 from .engine.rest import PROVIDER_LOCAL_REST_JSON, RestInvestmentCash, RestSnapshot
 from .last_known_good import RestLastKnownGoodStore, configuration_fingerprint
@@ -138,10 +130,7 @@ from .schedule import (
 )
 from .source import (
     LocalConfigurationPath,
-    LocalSourcePaths,
-    csv_source_config_from_data,
     resolve_configuration_directory,
-    resolve_local_source_paths,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -158,7 +147,7 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
         self.source_type = entry.data.get(CONF_SOURCE_TYPE, SOURCE_TYPE_LEGACY_SENSOR)
         update_interval = (
             timedelta(minutes=DEFAULT_UPDATE_INTERVAL_MINUTES)
-            if self.source_type in {SOURCE_TYPE_LOCAL_FILES, SOURCE_TYPE_REST_API}
+            if self.source_type == SOURCE_TYPE_REST_API
             else None
         )
         super().__init__(
@@ -171,11 +160,7 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
         )
 
         self.source_entity_id: str | None = None
-        self.local_paths: LocalSourcePaths | None = None
         self.configuration_path: LocalConfigurationPath | None = None
-        self.csv_source_config: CsvSourceConfig = CsvSourceConfig(
-            provider=PROVIDER_GENERIC_CSV
-        )
         self.rest_source_config: RestSourceConfig | None = None
         self.positions: dict[str, Position] = {}
         self.primary_positions: dict[str, Position] = {}
@@ -230,15 +215,7 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
             f"gateway_snapshot_integrity_failure_{entry.entry_id}"
         )
 
-        if self.source_type == SOURCE_TYPE_LOCAL_FILES:
-            self.csv_source_config = csv_source_config_from_data(dict(entry.data))
-            self.local_paths = resolve_local_source_paths(
-                hass,
-                entry.data.get(CONF_CSV_PATH, DEFAULT_CSV_PATH),
-                entry.data.get(CONF_CONFIG_DIRECTORY, DEFAULT_CONFIG_DIRECTORY),
-                require_exists=False,
-            )
-        elif self.source_type == SOURCE_TYPE_REST_API:
+        if self.source_type == SOURCE_TYPE_REST_API:
             self.rest_source_config = RestSourceConfig.from_mapping(dict(entry.data))
             self._last_known_good_store = RestLastKnownGoodStore(hass, entry.entry_id)
             self.configuration_path = resolve_configuration_directory(
@@ -1179,9 +1156,7 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
 
     async def _async_update_data(self) -> PortfolioData:
         """Calculate or read the configured source and validate its payload."""
-        if self.source_type == SOURCE_TYPE_LOCAL_FILES:
-            data = await self._async_update_local_files()
-        elif self.source_type == SOURCE_TYPE_REST_API:
+        if self.source_type == SOURCE_TYPE_REST_API:
             data = await self._async_update_rest_api()
         else:
             data = self._update_legacy_sensor()
@@ -1222,43 +1197,6 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
                 "Could not update Portfolio Architect decision-trace storage: %s",
                 type(err).__name__,
             )
-
-    async def _async_update_local_files(self) -> PortfolioData:
-        """Calculate one portfolio snapshot from confined local files."""
-        if self.local_paths is None:
-            raise UpdateFailed("Local portfolio source paths are not configured")
-        try:
-            (
-                payload,
-                csv_modified,
-                latest_input_modified,
-                primary_positions,
-                aggregation,
-            ) = await self.hass.async_add_executor_job(
-                _calculate_local_payload,
-                self.local_paths.csv_path,
-                self.local_paths.config_directory,
-                self.plan_override,
-                self.csv_source_config,
-            )
-            data = _parse_payload(payload)
-        except (OSError, ValueError, PortfolioArchitectDataError) as err:
-            raise UpdateFailed(str(err)) from err
-
-        self.primary_positions = dict(primary_positions)
-        self._apply_aggregation(aggregation)
-        self.source_last_changed = csv_modified
-        self.source_last_updated = latest_input_modified
-        self.last_valid_source_updated = csv_modified
-        self.gateway_health = None
-        self.gateway_health_error = None
-        self._gateway_health_observed_at = None
-        self._rest_snapshot_sha256 = None
-        self._rest_snapshot_position_count = None
-        self.rest_snapshot_integrity_verified = None
-        self.rest_snapshot_integrity_error = None
-        self._sync_gateway_issues()
-        return data
 
     async def _async_update_rest_api(self) -> PortfolioData:
         """Fetch REST data and retain HA-private validated data on live-source degradation."""
@@ -2049,39 +1987,6 @@ def _aggregation_metadata(
         "oldest_source_generated_at": aggregation.oldest_generated_at.isoformat(),
         "newest_source_generated_at": aggregation.newest_generated_at.isoformat(),
     }
-
-
-def _calculate_local_payload(
-    csv_path: Path,
-    config_directory: Path,
-    plan_override: dict[str, Any] | None,
-    source_config: CsvSourceConfig,
-) -> tuple[dict[str, Any], datetime, datetime, dict[str, Position], AggregationResult]:
-    """Run blocking provider-neutral local-file I/O and calculation."""
-    csv_modified = _mtime(csv_path)
-    primary_positions = read_positions(csv_path, source_config)
-    source = PortfolioSourceSnapshot(
-        source_id="primary",
-        provider=source_config.provider,
-        label=csv_path.name,
-        generated_at=csv_modified,
-        positions=primary_positions,
-    )
-    aggregation = aggregate_sources((source,))
-    payload = calculate_portfolio_payload_from_positions(
-        aggregation.positions,
-        config_directory,
-        evaluated_at=csv_modified,
-        plan_override=plan_override,
-        source_provider=source_config.provider,
-        source_label=csv_path.name,
-        source_metadata=_aggregation_metadata(aggregation),
-    )
-    input_times = [csv_modified]
-    for path in configuration_files(config_directory):
-        if path.exists():
-            input_times.append(_mtime(path))
-    return payload, csv_modified, max(input_times), primary_positions, aggregation
 
 
 def _calculate_rest_payload(

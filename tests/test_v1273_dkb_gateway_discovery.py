@@ -31,10 +31,10 @@ def test_dkb_gateway_is_the_only_active_dkb_provider_identity() -> None:
         )
     )
     provider_ids = _load_gateway_provider_ids()
-    importers = (COMPONENT / "engine" / "importers.py").read_text(encoding="utf-8")
+    importers = COMPONENT / "engine" / "importers.py"
     assert provider_ids.GATEWAY_PROVIDER_DKB == "dkb"
     assert config["environment"]["PA_PROVIDER_ID"] == provider_ids.GATEWAY_PROVIDER_DKB
-    assert 'PROVIDER_DKB: Final = "dkb_csv"' not in importers
+    assert not importers.exists()
 
 
 def test_dkb_discovery_uses_normal_explicit_supplemental_gateway_path() -> None:

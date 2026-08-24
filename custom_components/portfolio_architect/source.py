@@ -1,4 +1,4 @@
-"""Local source path handling for Portfolio Architect."""
+"""Confined Home Assistant configuration-path handling for Portfolio Architect."""
 
 from __future__ import annotations
 
@@ -8,16 +8,14 @@ import re
 
 from homeassistant.core import HomeAssistant
 
-from .engine.calculator import validate_configuration_source, validate_local_source
+from .engine.calculator import validate_configuration_source
 
 _MAX_RELATIVE_PATH_LENGTH = 255
 _SAFE_PATH_RE = re.compile(r"^[^\x00-\x1f\x7f]+$")
 
 
 class PortfolioSourcePathError(ValueError):
-    """Raised when a configured source path is unsafe or unavailable."""
-
-
+    """Raised when a configured configuration path is unsafe or unavailable."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -25,16 +23,6 @@ class LocalConfigurationPath:
     """Resolved, confined local YAML configuration directory."""
 
     config_relative: str
-    config_directory: Path
-
-
-@dataclass(frozen=True, slots=True)
-class LocalSourcePaths:
-    """Resolved, confined local source paths."""
-
-    csv_relative: str
-    config_relative: str
-    csv_path: Path
     config_directory: Path
 
 
@@ -48,13 +36,19 @@ def normalise_relative_path(value: object, *, field: str) -> str:
         or len(cleaned) > _MAX_RELATIVE_PATH_LENGTH
         or _SAFE_PATH_RE.fullmatch(cleaned) is None
     ):
-        raise PortfolioSourcePathError(f"{field} is empty, too long, or contains control characters")
+        raise PortfolioSourcePathError(
+            f"{field} is empty, too long, or contains control characters"
+        )
 
     path = PurePosixPath(cleaned)
     if path.is_absolute() or any(part in {"", ".", ".."} for part in path.parts):
-        raise PortfolioSourcePathError(f"{field} must remain inside the Home Assistant configuration directory")
+        raise PortfolioSourcePathError(
+            f"{field} must remain inside the Home Assistant configuration directory"
+        )
     if path.parts[0] in {".storage", "custom_components"}:
-        raise PortfolioSourcePathError(f"{field} cannot point into a protected Home Assistant directory")
+        raise PortfolioSourcePathError(
+            f"{field} cannot point into a protected Home Assistant directory"
+        )
     return path.as_posix()
 
 
@@ -84,42 +78,3 @@ def resolve_configuration_directory(
         except (OSError, ValueError) as err:
             raise PortfolioSourcePathError(str(err)) from err
     return result
-
-
-def resolve_local_source_paths(
-    hass: HomeAssistant,
-    csv_relative: object,
-    config_relative: object,
-    *,
-    require_exists: bool,
-) -> LocalSourcePaths:
-    """Resolve and confine configured paths under Home Assistant's config folder."""
-    csv_clean = normalise_relative_path(csv_relative, field="CSV path")
-    config_clean = normalise_relative_path(config_relative, field="configuration directory")
-
-    root = Path(hass.config.path()).resolve()
-    csv_path = (root / csv_clean).resolve(strict=False)
-    config_directory = (root / config_clean).resolve(strict=False)
-    if not csv_path.is_relative_to(root) or not config_directory.is_relative_to(root):
-        raise PortfolioSourcePathError("Configured paths must remain inside the Home Assistant configuration directory")
-
-    paths = LocalSourcePaths(
-        csv_relative=csv_clean,
-        config_relative=config_clean,
-        csv_path=csv_path,
-        config_directory=config_directory,
-    )
-    if require_exists:
-        try:
-            validate_local_source(csv_path, config_directory)
-        except (OSError, ValueError) as err:
-            raise PortfolioSourcePathError(str(err)) from err
-    return paths
-
-
-
-def csv_source_config_from_data(data: dict[str, object]):
-    """Return the strict provider adapter config stored in a config entry."""
-    from .engine.importers import CsvSourceConfig
-
-    return CsvSourceConfig.from_mapping(data)

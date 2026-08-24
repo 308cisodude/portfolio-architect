@@ -115,11 +115,10 @@ def test_dkb_app_is_autostart_csv_source_but_fints_stays_separate() -> None:
 
 
 def test_pa_side_dkb_csv_bridge_is_retired_after_live_proof() -> None:
-    importers = (COMPONENT / "engine" / "importers.py").read_text(encoding="utf-8")
+    importers = COMPONENT / "engine" / "importers.py"
     flow = (COMPONENT / "config_flow.py").read_text(encoding="utf-8")
     rest = (COMPONENT / "rest_client.py").read_text(encoding="utf-8")
-    assert "read_dkb_positions" not in importers
-    assert 'PROVIDER_DKB: Final = "dkb_csv"' not in importers
+    assert not importers.exists()
     assert "async_step_dkb_sources" not in flow
     assert "async_step_hassio_migrate_dkb_csv_confirm" not in flow
     assert "migration-snapshot" not in rest

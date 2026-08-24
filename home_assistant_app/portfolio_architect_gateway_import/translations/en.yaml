@@ -1,0 +1,9 @@
+configuration:
+  max_cached_snapshot_age_seconds:
+    name: Maximum cached snapshot age
+    description: Maximum age in seconds for the last imported canonical snapshot retained by the Gateway.
+  health_endpoint_enabled:
+    name: Enable health endpoint
+    description: Expose the bounded authenticated health document used by Portfolio Architect.
+network:
+  8787/tcp: Verified-HTTPS Portfolio Architect REST endpoint; leave host mapping disabled

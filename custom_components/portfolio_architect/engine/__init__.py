@@ -2,15 +2,13 @@
 
 from __future__ import annotations
 
-__version__ = "1.50.0"
+__version__ = "1.51.0"
 
 from .calculator import (
-    calculate_portfolio_payload,
     calculate_portfolio_payload_from_positions,
 )
 
 __all__ = [
     "__version__",
-    "calculate_portfolio_payload",
     "calculate_portfolio_payload_from_positions",
 ]

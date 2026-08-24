@@ -7,8 +7,7 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
-from .engine.io import load_yaml, read_positions
-from .engine.importers import CsvSourceConfig
+from .engine.io import load_yaml
 from .engine.models import Position
 from .engine.targets import canonicalize_target, portfolio_schema_version, resolve_target_id
 
@@ -52,24 +51,6 @@ class PlanEditorContext:
     plan_name: str
     budget_amount: float
     candidates: tuple[PlanCandidate, ...]
-
-
-def load_plan_editor_context(
-    csv_path: Path,
-    config_directory: Path,
-    configured_instruments: list[dict[str, Any]] | None = None,
-    source_config: dict[str, Any] | CsvSourceConfig | None = None,
-) -> PlanEditorContext:
-    """Build plan-editor choices from YAML targets and one CSV adapter."""
-    adapter = (
-        source_config
-        if isinstance(source_config, CsvSourceConfig)
-        else CsvSourceConfig.from_mapping(source_config)
-    )
-    positions = read_positions(csv_path, adapter)
-    return load_plan_editor_context_from_positions(
-        positions, config_directory, configured_instruments
-    )
 
 
 def _normalised_isin(value: object) -> str:
