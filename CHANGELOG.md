@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.48.2
+
+- preserve health-schema-7 `acquisition_mode` in the coordinator source summaries used by live freshness evaluation instead of overwriting it with acquisition-neutral aggregation metadata
+- re-annotate existing source summaries from fresh Gateway health on `304 Not Modified` refreshes so App upgrades or deliberate acquisition-mode changes do not require a holdings change to take effect
+- keep live and Home Assistant LKG source-summary acquisition metadata consistent while retaining conservative fallback when an acquisition mode is absent or unknown
+- leave v1.48.1 freshness thresholds/defaults, provider acquisition, no-fallback semantics, planner economics and wire/security contracts unchanged
+
 ## 1.48.1
 
 - classify health-schema-7 `acquisition_mode=csv` as static CSV evidence and `pdf` as imported-statement evidence instead of inheriting the live Gateway window

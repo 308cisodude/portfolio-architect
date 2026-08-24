@@ -1,4 +1,6 @@
-# Portfolio Architect Gateway — Comdirect v1.48.1
+# Portfolio Architect Gateway — Comdirect v1.48.2
+
+Version 1.48.2 aligns the Comdirect App package with Portfolio Architect’s Home Assistant-side source-summary propagation hotfix. Provider acquisition/runtime behavior is unchanged from v1.48.1 and no re-import or reauthentication is required solely for this package alignment.
 
 Version 1.48.1 aligns the Comdirect App package with Portfolio Architect’s acquisition-aware freshness correction. Comdirect `live_api`/`csv` arbitration, static parsers, OAuth/session behavior and Ingress UX are unchanged from v1.48.0.
 

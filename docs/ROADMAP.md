@@ -607,6 +607,14 @@ Live acceptance of v1.45.0 proved the exact atomic DKB source cut-over but expos
 - preserve explicit evidence-kind overrides and the pre-v1.33 global compatibility threshold
 - retain independent holdings/cash clocks and all v1.48.0 no-fallback acquisition semantics
 
+## v1.48.2 — preserve acquisition mode into live source summaries
+
+- Fix the live-observed coordinator wiring defect that discarded schema-7 acquisition mode after aggregation and left DKB CSV holdings on the 24-hour Gateway-snapshot class.
+- Use one acquisition-mode annotation path for calculated payload/LKG metadata and live coordinator source summaries.
+- Re-annotate unchanged (`304 Not Modified`) primary snapshots from fresh Gateway health so package upgrades or explicit mode changes do not require holdings changes to affect classification.
+- Preserve conservative fallback when acquisition mode is absent/unknown and keep every v1.48.1 threshold/default unchanged.
+- Preserve provider acquisition/no-fallback semantics, independent holdings/cash clocks, private-PKI transport, source-set/LKG behavior, planner economics, and the advisory/no-money-movement boundary.
+
 ## After v1.48.0 — provider acquisition cleanup
 
 - Retire the one-release PA-side Comdirect CSV migration parser/path after v1.48 live acceptance proves the Gateway cut-over.
