@@ -1,4 +1,4 @@
-"""v1.51.0 live source-summary acquisition-mode propagation regressions."""
+"""v1.51.1 live source-summary acquisition-mode propagation regressions."""
 
 from __future__ import annotations
 
