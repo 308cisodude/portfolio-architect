@@ -10,6 +10,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import hashlib
 import json
 import logging
+import re
 import secrets
 import ssl
 import threading
@@ -44,6 +45,7 @@ HEALTH_V3_MEDIA_TYPE = "application/vnd.portfolio-architect.health+json;version=
 HEALTH_V4_MEDIA_TYPE = "application/vnd.portfolio-architect.health+json;version=4"
 HEALTH_V5_MEDIA_TYPE = "application/vnd.portfolio-architect.health+json;version=5"
 HEALTH_V6_MEDIA_TYPE = "application/vnd.portfolio-architect.health+json;version=6"
+HEALTH_V7_MEDIA_TYPE = "application/vnd.portfolio-architect.health+json;version=7"
 REFRESH_TRIGGERS = frozenset({"startup", "scheduled", "manual", "bootstrap"})
 MANUAL_REFRESH_MIN_INTERVAL_SECONDS = 60
 
@@ -375,7 +377,7 @@ class GatewayState:
         if version >= 2:
             document.update(
                 {
-                    "health_schema_version": min(version, 6),
+                    "health_schema_version": min(version, 7),
                     "snapshot_sha256": view.sha256 if view is not None else None,
                     "snapshot_position_count": (
                         view.position_count if view is not None else None
@@ -433,6 +435,14 @@ class GatewayState:
             )
         if version >= 6:
             document["provider_id"] = self._provider_id
+        if version >= 7:
+            acquisition_mode = getattr(self._client, "acquisition_mode", "unknown")
+            if (
+                not isinstance(acquisition_mode, str)
+                or re.fullmatch(r"[a-z][a-z0-9_]{1,31}", acquisition_mode) is None
+            ):
+                acquisition_mode = "unknown"
+            document["acquisition_mode"] = acquisition_mode
         return document
 
 
@@ -554,16 +564,17 @@ class GatewayRequestHandler(BaseHTTPRequestHandler):
 
     def _serve_health(self) -> None:
         accept = self.headers.get("Accept", "")
-        use_v6 = HEALTH_V6_MEDIA_TYPE in accept
-        use_v5 = not use_v6 and HEALTH_V5_MEDIA_TYPE in accept
-        use_v4 = not use_v6 and not use_v5 and HEALTH_V4_MEDIA_TYPE in accept
-        use_v3 = not use_v6 and not use_v5 and not use_v4 and HEALTH_V3_MEDIA_TYPE in accept
+        use_v7 = HEALTH_V7_MEDIA_TYPE in accept
+        use_v6 = not use_v7 and HEALTH_V6_MEDIA_TYPE in accept
+        use_v5 = not use_v7 and not use_v6 and HEALTH_V5_MEDIA_TYPE in accept
+        use_v4 = not use_v7 and not use_v6 and not use_v5 and HEALTH_V4_MEDIA_TYPE in accept
+        use_v3 = not use_v7 and not use_v6 and not use_v5 and not use_v4 and HEALTH_V3_MEDIA_TYPE in accept
         use_v2 = (
-            not use_v6 and not use_v5 and not use_v4 and not use_v3
+            not use_v7 and not use_v6 and not use_v5 and not use_v4 and not use_v3
             and HEALTH_V2_MEDIA_TYPE in accept
         )
         version = (
-            6 if use_v6 else 5 if use_v5 else 4 if use_v4 else 3 if use_v3 else 2 if use_v2 else 1
+            7 if use_v7 else 6 if use_v6 else 5 if use_v5 else 4 if use_v4 else 3 if use_v3 else 2 if use_v2 else 1
         )
         body = json.dumps(
             self.gateway_server.gateway_state.health_document(version=version),
@@ -572,7 +583,9 @@ class GatewayRequestHandler(BaseHTTPRequestHandler):
         ).encode("utf-8")
         self.send_response(HTTPStatus.OK)
         content_type = (
-            HEALTH_V6_MEDIA_TYPE
+            HEALTH_V7_MEDIA_TYPE
+            if use_v7
+            else HEALTH_V6_MEDIA_TYPE
             if use_v6
             else HEALTH_V5_MEDIA_TYPE
             if use_v5

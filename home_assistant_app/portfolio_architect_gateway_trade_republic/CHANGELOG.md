@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.48.0
+
+- Package/version alignment plus optically distinct static statement and unavailable live-acquisition sections; Trade Republic DEPOTAUSZUG/KONTOAUSZUG semantics are unchanged.
+- Common health schema 7 reports bounded acquisition mode `pdf`; schemas 1–6 remain compatible.
+
 ## 1.47.0
 
 - Package/version alignment for DKB provider-scoped cash evidence. Trade Republic DEPOTAUSZUG/KONTOAUSZUG acquisition is unchanged.

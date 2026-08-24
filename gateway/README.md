@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway runtime v1.47.0
+# Portfolio Architect Gateway runtime v1.48.0
 
-Version 1.47.0 keeps the common provider-neutral REST/health runtime unchanged while the DKB provider App adds independent Girokonto CSV cash evidence through the existing schema-1 optional investment-cash fields.
+Version 1.48.0 adds bounded health-schema-7 acquisition-mode reporting and the explicit Comdirect live/API versus static/CSV acquisition wrapper. REST portfolio schema 1, verified private-PKI HTTPS, bearer authentication and provider-neutral common runtime semantics remain intact.
 
 The Gateway is a dedicated, Python-library-dependency-free service that converts one
 provider-specific portfolio source into provider-neutral Portfolio Architect REST

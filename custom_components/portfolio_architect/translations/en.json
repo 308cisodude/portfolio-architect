@@ -100,6 +100,16 @@
           "rest_api_token": "Dedicated bearer token for this Gateway. TLS trust is supplied separately through Supervisor discovery."
         }
       },
+      "hassio_migrate_comdirect_csv_confirm": {
+        "title": "Migrate legacy Comdirect CSV to the Comdirect Gateway",
+        "description": "Home Assistant Supervisor discovered {gateway}. Before migration, import the same Comdirect depot CSV into the Gateway and explicitly activate CSV acquisition. Enter the Gateway bearer token. Portfolio Architect will require verified private-CA HTTPS, provider identity, health schema 7, explicit CSV mode, snapshot integrity and exact canonical holdings equivalence before replacing the legacy local CSV source.",
+        "data": {
+          "rest_api_token": "Gateway bearer token"
+        },
+        "data_description": {
+          "rest_api_token": "Dedicated bearer token for the Comdirect Gateway. The HTTPS endpoint and private CA are supplied through Supervisor discovery."
+        }
+      },
       "hassio_add_supplemental_confirm": {
         "title": "Add discovered Portfolio Architect Gateway securely",
         "description": "Home Assistant Supervisor discovered {provider} at {gateway} and supplied its private CA. Enter that Gateway’s existing bearer token to validate and add it as an additional portfolio source.",
@@ -118,7 +128,8 @@
       "invalid_provider": "Select a supported source adapter.",
       "invalid_csv_format": "The CSV header could not be read with these format settings.",
       "invalid_rest_source": "The local REST gateway or its JSON response did not satisfy the bounded Portfolio Architect source contract.",
-      "invalid_auth": "The local REST gateway rejected the bearer token."
+      "invalid_auth": "The local REST gateway rejected the bearer token.",
+      "comdirect_gateway_migration_mismatch": "The Comdirect Gateway CSV snapshot did not exactly match the configured legacy Comdirect CSV source, or the Gateway was not healthy in explicit CSV acquisition mode. No source configuration was changed."
     },
     "abort": {
       "already_configured": "Portfolio Architect is already configured. Use Reconfigure on the existing integration entry to change its source.",
@@ -132,7 +143,8 @@
       "tls_already_configured": "This Gateway already uses the discovered verified HTTPS trust.",
       "tls_validation_failed": "The discovered HTTPS endpoint could not be validated with the supplied private CA and existing bearer token.",
       "tls_migrated": "The matching Gateway source was migrated to verified HTTPS successfully.",
-      "tls_supplemental_added": "The discovered Gateway was validated and added as a verified-HTTPS supplemental source."
+      "tls_supplemental_added": "The discovered Gateway was validated and added as a verified-HTTPS supplemental source.",
+      "comdirect_gateway_migrated": "The Comdirect Gateway CSV snapshot exactly matched the legacy Comdirect CSV source. Portfolio Architect atomically replaced the legacy local CSV source with the verified-HTTPS Comdirect Gateway."
     }
   },
   "entity": {

@@ -129,6 +129,10 @@ class DkbCsvProvider:
         return PROVIDER_ID
 
     @property
+    def acquisition_mode(self) -> str:
+        return "csv"
+
+    @property
     def poll_interval_seconds(self) -> int:
         # CSV imports are explicit user actions; no bank or filesystem polling occurs.
         return 86400

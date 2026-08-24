@@ -9,11 +9,11 @@ _FUTURE_TOLERANCE_SECONDS = 5 * 60
 _MAX_SUMMARY_CHARS = 240
 
 
-def evidence_kind(provider: str) -> str:
+def evidence_kind(provider: str, acquisition_mode: str | None = None) -> str:
     """Return a bounded provider-aware evidence kind without changing policy semantics."""
     token = str(provider or "").strip().lower()
     if token == "comdirect":
-        return "live_api"
+        return "csv" if str(acquisition_mode or "").strip().lower() == "csv" else "live_api"
     if token == "trade_republic":
         return "imported_statement"
     if token in {"dkb", "local_rest_json"}:
@@ -21,11 +21,11 @@ def evidence_kind(provider: str) -> str:
     return "other"
 
 
-def cash_evidence_kind(provider: str) -> str:
+def cash_evidence_kind(provider: str, acquisition_mode: str | None = None) -> str:
     """Return the evidence family that governs provider-scoped cash freshness."""
     token = str(provider or "").strip().lower()
     if token == "comdirect":
-        return "live_api"
+        return "csv" if str(acquisition_mode or "").strip().lower() == "csv" else "live_api"
     if token in {"trade_republic", "dkb"}:
         # Both providers currently obtain cash from explicit imported account
         # evidence even though DKB holdings remain a canonical Gateway snapshot.
@@ -64,7 +64,8 @@ def source_freshness_rows(
         source_id = _bounded_text(item.get("source_id"), fallback="unknown", maximum=32)
         provider = _bounded_text(item.get("provider"), fallback="unknown", maximum=32)
         label = _bounded_text(item.get("label"), fallback=source_id, maximum=80)
-        kind = evidence_kind(provider)
+        acquisition_mode = item.get("acquisition_mode") if isinstance(item, dict) else None
+        kind = evidence_kind(provider, acquisition_mode if isinstance(acquisition_mode, str) else None)
         effective_threshold = thresholds.get(kind, fallback_threshold)
         threshold_seconds = effective_threshold * 3600
         generated_at = _parse_timestamp(item.get("generated_at"))

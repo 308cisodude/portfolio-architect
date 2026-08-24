@@ -45,7 +45,7 @@ def _load_rest_client():
 
 def _health_v6_payload() -> dict:
     return {
-        "gateway_version": "1.47.0",
+        "gateway_version": "1.48.0",
         "status": "ok",
         "snapshot_available": True,
         "snapshot_generated_at": "2026-08-13T12:00:00+00:00",
@@ -106,7 +106,7 @@ def test_health_v6_adds_only_bounded_provider_identity() -> None:
 def test_health_client_negotiates_v6_with_v5_to_v1_fallbacks() -> None:
     source = (COMPONENT / "rest_client.py").read_text(encoding="utf-8")
     assert 'HEALTH_V6_MEDIA_TYPE: Final = "application/vnd.portfolio-architect.health+json;version=6"' in source
-    assert '"requested_health_schema_version": 6' in source
+    assert '"requested_health_schema_version": 7' in source
     for version in range(2, 7):
         assert f"HEALTH_V{version}_MEDIA_TYPE" in source
     assert '"application/json"' in source
@@ -116,14 +116,14 @@ def test_comdirect_app_is_distinct_in_ui_without_slug_or_data_migration() -> Non
     config = yaml.safe_load((APP / "config.yaml").read_text(encoding="utf-8"))
     assert config["name"] == "Portfolio Architect Gateway — Comdirect"
     assert config["slug"] == "portfolio_architect_gateway"
-    assert config["version"] == "1.47.0"
+    assert config["version"] == "1.48.0"
     assert config["stage"] == "stable"
 
     app = (APP / "src" / "portfolio_architect_gateway" / "app.py").read_text(
         encoding="utf-8"
     )
     assert 'APP_DATA_DIRECTORY: Final = Path("/data/gateway")' in app
-    assert 'health_document(version=6)' in app
+    assert 'health_document(version=7)' in app
 
 
 def test_gateway_status_and_diagnostics_expose_only_provider_id() -> None:
@@ -149,9 +149,9 @@ def test_provider_roadmap_keeps_tr_import_after_distinct_gateway_apps() -> None:
 
 def test_wire_versions_are_intentional() -> None:
     manifest = json.loads((COMPONENT / "manifest.json").read_text(encoding="utf-8"))
-    assert manifest["version"] == "1.47.0"
+    assert manifest["version"] == "1.48.0"
     assert "schema version 10" in (COMPONENT / "__init__.py").read_text(encoding="utf-8")
     release_notes = (ROOT / "docs" / "RELEASE-NOTES.md").read_text(encoding="utf-8")
     assert "REST portfolio schema 1" in release_notes
-    assert "Gateway health schema 6" in release_notes
+    assert "Gateway health schema 7" in release_notes
     assert "No trading, order, transfer, payment, or transaction-history capability" in release_notes

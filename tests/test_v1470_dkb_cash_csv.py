@@ -1,4 +1,4 @@
-"""v1.47.0 adds independent DKB Girokonto CSV cash evidence inside the DKB Gateway."""
+"""v1.48.0 adds independent DKB Girokonto CSV cash evidence inside the DKB Gateway."""
 
 from __future__ import annotations
 
