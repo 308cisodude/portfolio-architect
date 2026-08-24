@@ -7,13 +7,66 @@ from typing import Any, Iterable, Mapping
 
 _FUTURE_TOLERANCE_SECONDS = 5 * 60
 _MAX_SUMMARY_CHARS = 240
+_STATIC_WEEKLY_DEFAULT_HOURS = 5 * 24
+_STATIC_MONTHLY_DEFAULT_HOURS = 14 * 24
+_LIVE_DEFAULT_HOURS = 24
+
+
+def default_static_freshness_hours(plan_frequency: str | None) -> int:
+    """Return the cadence-aware default for manually refreshed evidence.
+
+    Weekly execution should see a fresh upload at least once within roughly one
+    execution period, while monthly-or-slower plans should not require weekly
+    operator work merely to remain actionable.  Explicit configured thresholds
+    always override this default in the coordinator.
+    """
+    token = str(plan_frequency or "").strip().lower()
+    return _STATIC_WEEKLY_DEFAULT_HOURS if token == "weekly" else _STATIC_MONTHLY_DEFAULT_HOURS
+
+
+def default_freshness_thresholds(
+    plan_frequency: str | None,
+    *,
+    legacy_threshold_hours: int = _LIVE_DEFAULT_HOURS,
+    preserve_legacy_global: bool = False,
+) -> dict[str, int]:
+    """Return unconfigured evidence-kind defaults without overriding user policy.
+
+    A pre-v1.33 installation that explicitly configured only the historical global
+    threshold keeps that value for every evidence family until the operator saves
+    provider-specific thresholds.  Otherwise live evidence defaults to 24 hours and
+    manual CSV/PDF evidence follows the plan cadence.
+    """
+    legacy = max(1, int(legacy_threshold_hours))
+    if preserve_legacy_global:
+        live = static = legacy
+    else:
+        live = _LIVE_DEFAULT_HOURS
+        static = default_static_freshness_hours(plan_frequency)
+    return {
+        "live_api": live,
+        "gateway_snapshot": live,
+        "imported_statement": static,
+        "imported_csv": static,
+        "csv": static,
+        "other": live,
+    }
 
 
 def evidence_kind(provider: str, acquisition_mode: str | None = None) -> str:
-    """Return a bounded provider-aware evidence kind without changing policy semantics."""
+    """Return a bounded provider/acquisition-aware holdings evidence kind."""
     token = str(provider or "").strip().lower()
+    mode = str(acquisition_mode or "").strip().lower()
+    if mode == "live_api":
+        return "live_api"
+    if mode == "csv":
+        return "csv"
+    if mode == "pdf":
+        return "imported_statement"
+    # Schema <=6 and other legacy/unknown Gateway health documents do not carry
+    # acquisition_mode.  Keep the conservative established fallbacks.
     if token == "comdirect":
-        return "csv" if str(acquisition_mode or "").strip().lower() == "csv" else "live_api"
+        return "live_api"
     if token == "trade_republic":
         return "imported_statement"
     if token in {"dkb", "local_rest_json"}:
@@ -22,13 +75,18 @@ def evidence_kind(provider: str, acquisition_mode: str | None = None) -> str:
 
 
 def cash_evidence_kind(provider: str, acquisition_mode: str | None = None) -> str:
-    """Return the evidence family that governs provider-scoped cash freshness."""
+    """Return the acquisition-aware evidence family governing provider cash."""
     token = str(provider or "").strip().lower()
+    mode = str(acquisition_mode or "").strip().lower()
+    if mode == "live_api":
+        return "live_api"
+    if mode == "csv":
+        return "csv"
+    if mode == "pdf":
+        return "imported_statement"
     if token == "comdirect":
-        return "csv" if str(acquisition_mode or "").strip().lower() == "csv" else "live_api"
+        return "live_api"
     if token in {"trade_republic", "dkb"}:
-        # Both providers currently obtain cash from explicit imported account
-        # evidence even though DKB holdings remain a canonical Gateway snapshot.
         return "imported_statement"
     if token == "local_rest_json":
         return "gateway_snapshot"

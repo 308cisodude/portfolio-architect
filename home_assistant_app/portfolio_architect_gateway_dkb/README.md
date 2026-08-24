@@ -1,4 +1,6 @@
-# Portfolio Architect Gateway — DKB v1.48.0
+# Portfolio Architect Gateway — DKB v1.48.1
+
+Version 1.48.1 aligns the DKB App package with Portfolio Architect’s acquisition-aware freshness correction. DKB CSV acquisition, independent cash evidence, FinTS research boundary and Ingress UX are unchanged from v1.48.0.
 
 Version 1.48.0 keeps DKB CSV/FinTS acquisition semantics unchanged and makes the existing boundary visually explicit: static DKB CSV acquisition is separated from the unavailable/research-only authenticated FinTS live section.
 

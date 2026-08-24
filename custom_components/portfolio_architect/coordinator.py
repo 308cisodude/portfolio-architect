@@ -104,6 +104,7 @@ from .engine.rest import PROVIDER_LOCAL_REST_JSON, RestInvestmentCash, RestSnaps
 from .last_known_good import RestLastKnownGoodStore, configuration_fingerprint
 from .freshness import (
     cash_evidence_kind,
+    default_freshness_thresholds,
     evidence_kind as source_evidence_kind,
     source_freshness_rows as build_source_freshness_rows,
     stale_rows as select_stale_rows,
@@ -255,47 +256,60 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
             minimum=MIN_FRESHNESS_HOURS,
             maximum=MAX_FRESHNESS_HOURS,
         )
+        provider_freshness_keys = (
+            CONF_FRESHNESS_LIVE_API_HOURS,
+            CONF_FRESHNESS_STATEMENT_HOURS,
+            CONF_FRESHNESS_CSV_HOURS,
+            CONF_FRESHNESS_OTHER_HOURS,
+        )
+        self._provider_freshness_policy_configured = any(
+            key in entry.options for key in provider_freshness_keys
+        )
+        self._legacy_global_freshness_policy_configured = (
+            CONF_FRESHNESS_HOURS in entry.options
+            and not self._provider_freshness_policy_configured
+        )
+        default_thresholds = default_freshness_thresholds(
+            str(entry.options.get(CONF_PLAN_FREQUENCY, PLAN_FREQUENCY_MONTHLY)),
+            legacy_threshold_hours=self.freshness_hours,
+            preserve_legacy_global=self._legacy_global_freshness_policy_configured,
+        )
+        csv_threshold = _bounded_int(
+            entry.options.get(CONF_FRESHNESS_CSV_HOURS),
+            default=default_thresholds["csv"],
+            minimum=MIN_FRESHNESS_HOURS,
+            maximum=MAX_DOCUMENT_FRESHNESS_HOURS,
+        )
         self.freshness_threshold_hours_by_kind = {
             "live_api": _bounded_int(
                 entry.options.get(CONF_FRESHNESS_LIVE_API_HOURS),
-                default=self.freshness_hours,
+                default=default_thresholds["live_api"],
                 minimum=MIN_FRESHNESS_HOURS,
                 maximum=MAX_FRESHNESS_HOURS,
             ),
             "gateway_snapshot": _bounded_int(
                 entry.options.get(CONF_FRESHNESS_LIVE_API_HOURS),
-                default=self.freshness_hours,
+                default=default_thresholds["gateway_snapshot"],
                 minimum=MIN_FRESHNESS_HOURS,
                 maximum=MAX_FRESHNESS_HOURS,
             ),
             "imported_statement": _bounded_int(
                 entry.options.get(CONF_FRESHNESS_STATEMENT_HOURS),
-                default=self.freshness_hours,
+                default=default_thresholds["imported_statement"],
                 minimum=MIN_FRESHNESS_HOURS,
                 maximum=MAX_DOCUMENT_FRESHNESS_HOURS,
             ),
-            "imported_csv": _bounded_int(
-                entry.options.get(CONF_FRESHNESS_CSV_HOURS),
-                default=self.freshness_hours,
-                minimum=MIN_FRESHNESS_HOURS,
-                maximum=MAX_DOCUMENT_FRESHNESS_HOURS,
-            ),
+            "imported_csv": csv_threshold,
+            # Health schema 7 uses acquisition_mode=csv for provider Gateways.
+            # Keep the established imported_csv key as well for legacy/local CSV.
+            "csv": csv_threshold,
             "other": _bounded_int(
                 entry.options.get(CONF_FRESHNESS_OTHER_HOURS),
-                default=self.freshness_hours,
+                default=default_thresholds["other"],
                 minimum=MIN_FRESHNESS_HOURS,
                 maximum=MAX_FRESHNESS_HOURS,
             ),
         }
-        self._provider_freshness_policy_configured = any(
-            key in entry.options
-            for key in (
-                CONF_FRESHNESS_LIVE_API_HOURS,
-                CONF_FRESHNESS_STATEMENT_HOURS,
-                CONF_FRESHNESS_CSV_HOURS,
-                CONF_FRESHNESS_OTHER_HOURS,
-            )
-        )
         self.review_lead_days = _bounded_int(
             entry.options.get(CONF_REVIEW_LEAD_DAYS),
             default=DEFAULT_REVIEW_LEAD_DAYS,
@@ -950,11 +964,11 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
     @property
     def freshness_policy(self) -> str:
         """Return whether provider-aware thresholds were explicitly configured."""
-        return (
-            "evidence_kind_thresholds"
-            if self._provider_freshness_policy_configured
-            else "legacy_global_threshold"
-        )
+        if self._provider_freshness_policy_configured:
+            return "evidence_kind_thresholds"
+        if self._legacy_global_freshness_policy_configured:
+            return "legacy_global_threshold"
+        return "cadence_aware_defaults"
 
     def source_freshness_evidence(
         self, now: datetime | None = None

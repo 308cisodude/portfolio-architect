@@ -238,7 +238,7 @@ async def async_migrate_entry(
                 "Cannot migrate Portfolio Architect to schema 10 while legacy "
                 "DKB CSV acquisition is still configured. Install v1.45.1, "
                 "migrate the DKB CSV source to Portfolio Architect Gateway — DKB, "
-                "verify provider_id dkb, then update to v1.48.0."
+                "verify provider_id dkb, then update to v1.48.1."
             )
             return False
 

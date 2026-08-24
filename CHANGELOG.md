@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.48.1
+
+- classify health-schema-7 `acquisition_mode=csv` as static CSV evidence and `pdf` as imported-statement evidence instead of inheriting the live Gateway window
+- add cadence-aware unconfigured static defaults: 5 days for weekly plans and 14 days for monthly-or-slower plans, while live/unknown Gateway evidence remains 24 hours
+- preserve every explicitly configured evidence-kind threshold and the pre-v1.33 global compatibility threshold
+- keep holdings and provider cash on independent evidence clocks; provider acquisition and no-fallback semantics are unchanged
+
 ## 1.48.0
 
 - Moves Comdirect provider-specific depot CSV parsing into the Comdirect Gateway and adds a complete explicit static mode with independent holdings and cash CSV evidence.

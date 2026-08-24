@@ -2460,7 +2460,7 @@
       },
       "runtime": {
         "title": "Runtime safeguards",
-        "description": "Source evidence age is evaluated independently from the plan review schedule. Existing installations keep their previous global threshold for every evidence kind until these values are deliberately saved.",
+        "description": "Source evidence age is evaluated independently from the plan review schedule. Live evidence defaults to 24 hours. Unconfigured CSV/PDF evidence follows the plan cadence: 5 days for weekly plans and 14 days for monthly-or-slower plans. Existing explicit evidence-kind thresholds are preserved; a legacy pre-v1.33 global threshold remains authoritative until deliberately replaced.",
         "data": {
           "freshness_live_api_hours": "Live API / Gateway snapshot freshness",
           "freshness_statement_hours": "Imported statement freshness",
@@ -2468,10 +2468,10 @@
           "freshness_other_hours": "Other source freshness"
         },
         "data_description": {
-          "freshness_live_api_hours": "Maximum age for live API and provider Gateway snapshots (1–168 hours).",
-          "freshness_statement_hours": "Maximum age for imported provider statements such as Trade Republic DEPOTAUSZUG evidence (1–744 hours).",
-          "freshness_csv_hours": "Maximum age for imported CSV evidence such as DKB CSV supplements (1–744 hours).",
-          "freshness_other_hours": "Maximum age for source types not covered by another evidence category (1–168 hours)."
+          "freshness_live_api_hours": "Maximum age for live API and unknown/legacy Gateway snapshots (1–168 hours). Default: 24 hours.",
+          "freshness_statement_hours": "Maximum age for imported provider statements/PDF evidence (1–744 hours). Default: 5 days for weekly plans, 14 days for monthly-or-slower plans unless explicitly overridden.",
+          "freshness_csv_hours": "Maximum age for imported/static CSV evidence (1–744 hours). Default: 5 days for weekly plans, 14 days for monthly-or-slower plans unless explicitly overridden.",
+          "freshness_other_hours": "Maximum age for source types not covered by another evidence category (1–168 hours). Default: 24 hours."
         }
       },
       "reset_plan": {

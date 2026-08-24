@@ -1,4 +1,6 @@
-# Portfolio Architect Gateway — Comdirect v1.48.0
+# Portfolio Architect Gateway — Comdirect v1.48.1
+
+Version 1.48.1 aligns the Comdirect App package with Portfolio Architect’s acquisition-aware freshness correction. Comdirect `live_api`/`csv` arbitration, static parsers, OAuth/session behavior and Ingress UX are unchanged from v1.48.0.
 
 Version 1.48.0 adds explicit, mutually exclusive Comdirect acquisition modes while keeping `live_api` as the backward-compatible default.
 

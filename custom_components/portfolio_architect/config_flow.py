@@ -135,6 +135,7 @@ from .broker_editor import (
 )
 from .engine import calculate_portfolio_payload, calculate_portfolio_payload_from_positions
 from .gateway_provider_ids import GATEWAY_PROVIDER_COMDIRECT
+from .freshness import default_freshness_thresholds
 CONF_MANUAL_VENUE_FEE_BPS = "manual_venue_fee_bps"
 
 # Native broker editor fields intentionally remain local to the options flow. The
@@ -2345,18 +2346,31 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
         """Configure explicit evidence-kind freshness thresholds."""
         options = dict(self.config_entry.options)
         legacy = int(options.get(CONF_FRESHNESS_HOURS, DEFAULT_FRESHNESS_HOURS))
+        provider_keys = (
+            CONF_FRESHNESS_LIVE_API_HOURS,
+            CONF_FRESHNESS_STATEMENT_HOURS,
+            CONF_FRESHNESS_CSV_HOURS,
+            CONF_FRESHNESS_OTHER_HOURS,
+        )
+        provider_policy_configured = any(key in options for key in provider_keys)
+        legacy_policy_configured = CONF_FRESHNESS_HOURS in options and not provider_policy_configured
+        defaults = default_freshness_thresholds(
+            str(options.get(CONF_PLAN_FREQUENCY, DEFAULT_PLAN_FREQUENCY)),
+            legacy_threshold_hours=legacy,
+            preserve_legacy_global=legacy_policy_configured,
+        )
         suggested = {
             CONF_FRESHNESS_LIVE_API_HOURS: int(
-                options.get(CONF_FRESHNESS_LIVE_API_HOURS, legacy)
+                options.get(CONF_FRESHNESS_LIVE_API_HOURS, defaults["live_api"])
             ),
             CONF_FRESHNESS_STATEMENT_HOURS: int(
-                options.get(CONF_FRESHNESS_STATEMENT_HOURS, legacy)
+                options.get(CONF_FRESHNESS_STATEMENT_HOURS, defaults["imported_statement"])
             ),
             CONF_FRESHNESS_CSV_HOURS: int(
-                options.get(CONF_FRESHNESS_CSV_HOURS, legacy)
+                options.get(CONF_FRESHNESS_CSV_HOURS, defaults["csv"])
             ),
             CONF_FRESHNESS_OTHER_HOURS: int(
-                options.get(CONF_FRESHNESS_OTHER_HOURS, legacy)
+                options.get(CONF_FRESHNESS_OTHER_HOURS, defaults["other"])
             ),
         }
         if user_input is not None:
