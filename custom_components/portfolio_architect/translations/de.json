@@ -2460,7 +2460,7 @@
       },
       "runtime": {
         "title": "Laufzeitschutz",
-        "description": "Das Alter der Quellenbelege wird unabhängig vom Prüfplan bewertet. Bestehende Installationen behalten für jede Belegart zunächst die bisherige globale Schwelle, bis diese Werte bewusst gespeichert werden.",
+        "description": "Das Alter der Quellenbelege wird unabhängig vom Prüfplan bewertet. Live-Belege verwenden standardmäßig 24 Stunden. Nicht explizit konfigurierte CSV-/PDF-Belege folgen der Planfrequenz: 5 Tage bei wöchentlichen und 14 Tage bei monatlichen oder selteneren Plänen. Bestehende explizite Schwellen je Belegart bleiben erhalten; eine alte globale Schwelle aus der Zeit vor v1.33 bleibt maßgeblich, bis sie bewusst ersetzt wird.",
         "data": {
           "freshness_live_api_hours": "Aktualität Live-API / Gateway-Snapshot",
           "freshness_statement_hours": "Aktualität importierter Abrechnungen",
@@ -2468,10 +2468,10 @@
           "freshness_other_hours": "Aktualität sonstiger Quellen"
         },
         "data_description": {
-          "freshness_live_api_hours": "Maximales Alter für Live-API- und Provider-Gateway-Snapshots (1–168 Stunden).",
-          "freshness_statement_hours": "Maximales Alter importierter Provider-Abrechnungen wie Trade-Republic-DEPOTAUSZUG-Belegen (1–744 Stunden).",
-          "freshness_csv_hours": "Maximales Alter importierter CSV-Belege wie DKB-CSV-Ergänzungen (1–744 Stunden).",
-          "freshness_other_hours": "Maximales Alter für nicht anderweitig zugeordnete Quellenarten (1–168 Stunden)."
+          "freshness_live_api_hours": "Maximales Alter für Live-API- und unbekannte/ältere Gateway-Snapshots (1–168 Stunden). Standard: 24 Stunden.",
+          "freshness_statement_hours": "Maximales Alter importierter Provider-Abrechnungen/PDF-Belege (1–744 Stunden). Standard: 5 Tage bei wöchentlichen, 14 Tage bei monatlichen oder selteneren Plänen, sofern nicht explizit überschrieben.",
+          "freshness_csv_hours": "Maximales Alter importierter/statischer CSV-Belege (1–744 Stunden). Standard: 5 Tage bei wöchentlichen, 14 Tage bei monatlichen oder selteneren Plänen, sofern nicht explizit überschrieben.",
+          "freshness_other_hours": "Maximales Alter für nicht anderweitig zugeordnete Quellenarten (1–168 Stunden). Standard: 24 Stunden."
         }
       },
       "reset_plan": {

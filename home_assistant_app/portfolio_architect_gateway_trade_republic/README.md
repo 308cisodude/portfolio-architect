@@ -1,4 +1,6 @@
-# Portfolio Architect Gateway — Trade Republic v1.48.0
+# Portfolio Architect Gateway — Trade Republic v1.48.1
+
+Version 1.48.1 aligns the Trade Republic App package with Portfolio Architect’s acquisition-aware freshness correction. DEPOTAUSZUG/KONTOAUSZUG parsing, static persistence and Ingress UX are unchanged from v1.48.0.
 
 Version 1.48.0 keeps Trade Republic statement acquisition unchanged and makes the acquisition boundary visually explicit: the active static PDF statement path is separated from an explicitly unavailable live/private-API section.
 

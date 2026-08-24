@@ -1,4 +1,6 @@
-# Portfolio Architect Gateway runtime v1.48.0
+# Portfolio Architect Gateway runtime v1.48.1
+
+Version 1.48.1 is package alignment for Portfolio Architect’s Home Assistant-side acquisition-aware freshness correction. Common Gateway runtime, health schema 7, REST schema 1 and provider acquisition behavior are unchanged from v1.48.0.
 
 Version 1.48.0 adds bounded health-schema-7 acquisition-mode reporting and the explicit Comdirect live/API versus static/CSV acquisition wrapper. REST portfolio schema 1, verified private-PKI HTTPS, bearer authentication and provider-neutral common runtime semantics remain intact.
 

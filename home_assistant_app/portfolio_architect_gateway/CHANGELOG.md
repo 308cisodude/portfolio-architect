@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.48.1
+
+- align package metadata with Portfolio Architect v1.48.1
+- provider acquisition/runtime behavior is unchanged from v1.48.0; freshness classification is applied by the Home Assistant integration using health-schema-7 acquisition mode
+
 ## 1.48.0
 
 - Adds explicit `live_api` and `csv` acquisition modes with `live_api` as the backward-compatible default and no silent cross-mode fallback.

@@ -599,6 +599,14 @@ Live acceptance of v1.45.0 proved the exact atomic DKB source cut-over but expos
 - Make live/online acquisition optically distinct from static CSV/PDF import in all three official provider Ingress UIs.
 - Preserve private-PKI HTTPS, bearer authentication, source-set/LKG behavior, planner economics and the advisory/no-money-movement boundary.
 
+## v1.48.1 — acquisition-aware static freshness
+
+- use health-schema-7 `acquisition_mode` when classifying Gateway holdings and cash freshness
+- keep live/unknown Gateway evidence at the 24-hour default
+- default static CSV/PDF evidence to 5 days for weekly plans and 14 days for monthly-or-slower plans
+- preserve explicit evidence-kind overrides and the pre-v1.33 global compatibility threshold
+- retain independent holdings/cash clocks and all v1.48.0 no-fallback acquisition semantics
+
 ## After v1.48.0 — provider acquisition cleanup
 
 - Retire the one-release PA-side Comdirect CSV migration parser/path after v1.48 live acceptance proves the Gateway cut-over.
