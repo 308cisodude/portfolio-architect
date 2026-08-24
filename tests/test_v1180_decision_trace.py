@@ -11,6 +11,13 @@ import pytest
 ROOT = Path(__file__).parents[1]
 COMPONENT = ROOT / "custom_components" / "portfolio_architect"
 sys.path.insert(0, str(COMPONENT))
+sys.path.insert(0, str(ROOT / "tests"))
+
+from reference_portfolio import (  # noqa: E402
+    REFERENCE_LABEL,
+    REFERENCE_PROVIDER,
+    read_reference_positions,
+)
 
 from decision_trace import (  # noqa: E402
     DecisionTraceError,
@@ -22,21 +29,17 @@ from decision_trace import (  # noqa: E402
     compare_history,
 )
 from engine.calculator import calculate_portfolio_payload_from_positions  # noqa: E402
-from engine.importers import CsvSourceConfig, PROVIDER_COMDIRECT, read_positions  # noqa: E402
 from model import parse_portfolio_data  # noqa: E402
 
 
 def _data():
-    positions = read_positions(
-        ROOT / "tests" / "fixtures" / "comdirect-depot-sanitized.csv",
-        CsvSourceConfig(provider=PROVIDER_COMDIRECT),
-    )
+    positions = read_reference_positions()
     payload = calculate_portfolio_payload_from_positions(
         positions,
         ROOT / "examples" / "current-plan",
         evaluated_at=datetime(2026, 8, 17, 8, 0, tzinfo=timezone.utc),
-        source_provider=PROVIDER_COMDIRECT,
-        source_label="Comdirect CSV",
+        source_provider=REFERENCE_PROVIDER,
+        source_label=REFERENCE_LABEL,
     )
     return parse_portfolio_data(
         payload["recommendations"],
@@ -58,7 +61,7 @@ def _snapshot(data, when):
     return build_evaluation_snapshot(
         data,
         evaluated_at=when,
-        source_provider=PROVIDER_COMDIRECT,
+        source_provider=REFERENCE_PROVIDER,
         source_count=1,
         source_conflict_count=0,
     )
@@ -240,9 +243,9 @@ def test_storage_and_diagnostics_keep_the_trace_private_and_integrity_checked() 
 
 def test_v1180_metadata_and_compatibility_contracts_are_aligned() -> None:
     manifest = json.loads((COMPONENT / "manifest.json").read_text())
-    assert manifest["version"] == "1.48.2"
-    assert 'VERSION: Final = "1.48.2"' in (COMPONENT / "const.py").read_text()
-    assert '__version__ = "1.48.2"' in (COMPONENT / "engine" / "__init__.py").read_text()
+    assert manifest["version"] == "1.49.0"
+    assert 'VERSION: Final = "1.49.0"' in (COMPONENT / "const.py").read_text()
+    assert '__version__ = "1.49.0"' in (COMPONENT / "engine" / "__init__.py").read_text()
     release_notes = (ROOT / "docs" / "RELEASE-NOTES.md").read_text()
     assert "payload schema 8" in release_notes.lower()
     assert "REST portfolio schema 1" in release_notes

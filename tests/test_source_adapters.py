@@ -9,22 +9,20 @@ import pytest
 ROOT = Path(__file__).parents[1]
 COMPONENT = ROOT / "custom_components" / "portfolio_architect"
 sys.path.insert(0, str(COMPONENT))
+sys.path.insert(0, str(ROOT / "tests"))
 
 from engine.importers import (  # noqa: E402
     CsvSourceConfig,
-    PROVIDER_COMDIRECT,
     PROVIDER_GENERIC_CSV,
     inspect_csv_headers,
     read_positions,
 )
 
 
-def test_comdirect_adapter_remains_default_and_reads_reference_export() -> None:
-    config = CsvSourceConfig.from_mapping(None)
-    assert config.provider == PROVIDER_COMDIRECT
-    positions = read_positions(ROOT / "tests" / "fixtures" / "comdirect-depot-sanitized.csv", config)
-    assert len(positions) == 13
-    assert sum(item.value_eur for item in positions.values()) == Decimal("14053.01")
+def test_generic_adapter_is_the_only_current_local_csv_provider() -> None:
+    assert CsvSourceConfig().provider == PROVIDER_GENERIC_CSV
+    with pytest.raises(ValueError, match="Unsupported portfolio source provider"):
+        CsvSourceConfig.from_mapping({"source_provider": "comdirect_csv"})
 
 
 def test_generic_csv_mapping_supports_utf8_comma_and_isin_identifier(tmp_path: Path) -> None:
@@ -146,16 +144,17 @@ def test_config_flow_exposes_provider_format_mapping_and_reconfigure() -> None:
     assert "CsvSourceConfig.from_mapping" in flow
     assert "entry.version < 6" in setup
     assert "entry.version < 7" in setup
-    assert "DEFAULT_SOURCE_PROVIDER" in setup
+    assert "LEGACY_COMDIRECT_CSV_PROVIDER" in setup
+    assert "entry.version < 11" in setup
 
 
 def test_generic_adapter_produces_same_schema_8_calculation(tmp_path: Path) -> None:
     import csv
     from engine import calculate_portfolio_payload
 
-    comdirect = read_positions(
-        ROOT / "tests" / "fixtures" / "comdirect-depot-sanitized.csv", CsvSourceConfig(provider=PROVIDER_COMDIRECT)
-    )
+    from reference_portfolio import read_reference_positions
+
+    comdirect = read_reference_positions()
     path = tmp_path / "generic.csv"
     with path.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.writer(handle)

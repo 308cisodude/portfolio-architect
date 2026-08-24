@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.49.0
+
+- align package metadata with Portfolio Architect v1.49.0
+- provider acquisition/runtime behavior is unchanged from v1.48.2; this release retires only the completed Home Assistant-side legacy Comdirect CSV migration surface
+
 ## 1.48.2
 
 - align package metadata with Portfolio Architect v1.48.2

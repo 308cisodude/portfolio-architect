@@ -18,9 +18,8 @@ from .models import Position
 
 D = Decimal
 
-PROVIDER_COMDIRECT: Final = "comdirect_csv"
 PROVIDER_GENERIC_CSV: Final = "generic_csv"
-SUPPORTED_PROVIDERS: Final = (PROVIDER_COMDIRECT, PROVIDER_GENERIC_CSV)
+SUPPORTED_PROVIDERS: Final = (PROVIDER_GENERIC_CSV,)
 
 CSV_ENCODING_AUTO: Final = "auto"
 CSV_ENCODINGS: Final = (
@@ -97,7 +96,7 @@ _DELIMITER_CHARS = {
 class CsvSourceConfig:
     """Validated provider and generic CSV mapping configuration."""
 
-    provider: str = PROVIDER_COMDIRECT
+    provider: str = PROVIDER_GENERIC_CSV
     encoding: str = DEFAULT_GENERIC_ENCODING
     delimiter: str = DEFAULT_GENERIC_DELIMITER
     header_row: int = DEFAULT_GENERIC_HEADER_ROW
@@ -113,12 +112,9 @@ class CsvSourceConfig:
     def from_mapping(cls, raw: dict[str, Any] | None) -> CsvSourceConfig:
         """Build one strict source config from persisted integration data."""
         values = raw or {}
-        provider = str(values.get("source_provider", PROVIDER_COMDIRECT))
+        provider = str(values.get("source_provider", PROVIDER_GENERIC_CSV))
         if provider not in SUPPORTED_PROVIDERS:
             raise ValueError("Unsupported portfolio source provider")
-        if provider == PROVIDER_COMDIRECT:
-            return cls(provider=provider)
-
         encoding = str(values.get("csv_encoding", DEFAULT_GENERIC_ENCODING))
         delimiter = str(values.get("csv_delimiter", DEFAULT_GENERIC_DELIMITER))
         decimal_format = str(
@@ -180,8 +176,6 @@ class CsvSourceConfig:
 
 def read_positions(csv_path: Path, config: CsvSourceConfig) -> dict[str, Position]:
     """Dispatch one CSV file to its explicit provider adapter."""
-    if config.provider == PROVIDER_COMDIRECT:
-        return read_comdirect_positions(csv_path)
     if config.provider == PROVIDER_GENERIC_CSV:
         return read_generic_positions(csv_path, config)
     raise ValueError("Unsupported portfolio source provider")
@@ -208,59 +202,6 @@ def inspect_csv_headers(csv_path: Path, config: CsvSourceConfig) -> tuple[str, .
     if len(set(headers)) != len(headers):
         raise ValueError("Generic CSV header names must be unique")
     return headers
-
-
-def read_comdirect_positions(csv_path: Path) -> dict[str, Position]:
-    """Read every valid security position from a Comdirect depot export."""
-    rows = _read_csv_with_encoding(csv_path, "iso-8859-1", ";")
-    header_idx = next(
-        (i for i, row in enumerate(rows) if "WKN" in row and "Wert in EUR" in row),
-        None,
-    )
-    if header_idx is None:
-        raise ValueError("Could not locate Comdirect securities table header")
-    header = rows[header_idx]
-    if len(set(header)) != len(header):
-        raise ValueError("Comdirect CSV contains duplicate header names")
-
-    result: dict[str, Position] = {}
-    for row_number, row in enumerate(rows[header_idx + 1 :], start=header_idx + 2):
-        if not row or len(row) < len(header):
-            continue
-        record = dict(zip(header, row, strict=False))
-        identifier = (record.get("WKN") or "").strip().upper()
-        if not identifier:
-            continue
-        _validate_identifier(identifier, row_number=row_number)
-        if identifier in result:
-            raise ValueError(f"CSV contains duplicate WKN {identifier}")
-        isin = (record.get("ISIN") or "").strip().upper()
-        _validate_isin(isin, row_number=row_number)
-        name = _clean_text(
-            record.get("Bezeichnung", ""),
-            field=f"CSV row {row_number} name",
-            maximum=_MAX_NAME_LENGTH,
-            required=True,
-        )
-        source_type = _clean_text(
-            record.get("Typ", ""),
-            field=f"CSV row {row_number} instrument type",
-            maximum=_MAX_SOURCE_TYPE_LENGTH,
-            required=True,
-        )
-        value_eur = parse_number(record.get("Wert in EUR", "0"), "comma_decimal")
-        _add_position(
-            result,
-            identifier=identifier,
-            isin=isin,
-            name=name,
-            source_type=source_type,
-            value_eur=value_eur,
-            row_number=row_number,
-        )
-    if not result:
-        raise ValueError("No valid securities positions found in Comdirect export")
-    return result
 
 
 def read_generic_positions(

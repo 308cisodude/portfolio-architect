@@ -254,7 +254,6 @@
       "source_provider": {
         "default": "mdi:file-table-box-multiple-outline",
         "state": {
-          "comdirect_csv": "mdi:bank-outline",
           "generic_csv": "mdi:file-delimited-outline",
           "local_rest_json": "mdi:lan-connect"
         }

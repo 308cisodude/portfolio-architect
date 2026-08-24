@@ -13,6 +13,13 @@ import pytest
 ROOT = Path(__file__).parents[1]
 COMPONENT = ROOT / "custom_components" / "portfolio_architect"
 sys.path.insert(0, str(COMPONENT))
+sys.path.insert(0, str(ROOT / "tests"))
+
+from reference_portfolio import (  # noqa: E402
+    REFERENCE_LABEL,
+    REFERENCE_PROVIDER,
+    read_reference_positions,
+)
 
 from engine.execution import (  # noqa: E402
     ExecutionConfig,
@@ -329,7 +336,6 @@ def test_full_payload_reopens_route_scoped_exception_when_provider_changes(tmp_p
     import yaml
 
     from engine.calculator import calculate_portfolio_payload_from_positions
-    from engine.importers import CsvSourceConfig, PROVIDER_COMDIRECT, read_positions
 
     config_dir = tmp_path / "plan"
     shutil.copytree(ROOT / "examples" / "current-plan", config_dir)
@@ -358,16 +364,13 @@ def test_full_payload_reopens_route_scoped_exception_when_provider_changes(tmp_p
         yaml.safe_dump(_exception(), sort_keys=False), encoding="utf-8"
     )
 
-    positions = read_positions(
-        ROOT / "tests" / "fixtures" / "comdirect-depot-sanitized.csv",
-        CsvSourceConfig(provider=PROVIDER_COMDIRECT),
-    )
+    positions = read_reference_positions()
     payload = calculate_portfolio_payload_from_positions(
         positions,
         config_dir,
         evaluated_at=datetime(2026, 8, 16, 20, 0, tzinfo=timezone.utc),
-        source_provider=PROVIDER_COMDIRECT,
-        source_label="Comdirect CSV",
+        source_provider=REFERENCE_PROVIDER,
+        source_label=REFERENCE_LABEL,
     )
     robotics = next(
         item

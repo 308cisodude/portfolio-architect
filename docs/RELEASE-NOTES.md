@@ -1,37 +1,34 @@
-# Portfolio Architect 1.48.2
+# Portfolio Architect 1.49.0
 
-Portfolio Architect v1.48.2 is a narrow Home Assistant-side hotfix for the acquisition-aware freshness path introduced in v1.48.1. Live acceptance showed that Gateway health schema 7 correctly reported DKB `acquisition_mode: csv`, but the coordinator discarded that mode when it replaced the enriched source summaries with acquisition-neutral aggregation summaries. DKB therefore still appeared as a generic `gateway_snapshot` and continued to use the 24-hour live/Gateway freshness threshold.
+Portfolio Architect v1.49.0 completes the Comdirect acquisition-boundary cleanup started in v1.48.0. Complete Comdirect static CSV acquisition already lives inside **Portfolio Architect Gateway — Comdirect**; the Home Assistant integration no longer needs the temporary provider-specific Comdirect CSV parser that existed only as an exact-equivalence migration oracle during the v1.48 cut-over window.
 
-## Source-summary propagation fix
+## Legacy Comdirect CSV bridge retired
 
-The coordinator now keeps acquisition mode attached to the same source summaries used by freshness evaluation, diagnostics, and Home Assistant entities:
+The current Home Assistant integration now keeps only the provider-neutral mapped-CSV adapter. Provider-specific Comdirect acquisition belongs entirely to the Comdirect Gateway.
 
-- normal REST/multi-Gateway recalculation applies the validated primary and supplemental Gateway acquisition modes to the accepted aggregation summaries;
-- the payload/LKG source summaries use the same annotation helper, preventing live-versus-LKG classification drift;
-- a successful `304 Not Modified` primary refresh re-annotates the already accepted source summary from the newly observed Gateway health, so an App upgrade or deliberate mode change does not require a changed holdings snapshot merely to update freshness classification; and
-- if a provider is explicitly re-observed without a usable acquisition mode, any older static annotation is removed or treated as `unknown`, preserving the conservative established provider fallback.
+v1.49.0 removes the production PA-side Comdirect depot-CSV parser, the current `comdirect_csv` source-provider/enum surface, and the Supervisor discovery migration step that compared a legacy local CSV source with a verified health-schema-7 Comdirect Gateway in explicit `csv` mode.
 
-For the live regression fixture, an aligned DKB Gateway reporting schema-7 `acquisition_mode: csv` therefore reaches freshness as CSV evidence and uses the configured CSV threshold. Trade Republic `pdf` remains imported-statement evidence and Comdirect `live_api` remains live evidence.
+Config-entry schema **11** provides the fail-closed upgrade boundary. If a config entry still uses the historical Home Assistant-side `comdirect_csv` source, migration stops without changing the source. The operator must remain on v1.48.2, complete the verified Gateway cut-over there, and then update to v1.49.0. No source is silently reinterpreted or discarded.
 
-## Freshness policy is unchanged from v1.48.1
+Historical upgrade and release documentation remains intact as audit history.
 
-v1.48.2 does not alter any freshness threshold or cadence rule. The v1.48.1 policy remains:
+## Provider architecture after v1.49.0
 
-- live API / unknown Gateway default: **24 hours**;
-- static CSV/PDF default for weekly plans: **120 hours / 5 days**;
-- static CSV/PDF default for monthly, quarterly, or yearly plans: **336 hours / 14 days**;
-- every explicitly configured evidence-kind threshold remains authoritative; and
-- holdings and provider cash keep independent evidence clocks.
+Provider-specific acquisition is now consistently outside Portfolio Architect for all three official providers:
 
-The current installation can therefore keep the deliberately configured monthly policy of 24 hours for live evidence and 336 hours for imported statement/CSV evidence.
+- **Comdirect Gateway:** live API or explicit complete static CSV, mutually exclusive with no silent fallback;
+- **DKB Gateway:** depot CSV holdings plus independent Girokonto CSV cash; and
+- **Trade Republic Gateway:** local holdings/cash PDF statement families.
+
+Portfolio Architect itself retains only the provider-neutral generic mapped-CSV escape hatch. A later architecture milestone will move that remaining generic import capability into a dedicated import Gateway as well.
 
 ## Provider packages
 
-The Comdirect, DKB, and Trade Republic Apps are version-aligned to 1.48.2 only. Provider acquisition/runtime behavior is unchanged from v1.48.1/v1.48.0. No CSV/PDF re-import, Comdirect PhotoTAN reauthentication, source migration, or dashboard replacement is required solely because of this hotfix.
+The Comdirect, DKB and Trade Republic Apps are version-aligned to 1.49.0. Provider runtime/acquisition behavior is unchanged from the live-accepted v1.48.2 baseline. No CSV/PDF re-import, Comdirect PhotoTAN reauthentication, source migration or dashboard replacement is required for an already Gateway-backed installation.
 
 ## Historical compatibility contracts retained
 
-The v1.33.0 source-freshness and plan-schedule separation remains anchored to the latest valid Portfolio Architect evaluation; v1.48.2 does not change any configured freshness threshold. The historical v1.19.0-rc2 brokerage-probe state remains historical and is not promoted by this release. The historical v1.39 colourful allocation view was not included in v1.38.1; that sequencing remains documented. Trade Republic provider-specific statement parsing remains in its Gateway; this release does not move PDF parsing into Portfolio Architect. authenticated DKB FinTS acquisition remains disabled. No trading, order, transfer, payment, or transaction-history capability is introduced.
+The v1.33.0 source-freshness and plan-schedule separation remains anchored to the latest valid Portfolio Architect evaluation; v1.49.0 does not change any configured freshness threshold. The v1.48.1 cadence-aware freshness policy and v1.48.2 acquisition-mode propagation remain unchanged. The historical v1.19.0-rc2 brokerage-probe state remains historical and is not promoted by this release. The historical v1.39 colourful allocation view was not included in v1.38.1; that sequencing remains documented. Trade Republic provider-specific statement parsing remains in its Gateway; this release does not move PDF parsing into Portfolio Architect. authenticated DKB FinTS acquisition remains disabled. No trading, order, transfer, payment, or transaction-history capability is introduced.
 
 ## Preserved boundaries
 
@@ -41,7 +38,8 @@ The v1.33.0 source-freshness and plan-schedule separation remains anchored to th
 - presentation schema 2 and broker schemas 1/2/3: unchanged;
 - Comdirect `live_api`/`csv` arbitration and no-fallback semantics: unchanged;
 - DKB CSV and Trade Republic PDF acquisition/parsing: unchanged;
+- v1.48 acquisition-aware freshness and explicit thresholds: unchanged;
 - source-set atomicity, Home Assistant LKG, planner economics, funding topology and execution-path behavior: unchanged;
 - verified private-PKI HTTPS, bearer authentication, Supervisor trust discovery, DNS pinning and no-plaintext fallback: unchanged;
-- no trading, order, transfer, payment, transaction-history, sell, or withdrawal capability is added; and
+- no trading, order, transfer, payment, transaction-history, sell or withdrawal capability is added; and
 - no dashboard YAML replacement is required.

@@ -11,7 +11,6 @@ from .importers import (
     CsvSourceConfig,
     inspect_csv_headers,
     parse_number,
-    read_comdirect_positions,
     read_generic_positions,
     read_positions,
 )
@@ -41,7 +40,6 @@ __all__ = [
     "inspect_csv_headers",
     "load_yaml",
     "parse_de_number",
-    "read_comdirect_positions",
     "read_generic_positions",
     "read_positions",
 ]

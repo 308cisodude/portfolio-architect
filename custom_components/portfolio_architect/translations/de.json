@@ -10,7 +10,7 @@
           "config_directory": "Verzeichnis der Portfolio-Konfiguration"
         },
         "data_description": {
-          "source_provider": "Comdirect-CSV, eine zugeordnete allgemeine CSV oder den lokalen REST-JSON-Gateway-Vertrag auswählen.",
+          "source_provider": "Eine zugeordnete allgemeine CSV oder den lokalen REST-JSON-Gateway-Vertrag auswählen.",
           "config_directory": "Relativ zu /config. Muss portfolio.yaml, policy.yaml, instruments.yaml und broker.yaml enthalten; exceptions.yaml ist optional."
         }
       },
@@ -22,7 +22,7 @@
           "config_directory": "Verzeichnis der Portfolio-Konfiguration"
         },
         "data_description": {
-          "source_provider": "Comdirect-CSV, eine zugeordnete allgemeine CSV oder den lokalen REST-JSON-Gateway-Vertrag auswählen.",
+          "source_provider": "Eine zugeordnete allgemeine CSV oder den lokalen REST-JSON-Gateway-Vertrag auswählen.",
           "config_directory": "Relativ zu /config. Muss portfolio.yaml, policy.yaml, instruments.yaml und broker.yaml enthalten; exceptions.yaml ist optional."
         }
       },
@@ -100,16 +100,6 @@
           "rest_api_token": "Dediziertes Bearer-Token für dieses Gateway. Das TLS-Vertrauen wird separat über die Supervisor-Erkennung bereitgestellt."
         }
       },
-      "hassio_migrate_comdirect_csv_confirm": {
-        "title": "Legacy-Comdirect-CSV zum Comdirect-Gateway migrieren",
-        "description": "Home Assistant Supervisor hat {gateway} erkannt. Vor der Migration dieselbe Comdirect-Depot-CSV in das Gateway importieren und dort den CSV-Erwerbsmodus ausdrücklich aktivieren. Das Bearer-Token des Gateways eingeben. Portfolio Architect verlangt verifiziertes Private-CA-HTTPS, passende Provider-Identität, Health-Schema 7, ausdrücklich aktiven CSV-Modus, Snapshot-Integrität und exakt identische kanonische Bestände, bevor die bisherige lokale CSV-Quelle ersetzt wird.",
-        "data": {
-          "rest_api_token": "Bearer-Token des Gateways"
-        },
-        "data_description": {
-          "rest_api_token": "Dediziertes Bearer-Token für das Comdirect-Gateway. HTTPS-Endpunkt und private CA werden über die Supervisor-Erkennung bereitgestellt."
-        }
-      },
       "hassio_add_supplemental_confirm": {
         "title": "Entdecktes Portfolio-Architect-Gateway sicher hinzufügen",
         "description": "Home Assistant Supervisor hat {provider} unter {gateway} erkannt und dessen private CA bereitgestellt. Das vorhandene Bearer-Token dieses Gateways eingeben, um es als zusätzliche Portfolioquelle zu validieren und hinzuzufügen.",
@@ -128,8 +118,7 @@
       "invalid_provider": "Einen unterstützten Quelladapter auswählen.",
       "invalid_csv_format": "Die CSV-Kopfzeile konnte mit diesen Formateinstellungen nicht gelesen werden.",
       "invalid_rest_source": "Das lokale REST-Gateway oder seine JSON-Antwort erfüllt den begrenzten Portfolio-Architect-Quellvertrag nicht.",
-      "invalid_auth": "Das lokale REST-Gateway hat das Bearer-Token abgelehnt.",
-      "comdirect_gateway_migration_mismatch": "Der CSV-Snapshot des Comdirect-Gateways entsprach nicht exakt der konfigurierten bisherigen Comdirect-CSV-Quelle, oder das Gateway war nicht fehlerfrei im ausdrücklich aktivierten CSV-Erwerbsmodus. Die Quellenkonfiguration wurde nicht geändert."
+      "invalid_auth": "Das lokale REST-Gateway hat das Bearer-Token abgelehnt."
     },
     "abort": {
       "already_configured": "Portfolio Architect ist bereits konfiguriert. Verwende bei der vorhandenen Integration „Neu konfigurieren“, um die Quelle zu ändern.",
@@ -143,8 +132,7 @@
       "tls_already_configured": "Dieses Gateway verwendet bereits das entdeckte verifizierte HTTPS-Vertrauen.",
       "tls_validation_failed": "Der entdeckte HTTPS-Endpunkt konnte mit der bereitgestellten privaten CA und dem vorhandenen Bearer-Token nicht validiert werden.",
       "tls_migrated": "Die passende Gateway-Quelle wurde erfolgreich auf verifiziertes HTTPS migriert.",
-      "tls_supplemental_added": "Das entdeckte Gateway wurde validiert und als zusätzliche verifizierte HTTPS-Quelle hinzugefügt.",
-      "comdirect_gateway_migrated": "Der CSV-Snapshot des Comdirect-Gateways entsprach exakt der bisherigen Comdirect-CSV-Quelle. Portfolio Architect hat die lokale CSV-Quelle atomar durch das Comdirect-Gateway mit verifiziertem HTTPS ersetzt."
+      "tls_supplemental_added": "Das entdeckte Gateway wurde validiert und als zusätzliche verifizierte HTTPS-Quelle hinzugefügt."
     }
   },
   "entity": {
@@ -1238,7 +1226,6 @@
       "source_provider": {
         "name": "Quellanbieter",
         "state": {
-          "comdirect_csv": "Comdirect-CSV",
           "generic_csv": "Allgemeine CSV",
           "local_rest_json": "Lokales REST-JSON",
           "multi_source": "Portfolio aus mehreren Quellen"
@@ -2820,7 +2807,6 @@
     },
     "source_provider": {
       "options": {
-        "comdirect_csv": "Comdirect-Depot-CSV",
         "generic_csv": "Allgemeine zugeordnete CSV",
         "local_rest_json": "Lokales REST-JSON-Gateway",
         "multi_source": "Portfolio aus mehreren Quellen"

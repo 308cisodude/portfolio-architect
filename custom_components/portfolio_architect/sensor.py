@@ -32,7 +32,7 @@ from .allocation_overview import allocation_overview_state, build_allocation_ove
 from .decision_trace import PLAN_CHANGE_STATES
 from .coordinator import PortfolioArchitectCoordinator
 from .engine.aggregation import PROVIDER_MULTI_SOURCE
-from .engine.importers import PROVIDER_COMDIRECT, PROVIDER_GENERIC_CSV
+from .engine.importers import PROVIDER_GENERIC_CSV
 from .engine.rest import PROVIDER_LOCAL_REST_JSON
 from .execution_semantics import PLAN_ACTIONABILITY_STATES, derive_plan_actionability
 from .execution_path import EXECUTION_PATH_MODES, EXECUTION_PATH_SCHEMA_VERSION, build_execution_path
@@ -2483,7 +2483,6 @@ class PortfolioSourceProviderSensor(
     _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_device_class = SensorDeviceClass.ENUM
     _attr_options = [
-        PROVIDER_COMDIRECT,
         PROVIDER_GENERIC_CSV,
         PROVIDER_LOCAL_REST_JSON,
         PROVIDER_MULTI_SOURCE,

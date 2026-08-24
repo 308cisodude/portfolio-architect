@@ -1,4 +1,4 @@
-"""v1.48.2 cadence-aware static evidence freshness regressions."""
+"""v1.49.0 cadence-aware static evidence freshness regressions."""
 
 from __future__ import annotations
 

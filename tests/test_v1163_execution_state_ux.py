@@ -9,18 +9,21 @@ import sys
 ROOT = Path(__file__).parents[1]
 COMPONENT = ROOT / "custom_components" / "portfolio_architect"
 sys.path.insert(0, str(COMPONENT))
+sys.path.insert(0, str(ROOT / "tests"))
+
+from reference_portfolio import (  # noqa: E402
+    REFERENCE_LABEL,
+    REFERENCE_PROVIDER,
+    read_reference_positions,
+)
 
 from engine.calculator import calculate_portfolio_payload_from_positions  # noqa: E402
-from engine.importers import CsvSourceConfig, PROVIDER_COMDIRECT, read_positions  # noqa: E402
 from engine.rest import PROVIDER_LOCAL_REST_JSON  # noqa: E402
 from model import parse_portfolio_data  # noqa: E402
 
 
 def _payload(reserve: str) -> dict:
-    positions = read_positions(
-        ROOT / "tests" / "fixtures" / "comdirect-depot-sanitized.csv",
-        CsvSourceConfig(provider=PROVIDER_COMDIRECT),
-    )
+    positions = read_reference_positions()
     return calculate_portfolio_payload_from_positions(
         positions,
         ROOT / "examples" / "current-plan",
@@ -90,4 +93,4 @@ def test_dashboard_uses_execution_state_not_ambiguous_plan_not_ready() -> None:
 
 
 def test_v1163_version_metadata_is_aligned() -> None:
-    assert 'version = "1.48.2"' in (ROOT / "pyproject.toml").read_text()
+    assert 'version = "1.49.0"' in (ROOT / "pyproject.toml").read_text()

@@ -14,11 +14,17 @@ import yaml
 ROOT = Path(__file__).parents[1]
 COMPONENT = ROOT / "custom_components" / "portfolio_architect"
 sys.path.insert(0, str(COMPONENT))
+sys.path.insert(0, str(ROOT / "tests"))
+
+from reference_portfolio import (  # noqa: E402
+    REFERENCE_LABEL,
+    REFERENCE_PROVIDER,
+    read_reference_positions,
+)
 
 from engine.calculator import calculate_portfolio_payload_from_positions  # noqa: E402
 from engine.execution import ExecutionConfig, choose_funded_route_for_cash  # noqa: E402
 from engine.funding import funding_transfers, transfer_for  # noqa: E402
-from engine.importers import CsvSourceConfig, PROVIDER_COMDIRECT, read_positions  # noqa: E402
 from model import parse_portfolio_data  # noqa: E402
 
 D = Decimal
@@ -190,10 +196,7 @@ def test_contribution_only_does_not_consume_gateway_cash(tmp_path: Path) -> None
     (config_dir / "broker.yaml").write_text(
         yaml.safe_dump(_broker(), sort_keys=False), encoding="utf-8"
     )
-    positions = read_positions(
-        ROOT / "tests" / "fixtures" / "comdirect-depot-sanitized.csv",
-        CsvSourceConfig(provider=PROVIDER_COMDIRECT),
-    )
+    positions = read_reference_positions()
     payload = calculate_portfolio_payload_from_positions(
         positions,
         config_dir,
@@ -253,10 +256,7 @@ def test_full_payload_exposes_provider_cash_and_advisory_transfer(tmp_path: Path
         yaml.safe_dump(_broker(), sort_keys=False), encoding="utf-8"
     )
 
-    positions = read_positions(
-        ROOT / "tests" / "fixtures" / "comdirect-depot-sanitized.csv",
-        CsvSourceConfig(provider=PROVIDER_COMDIRECT),
-    )
+    positions = read_reference_positions()
     payload = calculate_portfolio_payload_from_positions(
         positions,
         config_dir,
