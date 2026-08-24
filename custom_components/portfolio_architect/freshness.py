@@ -53,6 +53,34 @@ def default_freshness_thresholds(
     }
 
 
+def annotate_source_acquisition_modes(
+    source_summaries: Iterable[dict[str, Any]],
+    acquisition_modes: Mapping[str, str | None],
+) -> tuple[dict[str, Any], ...]:
+    """Return source summaries annotated with the latest Gateway acquisition modes.
+
+    Only providers explicitly present in ``acquisition_modes`` are changed.  A
+    ``None`` mode deliberately removes any older annotation so a schema downgrade
+    or legacy health response falls back to the conservative provider evidence
+    class instead of retaining a stale static classification.
+    """
+    modes = {str(provider): mode for provider, mode in acquisition_modes.items()}
+    rows: list[dict[str, Any]] = []
+    for item in source_summaries:
+        if not isinstance(item, dict):
+            continue
+        row = dict(item)
+        provider = row.get("provider")
+        if isinstance(provider, str) and provider in modes:
+            mode = modes[provider]
+            if isinstance(mode, str) and mode.strip():
+                row["acquisition_mode"] = mode.strip().lower()
+            else:
+                row.pop("acquisition_mode", None)
+        rows.append(row)
+    return tuple(rows)
+
+
 def evidence_kind(provider: str, acquisition_mode: str | None = None) -> str:
     """Return a bounded provider/acquisition-aware holdings evidence kind."""
     token = str(provider or "").strip().lower()

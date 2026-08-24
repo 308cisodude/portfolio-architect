@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 import logging
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import STATE_UNAVAILABLE, STATE_UNKNOWN
@@ -103,6 +103,7 @@ from .engine.models import Position
 from .engine.rest import PROVIDER_LOCAL_REST_JSON, RestInvestmentCash, RestSnapshot
 from .last_known_good import RestLastKnownGoodStore, configuration_fingerprint
 from .freshness import (
+    annotate_source_acquisition_modes,
     cash_evidence_kind,
     default_freshness_thresholds,
     evidence_kind as source_evidence_kind,
@@ -1447,6 +1448,27 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
         self.supplemental_source_errors = {}
 
         if reuse_existing_data:
+            primary_provider_id = (
+                self.gateway_health.provider_id
+                if self.gateway_health is not None and self.gateway_health.provider_id is not None
+                else (
+                    str(self.source_summaries[0].get("provider"))
+                    if self.source_summaries
+                    and isinstance(self.source_summaries[0].get("provider"), str)
+                    else PROVIDER_LOCAL_REST_JSON
+                )
+            )
+            self.source_summaries = annotate_source_acquisition_modes(
+                self.source_summaries,
+                {
+                    primary_provider_id: (
+                        self.gateway_health.acquisition_mode
+                        if self.gateway_health is not None
+                        and self.gateway_health.acquisition_mode is not None
+                        else "unknown"
+                    )
+                },
+            )
             if result.snapshot_sha256 is not None:
                 self._rest_snapshot_sha256 = result.snapshot_sha256
             if result.position_count is not None:
@@ -1507,7 +1529,26 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
 
         self.primary_positions = dict(positions)
         self.supplemental_source_errors = {}
-        self._apply_aggregation(aggregation)
+        primary_provider_id = (
+            self.gateway_health.provider_id
+            if self.gateway_health is not None and self.gateway_health.provider_id is not None
+            else PROVIDER_LOCAL_REST_JSON
+        )
+        self._apply_aggregation(
+            aggregation,
+            acquisition_modes={
+                primary_provider_id: (
+                    self.gateway_health.acquisition_mode
+                    if self.gateway_health is not None
+                    and self.gateway_health.acquisition_mode is not None
+                    else "unknown"
+                ),
+                **{
+                    provider_id: health.acquisition_mode
+                    for provider_id, health in supplemental_health.items()
+                },
+            },
+        )
         self._supplemental_rest_generated_at = {
             item.provider: item.generated_at for item in supplemental_rest_snapshots
         }
@@ -1597,10 +1638,18 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
         )
         return data
 
-    def _apply_aggregation(self, aggregation: AggregationResult) -> None:
+    def _apply_aggregation(
+        self,
+        aggregation: AggregationResult,
+        *,
+        acquisition_modes: Mapping[str, str | None] | None = None,
+    ) -> None:
         """Apply one validated aggregation result to coordinator diagnostics."""
         self.positions = dict(aggregation.positions)
-        self.source_summaries = tuple(item.to_dict() for item in aggregation.sources)
+        self.source_summaries = annotate_source_acquisition_modes(
+            (item.to_dict() for item in aggregation.sources),
+            acquisition_modes or {},
+        )
         self.source_conflicts = tuple(item.to_dict() for item in aggregation.conflicts)
         self.oldest_source_generated_at = aggregation.oldest_generated_at
         self.newest_source_generated_at = aggregation.newest_generated_at
@@ -1985,19 +2034,16 @@ def _aggregation_metadata(
     acquisition_modes: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     provider_ids = tuple(dict.fromkeys(item.provider for item in aggregation.sources))
-    summaries = [item.to_dict() for item in aggregation.sources]
-    modes = acquisition_modes or {}
-    for item in summaries:
-        provider = item.get("provider")
-        mode = modes.get(str(provider))
-        if mode:
-            item["acquisition_mode"] = mode
+    summaries = annotate_source_acquisition_modes(
+        (item.to_dict() for item in aggregation.sources),
+        acquisition_modes or {},
+    )
     return {
         "source_count": len(aggregation.sources),
         "source_providers": [item.provider for item in aggregation.sources],
         "provider_count": len(provider_ids),
         "provider_ids": list(provider_ids),
-        "source_summaries": summaries,
+        "source_summaries": list(summaries),
         "source_conflict_count": len(aggregation.conflicts),
         "source_conflicts": [item.to_dict() for item in aggregation.conflicts],
         "oldest_source_generated_at": aggregation.oldest_generated_at.isoformat(),

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.48.2
+
+- align package metadata with Portfolio Architect v1.48.2
+- provider acquisition/runtime behavior is unchanged; the hotfix is in Home Assistant coordinator source-summary propagation
+
 ## 1.48.1
 
 - align package metadata with Portfolio Architect v1.48.1
