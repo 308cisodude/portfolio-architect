@@ -2666,6 +2666,24 @@ class PortfolioGatewayStatusSensor(
             "retry_after_seconds": (
                 health.retry_after_seconds if health else None
             ),
+            "active_acquisition_method": (
+                health.active_acquisition_method if health else None
+            ),
+            "acquisition_methods": (
+                [item.as_public_dict() for item in health.acquisition_methods]
+                if health else []
+            ),
+            "fallback_policy": health.fallback_policy if health else None,
+            "previous_acquisition_method": (
+                health.previous_acquisition_method if health else None
+            ),
+            "last_acquisition_method_change_at": (
+                health.last_acquisition_method_change_at.isoformat()
+                if health and health.last_acquisition_method_change_at else None
+            ),
+            "last_acquisition_method_change_reason": (
+                health.last_acquisition_method_change_reason if health else None
+            ),
             "attention_reason": self.coordinator.gateway_attention_reason,
             "refresh_overdue": self.coordinator.is_gateway_refresh_overdue(),
             "transport_integrity_verified": (
@@ -3708,6 +3726,36 @@ def _runtime_timestamp(coordinator: PortfolioArchitectCoordinator) -> datetime |
     return coordinator.source_last_updated or coordinator.last_update_success_time
 
 
+def _acquisition_controls(
+    coordinator: PortfolioArchitectCoordinator,
+) -> list[dict[str, Any]]:
+    """Return bounded read-only provider acquisition controls for operator visibility."""
+    health_rows = []
+    if coordinator.gateway_health is not None:
+        health_rows.append(coordinator.gateway_health)
+    health_rows.extend(
+        health for _, health in sorted(coordinator.supplemental_gateway_health.items())
+    )
+    result: list[dict[str, Any]] = []
+    for health in health_rows:
+        if health.provider_id is None or health.active_acquisition_method is None:
+            continue
+        result.append(
+            {
+                "provider_id": health.provider_id,
+                "active_method": health.active_acquisition_method,
+                "methods": [item.as_public_dict() for item in health.acquisition_methods],
+                "fallback_policy": health.fallback_policy,
+                "previous_method": health.previous_acquisition_method,
+                "last_method_change_at": _isoformat(
+                    health.last_acquisition_method_change_at
+                ),
+                "last_method_change_reason": health.last_acquisition_method_change_reason,
+            }
+        )
+    return result
+
+
 def _source_attributes(coordinator: PortfolioArchitectCoordinator) -> dict[str, Any]:
     attributes: dict[str, Any] = {
         "source_type": coordinator.source_type,
@@ -3739,6 +3787,7 @@ def _source_attributes(coordinator: PortfolioArchitectCoordinator) -> dict[str, 
         "plan_actionability_reason": coordinator.plan_actionability_reason,
         "plan_actionability_detail": coordinator.plan_actionability_detail,
         "plan_actionability_detail_de": coordinator.plan_actionability_detail_de,
+        "acquisition_controls": _acquisition_controls(coordinator),
     }
     if coordinator.source_entity_id is not None:
         attributes["source_entity_id"] = coordinator.source_entity_id

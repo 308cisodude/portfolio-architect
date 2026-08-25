@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.53.0
+
+- Add health-schema-8 acquisition control metadata for the fixed `csv` method.
+- Keep mapped-CSV acquisition, fixed `generic_csv` identity and read-only boundary unchanged.
+
 ## 1.52.0
 
 - Keep Generic Import explicitly experimental pending deliberate live Home Assistant exercise.

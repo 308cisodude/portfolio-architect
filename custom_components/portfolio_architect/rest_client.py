@@ -46,6 +46,7 @@ HEALTH_V4_MEDIA_TYPE: Final = "application/vnd.portfolio-architect.health+json;v
 HEALTH_V5_MEDIA_TYPE: Final = "application/vnd.portfolio-architect.health+json;version=5"
 HEALTH_V6_MEDIA_TYPE: Final = "application/vnd.portfolio-architect.health+json;version=6"
 HEALTH_V7_MEDIA_TYPE: Final = "application/vnd.portfolio-architect.health+json;version=7"
+HEALTH_V8_MEDIA_TYPE: Final = "application/vnd.portfolio-architect.health+json;version=8"
 SNAPSHOT_SHA256_HEADER: Final = "X-Portfolio-Snapshot-SHA256"
 SNAPSHOT_POSITION_COUNT_HEADER: Final = "X-Portfolio-Position-Count"
 TLS_DISCOVERY_SCHEMA_VERSION: Final = 1
@@ -113,7 +114,7 @@ class RestSourceConfig:
             "response_limit_bytes": MAX_REST_RESPONSE_BYTES,
             "request_timeout_seconds": REST_REQUEST_TIMEOUT_SECONDS,
             "snapshot_integrity": "sha256_etag_position_count",
-            "requested_health_schema_version": 7,
+            "requested_health_schema_version": 8,
         }
 
 
@@ -353,6 +354,24 @@ async def _async_pinned_local_session(
 
 
 @dataclass(frozen=True, slots=True)
+class GatewayAcquisitionMethod:
+    """One validated, privacy-safe Gateway acquisition method."""
+
+    method_id: str
+    state: str
+    active: bool
+    can_activate: bool
+
+    def as_public_dict(self) -> dict[str, Any]:
+        return {
+            "id": self.method_id,
+            "state": self.state,
+            "active": self.active,
+            "can_activate": self.can_activate,
+        }
+
+
+@dataclass(frozen=True, slots=True)
 class GatewayHealth:
     """Validated, privacy-conscious gateway health state."""
 
@@ -384,6 +403,12 @@ class GatewayHealth:
     retry_after_seconds: int | None = None
     provider_id: str | None = None
     acquisition_mode: str | None = None
+    active_acquisition_method: str | None = None
+    acquisition_methods: tuple[GatewayAcquisitionMethod, ...] = ()
+    fallback_policy: str | None = None
+    previous_acquisition_method: str | None = None
+    last_acquisition_method_change_at: datetime | None = None
+    last_acquisition_method_change_reason: str | None = None
 
 
 def normalise_rest_endpoint(value: Any) -> str:
@@ -531,6 +556,7 @@ async def async_fetch_gateway_health(
     headers = {
         "Accept": ", ".join(
             (
+                HEALTH_V8_MEDIA_TYPE,
                 HEALTH_V7_MEDIA_TYPE,
                 HEALTH_V6_MEDIA_TYPE,
                 HEALTH_V5_MEDIA_TYPE,
@@ -633,6 +659,14 @@ def _parse_gateway_health(payload: Any) -> GatewayHealth:
     }
     v6_fields = v5_fields | {"provider_id"}
     v7_fields = v6_fields | {"acquisition_mode"}
+    v8_fields = v7_fields | {
+        "active_acquisition_method",
+        "acquisition_methods",
+        "fallback_policy",
+        "previous_acquisition_method",
+        "last_acquisition_method_change_at",
+        "last_acquisition_method_change_reason",
+    }
     keys = set(payload)
     if keys == base_fields:
         health_schema_version = 1
@@ -648,6 +682,8 @@ def _parse_gateway_health(payload: Any) -> GatewayHealth:
         health_schema_version = 6
     elif keys == v7_fields and payload.get("health_schema_version") == 7:
         health_schema_version = 7
+    elif keys == v8_fields and payload.get("health_schema_version") == 8:
+        health_schema_version = 8
     else:
         raise PortfolioRestError("Local gateway health document has an unexpected schema")
 
@@ -688,6 +724,12 @@ def _parse_gateway_health(payload: Any) -> GatewayHealth:
     retry_after_seconds = None
     provider_id = None
     acquisition_mode = None
+    active_acquisition_method = None
+    acquisition_methods: tuple[GatewayAcquisitionMethod, ...] = ()
+    fallback_policy = None
+    previous_acquisition_method = None
+    last_acquisition_method_change_at = None
+    last_acquisition_method_change_reason = None
     if health_schema_version >= 2:
         snapshot_sha256 = _parse_optional_sha256(
             payload["snapshot_sha256"], "snapshot_sha256"
@@ -909,6 +951,77 @@ def _parse_gateway_health(payload: Any) -> GatewayHealth:
         ):
             raise PortfolioRestError("Local gateway acquisition mode is invalid")
 
+    if health_schema_version >= 8:
+        active_acquisition_method = payload["active_acquisition_method"]
+        if (
+            not isinstance(active_acquisition_method, str)
+            or re.fullmatch(r"[a-z][a-z0-9_]{1,31}", active_acquisition_method) is None
+            or active_acquisition_method != acquisition_mode
+        ):
+            raise PortfolioRestError("Local gateway active acquisition method is invalid")
+        raw_methods = payload["acquisition_methods"]
+        if not isinstance(raw_methods, list) or not 1 <= len(raw_methods) <= 8:
+            raise PortfolioRestError("Local gateway acquisition method inventory is invalid")
+        parsed_methods: list[GatewayAcquisitionMethod] = []
+        method_ids: set[str] = set()
+        active_count = 0
+        for raw_method in raw_methods:
+            if not isinstance(raw_method, dict) or set(raw_method) != {
+                "id", "state", "active", "can_activate"
+            }:
+                raise PortfolioRestError("Local gateway acquisition method entry is invalid")
+            method_id = raw_method["id"]
+            state = raw_method["state"]
+            active = raw_method["active"]
+            can_activate = raw_method["can_activate"]
+            if (
+                not isinstance(method_id, str)
+                or re.fullmatch(r"[a-z][a-z0-9_]{1,31}", method_id) is None
+                or method_id in method_ids
+            ):
+                raise PortfolioRestError("Local gateway acquisition method ID is invalid")
+            if state not in {"ready", "not_ready", "unavailable", "research_only"}:
+                raise PortfolioRestError("Local gateway acquisition method state is invalid")
+            if not isinstance(active, bool) or not isinstance(can_activate, bool):
+                raise PortfolioRestError("Local gateway acquisition method flags are invalid")
+            if can_activate and state != "ready":
+                raise PortfolioRestError("Non-ready gateway acquisition method is activatable")
+            if active:
+                active_count += 1
+                if method_id != active_acquisition_method or state != "ready":
+                    raise PortfolioRestError("Local gateway active acquisition method is inconsistent")
+            method_ids.add(method_id)
+            parsed_methods.append(GatewayAcquisitionMethod(method_id, state, active, can_activate))
+        if active_count != 1 or active_acquisition_method not in method_ids:
+            raise PortfolioRestError("Local gateway acquisition method inventory lacks one active method")
+        acquisition_methods = tuple(parsed_methods)
+        fallback_policy = payload["fallback_policy"]
+        if fallback_policy != "none":
+            raise PortfolioRestError("Local gateway acquisition fallback policy is invalid")
+        previous_acquisition_method = payload["previous_acquisition_method"]
+        last_acquisition_method_change_at = _parse_optional_health_timestamp(
+            payload["last_acquisition_method_change_at"],
+            "last_acquisition_method_change_at",
+        )
+        last_acquisition_method_change_reason = payload[
+            "last_acquisition_method_change_reason"
+        ]
+        history = (
+            previous_acquisition_method,
+            last_acquisition_method_change_at,
+            last_acquisition_method_change_reason,
+        )
+        if any(value is not None for value in history):
+            if any(value is None for value in history):
+                raise PortfolioRestError("Local gateway acquisition method history is incomplete")
+            if (
+                not isinstance(previous_acquisition_method, str)
+                or previous_acquisition_method not in method_ids
+                or previous_acquisition_method == active_acquisition_method
+                or last_acquisition_method_change_reason != "operator"
+            ):
+                raise PortfolioRestError("Local gateway acquisition method history is invalid")
+
     return GatewayHealth(
         gateway_version=version,
         status=status,
@@ -944,6 +1057,12 @@ def _parse_gateway_health(payload: Any) -> GatewayHealth:
         retry_after_seconds=retry_after_seconds,
         provider_id=provider_id,
         acquisition_mode=acquisition_mode,
+        active_acquisition_method=active_acquisition_method,
+        acquisition_methods=acquisition_methods,
+        fallback_policy=fallback_policy,
+        previous_acquisition_method=previous_acquisition_method,
+        last_acquisition_method_change_at=last_acquisition_method_change_at,
+        last_acquisition_method_change_reason=last_acquisition_method_change_reason,
     )
 
 

@@ -252,9 +252,14 @@ class AppController:
                     else {}
                 ),
             },
-            "gateway": self.gateway_state.health_document(version=7),
+            "gateway": self.gateway_state.health_document(version=8),
             "acquisition": {
                 "mode": acquisition_mode,
+                "control": (
+                    self.acquisition.acquisition_control.as_health_fields()
+                    if self.acquisition is not None
+                    else None
+                ),
                 "static_holdings_available": holdings is not None,
                 "static_holdings_as_of": (
                     holdings.generated_at.isoformat(timespec="seconds") if holdings else None
@@ -401,14 +406,11 @@ class AppController:
             if mode != MODE_LIVE_API:
                 raise ValueError("Static Comdirect acquisition is unavailable")
             return
-        previous = self.acquisition.acquisition_mode
-        if mode == previous:
+        if mode == self.acquisition.acquisition_mode:
             return
-        self.acquisition.set_mode(mode)
-        if not self.gateway_state.refresh(trigger="manual"):
-            self.acquisition.restore_mode(previous)
-            self.gateway_state.refresh(trigger="manual")
-            raise ValueError("Requested Comdirect acquisition mode could not be activated")
+        self.acquisition.activate_mode(
+            mode, lambda: self.gateway_state.refresh(trigger="manual")
+        )
 
     def start_bootstrap(
         self,
@@ -736,7 +738,23 @@ class IngressRequestHandler(BaseHTTPRequestHandler):
             elif path == "/set-acquisition-mode":
                 if set(values) != {"csrf", "mode"}:
                     raise ValueError("Unexpected acquisition-mode form field")
-                self.ingress_server.controller.set_acquisition_mode(_single(values, "mode"))
+                try:
+                    self.ingress_server.controller.set_acquisition_mode(_single(values, "mode"))
+                except GatewayError as err:
+                    _LOGGER.warning(
+                        "Comdirect acquisition-method activation failed: %s",
+                        type(err).__name__,
+                    )
+                    self._see_other("./?acquisition_error=activation_failed")
+                    return
+                except ValueError:
+                    _LOGGER.warning("Comdirect acquisition-method activation was rejected")
+                    self._see_other("./?acquisition_error=activation_failed")
+                    return
+                except Exception:
+                    _LOGGER.exception("Unexpected Comdirect acquisition-method activation failure")
+                    self._empty(HTTPStatus.INTERNAL_SERVER_ERROR)
+                    return
                 accepted = True
             else:
                 if set(values) != {"csrf"}:
@@ -790,7 +808,11 @@ class IngressRequestHandler(BaseHTTPRequestHandler):
 
     def _see_other(self, location: str) -> None:
         """Return one bounded relative Ingress redirect."""
-        if location not in {"./", "./?cash_policy_error=invalid_amount"}:
+        if location not in {
+            "./",
+            "./?cash_policy_error=invalid_amount",
+            "./?acquisition_error=activation_failed",
+        }:
             raise ValueError("Unsupported Ingress redirect target")
         self.send_response(HTTPStatus.SEE_OTHER)
         self.send_header("Location", location)
@@ -901,11 +923,19 @@ class IngressRequestHandler(BaseHTTPRequestHandler):
         account_message = escape(str(account["message"]))
         selected_label = escape(str(account.get("selected_label") or "None selected"))
         cash_policy = document["investment_cash_policy"]
-        cash_policy_error = urlsplit(self.path).query == "cash_policy_error=invalid_amount"
+        query = urlsplit(self.path).query
+        cash_policy_error = query == "cash_policy_error=invalid_amount"
         cash_policy_error_html = (
             '<p class="warn" role="alert">Could not save the authorization policy. '
             'Enter a non-negative EUR amount, for example 1024,00 or 1024.00.</p>'
             if cash_policy_error
+            else ""
+        )
+        acquisition_error = query == "acquisition_error=activation_failed"
+        acquisition_error_html = (
+            '<p class="warn" role="alert">Could not activate the requested acquisition method. '
+            'The previous method remains authoritative. Review readiness and the App log, then retry.</p>'
+            if acquisition_error
             else ""
         )
         cash_policy_mode = str(cash_policy.get("mode") or MODE_ALL_AVAILABLE)
@@ -941,8 +971,18 @@ class IngressRequestHandler(BaseHTTPRequestHandler):
         acquisition_mode = str(acquisition.get("mode") or MODE_LIVE_API)
         live_active = acquisition_mode == MODE_LIVE_API
         csv_active = acquisition_mode == MODE_CSV
-        live_badge = "ACTIVE" if live_active else "INACTIVE"
-        csv_badge = "ACTIVE" if csv_active else "INACTIVE"
+        control = acquisition.get("control") or {}
+        method_rows = {
+            str(item.get("id")): item
+            for item in control.get("acquisition_methods", [])
+            if isinstance(item, dict)
+        }
+        live_method = method_rows.get(MODE_LIVE_API, {})
+        csv_method = method_rows.get(MODE_CSV, {})
+        live_state = str(live_method.get("state") or ("ready" if live_active else "not_ready"))
+        csv_state = str(csv_method.get("state") or ("ready" if csv_active else "not_ready"))
+        live_badge = "ACTIVE" if live_active else live_state.upper().replace("_", " ")
+        csv_badge = "ACTIVE" if csv_active else csv_state.upper().replace("_", " ")
         static_holdings_text = (
             f"Imported holdings available · evidence {acquisition['static_holdings_as_of']}"
             if acquisition.get("static_holdings_available")
@@ -954,13 +994,16 @@ class IngressRequestHandler(BaseHTTPRequestHandler):
             else "No supported Comdirect cash CSV has been imported yet."
         )
         activate_live = (
-            f'<form method="post" action="set-acquisition-mode" autocomplete="off"><input type="hidden" name="csrf" value="{csrf}"><input type="hidden" name="mode" value="live_api"><button type="submit">Activate live API mode</button></form>'
-            if not live_active else ""
+            f'<form method="post" action="set-acquisition-mode" autocomplete="off"><input type="hidden" name="csrf" value="{csrf}"><input type="hidden" name="mode" value="live_api"><button type="submit">Activate live API acquisition</button></form>'
+            if not live_active and live_method.get("can_activate") else ""
         )
         activate_csv = (
-            f'<form method="post" action="set-acquisition-mode" autocomplete="off"><input type="hidden" name="csrf" value="{csrf}"><input type="hidden" name="mode" value="csv"><button type="submit">Activate static CSV mode</button></form>'
-            if not csv_active and acquisition.get("static_holdings_available") else ""
+            f'<form method="post" action="set-acquisition-mode" autocomplete="off"><input type="hidden" name="csrf" value="{csrf}"><input type="hidden" name="mode" value="csv"><button type="submit">Activate static CSV acquisition</button></form>'
+            if not csv_active and csv_method.get("can_activate") else ""
         )
+        fallback_policy = escape(str(control.get("fallback_policy") or "none"))
+        previous_method = escape(str(control.get("previous_acquisition_method") or "not recorded"))
+        last_method_change = escape(str(control.get("last_acquisition_method_change_at") or "not recorded"))
         html = f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Portfolio Architect Gateway — Comdirect</title>
@@ -969,6 +1012,7 @@ class IngressRequestHandler(BaseHTTPRequestHandler):
 </style></head><body><main>
 <h1>Portfolio Architect Gateway — Comdirect</h1>
 <section><h2>Runtime status</h2><p>Gateway: <strong id="gateway-status" class="{status_class}">{escape(str(gateway['status']))}</strong></p><p>Gateway operating mode: <strong id="operating-mode" class="{status_class}">{operating_mode}</strong></p><p>Acquisition mode: <strong id="acquisition-mode">{escape(acquisition_mode)}</strong></p><p>Refresh state: <strong id="refresh-state">{escape(refresh_state)}</strong></p><p>Last refresh trigger: <strong id="refresh-trigger">{escape(str(refresh_trigger))}</strong></p><p>Last refresh duration: <strong id="refresh-duration">{escape(refresh_duration_text)}</strong></p><p>Next scheduled refresh: <strong id="next-refresh">{escape(str(next_refresh))}</strong></p><p>Snapshot age: <strong id="snapshot-age">{escape(snapshot_age_text)}</strong></p><p>Consecutive refresh failures: <strong id="refresh-failures">{escape(str(refresh_failures if refresh_failures is not None else 'unavailable'))}</strong></p><p>Last failure class: <strong id="failure-class">{escape(str(failure_class))}</strong></p><p>Last failure at: <strong id="failure-at">{escape(str(last_failure))}</strong></p><p>Recommended action: <strong id="recommended-action">{escape(str(recommended_action))}</strong></p><p>Retry after: <strong id="retry-after">{escape(retry_after_text)}</strong></p><p>Snapshot integrity: <strong id="snapshot-integrity" class="{status_class}">{snapshot_integrity}</strong></p><p>Snapshot positions: <strong id="snapshot-count">{escape(str(snapshot_count if snapshot_count is not None else 'unavailable'))}</strong></p><p>Snapshot fingerprint: <code id="snapshot-fingerprint">{escape(snapshot_fingerprint)}</code></p></section>
+<section><h2>Acquisition control</h2>{acquisition_error_html}<p>Active method: <strong>{escape(acquisition_mode)}</strong></p><p>Automatic fallback: <strong>{fallback_policy}</strong></p><p>Previous method: <strong>{previous_method}</strong></p><p>Last explicit method change: <strong>{last_method_change}</strong></p><p class="small">Prepare an inactive method first, then activate it explicitly. Method switching is provider-local and atomic; Portfolio Architect remains a read-only consumer of the canonical Gateway snapshot.</p></section>
 <section class="live-card"><div class="mode-head"><h2>Live acquisition · Comdirect API</h2><span class="badge">{live_badge}</span></div><p>The authenticated Comdirect API is authoritative for both holdings and investment cash while this mode is active. A failed API refresh never falls back to imported CSV evidence.</p>{activate_live}
 <div class="subsection"><h3>Live portfolio refresh</h3><form method="post" action="refresh" autocomplete="off"><input type="hidden" name="csrf" value="{csrf}"><button type="submit">Refresh portfolio now</button></form><p class="small">Manual refresh is an explicit API action and is rate-limited to one request per minute.</p></div>
 <div class="subsection"><h3>Dedicated investment account</h3><p>State: <strong id="investment-account-state">{account_state}</strong></p><p id="investment-account-message">{account_message}</p><p>Selected: <strong id="investment-account-selected">{selected_label}</strong></p><form method="post" action="discover-accounts" autocomplete="off"><input type="hidden" name="csrf" value="{csrf}"><button type="submit">Discover eligible EUR accounts</button></form>{selection_form}{clear_form}<p class="small">Account discovery is an explicit live API action. The account identifier remains App-private.</p></div>
@@ -976,7 +1020,7 @@ class IngressRequestHandler(BaseHTTPRequestHandler):
 <section class="static-card"><div class="mode-head"><h2>Static acquisition · Comdirect CSV</h2><span class="badge">{csv_badge}</span></div><p>Static mode is completely local: depot holdings and Girokonto cash are imported independently. Automatic API polling and OAuth session maintenance are disabled while static mode is active.</p>{activate_csv}
 <div class="subsection"><h3>Depot holdings CSV</h3><p>{escape(static_holdings_text)}</p><form method="post" action="import-holdings" enctype="multipart/form-data"><input type="hidden" name="csrf" value="{csrf}"><label for="holdings-statement">Comdirect depot CSV</label><input id="holdings-statement" type="file" name="statement" accept="text/csv,.csv" required><button type="submit">Import holdings CSV</button></form><p class="small">The raw CSV and filename are discarded. The supported securities table is normalized in memory; import time is the evidence timestamp because this CSV family has no trustworthy bank-issued export timestamp.</p></div>
 <div class="subsection"><h3>Investment cash CSV</h3><p>{escape(static_cash_text)}</p><form method="post" action="import-cash" enctype="multipart/form-data"><input type="hidden" name="csrf" value="{csrf}"><label for="cash-statement">Comdirect Girokonto transactions CSV</label><input id="cash-statement" type="file" name="statement" accept="text/csv,.csv" required><button type="submit">Import cash CSV</button></form><p class="small">Only an explicit closing/current balance is accepted as cash evidence. Transaction rows are structurally validated and discarded; Portfolio Architect never reconstructs a balance by summing transaction history. If the export omits an explicit closing balance, it is rejected fail-closed.</p></div>
-<p class="warn">Importing files while live API mode is active only stages static evidence. It cannot silently activate CSV mode. Likewise, static mode never calls the API as a fallback.</p></section>
+<p class="warn">Importing files while live API mode is active only stages static evidence. Both holdings and cash evidence are required before inactive CSV becomes READY for activation. It cannot silently activate CSV mode. Likewise, static mode never calls the API as a fallback.</p></section>
 <section><h2>Investment cash authorization</h2>{cash_policy_error_html}<form method="post" action="set-cash-policy" autocomplete="off"><input type="hidden" name="csrf" value="{csrf}"><label for="cash-policy-mode">Authorization policy</label><select id="cash-policy-mode" name="mode" required><option value="all_available"{all_available_selected}>All eligible cash</option><option value="capped"{capped_selected}>Cap authorized cash</option><option value="retain"{retain_selected}>Keep cash reserve</option></select><label for="cash-policy-cap">Authorization cap in EUR</label><input id="cash-policy-cap" name="cap_eur" inputmode="decimal" maxlength="16" value="{escape(cash_policy_cap, quote=True)}"><label for="cash-policy-retain">Cash reserve to keep unallocated in EUR</label><input id="cash-policy-retain" name="retain_eur" inputmode="decimal" maxlength="16" value="{escape(cash_policy_retain, quote=True)}"><button type="submit">Save authorization policy</button></form><p class="small">This provider-owned policy applies to whichever acquisition mode is active. Static CSV cash uses the explicit positive account balance as eligible cash; a zero or negative balance authorizes EUR 0.</p></section>
 <section><h2>Home Assistant connection</h2><label>Endpoint</label><code>{endpoint}</code><label>Bearer token</label><code>{token}</code><p class="small">Verified private-PKI HTTPS and the dedicated bearer token are independent trust factors. The token and normalized state remain App-private.</p></section>
 <script>
@@ -1180,7 +1224,10 @@ def serve_app(
     api_token = ensure_api_token(config.server.api_token_file)
     client = ComdirectClient(config.comdirect)
     acquisition = ComdirectAcquisitionProvider(
-        client, data_directory, config.comdirect.investment_cash_policy_file
+        client,
+        data_directory,
+        config.comdirect.investment_cash_policy_file,
+        config.server.snapshot_file,
     )
     state = GatewayState(config.server, acquisition)
     controller = AppController(

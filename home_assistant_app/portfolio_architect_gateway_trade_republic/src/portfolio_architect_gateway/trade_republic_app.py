@@ -312,7 +312,7 @@ class TradeRepublicIngressHandler(ProviderShellIngressHandler):
         return _parse_multipart_body(body, boundary_bytes)
 
     def _render_import_page(self) -> bytes:
-        health = self.tr_server.gateway_state.health_document(version=7)
+        health = self.tr_server.gateway_state.health_document(version=8)
         name = escape(self.tr_server.provider_name)
         provider_id = escape(str(health.get("provider_id", "unknown")))
         status = escape(str(health.get("status", "degraded")))

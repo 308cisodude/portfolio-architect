@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.53.0
+
+- Adds provider-neutral Gateway health schema 8 acquisition control-plane metadata: active method, bounded method inventory/readiness, explicit `fallback_policy: none`, and bounded operator switch history while retaining health schemas 1–7.
+- Makes Comdirect `live_api` / `csv` switching explicitly staged and crash-safe: inactive CSV becomes activatable only after both holdings and cash evidence are present, activation performs a real candidate validation, interrupted/failed publication restores the exact pre-switch control state, and an ambiguous cached snapshot is discarded on interrupted-switch recovery.
+- Treats corrupt inactive Comdirect CSV candidate evidence as not-ready without disrupting the active live source, and gives expected activation failures bounded Ingress feedback instead of an unhandled request failure.
+- Keeps Portfolio Architect read-only: it displays provider acquisition controls and provenance but cannot remotely change a Gateway acquisition method.
+- Advertises DKB `csv` active with `fints` research-only, Trade Republic `pdf` active with live acquisition unavailable, and Generic Import as fixed `csv`; no authenticated DKB FinTS research is advanced.
+- Preserves provider identity, REST portfolio schema 1, payload schema 8, freshness/evidence clocks, planner economics, private-PKI/LKG semantics and the advisory/no-money-movement boundary.
+
 ## 1.52.0
 
 - Promotes the Home Assistant App stage for the live-proven DKB CSV holdings/cash Gateway and Trade Republic PDF holdings/cash Gateway from `experimental` to `stable`.

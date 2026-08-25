@@ -1,4 +1,4 @@
-"""v1.52.0 source-architecture UX and DKB probe observability contracts."""
+"""v1.53.0 source-architecture UX and DKB probe observability contracts."""
 from __future__ import annotations
 
 import ast
@@ -162,8 +162,8 @@ def test_dkb_probe_persists_server_side_dispatch_timestamp(tmp_path: Path, monke
 
     class DummyState:
         def health_document(self, *, version: int):
-            assert version == 7
-            return {"health_schema_version": 7}
+            assert version == 8
+            return {"health_schema_version": 8}
 
     status = controller.status_document(DummyState())
     assert status["fints"]["probe_sent_at"] == sent_at

@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.53.0
+
+- Add health-schema-8 acquisition control-plane reporting for `live_api` and `csv`.
+- Require complete inactive CSV holdings + cash evidence before activation; validate and publish method changes atomically with crash-safe pending-state recovery and rollback on failure.
+- Treat corrupt inactive CSV evidence as not-ready without disrupting live acquisition, and bound activation-failure feedback in Ingress.
+- Keep automatic cross-method fallback disabled and keep acquisition administration inside the Comdirect Gateway.
+
 ## 1.52.0
 
 - Align package metadata with Portfolio Architect v1.52.0 Gateway maturity/status cleanup.

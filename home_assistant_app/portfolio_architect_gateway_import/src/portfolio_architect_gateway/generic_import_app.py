@@ -266,7 +266,7 @@ class GenericImportIngressHandler(ProviderShellIngressHandler):
         return _parse_multipart_body(body, boundary_bytes)
 
     def _render_page(self) -> bytes:
-        health = self.import_server.gateway_state.health_document(version=7)
+        health = self.import_server.gateway_state.health_document(version=8)
         try:
             mapping = self.import_server.load_mapping()
             mapping_error = ""
