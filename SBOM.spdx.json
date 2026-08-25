@@ -8,7 +8,7 @@
   },
   "dataLicense": "CC0-1.0",
   "documentNamespace": "urn:uuid:23edf9a1-e108-5dc7-ab27-2d629b4c13c2",
-  "name": "Portfolio Architect v1.51.1 SBOM",
+  "name": "Portfolio Architect v1.52.0 SBOM",
   "packages": [
     {
       "SPDXID": "SPDXRef-Package-Integration",
@@ -19,7 +19,7 @@
       "licenseDeclared": "MIT",
       "name": "Portfolio Architect Home Assistant integration",
       "supplier": "Organization: Portfolio Architect contributors",
-      "versionInfo": "1.51.1"
+      "versionInfo": "1.52.0"
     },
     {
       "SPDXID": "SPDXRef-Package-Gateway",
@@ -30,7 +30,7 @@
       "licenseDeclared": "MIT",
       "name": "Portfolio Architect Gateway \u2014 Comdirect App",
       "supplier": "Organization: Portfolio Architect contributors",
-      "versionInfo": "1.51.1"
+      "versionInfo": "1.52.0"
     },
     {
       "SPDXID": "SPDXRef-Package-PythonBase",
@@ -58,7 +58,7 @@
       "licenseDeclared": "MIT",
       "name": "Portfolio Architect Gateway \u2014 DKB App",
       "supplier": "Organization: Portfolio Architect contributors",
-      "versionInfo": "1.51.1"
+      "versionInfo": "1.52.0"
     },
     {
       "SPDXID": "SPDXRef-Package-Gateway-TradeRepublic",
@@ -68,7 +68,17 @@
       "licenseDeclared": "MIT",
       "name": "Portfolio Architect Gateway \u2014 Trade Republic App",
       "supplier": "Organization: Portfolio Architect contributors",
-      "versionInfo": "1.51.1"
+      "versionInfo": "1.52.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-Gateway-GenericImport",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "name": "Portfolio Architect Gateway \u2014 Generic Import App",
+      "supplier": "Organization: Portfolio Architect contributors",
+      "versionInfo": "1.52.0"
     },
     {
       "SPDXID": "SPDXRef-Package-pypdf",
@@ -134,6 +144,11 @@
       "spdxElementId": "SPDXRef-DOCUMENT"
     },
     {
+      "relatedSpdxElement": "SPDXRef-Package-Gateway-GenericImport",
+      "relationshipType": "DESCRIBES",
+      "spdxElementId": "SPDXRef-DOCUMENT"
+    },
+    {
       "relatedSpdxElement": "SPDXRef-Package-PythonBase",
       "relationshipType": "DEPENDS_ON",
       "spdxElementId": "SPDXRef-Package-Gateway-DKB"
@@ -162,6 +177,16 @@
       "relatedSpdxElement": "SPDXRef-Package-OpenSSL",
       "relationshipType": "DEPENDS_ON",
       "spdxElementId": "SPDXRef-Package-Gateway-TradeRepublic"
+    },
+    {
+      "relatedSpdxElement": "SPDXRef-Package-PythonBase",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-Gateway-GenericImport"
+    },
+    {
+      "relatedSpdxElement": "SPDXRef-Package-OpenSSL",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-Gateway-GenericImport"
     }
   ],
   "spdxVersion": "SPDX-2.3"

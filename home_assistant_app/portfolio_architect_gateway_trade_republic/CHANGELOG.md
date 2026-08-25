@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.52.0
+
+- Graduate the App-level Trade Republic Gateway stage from experimental to stable for the live-proven DEPOTAUSZUG holdings and KONTOAUSZUG cash PDF acquisition paths.
+- Statement parsing, evidence timestamps, private persistence, verified HTTPS and REST behavior are unchanged from v1.51.1.
+
 ## 1.50.0
 
 - align package metadata with Portfolio Architect v1.50.0 source-management UX

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.52.0
+
+- Align package metadata with Portfolio Architect v1.52.0 Gateway maturity/status cleanup.
+- Comdirect remains stable; acquisition, OAuth/session, live/static arbitration and security behavior are unchanged from v1.51.1.
+
 ## 1.50.0
 
 - align package metadata with Portfolio Architect v1.50.0 source-management UX

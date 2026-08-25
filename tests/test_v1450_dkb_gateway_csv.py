@@ -106,7 +106,7 @@ def test_dkb_app_is_autostart_csv_source_but_fints_stays_separate() -> None:
     fints = (PACKAGE / "dkb_fints.py").read_text(encoding="utf-8")
     assert config["environment"]["PA_PROVIDER_ID"] == "dkb"
     assert config["boot"] == "auto"
-    assert config["stage"] == "experimental"
+    assert config["stage"] == "stable"
     assert "parse_dkb_csv_batch" in app
     assert 'path == "/import-csv"' in app
     assert "FinTS cannot replace or silently fall back to CSV evidence" in app

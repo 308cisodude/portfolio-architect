@@ -645,7 +645,16 @@ Live acceptance of v1.45.0 proved the exact atomic DKB source cut-over but expos
 - Add executable schema-12 all-Gateway source-attribute coverage so entity evaluation is proven without any `local_paths` member.
 - Keep all Gateway acquisition, freshness, planner, schema, private-PKI/LKG and advisory-only contracts unchanged.
 
-## After v1.51.0 — provider acquisition architecture
+## v1.52.0 — capability-scoped Gateway maturity
+
+- Graduate the live-proven DKB depot/cash CSV Gateway and Trade Republic holdings/cash PDF Gateway from App-level experimental status to stable.
+- Keep the anonymous DKB FinTS BPD probe explicitly experimental/research-only inside the stable DKB App; authenticated FinTS remains unavailable and independently gated.
+- Keep Generic Import experimental until its provider-neutral mapped-CSV path receives deliberate live Home Assistant exercise.
+- Provide a wholly synthetic standalone Generic Import smoke that does not join or alter an existing real portfolio source set.
+- Align provider docs, translations, release verification and SPDX inventory with the four-App capability-scoped maturity model.
+- Preserve provider acquisition, freshness, evidence clocks, planner economics, schemas, private-PKI/LKG behavior and the advisory-only boundary.
+
+## After v1.52.0 — provider acquisition architecture
 
 - Provider-specific and provider-neutral acquisition formats now live outside Portfolio Architect. Future source work should extend isolated Gateway providers rather than reintroduce acquisition logic into the Home Assistant integration.
 

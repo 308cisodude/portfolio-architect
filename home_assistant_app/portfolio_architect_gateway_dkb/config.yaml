@@ -1,7 +1,7 @@
 name: Portfolio Architect Gateway — DKB
-version: 1.51.1
+version: 1.52.0
 slug: portfolio_architect_gateway_dkb
-description: Bounded local DKB depot-CSV holdings plus Girokonto cash CSV evidence with isolated anonymous FinTS capability probe; authenticated FinTS remains disabled.
+description: Stable bounded local DKB depot-CSV holdings plus Girokonto cash CSV evidence; includes an isolated experimental anonymous FinTS capability probe for research while authenticated FinTS remains disabled.
 url: https://developers.home-assistant.io/docs/apps/
 arch:
 - amd64
@@ -31,7 +31,7 @@ ports:
 ports_description:
   8787/tcp: Verified-HTTPS Portfolio Architect REST endpoint; leave host mapping disabled
 watchdog: tcp://[HOST]:[PORT:8787]
-stage: experimental
+stage: stable
 environment:
   PA_PROVIDER_ID: dkb
   PA_PROVIDER_NAME: DKB

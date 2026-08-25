@@ -1,7 +1,7 @@
 name: Portfolio Architect Gateway — Trade Republic
-version: 1.51.1
+version: 1.52.0
 slug: portfolio_architect_gateway_trade_republic
-description: Isolated Trade Republic Gateway with verified private-PKI HTTPS, local private DEPOTAUSZUG holdings and KONTOAUSZUG cash statement PDF import, and provider-neutral read-only portfolio service.
+description: Stable isolated Trade Republic Gateway with verified private-PKI HTTPS, local private DEPOTAUSZUG holdings and KONTOAUSZUG cash statement PDF import, and provider-neutral read-only portfolio service.
 url: https://developers.home-assistant.io/docs/apps/
 arch:
 - amd64
@@ -31,7 +31,7 @@ ports:
 ports_description:
   8787/tcp: Verified-HTTPS Portfolio Architect REST endpoint; leave host mapping disabled
 watchdog: tcp://[HOST]:[PORT:8787]
-stage: experimental
+stage: stable
 environment:
   PA_PROVIDER_ID: trade_republic
   PA_PROVIDER_NAME: Trade Republic

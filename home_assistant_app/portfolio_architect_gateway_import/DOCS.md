@@ -1,4 +1,6 @@
-# Portfolio Architect Gateway — Generic Import v1.51.1
+# Portfolio Architect Gateway — Generic Import v1.52.0
+
+Version 1.52.0 keeps Generic Import explicitly **experimental** pending deliberate live Home Assistant exercise. Its fixed `generic_csv` identity, transient raw CSV handling, canonical holdings-only persistence, verified private-PKI transport and read-only boundary are unchanged from v1.51.1.
 
 The Generic Import Gateway is the provider-neutral escape hatch for holdings sources that do not have a dedicated Portfolio Architect provider Gateway. It accepts one explicitly mapped CSV through Home Assistant's admin-only Ingress UI and publishes only the resulting canonical schema-1 portfolio snapshot over the same authenticated verified-HTTPS boundary as the official provider Gateways.
 

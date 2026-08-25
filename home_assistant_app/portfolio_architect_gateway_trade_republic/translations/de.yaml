@@ -1,7 +1,7 @@
 configuration:
   max_cached_snapshot_age_seconds:
     name: Maximales Alter des Zwischenspeichers
-    description: Reservierte Altersgrenze für Provider-Snapshots; diese Version erzeugt noch keinen Live-Snapshot.
+    description: Maximales Alter des aktiven importierten Trade-Republic-Gateway-Snapshots für Portfolio Architect.
   health_endpoint_enabled:
     name: Authentifizierten Status-Endpunkt aktivieren
     description: Stellt /healthz am privaten REST-Dienst bereit; der Bearer-Token bleibt erforderlich.

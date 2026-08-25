@@ -152,14 +152,14 @@ def verify_gateway_app_archive_layouts(directory: Path, release_version: str) ->
         "portfolio-architect-gateway-dkb-app-v%s.zip" % release_version: (
             "portfolio_architect_gateway_dkb",
             "portfolio_architect_gateway_dkb",
-            "experimental",
+            "stable",
             "dkb",
             "auto",
         ),
         "portfolio-architect-gateway-trade-republic-app-v%s.zip" % release_version: (
             "portfolio_architect_gateway_trade_republic",
             "portfolio_architect_gateway_trade_republic",
-            "experimental",
+            "stable",
             "trade_republic",
             "auto",
         ),
