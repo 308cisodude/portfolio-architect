@@ -7,47 +7,50 @@ contract.
 
 ## Common runtime boundary
 
-The hardened server consumes only a bounded `provider_id`, a validated refresh
-interval and `fetch_snapshot()` returning REST-schema-1 provider-neutral data.
-Gateway health schema 6 adds only the non-secret `provider_id`; schemas 1 through 5
-remain compatible for the established single-primary path.
+The hardened server consumes only a bounded `provider_id`, validated acquisition
+metadata and `fetch_snapshot()` returning REST-schema-1 provider-neutral data.
+Gateway health schema 7 adds bounded `acquisition_mode`; schema 6 carries bounded
+provider identity and schemas 1 through 6 remain accepted for compatibility.
 
-Version 1.24.0 moved server configuration and secret-file handling into
-provider-neutral runtime code. `GatewayState` and `create_server()` consume
-`ServerConfig` directly rather than the complete Comdirect configuration. Version
-1.24.1 corrected reduced-package startup without widening this contract.
+Provider-specific authentication/parsing stays inside its own App. Portfolio
+Architect consumes only canonical Gateway snapshots and never parses official or
+generic acquisition formats itself.
 
-## Official App identities
+## Official App identities and current maturity
 
-| Provider | Display name | App slug | v1.44.0 state |
+| Capability owner | Display name | App slug | v1.52.0 maturity |
 | --- | --- | --- | --- |
-| Comdirect | Portfolio Architect Gateway — Comdirect | `portfolio_architect_gateway` | stable live provider, auto-start |
-| DKB | Portfolio Architect Gateway — DKB | `portfolio_architect_gateway_dkb` | experimental manual-only anonymous FinTS capability probe; no live portfolio acquisition |
-| Trade Republic | Portfolio Architect Gateway — Trade Republic | `portfolio_architect_gateway_trade_republic` | experimental statement-import provider, auto-start |
+| Comdirect | Portfolio Architect Gateway — Comdirect | `portfolio_architect_gateway` | **stable** — live API or explicit static CSV, auto-start |
+| DKB | Portfolio Architect Gateway — DKB | `portfolio_architect_gateway_dkb` | **stable** — depot/cash CSV, auto-start; anonymous FinTS probe remains experimental/research-only |
+| Trade Republic | Portfolio Architect Gateway — Trade Republic | `portfolio_architect_gateway_trade_republic` | **stable** — DEPOTAUSZUG/KONTOAUSZUG PDF import, auto-start |
+| Generic Import | Portfolio Architect Gateway — Generic Import | `portfolio_architect_gateway_import` | **experimental** — provider-neutral mapped CSV, auto-start |
 
 The Comdirect slug is retained permanently so existing credentials, OAuth/session
 state, selected account, cash policy, API token and cached snapshot remain in place.
-DKB and Trade Republic have distinct slugs, therefore Supervisor gives each an
-independent App identity and private `/data` volume.
+Every other App has a distinct slug and independent App-private `/data` volume.
 
-No DKB or Trade Republic acquisition runtime is shipped by v1.24.0; that release
-created only the isolated provider shells.
+The DKB App-level stable marker applies only to its live-proven CSV holdings/cash
+acquisition. It does not imply authenticated FinTS support. The anonymous BPD probe
+remains a separately labelled research capability and cannot replace, refresh or
+silently fall back from CSV evidence.
 
-Version 1.25.0 added only the Trade Republic provider-specific local statement
-importer: before the first accepted `DEPOTAUSZUG` it remains degraded/unavailable;
-after acceptance, `fetch_snapshot()` returns the persisted provider-neutral
-snapshot and the common REST/health server operates normally. Version 1.26.0 changes
-its boot policy to automatic because Portfolio Architect can now keep it configured
-as an ongoing REST contributor. Version 1.41.0 adds a separate `KONTOAUSZUG` cash-statement parser and private sibling cash state. The two Trade Republic evidence families remain independently fail-closed and are composed only into the existing additive REST-schema-1 cash fields; raw PDFs and transaction/account identity data are not persisted. DKB remains manual-only. Version 1.41.1 changes only the Home Assistant-side funded-route tie-break so sufficient execution-provider-local cash wins an otherwise identical cross-provider funding option; provider App acquisition and wire behavior are unchanged. Version 1.42.0 adds only Home Assistant-side normalized execution-path presentation and native reference-dashboard rendering; provider App acquisition and wire behavior remain unchanged. Version 1.43.0 adds only Home Assistant-side route-level execution evidence and native broker-editor capability; provider App acquisition and wire behavior remain unchanged. Version 1.44.0 adds only Home Assistant Configure edit-context/menu consistency; provider App acquisition and wire behavior remain unchanged. Version 1.28.0 added only
-a registration-gated anonymous FinTS BPD capability probe; its provider REST snapshot
-remains fail-closed for authenticated FinTS. v1.45.0 enables bounded local DKB CSV acquisition inside this provider Gateway; v1.45.1 added a bounded stale-snapshot migration read for the exact legacy cut-over; v1.46.0 removes that temporary migration surface after live acceptance and keeps DKB CSV acquisition solely inside the Gateway; v1.47.0 adds an independent DKB Girokonto CSV cash-evidence family that composes through the existing optional schema-1 investment-cash fields without changing provider identity or wire schemas.
+Trade Republic's supported local PDF acquisition is stable. Generic Import remains
+experimental until deliberate live exercise establishes the same operational
+evidence; its fixed provider identity is `generic_csv` and it cannot impersonate an
+official provider.
+
+Historical provider evolution remains documented below: Trade Republic statement
+import arrived in v1.25/v1.41, DKB CSV acquisition in v1.45/v1.47, Comdirect static
+CSV in v1.48, and Generic Import in v1.51.
+
+No DKB or Trade Republic acquisition runtime is shipped by v1.24.0; that historical release created only isolated provider shells.
 
 ## Shared source and packaging rule
 
 Home Assistant builds each App from its own directory. To avoid independent
 implementations drifting, the repository keeps one canonical Gateway Python source
 tree under `gateway/src/portfolio_architect_gateway`. The Comdirect App vendors the
-complete canonical package. DKB/TR vendor only the audited provider-neutral subset
+complete canonical package. DKB/TR/Generic Import vendor only the audited provider-neutral subset
 required by their runtime. `tools/sync_gateway_app_sources.py` performs
 synchronization and regression tests require byte identity.
 

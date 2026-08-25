@@ -1,4 +1,6 @@
-# Portfolio Architect Gateway — Comdirect v1.50.0
+# Portfolio Architect Gateway — Comdirect v1.52.0
+
+Version 1.52.0 aligns the Comdirect package with Portfolio Architect's Gateway maturity/status cleanup. Comdirect remains **stable**. Live API/static CSV arbitration, OAuth/session maintenance, authorized cash, private state and the established live/static Ingress boundary are unchanged from v1.51.1.
 
 Version 1.50.0 aligns the Comdirect App package with Portfolio Architect’s source-management UX milestone. Comdirect `live_api`/`csv` acquisition, static parsers, OAuth/session behavior and the live/static Ingress distinction are unchanged from the live-accepted v1.49.0 baseline.
 

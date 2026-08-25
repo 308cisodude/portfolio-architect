@@ -24,9 +24,9 @@ def test_three_provider_apps_have_unique_stable_identities_and_isolated_storage(
     assert configs["dkb"]["slug"]=="portfolio_architect_gateway_dkb"
     assert configs["trade_republic"]["slug"]=="portfolio_architect_gateway_trade_republic"
     assert len({c["slug"] for c in configs.values()})==3
-    assert all(c["version"]=="1.51.1" for c in configs.values())
+    assert all(c["version"]=="1.52.0" for c in configs.values())
     for key in ("dkb","trade_republic"):
-        assert configs[key]["stage"]=="experimental"
+        assert configs[key]["stage"]=="stable"
         assert configs[key]["host_network"] is False
         assert configs[key]["homeassistant_api"] is False
         assert configs[key]["hassio_api"] is False
@@ -87,12 +87,12 @@ def test_provider_capability_boundaries_are_explicit():
     roadmap=(ROOT/"docs"/"ROADMAP.md").read_text(encoding="utf-8")
     assert "Trade Republic statement import" in roadmap
     assert "multiple Gateway REST aggregation" in roadmap
-    assert "v1.51.1" in roadmap
+    assert "v1.52.0" in roadmap
     assert "HIWPDS" in roadmap
 
 def test_current_release_version_is_1280():
     manifest=json.loads((ROOT/"custom_components"/"portfolio_architect"/"manifest.json").read_text())
-    assert manifest["version"]=="1.51.1"
+    assert manifest["version"]=="1.52.0"
 
 
 def test_protected_workflows_build_all_provider_app_images_before_publication():

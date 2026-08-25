@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.52.0
+
+- Promotes the Home Assistant App stage for the live-proven DKB CSV holdings/cash Gateway and Trade Republic PDF holdings/cash Gateway from `experimental` to `stable`.
+- Keeps the DKB anonymous FinTS BPD capability probe explicitly **EXPERIMENTAL · RESEARCH ONLY** inside the otherwise-stable DKB App; authenticated FinTS acquisition remains disabled and isolated from CSV evidence.
+- Keeps the new Generic Import Gateway experimental pending deliberate live exercise and documents a synthetic standalone smoke that must not join the real portfolio source set.
+- Updates current provider documentation and the SPDX SBOM to reflect the four-App architecture and capability-scoped maturity model.
+- Leaves provider acquisition, freshness, planner economics, schemas, private-PKI/LKG behavior and the advisory-only boundary unchanged.
+
 ## 1.51.1
 
 - Fixes the live-observed v1.51.0 Home Assistant entity regression where `configuration_label` still referenced the removed coordinator `local_paths` member and caused source-dependent entities to become unavailable.

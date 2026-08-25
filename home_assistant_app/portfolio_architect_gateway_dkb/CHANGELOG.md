@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.52.0
+
+- Graduate the App-level DKB Gateway stage from experimental to stable for the live-proven depot-CSV holdings and Girokonto cash-CSV acquisition paths.
+- Keep the anonymous FinTS BPD capability probe explicitly labelled `EXPERIMENTAL · RESEARCH ONLY`; authenticated FinTS remains disabled and cannot replace/fall back from CSV evidence.
+- Provider acquisition, evidence timestamps, probe transport/fingerprints and private-PKI behavior are otherwise unchanged from v1.51.1.
+
 ## 1.50.0
 
 - add a persisted server-side `Last probe sent` timestamp to the anonymous BPD research UI and bounded status document

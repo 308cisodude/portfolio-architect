@@ -1,21 +1,32 @@
-# v1.44.0 validation
+# v1.52.0 validation
 
-Portfolio Architect v1.44.0 is prepared from the exact published/live-accepted v1.43.0 tracked-source baseline. The release is a Home Assistant Configure UX consistency pass: selected-object edit forms gain immutable identity context, every Configure menu receives structural bilingual label coverage, and normal package/version/documentation alignment is applied. Planner/provider runtime and dashboard behavior remain unchanged.
+Portfolio Architect v1.52.0 is prepared from the exact published/live-accepted
+v1.51.1 tracked-source baseline. The release changes Gateway maturity metadata and
+capability-scoped presentation only: DKB and Trade Republic become stable Apps,
+Generic Import remains experimental, and the DKB anonymous FinTS probe is explicitly
+marked experimental/research inside the otherwise-stable DKB App.
 
 Release validation requires:
 
-- all integration/common Gateway/provider App current-version markers align to 1.44.0 while historical release documentation remains historical;
-- the exact v1.43.0 normalized tracked-source fingerprint is used as the preparation baseline;
-- every native Configure menu target has a non-empty English and German menu label and translated target-step title;
-- menu translation ordering matches emitted Configure menu ordering, including the funding-topology edit action;
-- every `async_step_edit_*_details` selected-object editor exposes explicit description placeholders for immutable identity context;
-- English and German editor descriptions consume every required identity placeholder above the editable fields;
-- execution-provider context includes provider display name + provider ID;
-- savings-plan-route context includes provider display name + provider ID + ISIN;
-- funding-transfer context includes exact directed source/destination provider names + IDs;
-- the plan-instrument editor retains its existing instrument name/ISIN/target-ID context;
-- v1.43 route-level evidence/fallback/freshness behavior, v1.41.1 local-cash routing, v1.42 execution-path presentation, provider acquisition, wire/security schemas and advisory-only semantics remain unchanged;
-- complete regression tests, Python compilation, structured-file parsing and `git diff --check` pass;
-- source/release privacy, publication readiness, provider-App source parity, deterministic release builds, and exact Git overlay/binary-patch replay all pass.
+- all integration/common Gateway/all four App current-version markers align to
+  1.52.0 while historical release documentation remains historical;
+- Comdirect, DKB and Trade Republic App `stage` values are `stable`;
+- Generic Import App `stage` remains `experimental`;
+- DKB Ingress explicitly marks the anonymous BPD probe `EXPERIMENTAL · RESEARCH ONLY`;
+- authenticated DKB FinTS acquisition remains disabled and cannot replace or fall
+  back from CSV evidence;
+- the bundled wholly synthetic generic CSV example parses successfully under the
+  Generic Import default mapping without creating provider cash or credentials;
+- current provider documentation reflects the four-App architecture and
+  capability-scoped maturity labels;
+- the SPDX SBOM describes all four Gateway Apps;
+- provider acquisition, v1.48 freshness, independent evidence clocks, planner
+  economics, wire schemas, private-PKI/DNS pinning, source-set atomicity/LKG and the
+  advisory-only boundary remain unchanged;
+- complete regression tests, Python compilation, structured-file parsing and
+  `git diff --check` pass;
+- source/release privacy, publication readiness, provider-App source parity,
+  deterministic release builds, and exact Git overlay/binary-patch replay all pass.
 
-Protected GitHub workflows remain authoritative for actual Docker provider-App build/smoke execution when Docker is unavailable in the preparation environment.
+Protected GitHub workflows remain authoritative for complete-history/Gitleaks and
+actual provider-App Docker/private-PKI smoke execution when unavailable locally.
