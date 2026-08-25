@@ -287,7 +287,7 @@ class DKBProbeController:
     def status_document(self, gateway_state: GatewayState) -> dict[str, Any]:
         view = self.probe_view()
         return {
-            "gateway": gateway_state.health_document(version=7),
+            "gateway": gateway_state.health_document(version=8),
             "fints": {
                 "endpoint": DKB_FINTS_ENDPOINT,
                 "bank_code": DKB_BANK_CODE,

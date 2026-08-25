@@ -23,6 +23,7 @@ from .dkb_cash_csv import (
     load_cash_snapshot,
     save_cash_snapshot,
 )
+from .acquisition_control import METHOD_READY, METHOD_RESEARCH_ONLY, AcquisitionControl, AcquisitionMethod, method_inventory
 from .errors import ConfigurationError, ProtocolError
 from .models import PortfolioSnapshot, Position, validate_snapshot
 from .store import load_snapshot
@@ -131,6 +132,16 @@ class DkbCsvProvider:
     @property
     def acquisition_mode(self) -> str:
         return "csv"
+
+    @property
+    def acquisition_control(self) -> AcquisitionControl:
+        return AcquisitionControl(
+            active_method="csv",
+            methods=method_inventory(
+                AcquisitionMethod("csv", METHOD_READY, True, True),
+                AcquisitionMethod("fints", METHOD_RESEARCH_ONLY, False, False),
+            ),
+        )
 
     @property
     def poll_interval_seconds(self) -> int:

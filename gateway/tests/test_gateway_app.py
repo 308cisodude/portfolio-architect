@@ -16,6 +16,7 @@ from portfolio_architect_gateway.app import (
     build_app_config,
     ensure_api_token,
 )
+from portfolio_architect_gateway.acquisition import ComdirectAcquisitionProvider
 from portfolio_architect_gateway.cash_policy import InvestmentCashPolicy
 from portfolio_architect_gateway.comdirect import AccountBalanceCandidate
 from portfolio_architect_gateway.models import PortfolioSnapshot, Position
@@ -600,6 +601,64 @@ def test_ingress_cash_policy_accepts_german_amount_and_redirects_invalid_input(t
         assert "Could not save the authorization policy" in page
         assert "1024,00 or 1024.00" in page
         assert "12,34,56" not in page
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=5)
+
+
+def test_ingress_failed_acquisition_activation_is_bounded_and_preserves_active_method(tmp_path: Path) -> None:
+    options = AppOptions()
+    data = tmp_path / "gateway"
+    data.mkdir()
+    config = build_app_config(options, data)
+    token = ensure_api_token(config.server.api_token_file)
+    client = FakeBootstrapClient()
+    acquisition = ComdirectAcquisitionProvider(
+        client, data, config.comdirect.investment_cash_policy_file
+    )
+    state = GatewayState(config.server, acquisition)
+    controller = AppController(config, client, state, token, acquisition=acquisition)
+    assert controller.acquisition.acquisition_mode == "live_api"
+    server = IngressHttpServer(
+        ("127.0.0.1", 0),
+        controller,
+        allowed_sources=frozenset({"127.0.0.1"}),
+        require_user_header=True,
+    )
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        connection = http.client.HTTPConnection(
+            "127.0.0.1", server.server_address[1], timeout=5
+        )
+        form = urlencode({"csrf": controller.csrf_token, "mode": "csv"})
+        connection.request(
+            "POST",
+            "/set-acquisition-mode",
+            body=form,
+            headers={
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Content-Length": str(len(form.encode())),
+                "X-Remote-User-Id": "admin",
+            },
+        )
+        response = connection.getresponse()
+        assert response.status == 303
+        assert response.getheader("Location") == "./?acquisition_error=activation_failed"
+        response.read()
+        assert controller.acquisition.acquisition_mode == "live_api"
+
+        connection.request(
+            "GET",
+            "/?acquisition_error=activation_failed",
+            headers={"X-Remote-User-Id": "admin"},
+        )
+        response = connection.getresponse()
+        page = response.read().decode()
+        assert response.status == 200
+        assert "Could not activate the requested acquisition method" in page
+        assert "The previous method remains authoritative" in page
     finally:
         server.shutdown()
         server.server_close()

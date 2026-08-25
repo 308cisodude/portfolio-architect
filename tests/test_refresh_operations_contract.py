@@ -17,7 +17,7 @@ def test_health_schema_four_and_fixed_cadence_are_implemented() -> None:
     assert "next_deadline += interval_seconds" in server
     assert "request_manual_refresh" in server
     assert "_refresh_execution_lock" in server
-    assert '"requested_health_schema_version": 7' in transport
+    assert '"requested_health_schema_version": 8' in transport
     for field in (
         "refresh_in_progress",
         "last_refresh_duration_ms",

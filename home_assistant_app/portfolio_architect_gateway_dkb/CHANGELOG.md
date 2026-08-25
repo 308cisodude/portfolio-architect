@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.53.0
+
+- Add health-schema-8 acquisition control metadata: `csv` active/ready and `fints` research-only/non-activatable.
+- Keep DKB CSV holdings/cash acquisition unchanged and keep authenticated FinTS disabled.
+
 ## 1.52.0
 
 - Graduate the App-level DKB Gateway stage from experimental to stable for the live-proven depot-CSV holdings and Girokonto cash-CSV acquisition paths.

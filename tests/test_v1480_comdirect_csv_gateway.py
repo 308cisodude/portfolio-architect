@@ -136,7 +136,7 @@ def test_arbitration_never_cross_falls_back(tmp_path: Path) -> None:
     assert live.calls == 1
 
     live.fail = False
-    provider.set_mode("csv")
+    provider.activate_mode("csv", lambda: True)
     calls_before = live.calls
     snapshot = provider.fetch_snapshot()
     assert live.calls == calls_before
@@ -145,15 +145,18 @@ def test_arbitration_never_cross_falls_back(tmp_path: Path) -> None:
 
 
 def test_mode_switch_requires_valid_requested_source_and_persists(tmp_path: Path) -> None:
-    holdings, _cash, acquisition, _policy, _store = _load_modules()
+    holdings, cash, acquisition, _policy, _store = _load_modules()
     static_holdings = holdings.parse_comdirect_holdings_csv(FIXTURE.read_bytes())
     live = _LiveClient(static_holdings)
     provider = acquisition.ComdirectAcquisitionProvider(live, tmp_path, tmp_path / "policy.json")
-    with pytest.raises(Exception, match="No Comdirect depot CSV"):
-        provider.set_mode("csv")
+    with pytest.raises(Exception, match="both holdings and cash"):
+        provider.activate_mode("csv", lambda: True)
     assert provider.acquisition_mode == "live_api"
     provider.persist_holdings(static_holdings)
-    provider.set_mode("csv")
+    with pytest.raises(Exception, match="both holdings and cash"):
+        provider.activate_mode("csv", lambda: True)
+    provider.persist_cash(cash.parse_comdirect_cash_csv(_cash_csv()))
+    provider.activate_mode("csv", lambda: True)
     restored = acquisition.ComdirectAcquisitionProvider(live, tmp_path, tmp_path / "policy.json")
     assert restored.acquisition_mode == "csv"
 
@@ -165,7 +168,7 @@ def test_comdirect_ingress_visually_separates_live_and_static_acquisition() -> N
     assert "live-card" in source and "static-card" in source
     assert "Import holdings CSV" in source
     assert "Import cash CSV" in source
-    assert "Activate static CSV mode" in source
+    assert "Activate static CSV acquisition" in source
     assert "never falls back" in source
     assert "Automatic API polling and OAuth session maintenance are disabled" in source
 

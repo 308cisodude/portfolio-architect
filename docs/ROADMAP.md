@@ -654,9 +654,24 @@ Live acceptance of v1.45.0 proved the exact atomic DKB source cut-over but expos
 - Align provider docs, translations, release verification and SPDX inventory with the four-App capability-scoped maturity model.
 - Preserve provider acquisition, freshness, evidence clocks, planner economics, schemas, private-PKI/LKG behavior and the advisory-only boundary.
 
-## After v1.52.0 — provider acquisition architecture
+## v1.53.0 — provider acquisition control plane
 
-- Provider-specific and provider-neutral acquisition formats now live outside Portfolio Architect. Future source work should extend isolated Gateway providers rather than reintroduce acquisition logic into the Home Assistant integration.
+- Add provider-neutral bounded acquisition-method inventory/readiness and explicit `fallback_policy: none` through Gateway health schema 8.
+- Keep switching inside the provider Gateway and Portfolio Architect read-only.
+- Use Comdirect `live_api` / complete `csv` as the first atomic staged-switch implementation with rollback on publication failure.
+- Advertise DKB CSV + research-only FinTS, Trade Republic PDF + unavailable live acquisition, and fixed Generic Import CSV without advancing unsupported methods.
+
+## After v1.53.0 — capability-level arbitration
+
+- Extend the proven provider-level control model to per-capability authority where justified, so one Gateway can intentionally source non-overlapping holdings/cash capabilities from different methods without becoming duplicate PA providers.
+- Preserve explicit activation and no silent fallback for overlapping capabilities.
+- Continue anonymous DKB BPD research only until product registration is accepted; only then design a separately gated authenticated UPD/user-capability research stage before any live FinTS acquisition.
+- Keep provider-specific and provider-neutral acquisition formats outside Portfolio Architect.
+
+## Later Gateway UX hygiene
+
+- Move the Generic Import bearer token lower on its Ingress page to match the other provider Apps and reduce accidental screenshot exposure.
+- Polish transient Gateway discovery-flow cleanup so removal of a temporary Generic Import App does not leave a stale discovery card until the next Home Assistant restart, without weakening legitimate provider discovery.
 
 ## Deferred beyond v1.45.0
 

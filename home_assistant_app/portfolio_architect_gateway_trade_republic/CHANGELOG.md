@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.53.0
+
+- Add health-schema-8 acquisition control metadata: `pdf` active/ready and `live_api` unavailable/non-activatable.
+- Keep DEPOTAUSZUG/KONTOAUSZUG parsing and persistence unchanged.
+
 ## 1.52.0
 
 - Graduate the App-level Trade Republic Gateway stage from experimental to stable for the live-proven DEPOTAUSZUG holdings and KONTOAUSZUG cash PDF acquisition paths.

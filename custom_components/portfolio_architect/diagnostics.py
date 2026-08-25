@@ -112,6 +112,23 @@ async def async_get_config_entry_diagnostics(
                 "retry_after_seconds": (
                     coordinator.gateway_health.retry_after_seconds
                 ),
+                "active_acquisition_method": (
+                    coordinator.gateway_health.active_acquisition_method
+                ),
+                "acquisition_methods": [
+                    item.as_public_dict()
+                    for item in coordinator.gateway_health.acquisition_methods
+                ],
+                "fallback_policy": coordinator.gateway_health.fallback_policy,
+                "previous_acquisition_method": (
+                    coordinator.gateway_health.previous_acquisition_method
+                ),
+                "last_acquisition_method_change_at": _isoformat(
+                    coordinator.gateway_health.last_acquisition_method_change_at
+                ),
+                "last_acquisition_method_change_reason": (
+                    coordinator.gateway_health.last_acquisition_method_change_reason
+                ),
             }
             if coordinator.gateway_health is not None
             else None
@@ -128,6 +145,18 @@ async def async_get_config_entry_diagnostics(
                 "snapshot_generated_at": _isoformat(health.snapshot_generated_at),
                 "health_schema_version": health.health_schema_version,
                 "provider_id": health.provider_id,
+                "active_acquisition_method": health.active_acquisition_method,
+                "acquisition_methods": [
+                    item.as_public_dict() for item in health.acquisition_methods
+                ],
+                "fallback_policy": health.fallback_policy,
+                "previous_acquisition_method": health.previous_acquisition_method,
+                "last_acquisition_method_change_at": _isoformat(
+                    health.last_acquisition_method_change_at
+                ),
+                "last_acquisition_method_change_reason": (
+                    health.last_acquisition_method_change_reason
+                ),
             }
             for provider_id, health in sorted(
                 coordinator.supplemental_gateway_health.items()

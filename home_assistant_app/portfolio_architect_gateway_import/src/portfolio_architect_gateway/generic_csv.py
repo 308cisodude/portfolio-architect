@@ -15,6 +15,7 @@ import re
 from pathlib import Path
 from typing import Any, Final
 
+from .acquisition_control import AcquisitionControl, single_method_control
 from .errors import ConfigurationError, ProtocolError
 from .models import PortfolioSnapshot, Position, validate_snapshot
 from .store import load_snapshot
@@ -175,6 +176,10 @@ class GenericCsvProvider:
     @property
     def acquisition_mode(self) -> str:
         return "csv"
+
+    @property
+    def acquisition_control(self) -> AcquisitionControl:
+        return single_method_control("csv")
 
     @property
     def poll_interval_seconds(self) -> int:

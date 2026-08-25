@@ -1,4 +1,7 @@
-# Portfolio Architect Gateway runtime v1.50.0
+# Portfolio Architect Gateway runtime v1.53.0
+
+Version 1.53.0 adds provider-neutral health schema 8 acquisition-control metadata while retaining health schemas 1–7 and REST schema 1. The common server exposes only bounded method inventory/readiness, explicit no-fallback policy and operator switch history; provider-specific activation remains outside the common server.
+
 
 Version 1.50.0 is package alignment for Portfolio Architect’s source-management UX milestone. Common Gateway runtime, health schema 7, REST schema 1 and provider acquisition behavior are unchanged from v1.49.0.
 

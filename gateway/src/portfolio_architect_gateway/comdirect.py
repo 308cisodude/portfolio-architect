@@ -129,6 +129,12 @@ class ComdirectClient:
         """Return the validated refresh cadence consumed by the common server."""
         return self._config.poll_interval_seconds
 
+    @property
+    def session_state_available(self) -> bool:
+        """Whether bounded persisted OAuth state exists for candidate activation."""
+        with self._operation_lock:
+            return self._state is not None and not self._reauthentication_required
+
     def __init__(
         self,
         config: ComdirectConfig,

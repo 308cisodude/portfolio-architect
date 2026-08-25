@@ -9,8 +9,7 @@ contract.
 
 The hardened server consumes only a bounded `provider_id`, validated acquisition
 metadata and `fetch_snapshot()` returning REST-schema-1 provider-neutral data.
-Gateway health schema 7 adds bounded `acquisition_mode`; schema 6 carries bounded
-provider identity and schemas 1 through 6 remain accepted for compatibility.
+Gateway health schema 8 adds the bounded acquisition control plane (active method, method readiness/inventory, explicit no-fallback policy and operator switch history); schema 7 retains bounded `acquisition_mode`, schema 6 carries bounded provider identity, and schemas 1 through 7 remain accepted for compatibility.
 
 Provider-specific authentication/parsing stays inside its own App. Portfolio
 Architect consumes only canonical Gateway snapshots and never parses official or
@@ -18,7 +17,7 @@ generic acquisition formats itself.
 
 ## Official App identities and current maturity
 
-| Capability owner | Display name | App slug | v1.52.0 maturity |
+| Capability owner | Display name | App slug | v1.53.0 maturity |
 | --- | --- | --- | --- |
 | Comdirect | Portfolio Architect Gateway — Comdirect | `portfolio_architect_gateway` | **stable** — live API or explicit static CSV, auto-start |
 | DKB | Portfolio Architect Gateway — DKB | `portfolio_architect_gateway_dkb` | **stable** — depot/cash CSV, auto-start; anonymous FinTS probe remains experimental/research-only |
@@ -44,6 +43,14 @@ import arrived in v1.25/v1.41, DKB CSV acquisition in v1.45/v1.47, Comdirect sta
 CSV in v1.48, and Generic Import in v1.51.
 
 No DKB or Trade Republic acquisition runtime is shipped by v1.24.0; that historical release created only isolated provider shells.
+
+## v1.53 acquisition-method control plane
+
+Provider identity and acquisition method are deliberately separate. One provider Gateway may advertise several methods, but Portfolio Architect still consumes one canonical provider snapshot. The provider App owns preparation and activation. Portfolio Architect receives the control state read-only through health schema 8.
+
+Comdirect is the first switchable implementation: `live_api` and `csv` may be prepared independently, inactive CSV requires both holdings and cash evidence before activation, and explicit switching is crash-safe/atomic with `fallback_policy: none`. Interrupted activation restores the prior mode and invalidates any ambiguous canonical cache before startup refresh; malformed inactive CSV candidate state is merely not-ready and cannot disrupt the active live method. DKB advertises `csv` plus non-activatable research-only `fints`; Trade Republic advertises `pdf` plus non-activatable unavailable `live_api`; Generic Import is fixed `csv`.
+
+Capability-level mixed arbitration (for example DKB holdings from CSV and cash from FinTS) is intentionally deferred until provider-level switching is live-proven.
 
 ## Shared source and packaging rule
 
