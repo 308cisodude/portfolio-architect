@@ -35,7 +35,7 @@ MAX_HEADER_BYTES: Final = 32 * 1024
 class PendingAppOptions:
     """Strict non-secret options for a provider shell."""
 
-    max_cached_snapshot_age_seconds: int = 604800
+    max_cached_snapshot_age_seconds: int = 0
     health_endpoint_enabled: bool = True
 
     @classmethod
@@ -51,7 +51,7 @@ class PendingAppOptions:
         allowed = {"max_cached_snapshot_age_seconds", "health_endpoint_enabled"}
         if set(raw) - allowed:
             raise RuntimeError("Home Assistant App options contain unsupported keys")
-        age = raw.get("max_cached_snapshot_age_seconds", 604800)
+        age = raw.get("max_cached_snapshot_age_seconds", 0)
         enabled = raw.get("health_endpoint_enabled", True)
         if isinstance(age, bool) or not isinstance(age, int) or not 0 <= age <= 2592000:
             raise RuntimeError("maximum cached snapshot age is outside the supported range")

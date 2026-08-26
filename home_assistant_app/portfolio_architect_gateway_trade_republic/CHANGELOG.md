@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.53.1
+
+- Keep accepted DEPOTAUSZUG/KONTOAUSZUG PDF snapshots servable independently of the legacy Gateway cache-age setting; Portfolio Architect's imported-statement freshness policy remains authoritative.
+- Preserve PDF parsing, evidence timestamps, provider identity and health-schema-8 method inventory unchanged.
+
 ## 1.53.0
 
 - Add health-schema-8 acquisition control metadata: `pdf` active/ready and `live_api` unavailable/non-activatable.

@@ -661,7 +661,15 @@ Live acceptance of v1.45.0 proved the exact atomic DKB source cut-over but expos
 - Use Comdirect `live_api` / complete `csv` as the first atomic staged-switch implementation with rollback on publication failure.
 - Advertise DKB CSV + research-only FinTS, Trade Republic PDF + unavailable live acquisition, and fixed Generic Import CSV without advancing unsupported methods.
 
-## After v1.53.0 — capability-level arbitration
+## v1.53.1 — acquisition-switch and static-evidence live-acceptance hotfix
+
+- Make timestamp anti-rollback acquisition-method-aware: only a validated health-schema-8 explicit operator transition from the last accepted method may establish a new, older evidence timeline; same-method rollback remains fail-closed.
+- Restore bounded primary Gateway attribution when PA itself rejects the current primary snapshot and serves HA LKG, eliminating `Source unavailable: None` in that path.
+- Keep static CSV/PDF snapshots servable with their original timestamps instead of allowing the Gateway live-cache TTL to undercut PA's configurable static freshness policy.
+- Distinguish supplemental snapshot unavailability/HTTP 503 from true integrity mismatches while preserving atomic source-set/LKG behavior.
+- Keep the v1.53 control plane, DKB FinTS gate, provider identities, wire schemas, planner economics and advisory-only boundary unchanged.
+
+## After v1.53.1 — capability-level arbitration
 
 - Extend the proven provider-level control model to per-capability authority where justified, so one Gateway can intentionally source non-overlapping holdings/cash capabilities from different methods without becoming duplicate PA providers.
 - Preserve explicit activation and no silent fallback for overlapping capabilities.

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.53.1
+
+- Keep accepted DKB CSV holdings/cash snapshots servable independently of the legacy Gateway cache-age setting; Portfolio Architect's CSV/static freshness policy remains authoritative.
+- Keep `csv` active and `fints` research-only/non-activatable; no authenticated FinTS behavior changes.
+
 ## 1.53.0
 
 - Add health-schema-8 acquisition control metadata: `csv` active/ready and `fints` research-only/non-activatable.

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.53.1
+
+- Keep accepted Generic Import CSV snapshots servable independently of the legacy Gateway cache-age setting; Portfolio Architect's CSV freshness policy remains authoritative.
+- Preserve transient raw CSV handling, fixed `generic_csv` identity and read-only holdings-only semantics.
+
 ## 1.53.0
 
 - Add health-schema-8 acquisition control metadata for the fixed `csv` method.

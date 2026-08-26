@@ -1,30 +1,26 @@
-# Portfolio Architect 1.53.0
+# Portfolio Architect 1.53.1
 
-Portfolio Architect v1.53.0 adds the provider-neutral acquisition-method control plane discussed after the fully live-accepted v1.52.0 baseline. It does not create duplicate bank providers and does not give the Home Assistant integration authority to change provider acquisition.
+Portfolio Architect v1.53.1 is a narrow live-acceptance hotfix on top of the published v1.53.0 provider-acquisition control plane. It keeps provider identity, health schema 8, REST portfolio schema 1 and the explicit no-fallback arbitration model unchanged.
 
-## Provider identity is separate from acquisition method
+## Method-aware timestamp anti-rollback
 
-Each Gateway continues to publish exactly one stable provider identity. Health schema 8 adds bounded read-only acquisition control metadata: the active method, the provider-defined method inventory, readiness/activation eligibility, `fallback_policy: none`, and privacy-safe last explicit operator switch metadata. Health schemas 1–7 remain accepted for compatibility.
+The pre-v1.53 coordinator correctly rejected any primary or supplemental snapshot whose `generated_at` moved backwards. With explicit acquisition switching, however, a legitimate static CSV/PDF evidence set may predate the most recently accepted live snapshot. v1.53.1 keeps timestamp monotonicity strict inside one acquisition method but permits one older evidence timeline only when validated health-schema-8 control history proves all of the following: the current method differs from the last accepted method, `previous_acquisition_method` equals that last accepted method, the change reason is `operator`, and the recorded explicit change happened no earlier than the previously accepted snapshot. Older health schemas, same-method rollback, stale/incomplete switch history and automatic fallback remain rejected.
 
-Portfolio Architect consumes this state for diagnostics and source visibility only. Acquisition changes remain explicit provider-Gateway administration actions; no management POST/API is added to the Home Assistant integration.
+The rule is applied symmetrically to the primary Gateway and supplemental Gateways so future provider methods do not reintroduce the same defect.
 
-## Comdirect is the first explicit dual-method switch implementation
+## Primary-source attribution while HA LKG is active
 
-The Comdirect Gateway keeps `live_api` and `csv` mutually exclusive. Inactive CSV holdings/cash can be staged without affecting the live canonical snapshot. When live API is active, CSV becomes `ready` for activation only after both supported static evidence families are present. Switching to live API performs a real provider read; switching to CSV validates the complete staged candidate.
+If Portfolio Architect itself rejects the primary REST snapshot on integrity/acceptance grounds while the Gateway health document is otherwise live, the bounded unavailable-source set now identifies that primary Gateway. The dashboard/entity therefore renders the provider label (for example `Comdirect Gateway`) instead of `None`. Existing v1.26.6 behavior for Gateway-local reauthentication/LKG remains unchanged.
 
-Activation is atomic with respect to Gateway snapshot publication. The acquisition lock spans candidate validation, control-state persistence and canonical publication, so concurrent refreshes cannot observe a transient candidate method. A private pending-activation marker makes the transition crash-safe: if the App stops mid-switch, startup restores the exact prior control state and discards the ambiguous cached canonical snapshot before normal startup refresh. Failed publication likewise restores the pre-switch state, and expected activation failures return bounded Ingress feedback while the previous method remains authoritative.
+## Static evidence is not expired by the live cache TTL
 
-Inactive staged CSV corruption is treated as `not_ready` and cannot disrupt an active live-API source. No automatic cross-method fallback is implemented.
+The historical Gateway `max_cached_snapshot_age_seconds` value is now an effective retention limit only for live acquisition methods. Active `csv` and `pdf` methods always serve their accepted canonical snapshot with the original immutable evidence timestamp. Portfolio Architect's evidence-kind freshness policy remains the authority that decides whether static evidence is usable.
 
-A pre-v1.53 installation already active in holdings-only CSV mode remains readable for upgrade compatibility, but once another method is activated, returning to inactive CSV requires both current holdings and cash evidence.
+This applies to Comdirect CSV, DKB CSV, Trade Republic PDF and Generic Import CSV. New static-only App configurations default the legacy cache-age option to `0`; existing non-zero settings are safe because the runtime reports and applies an effective value of `0` while a static method is active. Switching Comdirect back to `live_api` restores its configured bounded live-cache retention automatically.
 
-## Other provider inventories
+## Supplemental unavailability is not an integrity mismatch
 
-- DKB: `csv` is active/ready; `fints` is `research_only` and cannot be activated. The anonymous BPD probe remains **EXPERIMENTAL · RESEARCH ONLY** and authenticated DKB FinTS remains disabled.
-- Trade Republic: `pdf` is active/ready; `live_api` is `unavailable` and cannot be activated.
-- Generic Import: fixed single `csv` acquisition method.
-
-This release does not advance DKB authenticated user/UPD probing and does not introduce an undocumented Trade Republic client.
+A supplemental Gateway health document that reports no servable snapshot is classified as `snapshot_unavailable` before the snapshot fetch. A race where the snapshot endpoint returns HTTP 503 is represented by the same bounded class. Neither path creates a snapshot-integrity repair. True provider identity, timestamp, position-count and SHA-256 inconsistencies remain fail-closed integrity errors.
 
 ## Preserved contracts
 
@@ -32,28 +28,25 @@ This release does not advance DKB authenticated user/UPD probing and does not in
 - portfolio payload schema 8: unchanged
 - REST portfolio schema 1: unchanged
 - Gateway health schema 8 current; schemas 1–7 remain supported
+- Historical compatibility remains intact: schemas 1–6 remain supported within that wider compatibility range
 - presentation schema 2: unchanged
 - broker schemas 1/2/3: unchanged
-- v1.48 acquisition-aware freshness and independent holdings/cash evidence clocks: unchanged
-- provider-scoped cash, funding topology, execution path and planner economics: unchanged
-- verified private-PKI HTTPS, bearer authentication, DNS pinning, configured-source atomicity and Home Assistant LKG: unchanged
-- no automatic acquisition fallback
+- provider identity and one canonical snapshot per Gateway/provider: unchanged
+- explicit operator acquisition switching and `fallback_policy: none`: unchanged
+- independent holdings/cash evidence timestamps and configured freshness thresholds: unchanged
+- verified private-PKI HTTPS, bearer authentication, DNS pinning and atomic source-set/LKG behavior: unchanged
+- authenticated DKB FinTS acquisition remains disabled; the existing anonymous probe remains research-only/non-activatable and no authenticated probe is added
+- This hotfix does not move PDF parsing into Portfolio Architect; Trade Republic statement parsing remains provider-local in its Gateway App
 - no trading, order, transfer, payment, transaction-history, sell or withdrawal capability
 
-No dashboard YAML replacement is required.
+No dashboard YAML replacement is required. The previously noted degraded-state dashboard redundancy and DKB probe timezone presentation remain presentation-only follow-up items and are not mixed into this correctness hotfix.
 
 ## Historical compatibility note
 
 The former v1.19.0-rc2 brokerage probe remains historical only, is not present in the stable source tree, and is not promoted by this release.
 
-No trading, order, transfer, payment, or transaction-history capability is introduced by v1.53.0; sell and withdrawal capability remain absent.
-
-For historical compatibility, health schemas 1–6 remain supported unchanged within the wider schema-1-through-8 compatibility range.
-
-authenticated DKB FinTS acquisition remains disabled; the anonymous BPD capability probe remains isolated research-only functionality.
-
-Trade Republic provider-specific statement parsing remains in its Gateway; this release does not move PDF parsing into Portfolio Architect.
-
 The later v1.39 colourful allocation view was not included in v1.38.1; that historical sequencing remains unchanged.
 
-The v1.33.0 source-freshness and plan-schedule separation remains anchored to the latest valid Portfolio Architect evaluation; v1.53.0 does not change any configured freshness threshold.
+The v1.33.0 source-freshness and plan-schedule separation remains anchored to the latest valid Portfolio Architect evaluation; v1.53.1 does not change any configured freshness threshold or recurring-plan schedule semantics.
+
+No trading, order, transfer, payment, or transaction-history capability is introduced by this release; sell and withdrawal capability remain absent.

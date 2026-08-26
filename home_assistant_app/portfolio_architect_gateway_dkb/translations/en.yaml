@@ -1,7 +1,9 @@
 configuration:
   max_cached_snapshot_age_seconds:
     name: Maximum cached snapshot age
-    description: Maximum age for the active canonical DKB Gateway snapshot served to Portfolio Architect.
+    description: Compatibility setting for live-cache retention. Static DKB CSV snapshots
+      are not expired by this value; Portfolio Architect applies the configured CSV
+      freshness policy.
   health_endpoint_enabled:
     name: Enable authenticated health endpoint
     description: Expose the authenticated /healthz endpoint on the private REST service.

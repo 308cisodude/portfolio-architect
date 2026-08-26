@@ -50,6 +50,7 @@ HEALTH_V7_MEDIA_TYPE = "application/vnd.portfolio-architect.health+json;version=
 HEALTH_V8_MEDIA_TYPE = "application/vnd.portfolio-architect.health+json;version=8"
 REFRESH_TRIGGERS = frozenset({"startup", "scheduled", "manual", "bootstrap"})
 MANUAL_REFRESH_MIN_INTERVAL_SECONDS = 60
+STATIC_ACQUISITION_METHODS = frozenset({"csv", "pdf"})
 
 
 @dataclass(frozen=True, slots=True)
@@ -293,12 +294,30 @@ class GatewayState:
             self._recommended_action = recommended_action
             self._retry_after_seconds = retry_after
 
+    def _effective_max_cached_snapshot_age_seconds(self) -> int:
+        """Return the runtime retention bound for the active evidence family.
+
+        Imported/static evidence carries its own immutable ``generated_at`` timestamp.
+        Portfolio Architect applies the user-configurable evidence-kind freshness policy,
+        so a Gateway-local cache TTL must never make accepted CSV/PDF evidence disappear
+        earlier. Live acquisition retains the configured bounded LKG cache age.
+        """
+        try:
+            active_method = control_from_provider(self._client).active_method
+        except ConfigurationError:
+            # Invalid acquisition metadata is already fail-closed by health schema 8.
+            # Retain the configured cache bound rather than weakening retention here.
+            return self._config.max_cached_snapshot_age_seconds
+        if active_method in STATIC_ACQUISITION_METHODS:
+            return 0
+        return self._config.max_cached_snapshot_age_seconds
+
     def snapshot_view(self) -> SnapshotView | None:
         with self._lock:
             snapshot = self._snapshot
         if snapshot is None:
             return None
-        maximum = self._config.max_cached_snapshot_age_seconds
+        maximum = self._effective_max_cached_snapshot_age_seconds()
         if maximum:
             age = (
                 datetime.now(timezone.utc)
@@ -352,7 +371,7 @@ class GatewayState:
             generated = view.generated_at
             generated_at = generated.isoformat(timespec="seconds")
             snapshot_age_seconds = max(0, int((now - generated).total_seconds()))
-            maximum = self._config.max_cached_snapshot_age_seconds
+            maximum = self._effective_max_cached_snapshot_age_seconds()
             if maximum:
                 snapshot_expires_in_seconds = max(0, maximum - snapshot_age_seconds)
 
@@ -388,7 +407,7 @@ class GatewayState:
                         self._poll_interval_seconds
                     ),
                     "max_cached_snapshot_age_seconds": (
-                        self._config.max_cached_snapshot_age_seconds
+                        self._effective_max_cached_snapshot_age_seconds()
                     ),
                 }
             )

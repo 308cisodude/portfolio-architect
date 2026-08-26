@@ -116,6 +116,7 @@ from .rest_client import (
     PortfolioRestAuthenticationError,
     PortfolioRestError,
     PortfolioRestRateLimitError,
+    PortfolioRestUnavailableError,
     GatewayHealth,
     RestFetchResult,
     RestSourceConfig,
@@ -501,7 +502,15 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
         # cached snapshot.
         if self.source_type == SOURCE_TYPE_REST_API:
             health = self.gateway_health
-            if health is None or _gateway_health_operating_mode(health) != "live":
+            primary_rejected_by_pa = (
+                self._using_home_assistant_last_known_good
+                and self.rest_snapshot_integrity_error is not None
+            )
+            if (
+                health is None
+                or _gateway_health_operating_mode(health) != "live"
+                or primary_rejected_by_pa
+            ):
                 provider_id = health.provider_id if health and health.provider_id else None
                 if provider_id is None and self.source_summaries:
                     candidate = self.source_summaries[0].get("provider")
@@ -1295,6 +1304,18 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
             if (
                 self._rest_snapshot_generated_at is not None
                 and generated_at < self._rest_snapshot_generated_at
+                and not _explicit_acquisition_transition_allows_older_snapshot(
+                    self.gateway_health,
+                    accepted_mode=_source_summary_acquisition_mode(
+                        self.source_summaries,
+                        (
+                            self.gateway_health.provider_id
+                            if self.gateway_health is not None
+                            else None
+                        ),
+                    ),
+                    accepted_generated_at=self._rest_snapshot_generated_at,
+                )
             ):
                 message = (
                     "Local REST source attempted to replace the accepted snapshot "
@@ -1356,7 +1377,17 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
                 )
             for item in supplemental_rest_snapshots:
                 previous = self._supplemental_rest_generated_at.get(item.provider)
-                if previous is not None and item.generated_at < previous:
+                if (
+                    previous is not None
+                    and item.generated_at < previous
+                    and not _explicit_acquisition_transition_allows_older_snapshot(
+                        supplemental_health.get(item.provider),
+                        accepted_mode=_source_summary_acquisition_mode(
+                            self.source_summaries, item.provider
+                        ),
+                        accepted_generated_at=previous,
+                    )
+                ):
                     raise PortfolioRestError(
                         f"{_provider_display_name(item.provider)} Gateway attempted to replace "
                         "the accepted snapshot with an older snapshot"
@@ -1839,6 +1870,56 @@ def _provider_cash_metadata(
     return result
 
 
+def _source_summary_acquisition_mode(
+    source_summaries: tuple[dict[str, Any], ...] | list[dict[str, Any]],
+    provider_id: str | None,
+) -> str | None:
+    """Return the last accepted bounded acquisition mode for one provider."""
+    for item in source_summaries:
+        if not isinstance(item, dict):
+            continue
+        provider = item.get("provider")
+        if provider_id is not None and provider != provider_id:
+            continue
+        mode = item.get("acquisition_mode")
+        if isinstance(mode, str) and mode.strip():
+            return mode.strip().lower()
+        if provider_id is None:
+            return None
+    return None
+
+
+def _explicit_acquisition_transition_allows_older_snapshot(
+    health: GatewayHealth | None,
+    *,
+    accepted_mode: str | None,
+    accepted_generated_at: datetime,
+) -> bool:
+    """Authorize one older evidence timestamp only for a proven operator method switch.
+
+    Snapshot time remains strictly monotonic inside one acquisition method. Health
+    schema 8 may establish a new evidence timeline only when its validated control
+    history proves an explicit operator transition from the last accepted method to
+    the currently active method after the previously accepted snapshot was generated.
+    """
+    if health is None or health.health_schema_version < 8:
+        return False
+    current = health.active_acquisition_method
+    previous = health.previous_acquisition_method
+    changed_at = health.last_acquisition_method_change_at
+    if (
+        accepted_mode is None
+        or current is None
+        or previous is None
+        or changed_at is None
+        or health.last_acquisition_method_change_reason != "operator"
+        or current == accepted_mode
+        or previous != accepted_mode
+    ):
+        return False
+    return changed_at >= accepted_generated_at
+
+
 def _validate_supplemental_rest_integrity(
     *,
     config: SupplementalRestSourceConfig,
@@ -1914,6 +1995,9 @@ async def _async_fetch_supplemental_rest_snapshots(
             errors[config.provider_id] = "identity_error"
             continue
         health_by_provider[config.provider_id] = health
+        if not health.snapshot_available:
+            errors[config.provider_id] = "snapshot_unavailable"
+            continue
         try:
             result = await async_fetch_rest_snapshot(hass, config.rest_config)
             validated = _validate_supplemental_rest_integrity(
@@ -1934,6 +2018,8 @@ async def _async_fetch_supplemental_rest_snapshots(
                     provider_cash[config.provider_id] = cash_metadata
         except PortfolioRestAuthenticationError:
             errors[config.provider_id] = "authentication_error"
+        except PortfolioRestUnavailableError:
+            errors[config.provider_id] = "snapshot_unavailable"
         except (OSError, PortfolioRestError, ValueError) as err:
             errors[config.provider_id] = (
                 "integrity_error"

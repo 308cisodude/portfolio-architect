@@ -1,7 +1,7 @@
 configuration:
   max_cached_snapshot_age_seconds:
     name: Maximales Alter des Zwischenspeichers
-    description: Maximales Alter des aktiven importierten Trade-Republic-Gateway-Snapshots für Portfolio Architect.
+    description: Kompatibilitätseinstellung für die Live-Cache-Aufbewahrung. Das Alter des aktiven importierten Trade-Republic-Gateway-Snapshots wird durch diesen Wert nicht begrenzt; Portfolio Architect wendet die konfigurierte Beleg-Frischegrenze an.
   health_endpoint_enabled:
     name: Authentifizierten Status-Endpunkt aktivieren
     description: Stellt /healthz am privaten REST-Dienst bereit; der Bearer-Token bleibt erforderlich.

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.53.1
+
+- Keep v1.53 health-schema-8 switching semantics unchanged while making static `csv` snapshots independent of the live-API cached-snapshot TTL.
+- Live-API cached snapshots retain the configured age bound; CSV evidence remains timestamped and Portfolio Architect decides freshness.
+- Package/version alignment for the Home Assistant-side method-aware anti-rollback and source-attribution hotfix.
+
 ## 1.53.0
 
 - Add health-schema-8 acquisition control-plane reporting for `live_api` and `csv`.
