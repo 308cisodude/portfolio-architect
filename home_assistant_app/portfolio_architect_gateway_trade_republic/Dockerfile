@@ -5,7 +5,7 @@ ARG BUILD_ARCH
 ARG APP_UID=65532
 ARG APP_GID=65532
 
-RUN apk add --no-cache openssl=3.5.7-r0 \
+RUN apk add --no-cache openssl=3.5.8-r0 \
     && addgroup -S -g "${APP_GID}" portfolio \
     && adduser -S -D -H -u "${APP_UID}" -G portfolio portfolio
 

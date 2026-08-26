@@ -1,0 +1,211 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 9cdd9d3705548026ba5a06d7197d7784de4e51b8..3a97c0cc21b2288a3461069c82572c453e5b5142 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -2,6 +2,7 @@
+ 
+ ## 1.53.1
+ 
++- Refreshes the pinned Alpine 3.24 OpenSSL runtime CLI dependency from `3.5.7-r0` to `3.5.8-r0` after the distribution repository retired the former package, restoring deterministic provider-App Docker builds without changing Gateway TLS semantics.
+ - Fixes the live-observed Comdirect method-switch anti-rollback conflict: an older snapshot timestamp is accepted only when validated health-schema-8 history proves an explicit operator transition from the last accepted acquisition method; same-method timestamp rollback remains fail-closed.
+ - Restores bounded primary-source attribution when Portfolio Architect rejects the current primary snapshot and serves its Home Assistant LKG, so `Source unavailable` identifies the primary Gateway instead of `None`.
+ - Makes static `csv`/`pdf` Gateway snapshots remain servable independently of the live-LKG cache TTL; Portfolio Architect's evidence-kind freshness policy remains authoritative for whether static evidence is usable.
+diff --git a/SBOM.spdx.json b/SBOM.spdx.json
+index 68e152c68b0812404cf2e4e3e749d70925206e5a..fe42621f2ca08ab4a934177242d6d0d384904ec0 100644
+--- a/SBOM.spdx.json
++++ b/SBOM.spdx.json
+@@ -28,7 +28,7 @@
+       "filesAnalyzed": false,
+       "licenseConcluded": "MIT",
+       "licenseDeclared": "MIT",
+-      "name": "Portfolio Architect Gateway — Comdirect App",
++      "name": "Portfolio Architect Gateway \u2014 Comdirect App",
+       "supplier": "Organization: Portfolio Architect contributors",
+       "versionInfo": "1.53.1"
+     },
+@@ -56,7 +56,7 @@
+       "filesAnalyzed": false,
+       "licenseConcluded": "MIT",
+       "licenseDeclared": "MIT",
+-      "name": "Portfolio Architect Gateway — DKB App",
++      "name": "Portfolio Architect Gateway \u2014 DKB App",
+       "supplier": "Organization: Portfolio Architect contributors",
+       "versionInfo": "1.53.1"
+     },
+@@ -66,7 +66,7 @@
+       "filesAnalyzed": false,
+       "licenseConcluded": "MIT",
+       "licenseDeclared": "MIT",
+-      "name": "Portfolio Architect Gateway — Trade Republic App",
++      "name": "Portfolio Architect Gateway \u2014 Trade Republic App",
+       "supplier": "Organization: Portfolio Architect contributors",
+       "versionInfo": "1.53.1"
+     },
+@@ -76,7 +76,7 @@
+       "filesAnalyzed": false,
+       "licenseConcluded": "MIT",
+       "licenseDeclared": "MIT",
+-      "name": "Portfolio Architect Gateway — Generic Import App",
++      "name": "Portfolio Architect Gateway \u2014 Generic Import App",
+       "supplier": "Organization: Portfolio Architect contributors",
+       "versionInfo": "1.53.1"
+     },
+@@ -105,7 +105,7 @@
+       "externalRefs": [
+         {
+           "referenceCategory": "PACKAGE-MANAGER",
+-          "referenceLocator": "pkg:apk/alpine/openssl@3.5.7-r0",
++          "referenceLocator": "pkg:apk/alpine/openssl@3.5.8-r0",
+           "referenceType": "purl"
+         }
+       ],
+@@ -114,7 +114,7 @@
+       "licenseDeclared": "Apache-2.0",
+       "name": "OpenSSL runtime CLI",
+       "supplier": "Organization: OpenSSL Project",
+-      "versionInfo": "3.5.7-r0"
++      "versionInfo": "3.5.8-r0"
+     }
+   ],
+   "relationships": [
+diff --git a/docs/RELEASE-NOTES.md b/docs/RELEASE-NOTES.md
+index 5805a7fc9a384fd4543accdf1a71a5a9cc179e1b..51d86391df58d3bb9ca10a274f7fac47a5d9f78b 100644
+--- a/docs/RELEASE-NOTES.md
++++ b/docs/RELEASE-NOTES.md
+@@ -22,6 +22,10 @@ This applies to Comdirect CSV, DKB CSV, Trade Republic PDF and Generic Import CS
+ 
+ A supplemental Gateway health document that reports no servable snapshot is classified as `snapshot_unavailable` before the snapshot fetch. A race where the snapshot endpoint returns HTTP 503 is represented by the same bounded class. Neither path creates a snapshot-integrity repair. True provider identity, timestamp, position-count and SHA-256 inconsistencies remain fail-closed integrity errors.
+ 
++## Provider-App build dependency alignment
++
++The unpublished v1.53.1 release candidate originally pinned the Alpine 3.24 OpenSSL CLI package at `3.5.7-r0`. Alpine rotated the repository to `3.5.8-r0` before publication, so protected Docker validation could no longer install the retired exact package. The release candidate now pins `3.5.8-r0` consistently in all four provider-App Dockerfiles, the regression contract and SPDX SBOM. This is release-engineering dependency maintenance only; private-PKI generation, certificate semantics and Gateway TLS policy are unchanged.
++
+ ## Preserved contracts
+ 
+ - config-entry schema 12: unchanged
+diff --git a/docs/UPGRADE-1.53.1.md b/docs/UPGRADE-1.53.1.md
+index 542d5e3077923d6c2b570d19ffec18c54a925f44..eafb0c6b7442dfb6cf5418fdf0ef2860cc332dfd 100644
+--- a/docs/UPGRADE-1.53.1.md
++++ b/docs/UPGRADE-1.53.1.md
+@@ -2,6 +2,8 @@
+ 
+ Version 1.53.1 is a correctness hotfix for the published v1.53.0 acquisition-control-plane release. Upgrade in place; do not delete Gateway App data or re-import provider documents merely because of this update.
+ 
++The final release candidate also refreshes the exact Alpine 3.24 OpenSSL CLI package pin from `3.5.7-r0` to `3.5.8-r0` after repository rotation. This has no migration or operator action beyond installing the final v1.53.1 App packages.
++
+ ## Required upgrade order
+ 
+ 1. Update the Portfolio Architect Home Assistant integration to v1.53.1 and restart Home Assistant once.
+diff --git a/home_assistant_app/portfolio_architect_gateway/CHANGELOG.md b/home_assistant_app/portfolio_architect_gateway/CHANGELOG.md
+index cc329b827898c2f8285e7f4aec4a209adb44ca2d..02052b739b6719ef083a502c5083e0ea5659981b 100644
+--- a/home_assistant_app/portfolio_architect_gateway/CHANGELOG.md
++++ b/home_assistant_app/portfolio_architect_gateway/CHANGELOG.md
+@@ -2,6 +2,7 @@
+ 
+ ## 1.53.1
+ 
++- Refresh the pinned Alpine 3.24 OpenSSL runtime CLI dependency to `3.5.8-r0` after repository package rotation; private-PKI generation and TLS behavior are unchanged.
+ - Keep v1.53 health-schema-8 switching semantics unchanged while making static `csv` snapshots independent of the live-API cached-snapshot TTL.
+ - Live-API cached snapshots retain the configured age bound; CSV evidence remains timestamped and Portfolio Architect decides freshness.
+ - Package/version alignment for the Home Assistant-side method-aware anti-rollback and source-attribution hotfix.
+diff --git a/home_assistant_app/portfolio_architect_gateway/Dockerfile b/home_assistant_app/portfolio_architect_gateway/Dockerfile
+index 46bd63bffefaede33fa0038084fd1620e27f875b..148be92fde9d2eb3272b89189240dbc73be17d08 100644
+--- a/home_assistant_app/portfolio_architect_gateway/Dockerfile
++++ b/home_assistant_app/portfolio_architect_gateway/Dockerfile
+@@ -5,7 +5,7 @@ ARG BUILD_ARCH
+ ARG APP_UID=65532
+ ARG APP_GID=65532
+ 
+-RUN apk add --no-cache openssl=3.5.7-r0 \
++RUN apk add --no-cache openssl=3.5.8-r0 \
+     && addgroup -S -g "${APP_GID}" portfolio \
+     && adduser -S -D -H -u "${APP_UID}" -G portfolio portfolio
+ 
+diff --git a/home_assistant_app/portfolio_architect_gateway_dkb/CHANGELOG.md b/home_assistant_app/portfolio_architect_gateway_dkb/CHANGELOG.md
+index 66138b516b435c9c252dce8bf5a49d45a419a808..960d7f8ef0dc26886f9b48edb91438e407aaab44 100644
+--- a/home_assistant_app/portfolio_architect_gateway_dkb/CHANGELOG.md
++++ b/home_assistant_app/portfolio_architect_gateway_dkb/CHANGELOG.md
+@@ -2,6 +2,7 @@
+ 
+ ## 1.53.1
+ 
++- Refresh the pinned Alpine 3.24 OpenSSL runtime CLI dependency to `3.5.8-r0` after repository package rotation; private-PKI generation and TLS behavior are unchanged.
+ - Keep accepted DKB CSV holdings/cash snapshots servable independently of the legacy Gateway cache-age setting; Portfolio Architect's CSV/static freshness policy remains authoritative.
+ - Keep `csv` active and `fints` research-only/non-activatable; no authenticated FinTS behavior changes.
+ 
+diff --git a/home_assistant_app/portfolio_architect_gateway_dkb/Dockerfile b/home_assistant_app/portfolio_architect_gateway_dkb/Dockerfile
+index ff2643e5cb60cb9cdf656a186aff61103a781a22..f938af4ee9eb516e2b353216958358c22cb36f8f 100644
+--- a/home_assistant_app/portfolio_architect_gateway_dkb/Dockerfile
++++ b/home_assistant_app/portfolio_architect_gateway_dkb/Dockerfile
+@@ -5,7 +5,7 @@ ARG BUILD_ARCH
+ ARG APP_UID=65532
+ ARG APP_GID=65532
+ 
+-RUN apk add --no-cache openssl=3.5.7-r0 \
++RUN apk add --no-cache openssl=3.5.8-r0 \
+     && addgroup -S -g "${APP_GID}" portfolio \
+     && adduser -S -D -H -u "${APP_UID}" -G portfolio portfolio
+ 
+diff --git a/home_assistant_app/portfolio_architect_gateway_import/CHANGELOG.md b/home_assistant_app/portfolio_architect_gateway_import/CHANGELOG.md
+index f273e090dfb95bd027551770410846ce59aad64c..a89a142f70bdfc209e8f2c8e9df7742f7c81433b 100644
+--- a/home_assistant_app/portfolio_architect_gateway_import/CHANGELOG.md
++++ b/home_assistant_app/portfolio_architect_gateway_import/CHANGELOG.md
+@@ -2,6 +2,7 @@
+ 
+ ## 1.53.1
+ 
++- Refresh the pinned Alpine 3.24 OpenSSL runtime CLI dependency to `3.5.8-r0` after repository package rotation; private-PKI generation and TLS behavior are unchanged.
+ - Keep accepted Generic Import CSV snapshots servable independently of the legacy Gateway cache-age setting; Portfolio Architect's CSV freshness policy remains authoritative.
+ - Preserve transient raw CSV handling, fixed `generic_csv` identity and read-only holdings-only semantics.
+ 
+diff --git a/home_assistant_app/portfolio_architect_gateway_import/Dockerfile b/home_assistant_app/portfolio_architect_gateway_import/Dockerfile
+index 0f7472fcf4fa12da1a3c1d07f905d7e2086b97e1..5ee3272ee5ff2a2c7be13df81e9a479973aebd74 100644
+--- a/home_assistant_app/portfolio_architect_gateway_import/Dockerfile
++++ b/home_assistant_app/portfolio_architect_gateway_import/Dockerfile
+@@ -5,7 +5,7 @@ ARG BUILD_ARCH
+ ARG APP_UID=65532
+ ARG APP_GID=65532
+ 
+-RUN apk add --no-cache openssl=3.5.7-r0 \
++RUN apk add --no-cache openssl=3.5.8-r0 \
+     && addgroup -S -g "${APP_GID}" portfolio \
+     && adduser -S -D -H -u "${APP_UID}" -G portfolio portfolio
+ 
+diff --git a/home_assistant_app/portfolio_architect_gateway_trade_republic/CHANGELOG.md b/home_assistant_app/portfolio_architect_gateway_trade_republic/CHANGELOG.md
+index c3029fb11c582d92d9d75ad44912795110a2be10..f59747973a45e394bf5350ea988c6bb9325ffa64 100644
+--- a/home_assistant_app/portfolio_architect_gateway_trade_republic/CHANGELOG.md
++++ b/home_assistant_app/portfolio_architect_gateway_trade_republic/CHANGELOG.md
+@@ -2,6 +2,7 @@
+ 
+ ## 1.53.1
+ 
++- Refresh the pinned Alpine 3.24 OpenSSL runtime CLI dependency to `3.5.8-r0` after repository package rotation; private-PKI generation and TLS behavior are unchanged.
+ - Keep accepted DEPOTAUSZUG/KONTOAUSZUG PDF snapshots servable independently of the legacy Gateway cache-age setting; Portfolio Architect's imported-statement freshness policy remains authoritative.
+ - Preserve PDF parsing, evidence timestamps, provider identity and health-schema-8 method inventory unchanged.
+ 
+diff --git a/home_assistant_app/portfolio_architect_gateway_trade_republic/Dockerfile b/home_assistant_app/portfolio_architect_gateway_trade_republic/Dockerfile
+index 2ecab1e3d8e4375c08732fa425e0f8b999d9ab4d..cb0d7adc38f47b09b31dfcda7e7a2036a1b2dcb5 100644
+--- a/home_assistant_app/portfolio_architect_gateway_trade_republic/Dockerfile
++++ b/home_assistant_app/portfolio_architect_gateway_trade_republic/Dockerfile
+@@ -5,7 +5,7 @@ ARG BUILD_ARCH
+ ARG APP_UID=65532
+ ARG APP_GID=65532
+ 
+-RUN apk add --no-cache openssl=3.5.7-r0 \
++RUN apk add --no-cache openssl=3.5.8-r0 \
+     && addgroup -S -g "${APP_GID}" portfolio \
+     && adduser -S -D -H -u "${APP_UID}" -G portfolio portfolio
+ 
+diff --git a/tests/test_v1270_gateway_https.py b/tests/test_v1270_gateway_https.py
+index 834b4e42392795153fceb4b2d774fb6d03b680f1..2985d31c35a7703806914efdbd3a507aebc4756b 100644
+--- a/tests/test_v1270_gateway_https.py
++++ b/tests/test_v1270_gateway_https.py
+@@ -83,7 +83,7 @@ def test_official_apps_enable_discovery_and_https_runtime_dependency() -> None:
+         assert config["ports"]["8787/tcp"] is None
+         assert config["watchdog"] == "tcp://[HOST]:[PORT:8787]"
+         dockerfile = (app / "Dockerfile").read_text(encoding="utf-8")
+-        assert "apk add --no-cache openssl=3.5.7-r0" in dockerfile
++        assert "apk add --no-cache openssl=3.5.8-r0" in dockerfile
+         entrypoint = (app / "entrypoint.py").read_text(encoding="utf-8")
+         assert "prepare_supervisor_tls" in entrypoint
+         assert "start_supervisor_tls_discovery_publisher" in entrypoint

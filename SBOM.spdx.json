@@ -28,7 +28,7 @@
       "filesAnalyzed": false,
       "licenseConcluded": "MIT",
       "licenseDeclared": "MIT",
-      "name": "Portfolio Architect Gateway — Comdirect App",
+      "name": "Portfolio Architect Gateway \u2014 Comdirect App",
       "supplier": "Organization: Portfolio Architect contributors",
       "versionInfo": "1.53.1"
     },
@@ -56,7 +56,7 @@
       "filesAnalyzed": false,
       "licenseConcluded": "MIT",
       "licenseDeclared": "MIT",
-      "name": "Portfolio Architect Gateway — DKB App",
+      "name": "Portfolio Architect Gateway \u2014 DKB App",
       "supplier": "Organization: Portfolio Architect contributors",
       "versionInfo": "1.53.1"
     },
@@ -66,7 +66,7 @@
       "filesAnalyzed": false,
       "licenseConcluded": "MIT",
       "licenseDeclared": "MIT",
-      "name": "Portfolio Architect Gateway — Trade Republic App",
+      "name": "Portfolio Architect Gateway \u2014 Trade Republic App",
       "supplier": "Organization: Portfolio Architect contributors",
       "versionInfo": "1.53.1"
     },
@@ -76,7 +76,7 @@
       "filesAnalyzed": false,
       "licenseConcluded": "MIT",
       "licenseDeclared": "MIT",
-      "name": "Portfolio Architect Gateway — Generic Import App",
+      "name": "Portfolio Architect Gateway \u2014 Generic Import App",
       "supplier": "Organization: Portfolio Architect contributors",
       "versionInfo": "1.53.1"
     },
@@ -105,7 +105,7 @@
       "externalRefs": [
         {
           "referenceCategory": "PACKAGE-MANAGER",
-          "referenceLocator": "pkg:apk/alpine/openssl@3.5.7-r0",
+          "referenceLocator": "pkg:apk/alpine/openssl@3.5.8-r0",
           "referenceType": "purl"
         }
       ],
@@ -114,7 +114,7 @@
       "licenseDeclared": "Apache-2.0",
       "name": "OpenSSL runtime CLI",
       "supplier": "Organization: OpenSSL Project",
-      "versionInfo": "3.5.7-r0"
+      "versionInfo": "3.5.8-r0"
     }
   ],
   "relationships": [

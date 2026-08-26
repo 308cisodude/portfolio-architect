@@ -2,6 +2,8 @@
 
 Version 1.53.1 is a correctness hotfix for the published v1.53.0 acquisition-control-plane release. Upgrade in place; do not delete Gateway App data or re-import provider documents merely because of this update.
 
+The final release candidate also refreshes the exact Alpine 3.24 OpenSSL CLI package pin from `3.5.7-r0` to `3.5.8-r0` after repository rotation. This has no migration or operator action beyond installing the final v1.53.1 App packages.
+
 ## Required upgrade order
 
 1. Update the Portfolio Architect Home Assistant integration to v1.53.1 and restart Home Assistant once.

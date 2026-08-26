@@ -22,6 +22,10 @@ This applies to Comdirect CSV, DKB CSV, Trade Republic PDF and Generic Import CS
 
 A supplemental Gateway health document that reports no servable snapshot is classified as `snapshot_unavailable` before the snapshot fetch. A race where the snapshot endpoint returns HTTP 503 is represented by the same bounded class. Neither path creates a snapshot-integrity repair. True provider identity, timestamp, position-count and SHA-256 inconsistencies remain fail-closed integrity errors.
 
+## Provider-App build dependency alignment
+
+The unpublished v1.53.1 release candidate originally pinned the Alpine 3.24 OpenSSL CLI package at `3.5.7-r0`. Alpine rotated the repository to `3.5.8-r0` before publication, so protected Docker validation could no longer install the retired exact package. The release candidate now pins `3.5.8-r0` consistently in all four provider-App Dockerfiles, the regression contract and SPDX SBOM. This is release-engineering dependency maintenance only; private-PKI generation, certificate semantics and Gateway TLS policy are unchanged.
+
 ## Preserved contracts
 
 - config-entry schema 12: unchanged

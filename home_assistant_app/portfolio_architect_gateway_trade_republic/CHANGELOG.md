@@ -2,6 +2,7 @@
 
 ## 1.53.1
 
+- Refresh the pinned Alpine 3.24 OpenSSL runtime CLI dependency to `3.5.8-r0` after repository package rotation; private-PKI generation and TLS behavior are unchanged.
 - Keep accepted DEPOTAUSZUG/KONTOAUSZUG PDF snapshots servable independently of the legacy Gateway cache-age setting; Portfolio Architect's imported-statement freshness policy remains authoritative.
 - Preserve PDF parsing, evidence timestamps, provider identity and health-schema-8 method inventory unchanged.
 

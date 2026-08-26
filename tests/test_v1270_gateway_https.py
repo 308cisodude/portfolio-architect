@@ -83,7 +83,7 @@ def test_official_apps_enable_discovery_and_https_runtime_dependency() -> None:
         assert config["ports"]["8787/tcp"] is None
         assert config["watchdog"] == "tcp://[HOST]:[PORT:8787]"
         dockerfile = (app / "Dockerfile").read_text(encoding="utf-8")
-        assert "apk add --no-cache openssl=3.5.7-r0" in dockerfile
+        assert "apk add --no-cache openssl=3.5.8-r0" in dockerfile
         entrypoint = (app / "entrypoint.py").read_text(encoding="utf-8")
         assert "prepare_supervisor_tls" in entrypoint
         assert "start_supervisor_tls_discovery_publisher" in entrypoint
