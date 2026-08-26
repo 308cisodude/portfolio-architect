@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.53.1
+
+- Refreshes the pinned Alpine 3.24 OpenSSL runtime CLI dependency from `3.5.7-r0` to `3.5.8-r0` after the distribution repository retired the former package, restoring deterministic provider-App Docker builds without changing Gateway TLS semantics.
+- Fixes the live-observed Comdirect method-switch anti-rollback conflict: an older snapshot timestamp is accepted only when validated health-schema-8 history proves an explicit operator transition from the last accepted acquisition method; same-method timestamp rollback remains fail-closed.
+- Restores bounded primary-source attribution when Portfolio Architect rejects the current primary snapshot and serves its Home Assistant LKG, so `Source unavailable` identifies the primary Gateway instead of `None`.
+- Makes static `csv`/`pdf` Gateway snapshots remain servable independently of the live-LKG cache TTL; Portfolio Architect's evidence-kind freshness policy remains authoritative for whether static evidence is usable.
+- Classifies supplemental snapshot unavailability/HTTP 503 as `snapshot_unavailable` rather than a snapshot-integrity mismatch, while preserving true timestamp/count/fingerprint validation as fail-closed integrity errors.
+- Applies static-serving semantics to Comdirect CSV, DKB CSV, Trade Republic PDF and Generic Import CSV without changing provider identity, acquisition arbitration, evidence timestamps, wire schemas, planner economics or the advisory-only boundary.
+
 ## 1.53.0
 
 - Adds provider-neutral Gateway health schema 8 acquisition control-plane metadata: active method, bounded method inventory/readiness, explicit `fallback_policy: none`, and bounded operator switch history while retaining health schemas 1–7.

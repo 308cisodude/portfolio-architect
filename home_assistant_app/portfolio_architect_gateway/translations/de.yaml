@@ -4,7 +4,10 @@ configuration:
     description: Sekunden zwischen den Aktualisierungsversuchen des Comdirect-Portfolios.
   max_cached_snapshot_age_seconds:
     name: Maximales Alter des Zwischenspeichers
-    description: Nach dieser Zeit wird ein gespeicherter Stand nicht mehr ausgeliefert; 0 deaktiviert die Grenze.
+    description: Gilt für zwischengespeicherte Live-API-Snapshots. Statische CSV-Daten
+      bleiben mit ihrem ursprünglichen Zeitstempel abrufbar; Portfolio Architect wendet
+      die konfigurierte CSV-Frischegrenze an. 0 deaktiviert das Alterslimit für den
+      Live-Cache.
   request_timeout_seconds:
     name: Zeitlimit für Comdirect-Anfragen
     description: Zeitlimit in Sekunden für jede ausgehende Comdirect-API-Anfrage.
@@ -13,9 +16,12 @@ configuration:
     description: Maximale Wartezeit in Sekunden auf die Freigabe der PhotoTAN-Push-Anfrage.
   health_endpoint_enabled:
     name: Authentifizierten Status-Endpunkt aktivieren
-    description: Stellt /healthz am privaten REST-Dienst bereit; der Bearer-Token bleibt erforderlich.
+    description: Stellt /healthz am privaten REST-Dienst bereit; der Bearer-Token
+      bleibt erforderlich.
   depot_ids:
     name: Depot-IDs
-    description: Optionale exakte Comdirect-Depot-IDs; leer lassen, um alle sichtbaren Depots einzubeziehen.
+    description: Optionale exakte Comdirect-Depot-IDs; leer lassen, um alle sichtbaren
+      Depots einzubeziehen.
 network:
-  8787/tcp: Privater REST-Endpunkt für Portfolio Architect; Host-Port deaktiviert lassen.
+  8787/tcp: Privater REST-Endpunkt für Portfolio Architect; Host-Port deaktiviert
+    lassen.

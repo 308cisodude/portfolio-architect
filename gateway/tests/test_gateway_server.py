@@ -579,3 +579,35 @@ def test_expired_snapshot_stays_runtime_unavailable_and_health_is_consistent(tmp
     assert health["snapshot_position_count"] is None
     assert health["snapshot_age_seconds"] is None
     assert health["snapshot_expires_in_seconds"] is None
+
+
+def test_static_acquisition_snapshot_is_not_expired_by_live_lkg_cache_ttl(tmp_path: Path) -> None:
+    """CSV/PDF evidence remains servable so Portfolio Architect owns static freshness."""
+    config = _config(tmp_path)
+    stale = PortfolioSnapshot(
+        generated_at=datetime(2020, 1, 1, tzinfo=timezone.utc),
+        positions=(
+            Position(
+                identifier="STATIC001",
+                isin="IE00SYNTH001",
+                name="Synthetic Static ETF",
+                instrument_type="etf",
+                market_value_eur=Decimal("20.00"),
+            ),
+        ),
+    )
+    save_snapshot(config.server.snapshot_file, stale)
+
+    for method in ("csv", "pdf"):
+        class StaticClient(NoNetworkClient):
+            acquisition_mode = method
+
+        state = GatewayState(config.server, StaticClient())
+        view = state.snapshot_view()
+        assert view is not None
+        assert view.generated_at == stale.generated_at
+        health = state.health_document(version=8)
+        assert health["snapshot_available"] is True
+        assert health["max_cached_snapshot_age_seconds"] == 0
+        assert health["snapshot_expires_in_seconds"] is None
+        assert health["active_acquisition_method"] == method

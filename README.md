@@ -1,4 +1,4 @@
-# Portfolio Architect v1.53.0
+# Portfolio Architect v1.53.1
 
 Portfolio Architect is a Home Assistant-native portfolio overview, policy-check,
 and deterministic investment-planning system. It supports provider-isolated acquisition, multi-source consolidation, cost-aware recommendations, and separate read-only Gateway Apps, including DKB depot-CSV acquisition inside the DKB Gateway and simultaneous aggregation of multiple local Gateway REST snapshots.

@@ -74,6 +74,10 @@ class PortfolioRestAuthenticationError(PortfolioRestError):
     """Raised when the local source rejects its bearer token."""
 
 
+class PortfolioRestUnavailableError(PortfolioRestError):
+    """Raised when a healthy transport reports no currently servable snapshot."""
+
+
 class PortfolioRestRateLimitError(PortfolioRestError):
     """Raised when the source requests a bounded polling delay."""
 
@@ -1188,6 +1192,10 @@ async def _async_process_response(
         raise PortfolioRestRateLimitError(
             "Local REST source requested a slower polling rate",
             retry_after=_parse_retry_after(response.headers.get("Retry-After")),
+        )
+    if response.status == 503:
+        raise PortfolioRestUnavailableError(
+            "Local REST source has no currently servable snapshot"
         )
     if response.status != 200:
         raise PortfolioRestError(

@@ -1,4 +1,6 @@
-# Portfolio Architect Gateway — Generic Import v1.53.0
+# Portfolio Architect Gateway — Generic Import v1.53.1
+
+Version 1.53.1 keeps Generic Import's fixed `csv` method and transient mapped-CSV boundary unchanged. Accepted canonical CSV snapshots remain servable with their original evidence timestamp instead of expiring under a separate Gateway cache TTL; Portfolio Architect decides freshness.
 
 Version 1.53.0 adds the provider-neutral health-schema-8 control-plane representation for the fixed `csv` acquisition method. Generic Import remains a single-method provider-neutral escape hatch; mapped-CSV parsing, transient raw input, canonical holdings-only persistence and verified private-PKI transport are unchanged.
 
