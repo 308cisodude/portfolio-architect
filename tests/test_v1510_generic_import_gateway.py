@@ -1,4 +1,4 @@
-"""v1.53.1 Generic Import Gateway and acquisition-boundary contracts."""
+"""v1.54.0 Generic Import Gateway and acquisition-boundary contracts."""
 
 from __future__ import annotations
 
@@ -37,8 +37,8 @@ def _generic():
 
 
 def test_release_versions_and_schema_are_aligned() -> None:
-    assert json.loads((COMPONENT / "manifest.json").read_text())["version"] == "1.53.1"
-    assert 'VERSION: Final = "1.53.1"' in (COMPONENT / "const.py").read_text()
+    assert json.loads((COMPONENT / "manifest.json").read_text())["version"] == "1.54.0"
+    assert 'VERSION: Final = "1.54.0"' in (COMPONENT / "const.py").read_text()
     assert 'VERSION = 12' in (COMPONENT / "config_flow.py").read_text()
     for slug in (
         "portfolio_architect_gateway",
@@ -46,7 +46,7 @@ def test_release_versions_and_schema_are_aligned() -> None:
         "portfolio_architect_gateway_trade_republic",
         "portfolio_architect_gateway_import",
     ):
-        assert yaml.safe_load((APPS / slug / "config.yaml").read_text())["version"] == "1.53.1"
+        assert yaml.safe_load((APPS / slug / "config.yaml").read_text())["version"] == "1.54.0"
 
 
 def test_portfolio_architect_runtime_is_acquisition_format_neutral() -> None:
@@ -62,7 +62,7 @@ def test_schema_12_local_csv_migration_is_explicit_and_fail_closed() -> None:
     setup = (COMPONENT / "__init__.py").read_text()
     schema12 = setup.split("if entry.version < 12:", 1)[1].split("if migrated_entities:", 1)[0]
     assert "SOURCE_TYPE_LOCAL_FILES" in schema12
-    assert "Portfolio Architect Gateway — Generic Import v1.53.1" in schema12
+    assert "Portfolio Architect Gateway — Generic Import v1.54.0" in schema12
     assert "return False" in schema12
     assert "version=12" in schema12
 

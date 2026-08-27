@@ -1,5 +1,7 @@
-# Portfolio Architect v1.53.1
+# Portfolio Architect v1.54.0
 
+
+Version 1.54.0 standardizes acquisition-state colours across all official Gateway Ingress UIs, removes misleading static-Gateway freshness-looking options, and scopes the retained Comdirect cache-age setting to live-source LKG resilience. It also replaces brittle exact Alpine OpenSSL APK revision pinning with branch-current installation plus a protected minimum-version check; wire schemas and provider acquisition semantics are unchanged.
 Portfolio Architect is a Home Assistant-native portfolio overview, policy-check,
 and deterministic investment-planning system. It supports provider-isolated acquisition, multi-source consolidation, cost-aware recommendations, and separate read-only Gateway Apps, including DKB depot-CSV acquisition inside the DKB Gateway and simultaneous aggregation of multiple local Gateway REST snapshots.
 

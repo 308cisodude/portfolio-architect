@@ -669,7 +669,15 @@ Live acceptance of v1.45.0 proved the exact atomic DKB source cut-over but expos
 - Distinguish supplemental snapshot unavailability/HTTP 503 from true integrity mismatches while preserving atomic source-set/LKG behavior.
 - Keep the v1.53 control plane, DKB FinTS gate, provider identities, wire schemas, planner economics and advisory-only boundary unchanged.
 
-## After v1.53.1 — capability-level arbitration
+## v1.54.0 — Gateway acquisition UX and build-policy cleanup
+
+- Standardize acquisition-state colour semantics across every Gateway Ingress UI: ACTIVE/authoritative is green, inactive-ready is blue, and unavailable/not-ready/research-only acquisition is amber.
+- Remove the obsolete user-facing cache/freshness setting from static-only DKB CSV, Trade Republic PDF and Generic Import CSV Apps. Static evidence retains its original evidence timestamp and Portfolio Architect remains the freshness-policy authority.
+- Keep the Comdirect age limit only as a live-source LKG/cache resilience control, label it accordingly in App configuration, and surface its scope in the Live API Ingress section.
+- Stop exact-pinning mutable Alpine APK revisions. Keep the Python/Alpine base image digest-pinned, install branch-current OpenSSL, enforce a reviewed OpenSSL >= 3.5.8 security floor in protected Docker builds, and record the resolved runtime version in workflow build evidence.
+- Preserve health schema 8, REST schema 1, provider identity/arbitration, verified private-PKI transport, evidence timestamps/freshness thresholds and planner behavior.
+
+## After v1.54.0 — capability-level arbitration
 
 - Extend the proven provider-level control model to per-capability authority where justified, so one Gateway can intentionally source non-overlapping holdings/cash capabilities from different methods without becoming duplicate PA providers.
 - Preserve explicit activation and no silent fallback for overlapping capabilities.

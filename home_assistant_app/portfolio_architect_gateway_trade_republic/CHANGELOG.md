@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.54.0
+
+- Standardizes the active statement acquisition card to green and unavailable live acquisition to amber.
+- Removes the misleading user-facing Gateway cache/freshness option for static PDF acquisition; Portfolio Architect remains authoritative for evidence freshness.
+- Replaces the brittle exact Alpine OpenSSL package revision pin with branch-current installation plus a protected CI security floor.
+
 ## 1.53.1
 
 - Refresh the pinned Alpine 3.24 OpenSSL runtime CLI dependency to `3.5.8-r0` after repository package rotation; private-PKI generation and TLS behavior are unchanged.

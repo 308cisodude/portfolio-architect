@@ -53,6 +53,9 @@ jobs:
               --build-arg BUILD_ARCH=amd64 \
               --tag "portfolio-architect-${app}:validation" \
               "home_assistant_app/${app}"
+            openssl_output="$(docker run --rm --entrypoint /usr/bin/openssl "portfolio-architect-${app}:validation" version)"
+            python tools/check_openssl_runtime.py "${app}" "${openssl_output}"
+            printf -- '- `%s`: `%s` (minimum 3.5.8)\n' "${app}" "${openssl_output}" >> "${GITHUB_STEP_SUMMARY}"
           done
       - name: Smoke-test provider shell containers
         shell: bash

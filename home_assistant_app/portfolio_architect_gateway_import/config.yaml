@@ -1,5 +1,5 @@
 name: Portfolio Architect Gateway — Generic Import
-version: 1.53.1
+version: 1.54.0
 slug: portfolio_architect_gateway_import
 description: Experimental isolated provider-neutral mapped CSV import Gateway with verified private-PKI HTTPS and canonical read-only portfolio snapshots.
 url: https://developers.home-assistant.io/docs/apps/
@@ -36,8 +36,6 @@ environment:
   PA_PROVIDER_ID: generic_csv
   PA_PROVIDER_NAME: Generic Import
 options:
-  max_cached_snapshot_age_seconds: 0
   health_endpoint_enabled: true
 schema:
-  max_cached_snapshot_age_seconds: int(0,2592000)
   health_endpoint_enabled: bool

@@ -1,12 +1,6 @@
 configuration:
-  max_cached_snapshot_age_seconds:
-    name: Maximum cached snapshot age
-    description: Compatibility setting for live-cache retention. Static Generic Import
-      CSV snapshots are not expired by this value; Portfolio Architect applies the
-      configured CSV freshness policy.
   health_endpoint_enabled:
     name: Enable health endpoint
-    description: Expose the bounded authenticated health document used by Portfolio
-      Architect.
+    description: Expose the bounded authenticated health document used by Portfolio Architect.
 network:
   8787/tcp: Verified-HTTPS Portfolio Architect REST endpoint; leave host mapping disabled
