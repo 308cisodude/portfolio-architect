@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway — Comdirect v1.53.1
+# Portfolio Architect Gateway — Comdirect v1.54.0
 
-Version 1.53.1 keeps the v1.53 atomic `live_api`/`csv` control plane unchanged. The Gateway now applies `max_cached_snapshot_age_seconds` only to live acquisition: static CSV evidence remains servable with its original timestamp and Portfolio Architect's configured CSV freshness policy decides whether it is usable. The Home Assistant integration also gains method-aware anti-rollback handling for explicit schema-8 switches.
+Version 1.54.0 keeps the v1.53 atomic `live_api`/`csv` control plane unchanged. The Gateway now applies `max_cached_snapshot_age_seconds` only to live acquisition: static CSV evidence remains servable with its original timestamp and Portfolio Architect's configured CSV freshness policy decides whether it is usable. The Home Assistant integration also gains method-aware anti-rollback handling for explicit schema-8 switches.
 
 Version 1.53.0 adds the provider-neutral acquisition control plane and makes Comdirect the first explicitly switchable dual-method reference implementation. `live_api` and `csv` remain mutually exclusive with `fallback_policy: none`; inactive CSV becomes activatable only after both holdings and cash evidence are staged, and failed or interrupted switching restores the pre-switch control state. Interrupted-switch recovery discards an ambiguous canonical cache before startup refresh, while corrupt inactive CSV evidence is treated as not-ready without disrupting live acquisition. Portfolio Architect observes this state read-only through health schema 8.
 

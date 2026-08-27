@@ -24,7 +24,7 @@ def test_primary_reauthentication_is_named_without_home_assistant_lkg_gate() -> 
     body = _unavailable_source_property_source()
     assert "self.source_type == SOURCE_TYPE_REST_API" in body
     assert '_gateway_health_operating_mode(health) != "live"' in body
-    # Gateway-local non-live state remains independently sufficient; v1.53.1 also
+    # Gateway-local non-live state remains independently sufficient; v1.54.0 also
     # attributes a PA-local primary integrity rejection while HA LKG is active.
     assert "or primary_rejected_by_pa" in body
     assert 'missing.append(f"gateway:{provider_id or PROVIDER_LOCAL_REST_JSON}")' in body

@@ -165,7 +165,9 @@ def test_comdirect_ingress_visually_separates_live_and_static_acquisition() -> N
     source = (PACKAGE / "app.py").read_text(encoding="utf-8")
     assert "Live acquisition · Comdirect API" in source
     assert "Static acquisition · Comdirect CSV" in source
-    assert "live-card" in source and "static-card" in source
+    assert "mode-card active" in source
+    assert "mode-card inactive-ready" in source
+    assert "mode-card inactive-unavailable" in source
     assert "Import holdings CSV" in source
     assert "Import cash CSV" in source
     assert "Activate static CSV acquisition" in source
@@ -185,10 +187,11 @@ def test_all_provider_ingress_pages_optically_separate_live_and_static_acquisiti
     dkb = (ROOT / "home_assistant_app" / "portfolio_architect_gateway_dkb" / "src" / "portfolio_architect_gateway" / "dkb_app.py").read_text(encoding="utf-8")
     tr = (ROOT / "home_assistant_app" / "portfolio_architect_gateway_trade_republic" / "src" / "portfolio_architect_gateway" / "trade_republic_app.py").read_text(encoding="utf-8")
     for source in (dkb, tr):
-        assert "static-card" in source
-        assert "live-card" in source
+        assert "mode-card active" in source
         assert "Static acquisition" in source
         assert "Live acquisition" in source
+    assert "mode-card research" in dkb
+    assert "mode-card unavailable" in tr
     assert "UNAVAILABLE · RESEARCH ONLY" in dkb
     assert "authenticated DKB FinTS acquisition remains disabled" in dkb
     assert "UNAVAILABLE" in tr

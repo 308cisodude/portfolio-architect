@@ -19,7 +19,7 @@
       "licenseDeclared": "MIT",
       "name": "Portfolio Architect Home Assistant integration",
       "supplier": "Organization: Portfolio Architect contributors",
-      "versionInfo": "1.53.1"
+      "versionInfo": "1.54.0"
     },
     {
       "SPDXID": "SPDXRef-Package-Gateway",
@@ -30,7 +30,7 @@
       "licenseDeclared": "MIT",
       "name": "Portfolio Architect Gateway \u2014 Comdirect App",
       "supplier": "Organization: Portfolio Architect contributors",
-      "versionInfo": "1.53.1"
+      "versionInfo": "1.54.0"
     },
     {
       "SPDXID": "SPDXRef-Package-PythonBase",
@@ -58,7 +58,7 @@
       "licenseDeclared": "MIT",
       "name": "Portfolio Architect Gateway \u2014 DKB App",
       "supplier": "Organization: Portfolio Architect contributors",
-      "versionInfo": "1.53.1"
+      "versionInfo": "1.54.0"
     },
     {
       "SPDXID": "SPDXRef-Package-Gateway-TradeRepublic",
@@ -68,7 +68,7 @@
       "licenseDeclared": "MIT",
       "name": "Portfolio Architect Gateway \u2014 Trade Republic App",
       "supplier": "Organization: Portfolio Architect contributors",
-      "versionInfo": "1.53.1"
+      "versionInfo": "1.54.0"
     },
     {
       "SPDXID": "SPDXRef-Package-Gateway-GenericImport",
@@ -78,7 +78,7 @@
       "licenseDeclared": "MIT",
       "name": "Portfolio Architect Gateway \u2014 Generic Import App",
       "supplier": "Organization: Portfolio Architect contributors",
-      "versionInfo": "1.53.1"
+      "versionInfo": "1.54.0"
     },
     {
       "SPDXID": "SPDXRef-Package-pypdf",
@@ -105,7 +105,7 @@
       "externalRefs": [
         {
           "referenceCategory": "PACKAGE-MANAGER",
-          "referenceLocator": "pkg:apk/alpine/openssl@3.5.8-r0",
+          "referenceLocator": "pkg:apk/alpine/openssl",
           "referenceType": "purl"
         }
       ],
@@ -114,7 +114,7 @@
       "licenseDeclared": "Apache-2.0",
       "name": "OpenSSL runtime CLI",
       "supplier": "Organization: OpenSSL Project",
-      "versionInfo": "3.5.8-r0"
+      "versionInfo": "build-resolved; minimum 3.5.8"
     }
   ],
   "relationships": [

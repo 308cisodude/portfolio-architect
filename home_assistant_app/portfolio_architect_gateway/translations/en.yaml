@@ -3,10 +3,8 @@ configuration:
     name: Refresh interval
     description: Seconds between Comdirect portfolio refresh attempts.
   max_cached_snapshot_age_seconds:
-    name: Maximum cached snapshot age
-    description: Applies to cached live-API snapshots. Static CSV evidence remains
-      servable with its original timestamp and Portfolio Architect applies the configured
-      CSV freshness policy; 0 disables the live cache age limit.
+    name: Maximum live LKG snapshot age
+    description: Maximum age in seconds for a previously successful live-API snapshot served during a live-source failure. This is a Gateway resilience limit only; Portfolio Architect separately decides whether evidence is fresh enough for planning. 0 disables the live LKG age limit.
   request_timeout_seconds:
     name: Comdirect request timeout
     description: Timeout in seconds for each outbound Comdirect API request.
@@ -18,7 +16,6 @@ configuration:
     description: Expose the authenticated /healthz endpoint on the private REST service.
   depot_ids:
     name: Depot IDs
-    description: Optional exact Comdirect depot IDs; leave empty to include every
-      visible depot.
+    description: Optional exact Comdirect depot IDs; leave empty to include every visible depot.
 network:
   8787/tcp: Private Portfolio Architect REST endpoint; keep the host port disabled.

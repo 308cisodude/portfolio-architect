@@ -1,4 +1,4 @@
-"""Regression coverage for the v1.53.1 Configure UX consistency pass."""
+"""Regression coverage for the v1.54.0 Configure UX consistency pass."""
 from __future__ import annotations
 
 import ast

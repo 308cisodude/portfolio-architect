@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.54.0
+
+- Standardizes Gateway acquisition colour semantics across Comdirect, Trade Republic, DKB and Generic Import: authoritative/ACTIVE is green, inactive-ready is blue, and unavailable/not-ready/research-only acquisition is amber.
+- Removes the misleading static-Gateway cache/freshness configuration from Trade Republic, DKB and Generic Import. Static evidence keeps its original timestamp and Portfolio Architect remains the sole freshness-policy authority.
+- Clarifies the retained Comdirect cache-age setting as a live last-known-good resilience limit only and shows that scope directly inside the Live API Ingress section.
+- Replaces exact Alpine OpenSSL APK revision pinning with branch-current `apk add --no-cache openssl`; protected validation/publication Docker builds enforce OpenSSL >= 3.5.8 and record the resolved version in workflow build evidence. The digest-pinned Python/Alpine base image, exact GitHub Actions SHAs and hash-locked Python dependencies remain unchanged.
+- Gateway health schema 8, REST portfolio schema 1, provider identity, acquisition arbitration, freshness thresholds, planner behavior, verified private-PKI transport and advisory-only boundaries are unchanged.
+
 ## 1.53.1
 
 - Refreshes the pinned Alpine 3.24 OpenSSL runtime CLI dependency from `3.5.7-r0` to `3.5.8-r0` after the distribution repository retired the former package, restoring deterministic provider-App Docker builds without changing Gateway TLS semantics.

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.54.0
+
+- Standardizes acquisition-state colour semantics: authoritative acquisition is green, inactive-ready is blue and unavailable/not-ready is amber.
+- Renames the existing cache-age configuration presentation to a live last-known-good resilience limit; Portfolio Architect remains authoritative for evidence freshness.
+- Replaces the brittle exact Alpine OpenSSL package revision pin with branch-current installation plus a protected CI security floor.
+
 ## 1.53.1
 
 - Refresh the pinned Alpine 3.24 OpenSSL runtime CLI dependency to `3.5.8-r0` after repository package rotation; private-PKI generation and TLS behavior are unchanged.

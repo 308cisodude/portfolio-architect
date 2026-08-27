@@ -1,13 +1,6 @@
 configuration:
-  max_cached_snapshot_age_seconds:
-    name: Maximales Alter des zwischengespeicherten Snapshots
-    description: Kompatibilitätseinstellung für die Live-Cache-Aufbewahrung. Statische
-      Generic-Import-CSV-Snapshots verfallen nicht durch diesen Wert; Portfolio Architect
-      wendet die konfigurierte CSV-Frischegrenze an.
   health_endpoint_enabled:
     name: Health-Endpunkt aktivieren
-    description: Begrenztes authentifiziertes Health-Dokument für Portfolio Architect
-      bereitstellen.
+    description: Begrenztes authentifiziertes Health-Dokument für Portfolio Architect bereitstellen.
 network:
-  8787/tcp: Verifizierter HTTPS-REST-Endpunkt für Portfolio Architect; Host-Port nicht
-    freigeben
+  8787/tcp: Verifizierter HTTPS-REST-Endpunkt für Portfolio Architect; Host-Port nicht freigeben
