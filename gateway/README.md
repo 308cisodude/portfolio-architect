@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway runtime v1.55.0
+# Portfolio Architect Gateway runtime v1.55.1
 
-Version 1.55.0 standardizes Gateway acquisition-state presentation and runtime-package build policy. Active/authoritative acquisition is green, inactive-ready is blue, and unavailable/not-ready/research-only acquisition is amber. Static-only Apps no longer expose a cache/freshness-age setting; Comdirect retains the same live LKG resilience setting with explicit scoping. Alpine OpenSSL is branch-current with a protected >=3.5.8 build floor. Health schema 8 and REST schema 1 are unchanged.
+Version 1.55.1 fixes only the live-observed Comdirect App-identity migration compatibility/diagnostic path: production acquisition-state schema 2 is accepted alongside schema 1, successor preflight occurs before private transfer, and expected failures return bounded Ingress reason classes. Health schema 8, REST schema 1, provider acquisition and freshness semantics remain unchanged.
 
 Version 1.55.0 keeps health schema 8 and REST schema 1 unchanged. Static `csv`/`pdf` acquisition snapshots are no longer expired by the live-source LKG cache TTL; their immutable evidence timestamps remain visible and Portfolio Architect applies the configured static freshness policy. Live acquisition methods retain the configured bounded cache age.
 

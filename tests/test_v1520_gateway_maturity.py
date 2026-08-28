@@ -1,4 +1,4 @@
-"""v1.55.0 capability-scoped Gateway maturity contracts."""
+"""v1.55.1 capability-scoped Gateway maturity contracts."""
 
 from __future__ import annotations
 
@@ -42,13 +42,13 @@ def _config(app: Path) -> dict[str, object]:
 def test_current_release_versions_and_app_maturity_are_aligned() -> None:
     assert json.loads(
         (ROOT / "custom_components" / "portfolio_architect" / "manifest.json").read_text()
-    )["version"] == "1.55.0"
+    )["version"] == "1.55.1"
     assert _config(COMDIRECT)["stage"] == "stable"
     assert _config(DKB)["stage"] == "stable"
     assert _config(TR)["stage"] == "stable"
     assert _config(GENERIC)["stage"] == "experimental"
     for app in (COMDIRECT, DKB, TR, GENERIC):
-        assert _config(app)["version"] == "1.55.0"
+        assert _config(app)["version"] == "1.55.1"
 
 
 def test_dkb_stability_is_scoped_to_csv_while_fints_probe_stays_experimental() -> None:
@@ -100,7 +100,7 @@ def test_generic_import_remains_experimental_and_live_smoke_is_isolated() -> Non
     assert config["stage"] == "experimental"
     assert config["environment"]["PA_PROVIDER_ID"] == "generic_csv"
     assert "Experimental isolated provider-neutral" in str(config["description"])
-    guide = (ROOT / "docs" / "UPGRADE-1.55.0.md").read_text(encoding="utf-8")
+    guide = (ROOT / "docs" / "UPGRADE-1.55.1.md").read_text(encoding="utf-8")
     assert "do **not**" in guide and "add its discovery card/source" in guide
     assert "must not alter the real" in guide
     assert "uninstalled after this standalone" in guide and "smoke test" in guide
@@ -120,4 +120,4 @@ def test_sbom_describes_all_four_gateway_apps() -> None:
         for package in sbom["packages"]
         if package["name"] == "Portfolio Architect Gateway — Generic Import App"
     )
-    assert generic["versionInfo"] == "1.55.0"
+    assert generic["versionInfo"] == "1.55.1"

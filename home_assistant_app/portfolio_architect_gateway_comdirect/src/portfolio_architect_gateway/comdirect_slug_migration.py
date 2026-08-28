@@ -87,6 +87,37 @@ _FORBIDDEN_MIGRATION_FILES: Final = frozenset(
     }
 )
 
+MIGRATION_ERROR_INVALID_CODE: Final = "invalid_code"
+MIGRATION_ERROR_LEGACY_STATE_INVALID: Final = "legacy_state_invalid"
+MIGRATION_ERROR_SUCCESSOR_UNREACHABLE: Final = "successor_unreachable"
+MIGRATION_ERROR_SUCCESSOR_TLS_MISMATCH: Final = "successor_tls_mismatch"
+MIGRATION_ERROR_SUCCESSOR_AUTH_REJECTED: Final = "successor_auth_rejected"
+MIGRATION_ERROR_SUCCESSOR_PAYLOAD_REJECTED: Final = "successor_payload_rejected"
+MIGRATION_ERROR_SUCCESSOR_RESPONSE_INVALID: Final = "successor_response_invalid"
+MIGRATION_ERROR_LOCAL_STAGE_RECORD_FAILED: Final = "local_stage_record_failed"
+MIGRATION_ERROR_CODES: Final = frozenset(
+    {
+        MIGRATION_ERROR_INVALID_CODE,
+        MIGRATION_ERROR_LEGACY_STATE_INVALID,
+        MIGRATION_ERROR_SUCCESSOR_UNREACHABLE,
+        MIGRATION_ERROR_SUCCESSOR_TLS_MISMATCH,
+        MIGRATION_ERROR_SUCCESSOR_AUTH_REJECTED,
+        MIGRATION_ERROR_SUCCESSOR_PAYLOAD_REJECTED,
+        MIGRATION_ERROR_SUCCESSOR_RESPONSE_INVALID,
+        MIGRATION_ERROR_LOCAL_STAGE_RECORD_FAILED,
+    }
+)
+
+
+class MigrationError(ValueError):
+    """Bounded migration failure safe to expose as a reason code."""
+
+    def __init__(self, code: str) -> None:
+        if code not in MIGRATION_ERROR_CODES:
+            raise ValueError("Unsupported migration error code")
+        super().__init__(code)
+        self.code = code
+
 
 @dataclass(frozen=True, slots=True)
 class MigrationSummary:
@@ -272,6 +303,43 @@ def _validate_options(raw: dict[str, Any]) -> dict[str, Any]:
     return result
 
 
+def _validate_migrated_acquisition_state(raw: object) -> str:
+    """Accept every currently supported persisted acquisition-state schema."""
+    if not isinstance(raw, dict):
+        raise ValueError("Migrated acquisition state is invalid")
+    schema = raw.get("schema_version")
+    mode = raw.get("mode")
+    if mode not in {"live_api", "csv"}:
+        raise ValueError("Migrated acquisition mode is invalid")
+    if schema == 1:
+        if set(raw) != {"schema_version", "mode"}:
+            raise ValueError("Migrated acquisition state is invalid")
+        return str(mode)
+    if schema != 2 or set(raw) != {
+        "schema_version",
+        "mode",
+        "previous_mode",
+        "last_method_change_at",
+        "last_method_change_reason",
+    }:
+        raise ValueError("Migrated acquisition state is invalid")
+    previous = raw.get("previous_mode")
+    if previous not in {"live_api", "csv"} or previous == mode:
+        raise ValueError("Migrated acquisition state is invalid")
+    changed_at = raw.get("last_method_change_at")
+    if not isinstance(changed_at, str):
+        raise ValueError("Migrated acquisition state is invalid")
+    try:
+        parsed = datetime.fromisoformat(changed_at.replace("Z", "+00:00"))
+    except ValueError as err:
+        raise ValueError("Migrated acquisition state is invalid") from err
+    if parsed.tzinfo is None or parsed.utcoffset() is None:
+        raise ValueError("Migrated acquisition state is invalid")
+    if raw.get("last_method_change_reason") != "operator":
+        raise ValueError("Migrated acquisition state is invalid")
+    return str(mode)
+
+
 def _validate_payload(
     raw: dict[str, Any],
     *,
@@ -348,12 +416,7 @@ def _validate_payload(
     acquisition_record = decoded.get("comdirect-acquisition.json")
     if acquisition_record is not None:
         state = json.loads(acquisition_record.decode("utf-8"))
-        if not isinstance(state, dict) or state.get("schema_version") != 1:
-            raise ValueError("Migrated acquisition state is invalid")
-        mode = state.get("mode")
-        if mode not in {"live_api", "csv"}:
-            raise ValueError("Migrated acquisition mode is invalid")
-        acquisition_mode = str(mode)
+        acquisition_mode = _validate_migrated_acquisition_state(state)
 
     return MigrationSummary(
         source_hostname=source_hostname,
@@ -619,8 +682,57 @@ def parse_migration_code(value: str) -> tuple[str, str]:
     cleaned = value.strip()
     match = MIGRATION_CODE_RE.fullmatch(cleaned)
     if match is None:
-        raise ValueError("Migration code is invalid")
+        raise MigrationError(MIGRATION_ERROR_INVALID_CODE)
     return match.group(1), match.group(2)
+
+
+def _connect_pinned_successor(
+    *,
+    legacy_hostname: str,
+    cert_sha256: str,
+    timeout_seconds: int,
+) -> http.client.HTTPSConnection:
+    """Connect only to the exact successor and verify its ephemeral leaf fingerprint."""
+    target = expected_successor_hostname(legacy_hostname)
+    context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+    context.check_hostname = False
+    context.verify_mode = ssl.CERT_NONE
+    context.minimum_version = ssl.TLSVersion.TLSv1_2
+    connection = http.client.HTTPSConnection(
+        target, MIGRATION_RECEIVER_PORT, context=context, timeout=timeout_seconds
+    )
+    try:
+        connection.connect()
+    except (OSError, ssl.SSLError, http.client.HTTPException) as err:
+        connection.close()
+        raise MigrationError(MIGRATION_ERROR_SUCCESSOR_UNREACHABLE) from err
+    peer = connection.sock.getpeercert(binary_form=True) if connection.sock else None
+    if not peer or not secrets.compare_digest(_sha256_bytes(peer), cert_sha256):
+        connection.close()
+        raise MigrationError(MIGRATION_ERROR_SUCCESSOR_TLS_MISMATCH)
+    return connection
+
+
+def _bounded_successor_response(
+    response: http.client.HTTPResponse,
+    *,
+    expected_status: str,
+) -> dict[str, Any]:
+    """Parse one bounded receiver response without surfacing remote content."""
+    body = response.read(16 * 1024)
+    if response.status in {HTTPStatus.UNAUTHORIZED, HTTPStatus.FORBIDDEN}:
+        raise MigrationError(MIGRATION_ERROR_SUCCESSOR_AUTH_REJECTED)
+    if response.status in {HTTPStatus.BAD_REQUEST, HTTPStatus.CONFLICT, HTTPStatus.UNPROCESSABLE_ENTITY}:
+        raise MigrationError(MIGRATION_ERROR_SUCCESSOR_PAYLOAD_REJECTED)
+    if response.status != HTTPStatus.OK:
+        raise MigrationError(MIGRATION_ERROR_SUCCESSOR_RESPONSE_INVALID)
+    try:
+        document = json.loads(body.decode("utf-8"))
+    except (UnicodeError, json.JSONDecodeError) as err:
+        raise MigrationError(MIGRATION_ERROR_SUCCESSOR_RESPONSE_INVALID) from err
+    if not isinstance(document, dict) or document.get("status") != expected_status:
+        raise MigrationError(MIGRATION_ERROR_SUCCESSOR_RESPONSE_INVALID)
+    return document
 
 
 def send_payload_to_successor(
@@ -632,47 +744,38 @@ def send_payload_to_successor(
 ) -> MigrationSummary:
     """Send state only to the exact provider-qualified successor using leaf pinning."""
     cert_sha256, token = parse_migration_code(migration_code)
-    target = expected_successor_hostname(legacy_hostname)
     body = _canonical_json_bytes(payload)
     if not 1 <= len(body) <= MAX_MIGRATION_BODY_BYTES:
-        raise ValueError("Migration payload size is invalid")
-    context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-    context.check_hostname = False
-    context.verify_mode = ssl.CERT_NONE
-    context.minimum_version = ssl.TLSVersion.TLSv1_2
-    connection = http.client.HTTPSConnection(
-        target,
-        MIGRATION_RECEIVER_PORT,
-        context=context,
-        timeout=timeout_seconds,
+        raise MigrationError(MIGRATION_ERROR_LEGACY_STATE_INVALID)
+    connection = _connect_pinned_successor(
+        legacy_hostname=legacy_hostname,
+        cert_sha256=cert_sha256,
+        timeout_seconds=timeout_seconds,
     )
     try:
-        connection.connect()
-        peer = connection.sock.getpeercert(binary_form=True) if connection.sock else None
-        if not peer or not secrets.compare_digest(_sha256_bytes(peer), cert_sha256):
-            raise ValueError("Provider-qualified migration receiver certificate did not match")
-        connection.request(
-            "POST",
-            "/migration/v1/stage",
-            body=body,
-            headers={
-                "Authorization": f"Bearer {token}",
-                "Content-Type": "application/json",
-                "Content-Length": str(len(body)),
-                "Connection": "close",
-            },
-        )
-        response = connection.getresponse()
-        response_body = response.read(16 * 1024)
-        if response.status != HTTPStatus.OK:
-            raise ValueError("Provider-qualified migration receiver rejected the transfer")
-        document = json.loads(response_body.decode("utf-8"))
-        if not isinstance(document, dict) or document.get("status") != "staged":
-            raise ValueError("Provider-qualified migration receiver returned invalid status")
-        summary = MigrationSummary(**document["summary"])
-        expected = _validate_payload(payload, expected_source_hostname=legacy_hostname)
+        try:
+            connection.request(
+                "POST",
+                "/migration/v1/stage",
+                body=body,
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Content-Type": "application/json",
+                    "Content-Length": str(len(body)),
+                    "Connection": "close",
+                },
+            )
+            response = connection.getresponse()
+        except (OSError, ssl.SSLError, http.client.HTTPException) as err:
+            raise MigrationError(MIGRATION_ERROR_SUCCESSOR_UNREACHABLE) from err
+        document = _bounded_successor_response(response, expected_status="staged")
+        try:
+            summary = MigrationSummary(**document["summary"])
+            expected = _validate_payload(payload, expected_source_hostname=legacy_hostname)
+        except (KeyError, TypeError, ValueError, json.JSONDecodeError) as err:
+            raise MigrationError(MIGRATION_ERROR_SUCCESSOR_RESPONSE_INVALID) from err
         if summary != expected:
-            raise ValueError("Provider-qualified migration receiver staged unexpected state")
+            raise MigrationError(MIGRATION_ERROR_SUCCESSOR_RESPONSE_INVALID)
         return summary
     finally:
         connection.close()
@@ -686,35 +789,39 @@ def successor_status(
 ) -> tuple[str, MigrationSummary | None]:
     """Return the pinned successor receiver status without sending state."""
     cert_sha256, token = parse_migration_code(migration_code)
-    target = expected_successor_hostname(legacy_hostname)
-    context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-    context.check_hostname = False
-    context.verify_mode = ssl.CERT_NONE
-    context.minimum_version = ssl.TLSVersion.TLSv1_2
-    connection = http.client.HTTPSConnection(
-        target, MIGRATION_RECEIVER_PORT, context=context, timeout=timeout_seconds
+    connection = _connect_pinned_successor(
+        legacy_hostname=legacy_hostname,
+        cert_sha256=cert_sha256,
+        timeout_seconds=timeout_seconds,
     )
     try:
-        connection.connect()
-        peer = connection.sock.getpeercert(binary_form=True) if connection.sock else None
-        if not peer or not secrets.compare_digest(_sha256_bytes(peer), cert_sha256):
-            raise ValueError("Provider-qualified migration receiver certificate did not match")
-        connection.request(
-            "GET",
-            "/migration/v1/status",
-            headers={"Authorization": f"Bearer {token}", "Connection": "close"},
-        )
-        response = connection.getresponse()
+        try:
+            connection.request(
+                "GET",
+                "/migration/v1/status",
+                headers={"Authorization": f"Bearer {token}", "Connection": "close"},
+            )
+            response = connection.getresponse()
+        except (OSError, ssl.SSLError, http.client.HTTPException) as err:
+            raise MigrationError(MIGRATION_ERROR_SUCCESSOR_UNREACHABLE) from err
         body = response.read(16 * 1024)
+        if response.status in {HTTPStatus.UNAUTHORIZED, HTTPStatus.FORBIDDEN}:
+            raise MigrationError(MIGRATION_ERROR_SUCCESSOR_AUTH_REJECTED)
         if response.status != HTTPStatus.OK:
-            raise ValueError("Provider-qualified migration receiver status failed")
-        document = json.loads(body.decode("utf-8"))
+            raise MigrationError(MIGRATION_ERROR_SUCCESSOR_RESPONSE_INVALID)
+        try:
+            document = json.loads(body.decode("utf-8"))
+        except (UnicodeError, json.JSONDecodeError) as err:
+            raise MigrationError(MIGRATION_ERROR_SUCCESSOR_RESPONSE_INVALID) from err
         if not isinstance(document, dict) or document.get("status") not in {
             "waiting", "staged", "committed"
         }:
-            raise ValueError("Provider-qualified migration receiver returned invalid status")
+            raise MigrationError(MIGRATION_ERROR_SUCCESSOR_RESPONSE_INVALID)
         raw_summary = document.get("summary")
-        summary = MigrationSummary(**raw_summary) if isinstance(raw_summary, dict) else None
+        try:
+            summary = MigrationSummary(**raw_summary) if isinstance(raw_summary, dict) else None
+        except (TypeError, ValueError) as err:
+            raise MigrationError(MIGRATION_ERROR_SUCCESSOR_RESPONSE_INVALID) from err
         return str(document["status"]), summary
     finally:
         connection.close()

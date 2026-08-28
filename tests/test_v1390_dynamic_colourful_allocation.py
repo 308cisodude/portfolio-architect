@@ -161,20 +161,20 @@ def test_colour_is_slot_identity_only_and_dashboard_remains_generic_native_only(
 
 
 def test_v1390_release_metadata_and_preserved_contracts_are_aligned() -> None:
-    assert 'version = "1.55.0"' in (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    assert 'version = "1.55.1"' in (ROOT / "pyproject.toml").read_text(encoding="utf-8")
     manifest = json.loads((COMPONENT / "manifest.json").read_text(encoding="utf-8"))
-    assert manifest["version"] == "1.55.0"
-    assert 'VERSION: Final = "1.55.0"' in (COMPONENT / "const.py").read_text(encoding="utf-8")
-    assert '__version__ = "1.55.0"' in (COMPONENT / "engine" / "__init__.py").read_text(encoding="utf-8")
+    assert manifest["version"] == "1.55.1"
+    assert 'VERSION: Final = "1.55.1"' in (COMPONENT / "const.py").read_text(encoding="utf-8")
+    assert '__version__ = "1.55.1"' in (COMPONENT / "engine" / "__init__.py").read_text(encoding="utf-8")
     for app in (
         "portfolio_architect_gateway",
         "portfolio_architect_gateway_dkb",
         "portfolio_architect_gateway_trade_republic",
     ):
         config = yaml.safe_load((ROOT / "home_assistant_app" / app / "config.yaml").read_text())
-        assert config["version"] == "1.55.0"
+        assert config["version"] == "1.55.1"
 
-    assert (ROOT / "docs" / "UPGRADE-1.55.0.md").is_file()
+    assert (ROOT / "docs" / "UPGRADE-1.55.1.md").is_file()
     release_notes = (ROOT / "docs" / "RELEASE-NOTES.md").read_text(encoding="utf-8")
     for contract in (
         "payload schema 8: unchanged",

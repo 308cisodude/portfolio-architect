@@ -1,4 +1,4 @@
-"""v1.55.0 live-acceptance hotfix regression contracts."""
+"""v1.55.1 live-acceptance hotfix regression contracts."""
 
 from __future__ import annotations
 
@@ -129,7 +129,7 @@ def test_static_gateway_retention_is_pa_freshness_owned() -> None:
         "portfolio_architect_gateway_import",
     ):
         text = (ROOT / "home_assistant_app" / app / "config.yaml").read_text(encoding="utf-8")
-        # v1.55.0 removes the obsolete static user-facing option; v1.53.1's
+        # v1.55.1 removes the obsolete static user-facing option; v1.53.1's
         # server-side ownership rule remains the reason this is safe.
         assert "max_cached_snapshot_age_seconds" not in text
 
@@ -139,4 +139,4 @@ def test_v1531_does_not_change_gateway_health_or_portfolio_wire_schema() -> None
     rest = (COMPONENT / "rest_client.py").read_text(encoding="utf-8")
     assert '"health_schema_version": min(version, 8)' in server
     assert '"requested_health_schema_version": 8' in rest
-    assert json.loads((COMPONENT / "manifest.json").read_text())["version"] == "1.55.0"
+    assert json.loads((COMPONENT / "manifest.json").read_text())["version"] == "1.55.1"

@@ -696,6 +696,10 @@ Live acceptance of v1.45.0 proved the exact atomic DKB source cut-over but expos
 
 v1.41.1 retains bounded local Trade Republic cash-statement acquisition and changes only the funded-route tie-break; no new remote provider API or transaction capability is enabled. v1.42.0 adds only presentation of those already-decided instructions. v1.43.0 changes only Home Assistant-side execution-evidence governance/editing; v1.44.0 changes only Configure presentation/identity context. v1.45.0 adds local DKB CSV acquisition inside the DKB Gateway but no new remote bank API or transaction capability.
 
+## v1.55.1 — live migration compatibility hotfix
+
+Fix the first production v1.55.0 migration attempt: accept persisted Comdirect acquisition-state schema 2 as well as schema 1, preflight the exact fingerprint-pinned successor before private transfer, and return bounded non-secret migration failure classes inside Ingress. Security boundaries and cut-over semantics remain unchanged.
+
 ## v1.55.0 — safe Comdirect App-identity migration
 
 Current structural migration milestone: introduce the provider-qualified

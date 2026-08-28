@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.55.1
+
+- Fixes the first live-observed Comdirect App-identity migration failure by accepting the production schema-2 `comdirect-acquisition.json` history alongside schema 1 while keeping both schemas strict.
+- Adds authenticated fingerprint-pinned successor status preflight before private state transfer and idempotent recovery for an exactly matching already-staged/committed successor.
+- Replaces the legacy App's generic HTTP 400 migration failure with bounded non-secret Ingress reason classes; no raw exception text, credentials, account identifiers or response bodies are exposed.
+- Keeps the v1.55.0 same-CA/Gateway-bearer preservation, OAuth-session exclusion, explicit legacy freeze/resume, explicit PA cut-over confirmation, wire schemas, provider identity, acquisition/freshness semantics and advisory-only boundary unchanged.
+
 ## 1.55.0
 
 - Introduces the provider-qualified Comdirect Home Assistant App slug `portfolio_architect_gateway_comdirect` while retaining historical `portfolio_architect_gateway` as an explicit migration source.

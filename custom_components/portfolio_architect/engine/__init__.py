@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-__version__ = "1.55.0"
+__version__ = "1.55.1"
 
 from .calculator import (
     calculate_portfolio_payload_from_positions,
