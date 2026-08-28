@@ -145,7 +145,7 @@ def verify_gateway_app_archive_layouts(directory: Path, release_version: str) ->
         "portfolio-architect-gateway-app-v%s.zip" % release_version: (
             "portfolio_architect_gateway",
             "portfolio_architect_gateway",
-            "stable",
+            "deprecated",
             None,
             "auto",
         ),

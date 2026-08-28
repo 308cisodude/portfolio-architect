@@ -696,6 +696,15 @@ Live acceptance of v1.45.0 proved the exact atomic DKB source cut-over but expos
 
 v1.41.1 retains bounded local Trade Republic cash-statement acquisition and changes only the funded-route tie-break; no new remote provider API or transaction capability is enabled. v1.42.0 adds only presentation of those already-decided instructions. v1.43.0 changes only Home Assistant-side execution-evidence governance/editing; v1.44.0 changes only Configure presentation/identity context. v1.45.0 adds local DKB CSV acquisition inside the DKB Gateway but no new remote bank API or transaction capability.
 
+## v1.56.0 — UX and hygiene consolidation
+
+- deterministic DKB anonymous-probe time presentation in Europe/Berlin plus authoritative UTC;
+- Generic Import bearer-token placement and exact Supervisor discovery lifecycle cleanup;
+- consolidated bilingual runtime-health incident/LKG presentation;
+- canonical Comdirect display naming after the completed App-identity migration, with the historical package labelled LEGACY;
+- routine successful Ingress request-completion logging reduced to DEBUG;
+- no authenticated DKB FinTS or capability-level acquisition arbitration.
+
 ## v1.55.1 — live migration compatibility hotfix
 
 Fix the first production v1.55.0 migration attempt: accept persisted Comdirect acquisition-state schema 2 as well as schema 1, preflight the exact fingerprint-pinned successor before private transfer, and return bounded non-secret migration failure classes inside Ingress. Security boundaries and cut-over semantics remain unchanged.
@@ -711,3 +720,10 @@ excludes Comdirect OAuth/session state, freezes the historical App before cut-ov
 requires explicit same-CA authenticated Portfolio Architect validation before the endpoint
 changes. Canonical provider identity remains `comdirect`; acquisition/freshness semantics,
 wire schemas, planner behavior, and the advisory-only boundary remain unchanged.
+
+### Historical Comdirect App withdrawal (v1.57.0)
+
+- Remove the deprecated historical `portfolio_architect_gateway` package from the active Home Assistant App repository after its final v1.56.x migration-source release.
+- Stop building and publishing the historical Comdirect App artifact and remove its active-repository validation/publication wiring.
+- Retain bounded migration-receiver compatibility in canonical `portfolio_architect_gateway_comdirect` long enough for already-installed v1.55/v1.56 legacy instances to complete the established fail-closed migration.
+- Do not reuse the historical slug for another provider or purpose. Immutable historical tags/releases remain the archival source of the retired package.

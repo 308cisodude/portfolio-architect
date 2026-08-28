@@ -8,10 +8,10 @@ COMPONENT = ROOT / "custom_components" / "portfolio_architect"
 APP = ROOT / "home_assistant_app" / "portfolio_architect_gateway"
 
 
-def test_gateway_app_is_stable_and_versioned() -> None:
+def test_historical_gateway_app_is_deprecated_and_versioned() -> None:
     config = yaml.safe_load((APP / "config.yaml").read_text(encoding="utf-8"))
-    assert config["version"] == "1.55.1"
-    assert config["stage"] == "stable"
+    assert config["version"] == "1.56.0"
+    assert config["stage"] == "deprecated"
 
 
 def test_health_contract_is_bounded_authenticated_and_same_origin() -> None:

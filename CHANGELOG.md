@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.56.0
+
+- Render DKB anonymous-probe dispatch timestamps deterministically in `Europe/Berlin` plus authoritative UTC; add Alpine `tzdata` to the DKB runtime image.
+- Move Generic Import bearer material into a lower collapsed sensitive section and add exact Supervisor discovery UUID cleanup/reconciliation on graceful stop/start.
+- Consolidate bilingual runtime-health incident/LKG presentation without removing diagnostic entities or changing coordinator semantics.
+- Make the provider-qualified Comdirect App the plain `Comdirect` display identity; label the historical migration-source package `Comdirect LEGACY`, mark it `stage: deprecated`, and designate v1.56.x as its final published line before planned repository withdrawal in v1.57.0. Slugs and migration security contracts remain unchanged.
+- Move routine successful Ingress request-completion logs from INFO to DEBUG.
+- No provider acquisition, wire-schema, freshness, private-PKI, planner, or DKB authenticated-FinTS behavior changes.
+
 ## 1.55.1
 
 - Fixes the first live-observed Comdirect App-identity migration failure by accepting the production schema-2 `comdirect-acquisition.json` history alongside schema 1 while keeping both schemas strict.

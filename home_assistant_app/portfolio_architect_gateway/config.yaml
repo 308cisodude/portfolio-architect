@@ -1,7 +1,7 @@
-name: Portfolio Architect Gateway — Comdirect
-version: 1.55.1
+name: Portfolio Architect Gateway — Comdirect LEGACY
+version: 1.56.0
 slug: portfolio_architect_gateway
-description: Read-only Comdirect provider Gateway for Portfolio Architect with verified private-PKI HTTPS, private account selection, authorized investment cash, provider identity, and live recovery diagnostics.
+description: Historical Comdirect Gateway identity retained only as the explicit migration source for installations that have not yet moved to the provider-qualified canonical App.
 url: https://developers.home-assistant.io/docs/apps/
 arch:
 - amd64
@@ -14,7 +14,7 @@ ingress: true
 ingress_port: 8099
 ingress_stream: false
 panel_icon: mdi:shield-key-outline
-panel_title: Portfolio Gateway — Comdirect
+panel_title: Portfolio Gateway — Comdirect LEGACY
 panel_admin: true
 host_network: false
 hassio_api: false
@@ -33,7 +33,7 @@ ports:
 ports_description:
   8787/tcp: Verified-HTTPS Portfolio Architect REST endpoint; leave host mapping disabled
 watchdog: tcp://[HOST]:[PORT:8787]
-stage: stable
+stage: deprecated
 options:
   poll_interval_seconds: 900
   max_cached_snapshot_age_seconds: 604800

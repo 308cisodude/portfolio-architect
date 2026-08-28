@@ -1251,7 +1251,7 @@ async function update(){{try{{const r=await fetch('status',{{cache:'no-store'}})
         )
 
     def log_message(self, format: str, *args: Any) -> None:
-        _LOGGER.info("Ingress request completed")
+        _LOGGER.debug("Ingress request completed")
 
 
 
@@ -1268,13 +1268,21 @@ def _legacy_migration_html(
     migration_error_messages = {
         "invalid_code": "The one-time migration code was invalid or incomplete.",
         "legacy_state_invalid": "The legacy App state is not yet valid for migration.",
-        "successor_unreachable": "Comdirect NEW could not be reached on the private App network.",
-        "successor_tls_mismatch": "Comdirect NEW did not present the one-time pinned TLS identity.",
-        "successor_auth_rejected": "Comdirect NEW rejected the one-time migration credential.",
-        "successor_payload_rejected": "Comdirect NEW rejected the validated migration payload.",
-        "successor_response_invalid": "Comdirect NEW returned an unexpected migration status.",
+        "successor_unreachable": "The provider-qualified Comdirect App could not be reached on the private App network.",
+        "successor_tls_mismatch": "The provider-qualified Comdirect App did not present the one-time pinned TLS identity.",
+        "successor_auth_rejected": "The provider-qualified Comdirect App rejected the one-time migration credential.",
+        "successor_payload_rejected": "The provider-qualified Comdirect App rejected the validated migration payload.",
+        "successor_response_invalid": "The provider-qualified Comdirect App returned an unexpected migration status.",
         "local_stage_record_failed": "The successor accepted the state, but the legacy App could not record the staged marker.",
     }
+    retirement_notice = (
+        '<p class="warn" role="alert"><strong>Final legacy release.</strong> '
+        'This historical Comdirect App identity is deprecated in v1.56.0 and is '
+        'scheduled to be withdrawn from the App repository in v1.57.0. Complete '
+        'the migration to <strong>Portfolio Architect Gateway — Comdirect</strong> '
+        'before upgrading beyond v1.56.x. Existing migration safety gates remain '
+        'unchanged.</p>'
+    )
     notice = ""
     if query == "migration_resume=restart":
         notice = (
@@ -1294,6 +1302,7 @@ def _legacy_migration_html(
         return (
             '<section class="mode-card inactive-unavailable">'
             '<h2>Comdirect App identity migration · FROZEN</h2>'
+            + retirement_notice
             + notice
             + '<p>Provider refresh and OAuth maintenance are stopped for cut-over. '
             'The historical verified-HTTPS endpoint continues serving its last trusted '
@@ -1313,6 +1322,7 @@ def _legacy_migration_html(
         return (
             '<section class="mode-card inactive-ready">'
             '<h2>Comdirect App identity migration · state staged</h2>'
+            + retirement_notice
             + notice
             + f'<p>Long-lived private state was transferred through one-time pinned TLS '
             f'to <code>{successor}</code>.</p>'
@@ -1327,6 +1337,7 @@ def _legacy_migration_html(
         )
     return (
         '<section><h2>Comdirect App identity migration</h2>'
+        + retirement_notice
         + notice
         + '<p>This historical App slug is retained temporarily so its private state can '
         f'be migrated safely to <code>{successor}</code>.</p>'

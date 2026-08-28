@@ -17,16 +17,14 @@ generic acquisition formats itself.
 
 ## Official App identities and current maturity
 
-| Capability owner | Display name | App slug | v1.55.1 maturity |
+| Capability owner | Display name | App slug | v1.56.0 maturity |
 | --- | --- | --- | --- |
-| Comdirect | Portfolio Architect Gateway — Comdirect | `portfolio_architect_gateway` | **stable** — live API or explicit static CSV, auto-start |
+| Comdirect | Portfolio Architect Gateway — Comdirect | `portfolio_architect_gateway_comdirect` | **stable** — live API or explicit static CSV, auto-start |
 | DKB | Portfolio Architect Gateway — DKB | `portfolio_architect_gateway_dkb` | **stable** — depot/cash CSV, auto-start; anonymous FinTS probe remains experimental/research-only |
 | Trade Republic | Portfolio Architect Gateway — Trade Republic | `portfolio_architect_gateway_trade_republic` | **stable** — DEPOTAUSZUG/KONTOAUSZUG PDF import, auto-start |
 | Generic Import | Portfolio Architect Gateway — Generic Import | `portfolio_architect_gateway_import` | **experimental** — provider-neutral mapped CSV, auto-start |
 
-The Comdirect slug is retained permanently so existing credentials, OAuth/session
-state, selected account, cash policy, API token and cached snapshot remain in place.
-Every other App has a distinct slug and independent App-private `/data` volume.
+The provider-qualified Comdirect slug `portfolio_architect_gateway_comdirect` is canonical from v1.55.1 onward after the controlled identity migration. In v1.56.0 the historical `portfolio_architect_gateway` package is explicitly **Comdirect LEGACY**, is marked `stage: deprecated`, and enters its final published v1.56.x migration-source line; withdrawal from the active App repository is planned for v1.57.0. It exists only so installations that have not yet migrated can use the explicit same-CA/bearer migration path and is no longer part of a completed installation. Every active provider App has a distinct slug and independent App-private `/data` volume.
 
 The DKB App-level stable marker applies only to its live-proven CSV holdings/cash
 acquisition. It does not imply authenticated FinTS support. The anonymous BPD probe

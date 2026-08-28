@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.56.0
+
+DKB probe dispatch time is rendered deterministically in Europe/Berlin plus authoritative UTC; tzdata is installed and authenticated FinTS remains disabled. Routine Ingress request-completion logs move to DEBUG.
+
 ## 1.55.1
 
 - Version alignment only for the v1.55.1 Comdirect migration hotfix; DKB CSV acquisition and the anonymous FinTS research gate are unchanged.

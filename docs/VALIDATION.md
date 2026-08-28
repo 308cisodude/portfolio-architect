@@ -1,21 +1,15 @@
-# v1.55.1 validation
+# v1.56.0 validation
 
-Portfolio Architect v1.55.1 is prepared from the exact published v1.55.0 tracked-source baseline. It changes only Comdirect App-identity migration compatibility/observability plus aligned release metadata; provider identity, wire schemas, acquisition authority, freshness, private-PKI trust, planner economics and the advisory-only boundary remain unchanged.
+Portfolio Architect v1.56.0 is prepared from the exact fully published and fully live-accepted v1.55.1 tracked-source baseline. It is intentionally limited to operator-facing UX, discovery lifecycle hygiene, deterministic timestamp presentation, naming, and routine log-noise reduction.
 
-Validation requires:
+Release validation must establish that:
 
-- all integration/common Gateway/all five App current-version markers align to 1.55.1 while historical release documentation remains historical;
-- the live-observed schema-2 `comdirect-acquisition.json` shape is accepted for migration, while malformed schema-2 history remains fail-closed;
-- schema-1 acquisition migration remains compatible;
-- `comdirect-session.json` remains excluded;
-- migration-code parsing and all legacy-side failures expose only bounded reason classes;
-- successor preflight verifies the exact derived hostname, one-time leaf fingerprint and one-time bearer credential before private state transfer;
-- an exactly matching already-staged/committed successor can be recovered idempotently without weakening summary validation;
-- the historical App no longer turns expected migration failures into a bare HTTP 400 page;
-- v1.55 same-CA/bearer preservation, legacy freeze/resume, explicit PA cut-over confirmation, health-schema-8 and snapshot-integrity validation remain unchanged;
-- Gateway health schema 8 and REST portfolio schema 1 remain unchanged; schemas 1–7 stay accepted;
-- v1.54 OpenSSL >=3.5.8 build policy remains intact across all five Apps;
-- authenticated DKB FinTS remains disabled;
-- complete regression tests, Python compilation, structured-file parsing, `git diff --check`, strict publication/privacy, provider-source sync, deterministic builds, release verification/artifact privacy and exact v1.55.0→v1.55.1 handoff replay all pass.
-
-Protected GitHub workflows remain authoritative for actual five-App Docker/private-PKI/Supervisor smoke, minimum-OpenSSL enforcement, complete-history/Gitleaks and immutable publication.
+- all integration/common Gateway/all five published App version markers align to 1.56.0 while historical release documentation remains historical;
+- the DKB probe timestamp remains UTC-canonical in persisted/status data and renders deterministically with `ZoneInfo("Europe/Berlin")` plus authoritative UTC;
+- the DKB runtime contains Alpine `tzdata`, while authenticated DKB FinTS remains disabled and CSV remains authoritative;
+- Generic Import persists only its Supervisor discovery UUID, removes only that exact UUID during graceful shutdown, retains it for later reconciliation if Supervisor cleanup fails, and never republishes a duplicate while retained cleanup is unresolved;
+- Generic Import bearer material is below the normal operational/import content and hidden behind an explicit collapsed disclosure control;
+- canonical Comdirect is displayed without `NEW`, historical Comdirect is visibly `LEGACY` and is the only App marked `stage: deprecated`; v1.56.x is its final published line before planned v1.57.0 repository withdrawal, while both slugs/security migration contracts are unchanged;
+- successful routine Ingress request-completion logging is DEBUG-only while meaningful lifecycle/acquisition/error messages retain their existing levels;
+- the bilingual reference dashboard has one consolidated attention reason/action tile and one LKG snapshot-state presentation without removing the underlying entities;
+- `git diff --check`, Python compilation, structured JSON/YAML parsing, the complete 779-test regression suite, strict publication/privacy checks, provider-source synchronization, deterministic release builds, release verification, artifact privacy, and exact v1.55.1→v1.56.0 overlay/patch replay pass before handoff.

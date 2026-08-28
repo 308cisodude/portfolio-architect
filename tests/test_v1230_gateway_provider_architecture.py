@@ -45,7 +45,7 @@ def _load_rest_client():
 
 def _health_v6_payload() -> dict:
     return {
-        "gateway_version": "1.55.1",
+        "gateway_version": "1.56.0",
         "status": "ok",
         "snapshot_available": True,
         "snapshot_generated_at": "2026-08-13T12:00:00+00:00",
@@ -114,10 +114,17 @@ def test_health_client_negotiates_v6_with_v5_to_v1_fallbacks() -> None:
 
 def test_comdirect_app_is_distinct_in_ui_without_slug_or_data_migration() -> None:
     config = yaml.safe_load((APP / "config.yaml").read_text(encoding="utf-8"))
-    assert config["name"] == "Portfolio Architect Gateway — Comdirect"
+    assert config["name"] == "Portfolio Architect Gateway — Comdirect LEGACY"
     assert config["slug"] == "portfolio_architect_gateway"
-    assert config["version"] == "1.55.1"
-    assert config["stage"] == "stable"
+
+    canonical = yaml.safe_load(
+        (ROOT / "home_assistant_app" / "portfolio_architect_gateway_comdirect" / "config.yaml").read_text(encoding="utf-8")
+    )
+    assert canonical["name"] == "Portfolio Architect Gateway — Comdirect"
+    assert canonical["slug"] == "portfolio_architect_gateway_comdirect"
+    assert canonical["stage"] == "stable"
+    assert config["version"] == "1.56.0"
+    assert config["stage"] == "deprecated"
 
     app = (APP / "src" / "portfolio_architect_gateway" / "app.py").read_text(
         encoding="utf-8"
@@ -149,7 +156,7 @@ def test_provider_roadmap_keeps_tr_import_after_distinct_gateway_apps() -> None:
 
 def test_wire_versions_are_intentional() -> None:
     manifest = json.loads((COMPONENT / "manifest.json").read_text(encoding="utf-8"))
-    assert manifest["version"] == "1.55.1"
+    assert manifest["version"] == "1.56.0"
     assert "schema version 12" in (COMPONENT / "__init__.py").read_text(encoding="utf-8")
     release_notes = (ROOT / "docs" / "RELEASE-NOTES.md").read_text(encoding="utf-8")
     assert "REST portfolio schema 1" in release_notes

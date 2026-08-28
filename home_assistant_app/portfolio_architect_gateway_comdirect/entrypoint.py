@@ -25,7 +25,7 @@ APP_GID = 65532
 DATA_ROOT = Path("/data")
 DATA = DATA_ROOT / "gateway"
 WORKSPACE = DATA_ROOT / "comdirect-slug-migration-work"
-DISPLAY_TITLE = "Portfolio Architect Gateway — Comdirect NEW"
+DISPLAY_TITLE = "Portfolio Architect Gateway — Comdirect"
 
 
 def _secure_tree_for_runtime(path: Path) -> None:

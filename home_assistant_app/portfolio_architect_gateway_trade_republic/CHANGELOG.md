@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.56.0
+
+Routine successful Ingress request-completion logging moves from INFO to DEBUG; acquisition and statement semantics are unchanged.
+
 ## 1.55.1
 
 - Version alignment only for the v1.55.1 Comdirect migration hotfix; Trade Republic PDF/statement acquisition is unchanged.

@@ -213,7 +213,7 @@ class ProviderShellIngressHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'self'; base-uri 'none'")
 
     def log_message(self, format: str, *args: Any) -> None:
-        _LOGGER.info("Provider shell Ingress request completed")
+        _LOGGER.debug("Provider shell Ingress request completed")
 
 
 def serve_pending_app(

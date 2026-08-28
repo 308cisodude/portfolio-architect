@@ -1,10 +1,7 @@
-name: Portfolio Architect Gateway — Comdirect NEW
-version: 1.55.1
+name: Portfolio Architect Gateway — Comdirect
+version: 1.56.0
 slug: portfolio_architect_gateway_comdirect
-description: Provider-qualified Comdirect Gateway for Portfolio Architect. During
-  v1.55 migration it can securely import the historical Comdirect App identity while
-  preserving the private CA and long-lived provider state without copying OAuth session
-  state.
+description: Canonical provider-qualified Comdirect Gateway for Portfolio Architect, with secure one-time migration support for installations that still use the historical App identity.
 url: https://developers.home-assistant.io/docs/apps/
 arch:
 - amd64
@@ -17,7 +14,7 @@ ingress: true
 ingress_port: 8099
 ingress_stream: false
 panel_icon: mdi:shield-key-outline
-panel_title: Portfolio Gateway — Comdirect NEW
+panel_title: Portfolio Gateway — Comdirect
 panel_admin: true
 host_network: false
 hassio_api: false
