@@ -109,6 +109,10 @@
         "data_description": {
           "rest_api_token": "Dediziertes Bearer-Token dieses Gateways. HTTPS-Endpunkt und private CA werden über die Supervisor-Erkennung bereitgestellt."
         }
+      },
+      "hassio_comdirect_slug_migration_confirm": {
+        "title": "Comdirect-Gateway-Identität sicher umstellen",
+        "description": "Die providerqualifizierte Comdirect-App ist unter {new_gateway} bereit. Die vorhandene Quelle {legacy_gateway} verwendet denselben privaten CA-Fingerabdruck {ca_sha256}. Mit Bestätigung validiert Portfolio Architect Health-Schema 8, Provideridentität, Bearer-Token sowie Snapshot-Zeitstempel, Positionsanzahl und Fingerabdruck, bevor ausschließlich der Endpunkt atomar umgestellt wird."
       }
     },
     "error": {
@@ -132,7 +136,9 @@
       "tls_already_configured": "Dieses Gateway verwendet bereits das entdeckte verifizierte HTTPS-Vertrauen.",
       "tls_validation_failed": "Der entdeckte HTTPS-Endpunkt konnte mit der bereitgestellten privaten CA und dem vorhandenen Bearer-Token nicht validiert werden.",
       "tls_migrated": "Die passende Gateway-Quelle wurde erfolgreich auf verifiziertes HTTPS migriert.",
-      "tls_supplemental_added": "Das entdeckte Gateway wurde validiert und als zusätzliche verifizierte HTTPS-Quelle hinzugefügt."
+      "tls_supplemental_added": "Das entdeckte Gateway wurde validiert und als zusätzliche verifizierte HTTPS-Quelle hinzugefügt.",
+      "comdirect_slug_validation_failed": "Die providerqualifizierte Comdirect-App konnte mit dem vorhandenen Vertrauen und Bearer-Token nicht vollständig validiert werden. Die bisherige Quelle bleibt unverändert.",
+      "comdirect_slug_migrated": "Die Comdirect-Gateway-Identität wurde erfolgreich auf den providerqualifizierten Endpunkt umgestellt."
     }
   },
   "entity": {

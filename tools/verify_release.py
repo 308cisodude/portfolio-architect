@@ -149,6 +149,13 @@ def verify_gateway_app_archive_layouts(directory: Path, release_version: str) ->
             None,
             "auto",
         ),
+        "portfolio-architect-gateway-comdirect-app-v%s.zip" % release_version: (
+            "portfolio_architect_gateway_comdirect",
+            "portfolio_architect_gateway_comdirect",
+            "stable",
+            None,
+            "auto",
+        ),
         "portfolio-architect-gateway-dkb-app-v%s.zip" % release_version: (
             "portfolio_architect_gateway_dkb",
             "portfolio_architect_gateway_dkb",
@@ -250,6 +257,7 @@ def verify_expected_files(directory: Path, release_version: str) -> None:
         f"portfolio-architect-v{release_version}-ha-dropin.zip",
         "portfolio_architect.zip",
         f"portfolio-architect-gateway-app-v{release_version}.zip",
+        f"portfolio-architect-gateway-comdirect-app-v{release_version}.zip",
         f"portfolio-architect-gateway-dkb-app-v{release_version}.zip",
         f"portfolio-architect-gateway-trade-republic-app-v{release_version}.zip",
         f"portfolio-architect-gateway-import-app-v{release_version}.zip",

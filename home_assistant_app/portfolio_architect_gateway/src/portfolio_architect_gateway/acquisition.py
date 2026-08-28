@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 import threading
@@ -107,6 +108,16 @@ class ComdirectAcquisitionProvider:
                 last_method_change_at=changed_at,
                 last_method_change_reason=str(reason) if reason is not None else None,
             )
+
+    @contextmanager
+    def migration_guard(self):
+        """Hold acquisition authority stable while long-lived state is exported."""
+        with self._lock:
+            if self._pending_file.exists():
+                raise ConfigurationError(
+                    "A Comdirect acquisition switch is still pending"
+                )
+            yield
 
     @property
     def poll_interval_seconds(self) -> int:

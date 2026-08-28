@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.55.0
+
+- Version-aligns the experimental Generic Import App with the Comdirect App-identity migration release.
+- Mapped-CSV acquisition, transient raw-input handling, provider identity and freshness behavior are unchanged from v1.54.0.
+
 ## 1.54.0
 
 - Standardizes the authoritative mapped-CSV acquisition card to green with an explicit ACTIVE badge.

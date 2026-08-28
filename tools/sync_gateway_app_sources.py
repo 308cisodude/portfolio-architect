@@ -6,6 +6,7 @@ import shutil
 ROOT=Path(__file__).resolve().parents[1]
 MASTER=ROOT/"gateway"/"src"/"portfolio_architect_gateway"
 COMDIRECT=ROOT/"home_assistant_app"/"portfolio_architect_gateway"/"src"/"portfolio_architect_gateway"
+COMDIRECT_CANONICAL=ROOT/"home_assistant_app"/"portfolio_architect_gateway_comdirect"/"src"/"portfolio_architect_gateway"
 DKB=ROOT/"home_assistant_app"/"portfolio_architect_gateway_dkb"/"src"/"portfolio_architect_gateway"
 TRADE_REPUBLIC=ROOT/"home_assistant_app"/"portfolio_architect_gateway_trade_republic"/"src"/"portfolio_architect_gateway"
 GENERIC_IMPORT=ROOT/"home_assistant_app"/"portfolio_architect_gateway_import"/"src"/"portfolio_architect_gateway"
@@ -26,9 +27,12 @@ def _sync_shell(target: Path, *, provider_files: set[str]) -> None:
 
 
 def main():
-    COMDIRECT.mkdir(parents=True,exist_ok=True)
-    for p in MASTER.glob("*.py"):
-        shutil.copy2(p,COMDIRECT/p.name)
+    for target in (COMDIRECT, COMDIRECT_CANONICAL):
+        target.mkdir(parents=True,exist_ok=True)
+        for p in target.glob("*.py"):
+            p.unlink()
+        for p in MASTER.glob("*.py"):
+            shutil.copy2(p,target/p.name)
     _sync_shell(DKB, provider_files=DKB_PROVIDER_FILES)
     _sync_shell(TRADE_REPUBLIC, provider_files=TR_PROVIDER_FILES)
     _sync_shell(GENERIC_IMPORT, provider_files=GENERIC_IMPORT_PROVIDER_FILES)

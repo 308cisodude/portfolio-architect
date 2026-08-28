@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.55.0
+
+- Version-aligns the Trade Republic App with the Comdirect App-identity migration release.
+- DEPOTAUSZUG/KONTOAUSZUG acquisition, static evidence timestamps, verified HTTPS and freshness behavior are unchanged from v1.54.0.
+
 ## 1.54.0
 
 - Standardizes the active statement acquisition card to green and unavailable live acquisition to amber.

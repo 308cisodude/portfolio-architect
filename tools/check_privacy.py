@@ -176,10 +176,12 @@ def is_allowed_png(relative: str) -> bool:
         return False
     return parent in {
         "portfolio_architect_gateway",
+        "portfolio_architect_gateway_comdirect",
         "portfolio_architect_gateway_dkb",
         "portfolio_architect_gateway_trade_republic",
         "portfolio_architect_gateway_import",
         "home_assistant_app/portfolio_architect_gateway",
+        "home_assistant_app/portfolio_architect_gateway_comdirect",
         "home_assistant_app/portfolio_architect_gateway_dkb",
         "home_assistant_app/portfolio_architect_gateway_trade_republic",
         "home_assistant_app/portfolio_architect_gateway_import",

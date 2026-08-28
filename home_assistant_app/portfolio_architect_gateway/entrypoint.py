@@ -6,6 +6,10 @@ import logging
 import os
 from pathlib import Path
 
+from portfolio_architect_gateway.comdirect_slug_migration import (
+    FREEZE_MARKER_NAME,
+    legacy_is_frozen,
+)
 from portfolio_architect_gateway.supervisor_tls import (
     prepare_supervisor_tls,
     start_supervisor_tls_discovery_publisher,
@@ -58,14 +62,29 @@ def main() -> int:
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
     tls = prepare_supervisor_tls(DATA, "comdirect")
+    migrated_options = {
+        "poll_interval_seconds": options.poll_interval_seconds,
+        "max_cached_snapshot_age_seconds": options.max_cached_snapshot_age_seconds,
+        "request_timeout_seconds": options.request_timeout_seconds,
+        "mfa_timeout_seconds": options.mfa_timeout_seconds,
+        "health_endpoint_enabled": options.health_endpoint_enabled,
+        "depot_ids": list(options.depot_ids),
+    }
+    frozen = legacy_is_frozen(DATA / FREEZE_MARKER_NAME)
     serve_app(
         options=options,
         tls_cert_file=tls.cert_file,
         tls_key_file=tls.key_file,
         gateway_endpoint_url=f"https://{tls.hostname}:8787/api/v1/portfolio",
-        ready_callback=lambda _controller: start_supervisor_tls_discovery_publisher(
-            tls, "comdirect"
+        ready_callback=(
+            None
+            if frozen
+            else lambda _controller: start_supervisor_tls_discovery_publisher(
+                tls, "comdirect"
+            )
         ),
+        legacy_migration_hostname=tls.hostname,
+        legacy_migration_options=migrated_options,
     )
     return 0
 

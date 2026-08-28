@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.55.0
+
+- Introduces the provider-qualified Comdirect Home Assistant App slug `portfolio_architect_gateway_comdirect` while retaining historical `portfolio_architect_gateway` as an explicit migration source.
+- Adds one-time fingerprint-pinned App-to-App state migration with an allowlisted bounded payload, per-file SHA-256 validation, preserved private CA/Gateway bearer token, and deliberate exclusion of the Comdirect OAuth session.
+- Adds explicit legacy freeze/resume and delays canonical Comdirect NEW discovery until health schema 8 reports a healthy live snapshot.
+- Adds an explicit PA confirmation flow for only the exact historical→provider-qualified Comdirect hostname transition; the already trusted CA, existing bearer token, provider identity and snapshot integrity must all validate before the endpoint changes.
+- Keeps provider identity `comdirect`, acquisition/freshness semantics, wire schemas, v1.54 OpenSSL policy, planner behavior and the advisory-only boundary unchanged.
+
 ## 1.54.0
 
 - Standardizes Gateway acquisition colour semantics across Comdirect, Trade Republic, DKB and Generic Import: authoritative/ACTIVE is green, inactive-ready is blue, and unavailable/not-ready/research-only acquisition is amber.

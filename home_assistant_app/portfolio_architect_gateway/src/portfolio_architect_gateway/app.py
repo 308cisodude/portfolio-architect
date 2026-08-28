@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from html import escape
 from email import policy
@@ -23,6 +23,17 @@ from .acquisition import ComdirectAcquisitionProvider, MODE_CSV, MODE_LIVE_API
 from .comdirect_csv import ComdirectCsvImportError, parse_comdirect_holdings_csv
 from .comdirect_cash_csv import ComdirectCashCsvImportError, parse_comdirect_cash_csv
 from .comdirect import AccountBalanceCandidate, ComdirectClient
+from .comdirect_slug_migration import (
+    EXPORT_MARKER_NAME,
+    FREEZE_MARKER_NAME,
+    build_export_payload,
+    expected_successor_hostname,
+    legacy_is_frozen,
+    read_export_marker,
+    send_payload_to_successor,
+    write_export_marker,
+    write_freeze_marker,
+)
 from .config import ComdirectConfig, GatewayConfig
 from .runtime_config import ServerConfig, atomic_secret, ensure_api_token
 from .errors import GatewayError, RemoteApiError
@@ -195,6 +206,11 @@ class AppController:
         api_token: str,
         endpoint_url: str = LOCAL_ENDPOINT,
         acquisition: ComdirectAcquisitionProvider | None = None,
+        *,
+        legacy_migration_hostname: str | None = None,
+        legacy_migration_options: dict[str, Any] | None = None,
+        pause_provider_callback: Callable[[], None] | None = None,
+        display_title: str = "Portfolio Architect Gateway — Comdirect",
     ) -> None:
         self.config = config
         self.client = client
@@ -213,6 +229,14 @@ class AppController:
             "Configured account" if client.selected_investment_account_id() else None,
             (),
         )
+        self.legacy_migration_hostname = legacy_migration_hostname
+        self.legacy_migration_options = (
+            dict(legacy_migration_options) if legacy_migration_options is not None else None
+        )
+        self._pause_provider_callback = pause_provider_callback
+        self.display_title = display_title
+        self._legacy_export_marker = config.server.snapshot_file.parent / EXPORT_MARKER_NAME
+        self._legacy_freeze_marker = config.server.snapshot_file.parent / FREEZE_MARKER_NAME
 
     def bootstrap_view(self) -> BootstrapView:
         with self._lock:
@@ -221,6 +245,61 @@ class AppController:
     def account_view(self) -> InvestmentAccountView:
         with self._lock:
             return self._account_view
+
+    def slug_migration_status(self) -> dict[str, Any] | None:
+        """Return privacy-bounded legacy App migration state, when applicable."""
+        if self.legacy_migration_hostname is None:
+            return None
+        exported = read_export_marker(self._legacy_export_marker)
+        return {
+            "legacy_hostname": self.legacy_migration_hostname,
+            "successor_hostname": expected_successor_hostname(self.legacy_migration_hostname),
+            "staged": exported is not None,
+            "staged_summary": asdict(exported) if exported is not None else None,
+            "frozen": legacy_is_frozen(self._legacy_freeze_marker),
+            "oauth_session_transferred": False,
+        }
+
+    def stage_slug_migration(self, migration_code: str) -> None:
+        """Transfer stable long-lived state to only the exact successor App."""
+        if (
+            self.legacy_migration_hostname is None
+            or self.legacy_migration_options is None
+            or self.acquisition is None
+        ):
+            raise ValueError("Legacy Comdirect App migration is unavailable")
+        if legacy_is_frozen(self._legacy_freeze_marker):
+            raise ValueError("Legacy Comdirect App is already frozen")
+        with self.acquisition.migration_guard():
+            payload, _local_summary = build_export_payload(
+                self.config.server.snapshot_file.parent,
+                options=self.legacy_migration_options,
+                source_hostname=self.legacy_migration_hostname,
+            )
+            remote_summary = send_payload_to_successor(
+                legacy_hostname=self.legacy_migration_hostname,
+                migration_code=migration_code,
+                payload=payload,
+            )
+        write_export_marker(self._legacy_export_marker, remote_summary)
+
+    def freeze_legacy_for_cutover(self) -> None:
+        """Stop provider calls while continuing to serve the trusted cached snapshot."""
+        if self.legacy_migration_hostname is None or self._pause_provider_callback is None:
+            raise ValueError("Legacy Comdirect App migration is unavailable")
+        if read_export_marker(self._legacy_export_marker) is None:
+            raise ValueError("No successor migration has been staged")
+        write_freeze_marker(
+            self._legacy_freeze_marker,
+            successor_hostname=expected_successor_hostname(self.legacy_migration_hostname),
+        )
+        self._pause_provider_callback()
+
+    def resume_legacy_on_restart(self) -> None:
+        """Explicitly cancel a frozen cut-over; provider threads resume after restart."""
+        if self.legacy_migration_hostname is None:
+            raise ValueError("Legacy Comdirect App migration is unavailable")
+        self._legacy_freeze_marker.unlink(missing_ok=True)
 
     def status_document(self) -> dict[str, Any]:
         bootstrap = self.bootstrap_view()
@@ -272,6 +351,7 @@ class AppController:
                 and self.config.comdirect.client_secret_file.is_file()
             ),
             "endpoint": self.endpoint_url,
+            "app_identity_migration": self.slug_migration_status(),
         }
 
     def discover_investment_accounts(self) -> None:
@@ -639,9 +719,21 @@ class IngressRequestHandler(BaseHTTPRequestHandler):
             "/set-acquisition-mode",
             "/import-holdings",
             "/import-cash",
+            "/migrate-app-identity",
+            "/freeze-app-identity",
+            "/resume-legacy",
         }:
             self._empty(HTTPStatus.NOT_FOUND)
             return
+        migration_status = self.ingress_server.controller.slug_migration_status()
+        if (
+            migration_status
+            and migration_status.get("frozen")
+            and path != "/resume-legacy"
+        ):
+            self._empty(HTTPStatus.CONFLICT)
+            return
+
         if path in {"/import-holdings", "/import-cash"}:
             try:
                 csrf, document = self._read_csv_import_form()
@@ -683,7 +775,13 @@ class IngressRequestHandler(BaseHTTPRequestHandler):
                 body.decode("utf-8"),
                 keep_blank_values=True,
                 strict_parsing=True,
-                max_num_fields=8 if path == "/bootstrap" else (4 if path == "/set-cash-policy" else 3),
+                max_num_fields=(
+                    8
+                    if path == "/bootstrap"
+                    else 4
+                    if path == "/set-cash-policy"
+                    else 3
+                ),
             )
             csrf = _single(values, "csrf")
             if not secrets.compare_digest(
@@ -692,7 +790,25 @@ class IngressRequestHandler(BaseHTTPRequestHandler):
                 self._empty(HTTPStatus.FORBIDDEN)
                 return
             retry_after = None
-            if path == "/refresh":
+            if path == "/migrate-app-identity":
+                if set(values) != {"csrf", "migration_code"}:
+                    raise ValueError("Unexpected App-identity migration form field")
+                self.ingress_server.controller.stage_slug_migration(
+                    _single(values, "migration_code")
+                )
+                accepted = True
+            elif path == "/freeze-app-identity":
+                if set(values) != {"csrf"}:
+                    raise ValueError("Unexpected App-identity freeze form field")
+                self.ingress_server.controller.freeze_legacy_for_cutover()
+                accepted = True
+            elif path == "/resume-legacy":
+                if set(values) != {"csrf"}:
+                    raise ValueError("Unexpected App-identity resume form field")
+                self.ingress_server.controller.resume_legacy_on_restart()
+                self._see_other("./?migration_resume=restart")
+                return
+            elif path == "/refresh":
                 if set(values) != {"csrf"}:
                     raise ValueError("Unexpected manual refresh form field")
                 accepted, retry_after = self.ingress_server.controller.start_manual_refresh()
@@ -761,7 +877,7 @@ class IngressRequestHandler(BaseHTTPRequestHandler):
                     raise ValueError("Unexpected account-clear form field")
                 self.ingress_server.controller.clear_investment_account()
                 accepted = True
-        except (UnicodeError, ValueError):
+        except (UnicodeError, ValueError, RuntimeError, OSError):
             self._empty(HTTPStatus.BAD_REQUEST)
             return
         finally:
@@ -812,6 +928,7 @@ class IngressRequestHandler(BaseHTTPRequestHandler):
             "./",
             "./?cash_policy_error=invalid_amount",
             "./?acquisition_error=activation_failed",
+            "./?migration_resume=restart",
         }:
             raise ValueError("Unsupported Ingress redirect target")
         self.send_response(HTTPStatus.SEE_OTHER)
@@ -1020,13 +1137,23 @@ class IngressRequestHandler(BaseHTTPRequestHandler):
         fallback_policy = escape(str(control.get("fallback_policy") or "none"))
         previous_method = escape(str(control.get("previous_acquisition_method") or "not recorded"))
         last_method_change = escape(str(control.get("last_acquisition_method_change_at") or "not recorded"))
+        migration = controller.slug_migration_status()
+        migration_section = _legacy_migration_html(
+            migration, csrf=csrf, query=urlsplit(self.path).query
+        )
+        page_title = (
+            f"{controller.display_title} (Legacy migration)"
+            if migration is not None
+            else controller.display_title
+        )
         html = f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Portfolio Architect Gateway — Comdirect</title>
+<title>{escape(page_title)}</title>
 <style>
 :root{{color-scheme:light dark;font-family:system-ui,sans-serif}}body{{margin:0;padding:24px;background:var(--ha-card-background,#111827);color:var(--primary-text-color,#e5e7eb)}}main{{max-width:920px;margin:auto}}h1{{font-size:1.55rem}}section{{border:1px solid #64748b55;border-radius:14px;padding:18px;margin:16px 0;background:#64748b12}}.mode-card.active{{border:2px solid #22c55eaa;background:#22c55e12}}.mode-card.inactive-ready{{border:2px solid #3b82f6aa;background:#3b82f612}}.mode-card.inactive-unavailable{{border:2px solid #f59e0baa;background:#f59e0b12}}.mode-head{{display:flex;align-items:center;justify-content:space-between;gap:12px}}.badge{{font-size:.78rem;font-weight:800;letter-spacing:.06em;padding:4px 9px;border-radius:999px;border:1px solid currentColor}}.mode-card.active .badge{{color:#4ade80}}.mode-card.inactive-ready .badge{{color:#60a5fa}}.mode-card.inactive-unavailable .badge{{color:#fbbf24}}label{{display:block;margin-top:12px;font-weight:650}}input,select{{box-sizing:border-box;width:100%;padding:10px;margin-top:5px;border-radius:8px;border:1px solid #64748b;background:transparent;color:inherit}}input[type=file]{{display:block}}button{{margin-top:16px;padding:10px 16px;border:0;border-radius:8px;font-weight:700;cursor:pointer}}code{{display:block;white-space:pre-wrap;word-break:break-all;padding:10px;border-radius:8px;background:#02061755}}.ok{{color:#22c55e}}.warn{{color:#f59e0b}}.small{{font-size:.9rem;opacity:.82}}.grid{{display:grid;grid-template-columns:1fr 1fr;gap:14px}}.subsection{{border-top:1px solid #64748b44;margin-top:18px;padding-top:14px}}@media(max-width:700px){{.grid{{grid-template-columns:1fr}}.mode-head{{align-items:flex-start;flex-direction:column}}}}
 </style></head><body><main>
-<h1>Portfolio Architect Gateway — Comdirect</h1>
+<h1>{escape(page_title)}</h1>
+{migration_section}
 <section><h2>Runtime status</h2><p>Gateway: <strong id="gateway-status" class="{status_class}">{escape(str(gateway['status']))}</strong></p><p>Gateway operating mode: <strong id="operating-mode" class="{status_class}">{operating_mode}</strong></p><p>Acquisition mode: <strong id="acquisition-mode">{escape(acquisition_mode)}</strong></p><p>Refresh state: <strong id="refresh-state">{escape(refresh_state)}</strong></p><p>Last refresh trigger: <strong id="refresh-trigger">{escape(str(refresh_trigger))}</strong></p><p>Last refresh duration: <strong id="refresh-duration">{escape(refresh_duration_text)}</strong></p><p>Next scheduled refresh: <strong id="next-refresh">{escape(str(next_refresh))}</strong></p><p>Snapshot age: <strong id="snapshot-age">{escape(snapshot_age_text)}</strong></p><p>Consecutive refresh failures: <strong id="refresh-failures">{escape(str(refresh_failures if refresh_failures is not None else 'unavailable'))}</strong></p><p>Last failure class: <strong id="failure-class">{escape(str(failure_class))}</strong></p><p>Last failure at: <strong id="failure-at">{escape(str(last_failure))}</strong></p><p>Recommended action: <strong id="recommended-action">{escape(str(recommended_action))}</strong></p><p>Retry after: <strong id="retry-after">{escape(retry_after_text)}</strong></p><p>Snapshot integrity: <strong id="snapshot-integrity" class="{status_class}">{snapshot_integrity}</strong></p><p>Snapshot positions: <strong id="snapshot-count">{escape(str(snapshot_count if snapshot_count is not None else 'unavailable'))}</strong></p><p>Snapshot fingerprint: <code id="snapshot-fingerprint">{escape(snapshot_fingerprint)}</code></p></section>
 <section><h2>Acquisition control</h2>{acquisition_error_html}<p>Active method: <strong>{escape(acquisition_mode)}</strong></p><p>Automatic fallback: <strong>{fallback_policy}</strong></p><p>Previous method: <strong>{previous_method}</strong></p><p>Last explicit method change: <strong>{last_method_change}</strong></p><p class="small">Prepare an inactive method first, then activate it explicitly. Method switching is provider-local and atomic; Portfolio Architect remains a read-only consumer of the canonical Gateway snapshot.</p></section>
 <section class="{live_card_class}"><div class="mode-head"><h2>Live acquisition · Comdirect API</h2><span class="badge">{live_badge}</span></div><p>The authenticated Comdirect API is authoritative for both holdings and investment cash while this mode is active. A failed API refresh never falls back to imported CSV evidence.</p><p class="small">Live last-known-good serving limit: <strong>{escape(live_lkg_age_text)}</strong>. This resilience limit applies only to live-API recovery; Portfolio Architect owns evidence freshness for planning.</p>{activate_live}
@@ -1094,6 +1221,78 @@ async function update(){{try{{const r=await fetch('status',{{cache:'no-store'}})
     def log_message(self, format: str, *args: Any) -> None:
         _LOGGER.info("Ingress request completed")
 
+
+
+def _legacy_migration_html(
+    migration: dict[str, Any] | None,
+    *,
+    csrf: str,
+    query: str,
+) -> str:
+    """Render only privacy-bounded legacy-slug migration controls."""
+    if migration is None:
+        return ""
+    successor = escape(str(migration.get("successor_hostname") or "unavailable"))
+    notice = (
+        '<p class="warn" role="alert">Freeze cancellation recorded. Restart this '
+        'legacy App to resume provider refresh and OAuth maintenance.</p>'
+        if query == "migration_resume=restart"
+        else ""
+    )
+    if migration.get("frozen"):
+        return (
+            '<section class="mode-card inactive-unavailable">'
+            '<h2>Comdirect App identity migration · FROZEN</h2>'
+            + notice
+            + '<p>Provider refresh and OAuth maintenance are stopped for cut-over. '
+            'The historical verified-HTTPS endpoint continues serving its last trusted '
+            'snapshot while the normal live-LKG limit allows.</p>'
+            f'<p>Successor: <code>{successor}</code></p>'
+            '<p class="warn">Do not uninstall this legacy App until Portfolio Architect '
+            'has explicitly migrated to the provider-qualified App and is healthy there.</p>'
+            '<form method="post" action="resume-legacy" autocomplete="off">'
+            f'<input type="hidden" name="csrf" value="{csrf}">'
+            '<button type="submit">Cancel cut-over; resume after legacy App restart</button>'
+            '</form></section>'
+        )
+    staged = migration.get("staged_summary") if migration.get("staged") else None
+    if isinstance(staged, dict):
+        ca = escape(str(staged.get("source_ca_sha256") or "unavailable"))
+        generated = escape(str(staged.get("snapshot_generated_at") or "unavailable"))
+        return (
+            '<section class="mode-card inactive-ready">'
+            '<h2>Comdirect App identity migration · state staged</h2>'
+            + notice
+            + f'<p>Long-lived private state was transferred through one-time pinned TLS '
+            f'to <code>{successor}</code>.</p>'
+            f'<p>Private CA SHA-256: <code>{ca}</code></p>'
+            f'<p>Snapshot evidence: <code>{generated}</code></p>'
+            '<p><strong>OAuth session transferred: no.</strong></p>'
+            '<p>Open the provider-qualified App and commit the staged state. When that '
+            'App tells you to return here, freeze this legacy runtime for cut-over.</p>'
+            '<form method="post" action="freeze-app-identity" autocomplete="off">'
+            f'<input type="hidden" name="csrf" value="{csrf}">'
+            '<button type="submit">Freeze legacy for cut-over</button></form></section>'
+        )
+    return (
+        '<section><h2>Comdirect App identity migration</h2>'
+        + notice
+        + '<p>This historical App slug is retained temporarily so its private state can '
+        f'be migrated safely to <code>{successor}</code>.</p>'
+        '<p>Install <strong>Portfolio Architect Gateway — Comdirect</strong> with the '
+        'provider-qualified slug, open its Ingress page, then paste its one-time '
+        'migration code here. The target hostname is derived internally; no destination '
+        'URL can be supplied.</p>'
+        '<form method="post" action="migrate-app-identity" autocomplete="off">'
+        f'<input type="hidden" name="csrf" value="{csrf}">'
+        '<label for="migration-code">One-time successor migration code</label>'
+        '<input id="migration-code" name="migration_code" type="password" '
+        'maxlength="256" required>'
+        '<button type="submit">Stage private state in provider-qualified App</button>'
+        '</form><p class="small">The Gateway bearer token, private CA, client credentials, '
+        'acquisition/static evidence and policy state are transferred over ephemeral '
+        'pinned TLS. The Comdirect OAuth session is deliberately excluded.</p></section>'
+    )
 
 
 class _MalformedRequestBody(Exception):
@@ -1220,6 +1419,10 @@ def serve_app(
     tls_cert_file: Path | None = None,
     tls_key_file: Path | None = None,
     gateway_endpoint_url: str = LOCAL_ENDPOINT,
+    legacy_migration_hostname: str | None = None,
+    legacy_migration_options: dict[str, Any] | None = None,
+    display_title: str = "Portfolio Architect Gateway — Comdirect",
+    ready_when_live: bool = False,
 ) -> None:
     """Run the private REST API, refresh loop, and HA Ingress setup UI.
 
@@ -1246,11 +1449,27 @@ def serve_app(
         config.server.snapshot_file,
     )
     state = GatewayState(config.server, acquisition)
+    stop_event = threading.Event()
+    if legacy_migration_hostname is not None and legacy_is_frozen(
+        data_directory / FREEZE_MARKER_NAME
+    ):
+        stop_event.set()
+        _LOGGER.warning(
+            "Legacy Comdirect App is frozen for provider-qualified identity cut-over"
+        )
     controller = AppController(
-        config, client, state, api_token, endpoint_url=gateway_endpoint_url, acquisition=acquisition
+        config,
+        client,
+        state,
+        api_token,
+        endpoint_url=gateway_endpoint_url,
+        acquisition=acquisition,
+        legacy_migration_hostname=legacy_migration_hostname,
+        legacy_migration_options=legacy_migration_options,
+        pause_provider_callback=stop_event.set if legacy_migration_hostname else None,
+        display_title=display_title,
     )
 
-    stop_event = threading.Event()
     gateway_server = create_server(config.server, state)
     ingress_server = IngressHttpServer(
         ingress_address,
@@ -1281,8 +1500,31 @@ def serve_app(
     gateway_thread.start()
     _LOGGER.info("Private gateway API listening on internal port %d", GATEWAY_PORT)
     _LOGGER.info("Home Assistant Ingress setup UI listening on port %d", ingress_address[1])
+    readiness_thread: threading.Thread | None = None
     if ready_callback:
-        ready_callback(controller)
+        if ready_when_live:
+            def _publish_when_live() -> None:
+                while not stop_event.wait(1.0):
+                    try:
+                        health = state.health_document(version=8)
+                    except Exception:
+                        continue
+                    if (
+                        health.get("status") == "ok"
+                        and health.get("operating_mode") == "live"
+                        and health.get("snapshot_available") is True
+                        and health.get("provider_id") == "comdirect"
+                    ):
+                        ready_callback(controller)
+                        return
+            readiness_thread = threading.Thread(
+                target=_publish_when_live,
+                name="portfolio-discovery-readiness",
+                daemon=True,
+            )
+            readiness_thread.start()
+        else:
+            ready_callback(controller)
     try:
         ingress_server.serve_forever(poll_interval=0.5)
     except KeyboardInterrupt:
@@ -1296,3 +1538,5 @@ def serve_app(
         gateway_thread.join(timeout=5)
         refresh_thread.join(timeout=5)
         session_maintenance_thread.join(timeout=5)
+        if readiness_thread is not None:
+            readiness_thread.join(timeout=5)

@@ -4,7 +4,7 @@ set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$root"
 
-python -m compileall -q custom_components gateway/src home_assistant_app/portfolio_architect_gateway/src home_assistant_app/portfolio_architect_gateway_dkb/src home_assistant_app/portfolio_architect_gateway_trade_republic/src home_assistant_app/portfolio_architect_gateway_import/src
+python -m compileall -q custom_components gateway/src home_assistant_app/portfolio_architect_gateway/src home_assistant_app/portfolio_architect_gateway_comdirect/src home_assistant_app/portfolio_architect_gateway_dkb/src home_assistant_app/portfolio_architect_gateway_trade_republic/src home_assistant_app/portfolio_architect_gateway_import/src
 python - <<'PY'
 import json
 from pathlib import Path

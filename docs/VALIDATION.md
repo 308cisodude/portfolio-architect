@@ -1,19 +1,24 @@
-# v1.54.0 validation
+# v1.55.0 validation
 
-Portfolio Architect v1.54.0 is prepared from the exact published and fully live-accepted v1.53.1 tracked-source baseline. It is a Gateway acquisition-presentation and release-engineering policy cleanup; provider acquisition and Portfolio Architect planning semantics remain unchanged.
+Portfolio Architect v1.55.0 is prepared from the exact published and fully live-accepted v1.54.0 tracked-source baseline. It is a narrow Comdirect Home Assistant App-identity migration release; provider identity, acquisition semantics, freshness, wire schemas and planner behavior remain unchanged.
 
 Release validation requires:
 
-- all integration/common Gateway/all four App current-version markers align to 1.54.0 while historical release documentation remains historical;
-- Gateway health schema 8 and REST portfolio schema 1 remain unchanged; schemas 1-7 stay accepted;
-- authoritative acquisition cards are green across Comdirect, Trade Republic, DKB and Generic Import; inactive-ready is blue; unavailable/not-ready/research-only acquisition is amber;
-- static-only DKB/TR/Generic App configuration no longer exposes `max_cached_snapshot_age_seconds`, while the bounded compatibility parser continues to tolerate stale stored legacy state;
-- Comdirect retains the bounded option under the explicit `Maximum live LKG snapshot age` presentation and the Ingress Live API section states that Portfolio Architect owns planning freshness;
-- no provider Dockerfile exact-pins an Alpine OpenSSL APK revision; protected validate/release workflows enforce OpenSSL >= 3.5.8 on every built App image and record the resolved version;
-- Python/Alpine base images remain digest-pinned, GitHub Actions remain commit-SHA pinned, and Python requirements remain hash-locked;
-- provider-source synchronization remains idempotent;
-- strict publication and privacy checks pass;
-- three release builds are byte-identical;
-- source/archive modes and both Git handoff replay paths reproduce the final tracked tree from exact v1.53.1.
+- all integration/common Gateway/all five App current-version markers align to 1.55.0 while historical release documentation remains historical;
+- both Comdirect App packages coexist: historical slug `portfolio_architect_gateway` and provider-qualified slug `portfolio_architect_gateway_comdirect`, with the latter visibly labelled `Comdirect NEW`;
+- the provider-qualified App starts non-discoverable on a pristine installation and exposes only the migration/setup shell plus internal migration/watchdog listeners;
+- historical→successor hostname derivation is exact and does not accept a user-controlled URL;
+- migration payloads are allowlisted, size-bounded, per-file SHA-256 validated and reject symlinks/unknown state/pending acquisition switches;
+- `comdirect-session.json` is never exported and is absent before canonical cut-over;
+- private CA SHA-256 and Gateway bearer token are preserved; only the TLS server leaf may be renewed for the new hostname;
+- legacy freeze disables provider refresh/session maintenance while retaining cached REST serving and offers explicit restart-based recovery;
+- provider-qualified discovery waits for health-schema-8 `ok` / `live` / snapshot-available state with provider `comdirect`;
+- PA recognizes only the exact slug successor, refuses CA changes, requires explicit confirmation, reuses the existing bearer token and validates health/provider/snapshot count/timestamp/SHA before endpoint replacement;
+- Gateway health schema 8 and REST portfolio schema 1 remain unchanged; schemas 1–7 stay accepted;
+- v1.54 acquisition colours, static freshness authority, live-LKG scope and branch-current OpenSSL >=3.5.8 build policy remain intact across all five built Apps;
+- provider-source synchronization is idempotent and the complete master Comdirect source is byte-identical in both Comdirect App build contexts;
+- strict publication/privacy, release-artifact privacy and complete-history secret scanning pass;
+- deterministic release builds are byte-identical;
+- source/archive modes and both Git handoff replay paths reproduce the final tracked tree from exact v1.54.0.
 
-The preparation environment does not provide Docker. Protected GitHub workflows remain authoritative for actual provider-App Docker build, minimum-OpenSSL enforcement and verified-private-PKI smoke execution.
+The preparation environment does not provide Docker. Protected GitHub workflows remain authoritative for all five actual provider-App Docker builds, minimum-OpenSSL enforcement, pending Comdirect NEW migration-shell smoke, existing provider private-PKI smoke and complete-history/Gitleaks gates.

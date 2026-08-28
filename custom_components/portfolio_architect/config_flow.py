@@ -197,6 +197,7 @@ class PortfolioArchitectConfigFlow(ConfigFlow, domain=DOMAIN):
     _existing_source_data: dict[str, Any]
     _reconfigure_mode: bool = False
     _hassio_discovery: GatewayTlsDiscovery | None = None
+    _hassio_comdirect_slug_migration_entry_id: str | None = None
 
     @staticmethod
     @callback
@@ -225,6 +226,20 @@ class PortfolioArchitectConfigFlow(ConfigFlow, domain=DOMAIN):
         entry = entries[0]
         if entry.data.get(CONF_SOURCE_TYPE) == SOURCE_TYPE_REST_API:
             endpoint = entry.data.get(CONF_REST_ENDPOINT_URL)
+            if (
+                isinstance(endpoint, str)
+                and discovery.provider_id == GATEWAY_PROVIDER_COMDIRECT
+                and discovery.matches_comdirect_slug_successor(endpoint)
+            ):
+                try:
+                    stored = RestSourceConfig.from_mapping(dict(entry.data))
+                except PortfolioRestError:
+                    return self.async_abort(reason="tls_discovery_not_applicable")
+                if stored.tls_ca_sha256 != discovery.ca_sha256:
+                    return self.async_abort(reason="tls_trust_changed")
+                self._hassio_discovery = discovery
+                self._hassio_comdirect_slug_migration_entry_id = entry.entry_id
+                return await self.async_step_hassio_comdirect_slug_migration_confirm()
             if isinstance(endpoint, str) and discovery.matches_legacy_endpoint(endpoint):
                 if urlsplit(endpoint).scheme == "https":
                     try:
@@ -272,6 +287,83 @@ class PortfolioArchitectConfigFlow(ConfigFlow, domain=DOMAIN):
             return await self.async_step_hassio_add_supplemental_confirm()
 
         return self.async_abort(reason="tls_discovery_not_applicable")
+
+    async def async_step_hassio_comdirect_slug_migration_confirm(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Explicitly move the primary Comdirect endpoint to the provider-qualified App."""
+        discovery = self._hassio_discovery
+        entry_id = self._hassio_comdirect_slug_migration_entry_id
+        if discovery is None or discovery.provider_id != GATEWAY_PROVIDER_COMDIRECT or entry_id is None:
+            return self.async_abort(reason="invalid_tls_discovery")
+        entry = next(
+            (item for item in self.hass.config_entries.async_entries(DOMAIN) if item.entry_id == entry_id),
+            None,
+        )
+        if entry is None or entry.data.get(CONF_SOURCE_TYPE) != SOURCE_TYPE_REST_API:
+            return self.async_abort(reason="tls_discovery_not_applicable")
+        endpoint = entry.data.get(CONF_REST_ENDPOINT_URL)
+        if not isinstance(endpoint, str) or not discovery.matches_comdirect_slug_successor(endpoint):
+            return self.async_abort(reason="tls_discovery_not_applicable")
+        try:
+            stored = RestSourceConfig.from_mapping(dict(entry.data))
+        except PortfolioRestError:
+            return self.async_abort(reason="tls_discovery_not_applicable")
+        if stored.tls_ca_sha256 != discovery.ca_sha256:
+            return self.async_abort(reason="tls_trust_changed")
+
+        if user_input is not None:
+            candidate = RestSourceConfig.from_mapping(
+                {
+                    CONF_REST_ENDPOINT_URL: discovery.endpoint_url,
+                    CONF_REST_API_TOKEN: stored.api_token,
+                    CONF_REST_TLS_CA_CERTIFICATE: discovery.ca_certificate,
+                }
+            )
+            try:
+                health = await async_fetch_gateway_health(self.hass, candidate)
+                result = await async_fetch_rest_snapshot(self.hass, candidate)
+                snapshot = result.snapshot
+                if (
+                    health.health_schema_version < 8
+                    or health.provider_id != GATEWAY_PROVIDER_COMDIRECT
+                    or health.status != "ok"
+                    or health.operating_mode != "live"
+                    or health.reauthentication_required
+                    or not health.snapshot_available
+                    or health.fallback_policy != "none"
+                    or snapshot is None
+                    or result.snapshot_sha256 is None
+                    or result.position_count is None
+                    or result.position_count != len(snapshot.positions)
+                    or health.snapshot_generated_at != snapshot.generated_at
+                    or health.snapshot_position_count != len(snapshot.positions)
+                    or health.snapshot_sha256 != result.snapshot_sha256
+                ):
+                    raise PortfolioRestError(
+                        "Provider-qualified Comdirect Gateway did not validate for cut-over"
+                    )
+            except PortfolioRestAuthenticationError:
+                return self.async_abort(reason="comdirect_slug_validation_failed")
+            except (OSError, ValueError, PortfolioRestError):
+                return self.async_abort(reason="comdirect_slug_validation_failed")
+
+            data = dict(entry.data)
+            data[CONF_REST_ENDPOINT_URL] = discovery.endpoint_url
+            data[CONF_REST_TLS_CA_CERTIFICATE] = discovery.ca_certificate
+            self.hass.config_entries.async_update_entry(entry, data=data)
+            await self.hass.config_entries.async_reload(entry.entry_id)
+            return self.async_abort(reason="comdirect_slug_migrated")
+
+        return self.async_show_form(
+            step_id="hassio_comdirect_slug_migration_confirm",
+            data_schema=vol.Schema({}),
+            description_placeholders={
+                "legacy_gateway": urlsplit(stored.endpoint_url).hostname or "",
+                "new_gateway": discovery.hostname,
+                "ca_sha256": discovery.ca_sha256,
+            },
+        )
 
     async def async_step_hassio_confirm(
         self, user_input: dict[str, Any] | None = None

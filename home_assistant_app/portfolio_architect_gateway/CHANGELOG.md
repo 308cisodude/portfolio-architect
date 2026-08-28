@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.55.0
+
+- Keeps the historical `portfolio_architect_gateway` App as the explicit source of the v1.55 provider-qualified Comdirect identity migration.
+- Adds bounded one-time export to only the exact `portfolio_architect_gateway_comdirect` successor plus explicit freeze/resume controls.
+- Does not transfer OAuth/session state; normal provider behavior is unchanged until the operator explicitly freezes this legacy App for cut-over.
+
 ## 1.54.0
 
 - Standardizes acquisition-state colour semantics: authoritative acquisition is green, inactive-ready is blue and unavailable/not-ready is amber.
