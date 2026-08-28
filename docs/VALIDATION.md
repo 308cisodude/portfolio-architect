@@ -7,7 +7,7 @@ Release validation must establish that:
 - all integration/common Gateway/all five published App version markers align to 1.56.1 while historical release documentation remains historical;
 - Comdirect migration export, staging and commit continue to exclude `comdirect-session.json` and the import marker remains `oauth_session_transferred: false`;
 - a session present before the first canonical runtime still fails closed;
-- changing only `tls/hostname` cannot bypass that gate: the actual private-PKI leaf/key must validate for the exact canonical successor hostname;
+- changing only `tls/hostname` cannot bypass that gate: an independent certificate-chain/hostname verifier must validate the actual private-PKI leaf for the exact canonical successor hostname even if the generic leaf-usability helper reports success;
 - the canonical entrypoint validates committed migration identity before `prepare_supervisor_tls()` can renew the migrated leaf;
 - after that valid successor-bound leaf exists, a fresh canonical OAuth session survives a later App restart;
 - preserved CA identity, predecessor/successor hostname binding, explicit cut-over, bearer continuity, acquisition mode, health/wire schemas, freshness/LKG semantics and `fallback_policy: none` remain unchanged;

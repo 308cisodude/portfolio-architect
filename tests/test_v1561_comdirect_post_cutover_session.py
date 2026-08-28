@@ -14,6 +14,7 @@ if str(GATEWAY_SRC) not in sys.path:
     sys.path.insert(0, str(GATEWAY_SRC))
 
 from portfolio_architect_gateway import supervisor_tls  # noqa: E402
+import portfolio_architect_gateway.comdirect_slug_migration as migration_module  # noqa: E402
 from portfolio_architect_gateway.comdirect_slug_migration import (  # noqa: E402
     CUTOVER_MARKER_NAME,
     IMPORT_MARKER_NAME,
@@ -121,6 +122,23 @@ def test_oauth_session_still_fails_closed_before_first_canonical_runtime(tmp_pat
     # Merely forging the stored hostname is insufficient: the actual leaf must be
     # valid for the canonical successor hostname under the preserved private CA.
     (target / "tls" / "hostname").write_text(CANONICAL_HOST, encoding="ascii")
+    with pytest.raises(ValueError, match="before canonical cut-over"):
+        validate_committed_migration_identity(target, successor_hostname=CANONICAL_HOST)
+
+
+def test_hostname_metadata_cannot_bypass_strict_certificate_verification(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    target, _ca_sha256 = _committed_migration(tmp_path)
+    (target / "comdirect-session.json").write_text(
+        '{"refresh_token":"unexpected-pre-cutover-session"}\n', encoding="utf-8"
+    )
+    (target / "tls" / "hostname").write_text(CANONICAL_HOST, encoding="ascii")
+
+    # Reproduce the dangerous cross-OpenSSL condition seen by protected CI: even
+    # if the generic leaf-usability helper reports True, the migration boundary
+    # must independently verify the certificate for the canonical hostname.
+    monkeypatch.setattr(migration_module, "_leaf_is_usable", lambda *_args: True)
     with pytest.raises(ValueError, match="before canonical cut-over"):
         validate_committed_migration_identity(target, successor_hostname=CANONICAL_HOST)
 

@@ -953,6 +953,44 @@ def cutover_marker_document(path: Path) -> dict[str, Any] | None:
     return document
 
 
+def _successor_leaf_is_cryptographically_bound(
+    tls_directory: Path,
+    successor_hostname: str,
+) -> bool:
+    """Return whether the current leaf is validly bound to the exact successor host.
+
+    ``openssl x509 -checkhost`` has historically exposed version-dependent CLI exit
+    semantics, so it must not be the sole migration-lifecycle proof.  Keep the
+    normal TLS material/key-pair validation and independently require OpenSSL's
+    certificate verifier to authenticate the leaf under the preserved CA for the
+    provider-qualified successor hostname.
+    """
+    successor = _normalise_hostname(successor_hostname)
+    if not _leaf_is_usable(tls_directory, successor):
+        return False
+    try:
+        subprocess.run(
+            (
+                "/usr/bin/openssl",
+                "verify",
+                "-verify_hostname",
+                successor,
+                "-CAfile",
+                str(tls_directory / "ca-cert.pem"),
+                str(tls_directory / "server-cert.pem"),
+            ),
+            check=True,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=15,
+            env={"PATH": "/usr/bin:/bin"},
+        )
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return True
+
+
 def validate_committed_migration_identity(
     data_directory: Path,
     *,
@@ -1005,7 +1043,9 @@ def validate_committed_migration_identity(
             raise ValueError(
                 "Migrated Comdirect OAuth session appeared before canonical cut-over"
             ) from err
-        if stored_hostname != successor or not _leaf_is_usable(tls_directory, successor):
+        if stored_hostname != successor or not _successor_leaf_is_cryptographically_bound(
+            tls_directory, successor
+        ):
             raise ValueError(
                 "Migrated Comdirect OAuth session appeared before canonical cut-over"
             )

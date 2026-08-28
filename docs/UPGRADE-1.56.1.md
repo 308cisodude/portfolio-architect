@@ -29,7 +29,7 @@ A second canonical Comdirect App restart after recovery is the critical regressi
 
 ## Security invariant
 
-v1.56.1 does **not** weaken the migration's OAuth exclusion. A session present while the migrated TLS leaf is still bound to the historical hostname is rejected. Merely changing the stored hostname metadata is insufficient: the actual leaf certificate/key must validate for the exact canonical successor hostname under the preserved private CA before post-cut-over session presence is accepted.
+v1.56.1 does **not** weaken the migration's OAuth exclusion. A session present while the migrated TLS leaf is still bound to the historical hostname is rejected. Merely changing the stored hostname metadata is insufficient: an independent certificate-chain/hostname verification must validate the actual leaf for the exact canonical successor hostname under the preserved private CA before post-cut-over session presence is accepted; the decision does not rely on `openssl x509 -checkhost` exit semantics.
 
 Authenticated DKB FinTS remains disabled and capability-level acquisition arbitration remains deferred.
 

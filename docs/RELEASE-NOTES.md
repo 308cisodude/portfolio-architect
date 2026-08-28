@@ -15,7 +15,7 @@ v1.56.1 keeps the fail-closed boundary and makes the lifecycle distinction expli
 - the first canonical startup after migration still rejects any OAuth session that appears before cut-over;
 - the canonical entrypoint still validates committed migration identity **before** renewing the migrated TLS leaf;
 - only after the preserved private-PKI leaf has been genuinely renewed and validated for the exact provider-qualified successor hostname may a later canonical restart accept the fresh OAuth session created by the canonical runtime;
-- changing only TLS hostname metadata is insufficient because the actual certificate/key pair must validate for the successor hostname under the preserved CA.
+- changing only TLS hostname metadata is insufficient because an independent certificate verifier validates the actual leaf under the preserved CA for the successor hostname; this proof does not rely on `openssl x509 -checkhost` exit semantics.
 
 The preserved CA fingerprint, exact predecessor/successor hostname relationship, Gateway bearer secret, explicit cut-over marker, imported snapshot identity, Supervisor options reconciliation and all other migration invariants remain enforced.
 
