@@ -37,8 +37,8 @@ def _generic():
 
 
 def test_release_versions_and_schema_are_aligned() -> None:
-    assert json.loads((COMPONENT / "manifest.json").read_text())["version"] == "1.55.1"
-    assert 'VERSION: Final = "1.55.1"' in (COMPONENT / "const.py").read_text()
+    assert json.loads((COMPONENT / "manifest.json").read_text())["version"] == "1.56.0"
+    assert 'VERSION: Final = "1.56.0"' in (COMPONENT / "const.py").read_text()
     assert 'VERSION = 12' in (COMPONENT / "config_flow.py").read_text()
     for slug in (
         "portfolio_architect_gateway",
@@ -46,7 +46,7 @@ def test_release_versions_and_schema_are_aligned() -> None:
         "portfolio_architect_gateway_trade_republic",
         "portfolio_architect_gateway_import",
     ):
-        assert yaml.safe_load((APPS / slug / "config.yaml").read_text())["version"] == "1.55.1"
+        assert yaml.safe_load((APPS / slug / "config.yaml").read_text())["version"] == "1.56.0"
 
 
 def test_portfolio_architect_runtime_is_acquisition_format_neutral() -> None:
@@ -62,7 +62,7 @@ def test_schema_12_local_csv_migration_is_explicit_and_fail_closed() -> None:
     setup = (COMPONENT / "__init__.py").read_text()
     schema12 = setup.split("if entry.version < 12:", 1)[1].split("if migrated_entities:", 1)[0]
     assert "SOURCE_TYPE_LOCAL_FILES" in schema12
-    assert "Portfolio Architect Gateway — Generic Import v1.55.1" in schema12
+    assert "Portfolio Architect Gateway — Generic Import v1.56.0" in schema12
     assert "return False" in schema12
     assert "version=12" in schema12
 
@@ -131,13 +131,14 @@ def test_generic_import_release_tooling_and_ci_cover_fourth_app() -> None:
         assert "portfolio_architect_gateway_import" in path.read_text()
 
 
-def test_dkb_probe_timestamp_is_utc_canonical_with_browser_local_display() -> None:
+def test_dkb_probe_timestamp_is_utc_canonical_with_deterministic_berlin_display() -> None:
     source = (DKB_APP / "src" / "portfolio_architect_gateway" / "dkb_app.py").read_text()
     assert '"probe_sent_at": self.last_probe_sent_at()' in source
-    assert 'ZoneInfo("Europe/Berlin")' not in source
-    assert "Intl.DateTimeFormat" in source
-    assert 'data-utc=' in source
-    assert "authoritative server-side dispatch timestamp" in source
+    assert 'ZoneInfo("Europe/Berlin")' in source
+    assert "Intl.DateTimeFormat" not in source
+    assert 'data-utc=' not in source
+    assert "Authoritative server-side dispatch timestamp" in source
+    assert "Last probe sent · Europe/Berlin" in source
 
 
 def test_v151_upgrade_documents_no_automatic_generic_gateway_requirement() -> None:

@@ -173,8 +173,10 @@ def test_provider_qualified_app_is_distinguishable_and_pending_by_default() -> N
     )
     assert legacy["slug"] == "portfolio_architect_gateway"
     assert new["slug"] == "portfolio_architect_gateway_comdirect"
-    assert "Comdirect NEW" in new["name"]
-    assert "Comdirect NEW" in new["panel_title"]
+    assert new["name"] == "Portfolio Architect Gateway — Comdirect"
+    assert new["panel_title"] == "Portfolio Gateway — Comdirect"
+    assert "Comdirect LEGACY" in legacy["name"]
+    assert "Comdirect LEGACY" in legacy["panel_title"]
     assert new["ports"]["8787/tcp"] is None
     entrypoint = (
         ROOT / "home_assistant_app/portfolio_architect_gateway_comdirect/entrypoint.py"
@@ -222,7 +224,7 @@ def test_current_release_is_v1550_and_wire_contracts_remain_unchanged() -> None:
     manifest = json.loads(
         (ROOT / "custom_components/portfolio_architect/manifest.json").read_text()
     )
-    assert manifest["version"] == "1.55.1"
+    assert manifest["version"] == "1.56.0"
     server = (ROOT / "gateway/src/portfolio_architect_gateway/server.py").read_text()
     rest = (ROOT / "custom_components/portfolio_architect/rest_client.py").read_text()
     assert '"health_schema_version": min(version, 8)' in server

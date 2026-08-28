@@ -18,7 +18,7 @@ from .const import DOMAIN, NAME, SOURCE_TYPE_REST_API, VERSION
 from .coordinator import PortfolioArchitectCoordinator
 from .model import PositionData
 from .presentation_slots import ordered_target_positions, target_position_for_slot
-from .presentation import display_binary_state_de
+from .presentation import display_binary_state_de, display_state_de
 
 FRESHNESS_TICK = timedelta(minutes=5)
 
@@ -691,7 +691,13 @@ class PortfolioGatewayAttentionRequired(
         health = self.coordinator.gateway_health
         return {
             "attention_reason": self.coordinator.gateway_attention_reason,
+            "attention_reason_de": display_state_de(
+                "gateway_attention_reason", self.coordinator.gateway_attention_reason
+            ),
             "recommended_action": self.coordinator.gateway_recommended_action,
+            "recommended_action_de": display_state_de(
+                "gateway_recommended_action", self.coordinator.gateway_recommended_action
+            ),
             "last_refresh_failure_class": (
                 self.coordinator.gateway_last_refresh_failure_class
             ),

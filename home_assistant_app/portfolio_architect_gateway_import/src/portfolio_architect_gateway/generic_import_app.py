@@ -299,7 +299,7 @@ class GenericImportIngressHandler(ProviderShellIngressHandler):
 </style></head><body><main>
 <h1>Portfolio Architect Gateway — Generic Import</h1>
 <section class="mode-card active"><div class="mode-head"><h2>Static acquisition · mapped CSV</h2><span class="badge">ACTIVE</span></div><p>This Gateway is an explicit provider-neutral escape hatch. Raw CSV bytes are parsed transiently and are never persisted.</p><p>Provider ID: <code>generic_csv</code> · Acquisition mode: <code>csv</code></p><p>Current snapshot: <strong>{snapshot_text}</strong></p></section>
-<section><h2>Runtime</h2><p>Gateway status: <strong class="{status_class}">{status}</strong></p><p>Bearer token: <code>{escape(self.import_server.api_token)}</code></p><p><small>The token is App-private state and is shown only in this admin-only Ingress page.</small></p></section>
+<section><h2>Runtime</h2><p>Gateway status: <strong class="{status_class}">{status}</strong></p></section>
 <section><h2>Import mapped CSV</h2>{mapping_error}
 <form method="post" action="import" enctype="multipart/form-data">
 <input type="hidden" name="nonce" value="{escape(self.import_server.import_nonce)}">
@@ -322,6 +322,7 @@ class GenericImportIngressHandler(ProviderShellIngressHandler):
 <button type="submit">Validate and activate CSV</button></form></section>
 <section><h2>Last import result</h2>{diagnostic_html}</section>
 <section><h2>Boundary</h2><p>Portfolio Architect consumes only the canonical read-only snapshot over verified private-PKI HTTPS. This App has no live-provider credentials and no order, transfer, payment, transaction-history, sell, or withdrawal capability.</p></section>
+<section><h2>Sensitive connection material</h2><p><small>The bearer token is needed only for an explicit Portfolio Architect source setup and is intentionally kept away from the screenshot-prone top of this page.</small></p><details><summary>Show bearer token</summary><p>Bearer token: <code>{escape(self.import_server.api_token)}</code></p><p><small>The token is App-private state and is shown only in this admin-only Ingress page.</small></p></details></section>
 </main></body></html>"""
         return body.encode("utf-8")
 

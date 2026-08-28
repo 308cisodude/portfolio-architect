@@ -1,14 +1,14 @@
 {
   "SPDXID": "SPDXRef-DOCUMENT",
   "creationInfo": {
-    "created": "2026-08-25T00:00:00Z",
+    "created": "2026-08-28T00:00:00Z",
     "creators": [
       "Tool: Portfolio Architect release tooling"
     ]
   },
   "dataLicense": "CC0-1.0",
-  "documentNamespace": "urn:uuid:1bbe2d53-7e3c-50b7-8f7c-7735df727427",
-  "name": "Portfolio Architect v1.53.1 SBOM",
+  "documentNamespace": "urn:uuid:64c8e387-4fb5-5dd4-97b2-df42812f5ef2",
+  "name": "Portfolio Architect v1.56.0 SBOM",
   "packages": [
     {
       "SPDXID": "SPDXRef-Package-Integration",
@@ -19,7 +19,7 @@
       "licenseDeclared": "MIT",
       "name": "Portfolio Architect Home Assistant integration",
       "supplier": "Organization: Portfolio Architect contributors",
-      "versionInfo": "1.55.1"
+      "versionInfo": "1.56.0"
     },
     {
       "SPDXID": "SPDXRef-Package-Gateway",
@@ -28,9 +28,9 @@
       "filesAnalyzed": false,
       "licenseConcluded": "MIT",
       "licenseDeclared": "MIT",
-      "name": "Portfolio Architect Gateway — Comdirect App",
+      "name": "Portfolio Architect Gateway \u2014 Comdirect LEGACY App",
       "supplier": "Organization: Portfolio Architect contributors",
-      "versionInfo": "1.55.1"
+      "versionInfo": "1.56.0"
     },
     {
       "SPDXID": "SPDXRef-Package-Gateway-ComdirectCanonical",
@@ -39,9 +39,9 @@
       "filesAnalyzed": false,
       "licenseConcluded": "MIT",
       "licenseDeclared": "MIT",
-      "name": "Portfolio Architect Gateway — Comdirect provider-qualified App",
+      "name": "Portfolio Architect Gateway \u2014 Comdirect App",
       "supplier": "Organization: Portfolio Architect contributors",
-      "versionInfo": "1.55.1"
+      "versionInfo": "1.56.0"
     },
     {
       "SPDXID": "SPDXRef-Package-PythonBase",
@@ -67,9 +67,9 @@
       "filesAnalyzed": false,
       "licenseConcluded": "MIT",
       "licenseDeclared": "MIT",
-      "name": "Portfolio Architect Gateway — DKB App",
+      "name": "Portfolio Architect Gateway \u2014 DKB App",
       "supplier": "Organization: Portfolio Architect contributors",
-      "versionInfo": "1.55.1"
+      "versionInfo": "1.56.0"
     },
     {
       "SPDXID": "SPDXRef-Package-Gateway-TradeRepublic",
@@ -77,9 +77,9 @@
       "filesAnalyzed": false,
       "licenseConcluded": "MIT",
       "licenseDeclared": "MIT",
-      "name": "Portfolio Architect Gateway — Trade Republic App",
+      "name": "Portfolio Architect Gateway \u2014 Trade Republic App",
       "supplier": "Organization: Portfolio Architect contributors",
-      "versionInfo": "1.55.1"
+      "versionInfo": "1.56.0"
     },
     {
       "SPDXID": "SPDXRef-Package-Gateway-GenericImport",
@@ -87,9 +87,9 @@
       "filesAnalyzed": false,
       "licenseConcluded": "MIT",
       "licenseDeclared": "MIT",
-      "name": "Portfolio Architect Gateway — Generic Import App",
+      "name": "Portfolio Architect Gateway \u2014 Generic Import App",
       "supplier": "Organization: Portfolio Architect contributors",
-      "versionInfo": "1.55.1"
+      "versionInfo": "1.56.0"
     },
     {
       "SPDXID": "SPDXRef-Package-pypdf",
@@ -126,6 +126,24 @@
       "name": "OpenSSL runtime CLI",
       "supplier": "Organization: OpenSSL Project",
       "versionInfo": "build-resolved; minimum 3.5.8"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-Tzdata",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://pkgs.alpinelinux.org/package/v3.24/main/x86_64/tzdata",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:apk/alpine/tzdata",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "Public-Domain",
+      "licenseDeclared": "Public-Domain",
+      "name": "Alpine tzdata runtime database",
+      "supplier": "Organization: Alpine Linux",
+      "versionInfo": "build-resolved"
     }
   ],
   "relationships": [
@@ -213,6 +231,11 @@
       "relatedSpdxElement": "SPDXRef-Package-OpenSSL",
       "relationshipType": "DEPENDS_ON",
       "spdxElementId": "SPDXRef-Package-Gateway-ComdirectCanonical"
+    },
+    {
+      "relatedSpdxElement": "SPDXRef-Package-Tzdata",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-Gateway-DKB"
     }
   ],
   "spdxVersion": "SPDX-2.3"

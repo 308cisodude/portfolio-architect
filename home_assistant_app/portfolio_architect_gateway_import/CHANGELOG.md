@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.56.0
+
+Bearer token moves to a lower collapsed sensitive section; exact Supervisor discovery UUID lifecycle cleanup/reconciliation is added; routine Ingress request-completion logging moves to DEBUG.
+
 ## 1.55.1
 
 - Version alignment only for the v1.55.1 Comdirect migration hotfix; Generic Import CSV behavior and experimental maturity are unchanged.

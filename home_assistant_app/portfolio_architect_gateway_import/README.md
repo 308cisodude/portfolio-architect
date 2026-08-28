@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway — Generic Import v1.55.1
+# Portfolio Architect Gateway — Generic Import v1.56.0
 
-Version 1.55.1: Version alignment only for the v1.55.1 Comdirect migration hotfix; Generic Import CSV behavior and experimental maturity are unchanged.
+Version 1.56.0 moves bearer-token display into a lower collapsed **Sensitive connection material** section and adds exact Supervisor discovery-UUID cleanup/reconciliation across graceful stop, update and restart. CSV acquisition semantics and experimental maturity remain unchanged.
 
 Version 1.55.0 keeps Generic Import's fixed `csv` method and transient mapped-CSV boundary unchanged. Accepted canonical CSV snapshots remain servable with their original evidence timestamp instead of expiring under a separate Gateway cache TTL; Portfolio Architect decides freshness.
 Version 1.53.0 adds the provider-neutral health-schema-8 control-plane representation for the fixed `csv` acquisition method. Generic Import remains a single-method provider-neutral escape hatch; mapped-CSV parsing, transient raw input, canonical holdings-only persistence and verified private-PKI transport are unchanged.

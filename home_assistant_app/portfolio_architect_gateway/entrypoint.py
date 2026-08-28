@@ -84,6 +84,7 @@ def main() -> int:
             )
         ),
         legacy_migration_hostname=tls.hostname,
+        display_title="Portfolio Architect Gateway — Comdirect LEGACY",
         legacy_migration_options=migrated_options,
     )
     return 0

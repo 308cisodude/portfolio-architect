@@ -73,5 +73,7 @@ def test_recovery_translations_icons_and_dashboard_are_present() -> None:
         assert translations["issues"]["gateway_repeated_refresh_failures"]["title"]
         runtime = (ROOT / "dashboard" / language / "runtime-health.yaml").read_text()
         assert "gateway_attention_required" in runtime
-        assert "gateway_attention_reason" in runtime
-        assert "gateway_recommended_action" in runtime
+        assert "attention_reason" in runtime
+        assert "recommended_action" in runtime
+        assert "sensor.portfolio_architect_gateway_attention_reason" not in runtime
+        assert "sensor.portfolio_architect_gateway_recommended_action" not in runtime

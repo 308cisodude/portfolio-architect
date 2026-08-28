@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway — Trade Republic v1.55.1
+# Portfolio Architect Gateway — Trade Republic v1.56.0
 
-Version 1.55.1: Version alignment only for the v1.55.1 Comdirect migration hotfix; Trade Republic PDF/statement acquisition is unchanged.
+Version 1.56.0 reduces routine successful Ingress request-completion logging from INFO to DEBUG. Trade Republic PDF holdings/cash statement acquisition, evidence timestamps and freshness semantics are unchanged.
 
 Version 1.55.0 fixes the live-observed conflict between the historical Gateway cache-age setting and Portfolio Architect's longer imported-statement freshness policy. Accepted Trade Republic PDF evidence remains servable with its original timestamp; Portfolio Architect alone decides whether that evidence is fresh enough to use. Parsing and provider identity are unchanged.
 Version 1.53.0 adds provider-neutral health-schema-8 acquisition control metadata. Trade Republic reports `pdf` as the active/ready production method and `live_api` as unavailable/non-activatable. Statement parsing, independent evidence clocks, private persistence and verified HTTPS are unchanged.

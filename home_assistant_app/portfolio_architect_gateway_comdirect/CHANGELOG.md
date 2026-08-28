@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.56.0
+
+Canonical provider-qualified App now displays simply as Comdirect; the temporary NEW label is retired with no slug/runtime/migration-security change.
+
 ## 1.55.1
 
 - The provider-qualified migration target is version-aligned with the v1.55.1 hotfix. Its one-time fingerprint-pinned receiver, same-CA import, OAuth-session exclusion and explicit cut-over behavior are unchanged.

@@ -15,7 +15,7 @@ import subprocess
 import tempfile
 import threading
 import time
-from typing import Any, Final
+from typing import Any, Callable, Final
 from urllib.error import HTTPError, URLError
 from urllib.request import ProxyHandler, Request, build_opener
 
@@ -106,18 +106,42 @@ def prepare_supervisor_tls(
 def start_supervisor_tls_discovery_publisher(
     material: SupervisorTlsMaterial,
     provider_id: str,
+    *,
+    on_published: Callable[[str], None] | None = None,
+    stop_event: threading.Event | None = None,
 ) -> threading.Thread:
-    """Publish discovery asynchronously, retrying boundedly while the App keeps serving HTTPS."""
+    """Publish discovery asynchronously with bounded retry and optional lifecycle tracking."""
     provider = _normalise_provider_id(provider_id)
 
     def _worker() -> None:
         delay = 2.0
         for _attempt in range(8):
+            if stop_event is not None and stop_event.is_set():
+                return
             try:
-                publish_supervisor_tls_discovery(material, provider)
+                discovery_uuid = publish_supervisor_tls_discovery(material, provider)
+                if stop_event is not None and stop_event.is_set():
+                    try:
+                        delete_supervisor_tls_discovery(discovery_uuid)
+                    except RuntimeError:
+                        if on_published is not None:
+                            on_published(discovery_uuid)
+                    return
+                if on_published is not None:
+                    try:
+                        on_published(discovery_uuid)
+                    except Exception as err:
+                        try:
+                            delete_supervisor_tls_discovery(discovery_uuid)
+                        except RuntimeError:
+                            pass
+                        raise RuntimeError("Supervisor discovery lifecycle callback failed") from err
                 return
             except RuntimeError:
-                time.sleep(delay)
+                if stop_event is not None and stop_event.wait(delay):
+                    return
+                if stop_event is None:
+                    time.sleep(delay)
                 delay = min(delay * 2.0, 60.0)
 
     thread = threading.Thread(
@@ -164,7 +188,42 @@ def publish_supervisor_tls_discovery(
     return uuid
 
 
+def delete_supervisor_tls_discovery(
+    discovery_uuid: str,
+    *,
+    supervisor_url: str = "http://supervisor",
+    supervisor_token: str | None = None,
+) -> None:
+    """Delete one exact Supervisor discovery registration created by this App."""
+    if re.fullmatch(r"[0-9a-f]{32}", discovery_uuid) is None:
+        raise RuntimeError("Supervisor discovery identifier is invalid")
+    token = supervisor_token or os.environ.get("SUPERVISOR_TOKEN", "")
+    if not token:
+        raise RuntimeError("Supervisor token is unavailable")
+    _supervisor_request(
+        "DELETE",
+        f"/discovery/{discovery_uuid}",
+        token,
+        supervisor_url,
+    )
+
+
 def _supervisor_json(
+    method: str,
+    path: str,
+    token: str,
+    base_url: str,
+    *,
+    payload: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    document = _supervisor_request(method, path, token, base_url, payload=payload)
+    data = document.get("data")
+    if not isinstance(data, dict):
+        raise RuntimeError("Supervisor API response did not contain an object")
+    return data
+
+
+def _supervisor_request(
     method: str,
     path: str,
     token: str,
@@ -174,6 +233,8 @@ def _supervisor_json(
 ) -> dict[str, Any]:
     if base_url != "http://supervisor":
         raise RuntimeError("Unexpected Supervisor API origin")
+    if not path.startswith("/") or ".." in path:
+        raise RuntimeError("Unexpected Supervisor API path")
     body = None
     headers = {"Authorization": f"Bearer {token}", "Accept": "application/json"}
     if payload is not None:
@@ -194,10 +255,7 @@ def _supervisor_json(
         raise RuntimeError("Supervisor API returned invalid JSON") from err
     if not isinstance(document, dict) or document.get("result") != "ok":
         raise RuntimeError("Supervisor API rejected the request")
-    data = document.get("data")
-    if not isinstance(data, dict):
-        raise RuntimeError("Supervisor API response did not contain an object")
-    return data
+    return document
 
 
 def _create_initial_material(

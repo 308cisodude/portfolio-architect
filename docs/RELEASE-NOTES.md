@@ -1,49 +1,70 @@
-# Portfolio Architect 1.55.1
+# Portfolio Architect 1.56.0
 
-Portfolio Architect v1.55.1 is a narrow live-migration hotfix prepared from the exact published v1.55.0 tracked-source baseline. It fixes the first real Comdirect App-identity migration attempt without changing the v1.55 security model, provider identity, wire schemas, acquisition semantics, freshness policy, private-PKI trust model, planner behavior, or advisory-only boundary.
+Portfolio Architect v1.56.0 is a deliberately narrow UX and hygiene release prepared from the fully published and live-accepted v1.55.1 baseline. It does not change provider identity, acquisition authority, REST portfolio schema 1, Gateway health schema 8 (payload schema 8), `fallback_policy: none`, freshness policy, private-PKI trust, planner economics, or the advisory-only boundary.
 
-## Live-observed v1.55.0 defect
+## What changes
 
-The published v1.55.0 migration exporter accepted only the historical schema-1 `comdirect-acquisition.json` shape. A normal production Comdirect installation that had previously exercised the explicit v1.53 acquisition control plane can legitimately persist schema 2 with `previous_mode`, `last_method_change_at`, and `last_method_change_reason`. The production installation therefore failed local export validation before any migration request reached Comdirect NEW.
+### Deterministic DKB probe time presentation
 
-The failure was fail-closed and non-destructive: the historical App remained live and authoritative, Comdirect NEW remained in its pristine waiting state, Portfolio Architect did not change endpoints, and no private migration state was committed. The legacy Ingress nevertheless reduced the bounded validation failure to a bare HTTP 400, producing poor operator diagnostics.
+The DKB anonymous BPD research page no longer asks the browser to localize the persisted probe timestamp. The App renders the timestamp server-side in two explicit forms:
 
-## Fix
+- deterministic `Europe/Berlin` local time, including the correct CET/CEST offset; and
+- the authoritative UTC dispatch timestamp retained by the probe state.
 
-v1.55.1:
+The DKB App installs Alpine `tzdata` so `zoneinfo.ZoneInfo("Europe/Berlin")` is available in the minimal runtime image. The anonymous BPD probe remains research-only. Authenticated DKB FinTS acquisition remains disabled and cannot replace or fall back from CSV evidence.
 
-- accepts both currently supported persisted Comdirect acquisition-state schemas 1 and 2, with schema-2 fields validated as strictly as the live acquisition runtime validates them;
-- keeps `comdirect-session.json` excluded and still requires fresh PhotoTAN bootstrap on Comdirect NEW before a migrated `live_api` endpoint can become discoverable;
-- validates the one-time migration code and legacy state locally, then performs an authenticated fingerprint-pinned successor status preflight before transferring any private state;
-- supports idempotent recovery when the successor already has an exactly matching staged or committed summary but the historical App has not yet recorded its local staged marker;
-- classifies migration failures into a small privacy-safe reason set and returns to the legacy migration card instead of exposing a generic HTTP 400 page;
-- never exposes exception text, filenames, bearer secrets, OAuth material, client credentials, account/depot identifiers, response bodies, or other bank data in those reason classes;
-- leaves the exact historical→provider-qualified hostname relationship, same-CA requirement, existing Gateway bearer token, explicit legacy freeze, explicit PA confirmation, and health/snapshot-integrity validation unchanged.
+### Generic Import privacy and discovery lifecycle
 
-The bounded legacy-side reason classes are `invalid_code`, `legacy_state_invalid`, `successor_unreachable`, `successor_tls_mismatch`, `successor_auth_rejected`, `successor_payload_rejected`, `successor_response_invalid`, and `local_stage_record_failed`.
+The Generic Import bearer token is moved away from the screenshot-prone top of Ingress into a dedicated, collapsed **Sensitive connection material** section near the bottom of the page.
 
-## Compatibility
+Generic Import now records the exact Supervisor discovery UUID it publishes. On graceful App shutdown it removes that exact discovery record. If cleanup cannot reach Supervisor, the UUID remains in App-private state and is reconciled before any later publication, preventing duplicate self-registration. SIGTERM is routed through the normal graceful server shutdown path so ordinary stop/update/uninstall operations can execute the cleanup.
 
-The following established contracts remain unchanged in v1.55.1:
+No provider credentials, CSV bytes, filenames, account identifiers, transaction rows, bearer secrets, or private TLS key material are added to discovery.
 
-- canonical provider identity `comdirect`;
-- payload schema 8;
-- REST portfolio schema 1;
-- Gateway health schema 8 current, schemas 1–7 accepted;
-- presentation schema 2 and broker schemas 1/2/3;
-- explicit Comdirect `live_api`/CSV arbitration with `fallback_policy: none`;
-- Trade Republic PDF, DKB CSV and Generic Import CSV acquisition behavior;
-- Portfolio Architect evidence-kind freshness and Gateway live-LKG semantics;
-- verified private-PKI HTTPS, bearer authentication, hostname verification and local-source/DNS hardening;
-- authenticated DKB FinTS acquisition remains disabled;
-- no trading, order, transfer, payment or transaction-history capability.
+### Runtime-health dashboard consolidation
 
-No dashboard YAML replacement is required. Follow `docs/UPGRADE-1.55.1.md` for the resumed migration.
+The bilingual reference dashboard reduces overlapping incident presentation:
 
-## Preserved historical release-note contracts
+- one primary **Gateway incident / Gateway-Störung** tile presents the consolidated reason and recommended action;
+- one explicit **Snapshot / LKG state** tile appears when Home Assistant is using a last-known-good snapshot;
+- ordinary freshness and gateway-status tiles yield to the higher-priority incident/LKG presentation when appropriate;
+- redundant standalone reauthentication, attention-reason, recommended-action, failure, and overdue alert tiles are removed while the underlying entities remain available.
 
-For regression continuity, this hotfix preserves the established compatibility statements: payload schema 8: unchanged; REST portfolio schema 1: unchanged; Gateway health schema 8 current; schemas 1–7 remain supported (and therefore schemas 1–6 remain supported); presentation schema 2; broker schemas 1/2/3. It does not move PDF parsing into Portfolio Architect.
+This is presentation-only; coordinator state, repairs, diagnostics, automations, LKG behavior, and fail-closed actionability are unchanged.
 
-The former v1.19.0-rc2 brokerage-probe experiment is not promoted by this release. The v1.33.0 source-freshness and plan-schedule separation remains intact: scheduling is anchored to the latest valid Portfolio Architect evaluation and this hotfix does not change any configured freshness threshold. Dashboard changes are not included.
+### Comdirect naming after the completed identity migration
 
-No trading, order, transfer, payment, or transaction-history capability is added.
+The provider-qualified App `portfolio_architect_gateway_comdirect` is now displayed simply as **Portfolio Architect Gateway — Comdirect**. The historical migration-source package `portfolio_architect_gateway` is displayed as **Comdirect LEGACY** and marked with Home Assistant's native `stage: deprecated` lifecycle flag.
+
+v1.56.x is the final published line for the historical App identity. Its Ingress page explicitly instructs remaining installations to complete the established one-time migration before upgrading beyond v1.56.x. The active App repository is scheduled to withdraw `portfolio_architect_gateway` in v1.57.0, while the canonical Comdirect App will retain the migration receiver compatibility needed by already-installed v1.55/v1.56 legacy instances.
+
+No slug, endpoint derivation, same-CA migration rule, bearer-token preservation, OAuth-session exclusion, migration code, or Portfolio Architect cut-over validation changes in v1.56.0.
+
+### Quieter routine Ingress logging
+
+Routine successful Ingress request-completion messages move from INFO to DEBUG across the Gateway UIs. Explicit startup, acquisition, import, migration, probe, error, and security-relevant messages keep their existing operational log levels.
+
+## Compatibility and non-goals
+
+v1.56.0 intentionally does **not** introduce capability-level acquisition arbitration and does **not** advance authenticated DKB FinTS. Comdirect remains `live_api`/complete-`csv` with explicit operator switching; DKB remains CSV-authoritative; Trade Republic remains PDF-authoritative; Generic Import remains provider-neutral mapped CSV.
+
+The historical Comdirect App remains in the release assets only as a bounded migration source for installations that still need the v1.55 identity migration. A completed installation should run only the canonical provider-qualified Comdirect App.
+
+## Retained compatibility contracts
+
+v1.56.0 deliberately preserves the established wire, planner, and safety contracts:
+
+- payload schema 8: unchanged
+- REST portfolio schema 1: unchanged
+- Gateway health schema 8 current; schemas 1–7 remain supported
+- schemas 1–6 remain supported as part of that health-schema compatibility range
+- presentation schema 2 remains current
+- broker schemas 1/2/3 remain supported
+- authenticated DKB FinTS acquisition remains disabled
+- Trade Republic remains Gateway-owned PDF acquisition; this release does not move PDF parsing into Portfolio Architect
+- the historical v1.19.0-rc2 brokerage capability probe is not promoted by this release and no brokerage probe code is included
+- No trading, order, transfer, payment, or transaction-history capability is added
+- the v1.33.0 source-freshness and plan-schedule separation remains intact: execution timing is anchored to the latest valid Portfolio Architect evaluation and this release does not change any configured freshness threshold
+- the v1.53 acquisition-control compatibility contract required no dashboard YAML replacement; v1.56 changes no runtime contract, while users of the shipped reference dashboard should replace its YAML only to adopt the consolidated presentation
+
+Capability-level acquisition arbitration is not included.

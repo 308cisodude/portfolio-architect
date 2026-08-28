@@ -263,7 +263,7 @@ async def async_migrate_entry(
             _LOGGER.error(
                 "Cannot migrate Portfolio Architect to schema 12 while local CSV "
                 "acquisition is still configured (provider %s). Stay on v1.50.0, "
-                "install Portfolio Architect Gateway — Generic Import v1.55.1, "
+                "install Portfolio Architect Gateway — Generic Import v1.56.0, "
                 "import and verify the mapped CSV there, reconfigure Portfolio "
                 "Architect to that verified REST Gateway, then retry the v1.51.0 "
                 "upgrade.",

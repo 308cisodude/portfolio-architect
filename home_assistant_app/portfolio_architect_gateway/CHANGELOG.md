@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.56.0
+
+- Marks the historical `portfolio_architect_gateway` App as `stage: deprecated`; v1.56.x is its final published migration-source line and repository withdrawal is scheduled for v1.57.0.
+- Adds an explicit Ingress retirement warning directing remaining installations to the canonical `portfolio_architect_gateway_comdirect` App before upgrading beyond v1.56.x.
+- Preserves all v1.55.1 migration transport, same-CA trust, bearer-token preservation, OAuth-session exclusion, freeze/cut-over and fail-closed semantics.
+Historical migration-source package is now explicitly displayed as Comdirect LEGACY; runtime/migration security semantics are unchanged.
+
 ## 1.55.1
 
 - The historical migration-source App now accepts production acquisition-state schema 2 as well as schema 1 and returns bounded migration failure reasons in Ingress. Normal live/CSV acquisition and provider runtime are unchanged.
