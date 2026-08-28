@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.56.1
+
+- Version alignment only for the Comdirect migration-lifecycle hotfix; Generic Import privacy/discovery cleanup and mapped-CSV acquisition are unchanged from v1.56.0.
+
 ## 1.56.0
 
 Bearer token moves to a lower collapsed sensitive section; exact Supervisor discovery UUID lifecycle cleanup/reconciliation is added; routine Ingress request-completion logging moves to DEBUG.

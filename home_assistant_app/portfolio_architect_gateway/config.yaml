@@ -1,5 +1,5 @@
 name: Portfolio Architect Gateway — Comdirect LEGACY
-version: 1.56.0
+version: 1.56.1
 slug: portfolio_architect_gateway
 description: Historical Comdirect Gateway identity retained only as the explicit migration source for installations that have not yet moved to the provider-qualified canonical App.
 url: https://developers.home-assistant.io/docs/apps/

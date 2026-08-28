@@ -1,15 +1,6 @@
-# Portfolio Architect Gateway — Comdirect LEGACY
+# Portfolio Architect Gateway — Comdirect LEGACY v1.56.1
 
-Version 1.56.0 is the **final published release** of this historical App identity. It is marked `stage: deprecated` in Home Assistant, shows an explicit retirement warning in Ingress, and is scheduled to be withdrawn from the active App repository in v1.57.0. Installations that still use this App must complete the existing one-time migration to **Portfolio Architect Gateway — Comdirect** before upgrading beyond v1.56.x. The v1.55.1 schema-2 migration hotfix, same-CA trust, bearer preservation, OAuth-session exclusion, freeze/cut-over safety gates, and fail-closed behavior remain unchanged.
-
-Version 1.55.0 kept this historical `portfolio_architect_gateway` App available as the explicit migration source for the provider-qualified Comdirect App; from v1.56 onward it is explicitly labeled **Comdirect LEGACY** during coexistence. Its normal v1.53 atomic `live_api`/`csv` control plane remains unchanged until the operator deliberately stages and freezes an identity cut-over. The Gateway now applies `max_cached_snapshot_age_seconds` only to live acquisition: static CSV evidence remains servable with its original timestamp and Portfolio Architect's configured CSV freshness policy decides whether it is usable. The Home Assistant integration also gains method-aware anti-rollback handling for explicit schema-8 switches.
-Version 1.53.0 adds the provider-neutral acquisition control plane and makes Comdirect the first explicitly switchable dual-method reference implementation. `live_api` and `csv` remain mutually exclusive with `fallback_policy: none`; inactive CSV becomes activatable only after both holdings and cash evidence are staged, and failed or interrupted switching restores the pre-switch control state. Interrupted-switch recovery discards an ambiguous canonical cache before startup refresh, while corrupt inactive CSV evidence is treated as not-ready without disrupting live acquisition. Portfolio Architect observes this state read-only through health schema 8.
-
-Version 1.50.0 aligns the Comdirect App package with Portfolio Architect’s source-management UX milestone. Comdirect `live_api`/`csv` acquisition, static parsers, OAuth/session behavior and the live/static Ingress distinction are unchanged from the live-accepted v1.49.0 baseline.
-
-Version 1.48.1 aligns the Comdirect App package with Portfolio Architect’s acquisition-aware freshness correction. Comdirect `live_api`/`csv` arbitration, static parsers, OAuth/session behavior and Ingress UX are unchanged from v1.48.0.
-
-Version 1.48.0 adds explicit, mutually exclusive Comdirect acquisition modes while keeping `live_api` as the backward-compatible default.
+Version 1.56.1 is the hotfix-aligned build within the **final published release** line of this historical migration-source identity. It remains `stage: deprecated` and scheduled for withdrawal from the active App repository in v1.57.0. Its export still excludes OAuth/session state and preserves the established same-CA, bearer, freeze and explicit cut-over migration contracts. Completed installations should run only **Portfolio Architect Gateway — Comdirect**.
 
 ## Live acquisition · Comdirect API
 

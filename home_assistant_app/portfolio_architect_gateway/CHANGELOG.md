@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.56.1
+
+- Version-align the final deprecated historical Comdirect migration-source package with the canonical v1.56.1 post-cut-over restart hotfix.
+- Legacy export/staging rules remain unchanged: OAuth/session state is never transferred.
+- Repository withdrawal remains scheduled for v1.57.0.
+
 ## 1.56.0
 
 - Marks the historical `portfolio_architect_gateway` App as `stage: deprecated`; v1.56.x is its final published migration-source line and repository withdrawal is scheduled for v1.57.0.
