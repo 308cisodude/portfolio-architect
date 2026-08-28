@@ -26,11 +26,17 @@ from .comdirect import AccountBalanceCandidate, ComdirectClient
 from .comdirect_slug_migration import (
     EXPORT_MARKER_NAME,
     FREEZE_MARKER_NAME,
+    MIGRATION_ERROR_LEGACY_STATE_INVALID,
+    MIGRATION_ERROR_LOCAL_STAGE_RECORD_FAILED,
+    MIGRATION_ERROR_SUCCESSOR_RESPONSE_INVALID,
+    MIGRATION_ERROR_CODES,
+    MigrationError,
     build_export_payload,
     expected_successor_hostname,
     legacy_is_frozen,
     read_export_marker,
     send_payload_to_successor,
+    successor_status,
     write_export_marker,
     write_freeze_marker,
 )
@@ -261,27 +267,44 @@ class AppController:
         }
 
     def stage_slug_migration(self, migration_code: str) -> None:
-        """Transfer stable long-lived state to only the exact successor App."""
+        """Preflight and transfer stable long-lived state to only the exact successor App."""
         if (
             self.legacy_migration_hostname is None
             or self.legacy_migration_options is None
             or self.acquisition is None
         ):
-            raise ValueError("Legacy Comdirect App migration is unavailable")
+            raise MigrationError(MIGRATION_ERROR_LEGACY_STATE_INVALID)
         if legacy_is_frozen(self._legacy_freeze_marker):
-            raise ValueError("Legacy Comdirect App is already frozen")
+            raise MigrationError(MIGRATION_ERROR_LEGACY_STATE_INVALID)
         with self.acquisition.migration_guard():
-            payload, _local_summary = build_export_payload(
-                self.config.server.snapshot_file.parent,
-                options=self.legacy_migration_options,
-                source_hostname=self.legacy_migration_hostname,
-            )
-            remote_summary = send_payload_to_successor(
+            try:
+                payload, local_summary = build_export_payload(
+                    self.config.server.snapshot_file.parent,
+                    options=self.legacy_migration_options,
+                    source_hostname=self.legacy_migration_hostname,
+                )
+            except (OSError, RuntimeError, ValueError, json.JSONDecodeError) as err:
+                if isinstance(err, MigrationError):
+                    raise
+                raise MigrationError(MIGRATION_ERROR_LEGACY_STATE_INVALID) from err
+            status, staged_summary = successor_status(
                 legacy_hostname=self.legacy_migration_hostname,
                 migration_code=migration_code,
-                payload=payload,
             )
-        write_export_marker(self._legacy_export_marker, remote_summary)
+            if status == "waiting":
+                remote_summary = send_payload_to_successor(
+                    legacy_hostname=self.legacy_migration_hostname,
+                    migration_code=migration_code,
+                    payload=payload,
+                )
+            elif status in {"staged", "committed"} and staged_summary == local_summary:
+                remote_summary = staged_summary
+            else:
+                raise MigrationError(MIGRATION_ERROR_SUCCESSOR_RESPONSE_INVALID)
+        try:
+            write_export_marker(self._legacy_export_marker, remote_summary)
+        except OSError as err:
+            raise MigrationError(MIGRATION_ERROR_LOCAL_STAGE_RECORD_FAILED) from err
 
     def freeze_legacy_for_cutover(self) -> None:
         """Stop provider calls while continuing to serve the trusted cached snapshot."""
@@ -793,9 +816,16 @@ class IngressRequestHandler(BaseHTTPRequestHandler):
             if path == "/migrate-app-identity":
                 if set(values) != {"csrf", "migration_code"}:
                     raise ValueError("Unexpected App-identity migration form field")
-                self.ingress_server.controller.stage_slug_migration(
-                    _single(values, "migration_code")
-                )
+                try:
+                    self.ingress_server.controller.stage_slug_migration(
+                        _single(values, "migration_code")
+                    )
+                except MigrationError as err:
+                    _LOGGER.warning(
+                        "Comdirect App identity migration failed: reason=%s", err.code
+                    )
+                    self._see_other(f"./?migration_error={err.code}")
+                    return
                 accepted = True
             elif path == "/freeze-app-identity":
                 if set(values) != {"csrf"}:
@@ -924,12 +954,14 @@ class IngressRequestHandler(BaseHTTPRequestHandler):
 
     def _see_other(self, location: str) -> None:
         """Return one bounded relative Ingress redirect."""
-        if location not in {
+        allowed = {
             "./",
             "./?cash_policy_error=invalid_amount",
             "./?acquisition_error=activation_failed",
             "./?migration_resume=restart",
-        }:
+            *(f"./?migration_error={code}" for code in MIGRATION_ERROR_CODES),
+        }
+        if location not in allowed:
             raise ValueError("Unsupported Ingress redirect target")
         self.send_response(HTTPStatus.SEE_OTHER)
         self.send_header("Location", location)
@@ -1233,12 +1265,31 @@ def _legacy_migration_html(
     if migration is None:
         return ""
     successor = escape(str(migration.get("successor_hostname") or "unavailable"))
-    notice = (
-        '<p class="warn" role="alert">Freeze cancellation recorded. Restart this '
-        'legacy App to resume provider refresh and OAuth maintenance.</p>'
-        if query == "migration_resume=restart"
-        else ""
-    )
+    migration_error_messages = {
+        "invalid_code": "The one-time migration code was invalid or incomplete.",
+        "legacy_state_invalid": "The legacy App state is not yet valid for migration.",
+        "successor_unreachable": "Comdirect NEW could not be reached on the private App network.",
+        "successor_tls_mismatch": "Comdirect NEW did not present the one-time pinned TLS identity.",
+        "successor_auth_rejected": "Comdirect NEW rejected the one-time migration credential.",
+        "successor_payload_rejected": "Comdirect NEW rejected the validated migration payload.",
+        "successor_response_invalid": "Comdirect NEW returned an unexpected migration status.",
+        "local_stage_record_failed": "The successor accepted the state, but the legacy App could not record the staged marker.",
+    }
+    notice = ""
+    if query == "migration_resume=restart":
+        notice = (
+            '<p class="warn" role="alert">Freeze cancellation recorded. Restart this '
+            'legacy App to resume provider refresh and OAuth maintenance.</p>'
+        )
+    elif query.startswith("migration_error="):
+        code = query.partition("=")[2]
+        message = migration_error_messages.get(code)
+        if message is not None:
+            notice = (
+                '<p class="warn" role="alert"><strong>Migration not staged.</strong> '
+                + escape(message)
+                + ' No provider authority or Portfolio Architect endpoint was changed.</p>'
+            )
     if migration.get("frozen"):
         return (
             '<section class="mode-card inactive-unavailable">'

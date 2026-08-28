@@ -1,5 +1,5 @@
 name: Portfolio Architect Gateway — Comdirect NEW
-version: 1.55.0
+version: 1.55.1
 slug: portfolio_architect_gateway_comdirect
 description: Provider-qualified Comdirect Gateway for Portfolio Architect. During
   v1.55 migration it can securely import the historical Comdirect App identity while

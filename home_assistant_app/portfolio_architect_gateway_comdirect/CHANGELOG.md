@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.55.1
+
+- The provider-qualified migration target is version-aligned with the v1.55.1 hotfix. Its one-time fingerprint-pinned receiver, same-CA import, OAuth-session exclusion and explicit cut-over behavior are unchanged.
+
 ## 1.55.0
 
 - Adds the provider-qualified `portfolio_architect_gateway_comdirect` App identity.

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.55.1
+
+- Version alignment only for the v1.55.1 Comdirect migration hotfix; DKB CSV acquisition and the anonymous FinTS research gate are unchanged.
+
 ## 1.55.0
 
 - Version-aligns the DKB App with the Comdirect App-identity migration release.

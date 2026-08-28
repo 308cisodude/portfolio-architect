@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.55.1
+
+- Version alignment only for the v1.55.1 Comdirect migration hotfix; Trade Republic PDF/statement acquisition is unchanged.
+
 ## 1.55.0
 
 - Version-aligns the Trade Republic App with the Comdirect App-identity migration release.

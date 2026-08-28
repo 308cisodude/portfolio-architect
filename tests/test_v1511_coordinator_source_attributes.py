@@ -1,4 +1,4 @@
-"""v1.55.0 regression contracts for the all-Gateway coordinator source metadata."""
+"""v1.55.1 regression contracts for the all-Gateway coordinator source metadata."""
 
 from __future__ import annotations
 
@@ -77,7 +77,7 @@ def test_all_gateway_configuration_label_has_no_removed_local_file_dependency() 
 
 
 def test_schema12_all_gateway_source_attributes_execute_without_local_paths_member() -> None:
-    """Reproduce the v1.55.0 live entity-attribute call on an all-Gateway object."""
+    """Reproduce the v1.55.1 live entity-attribute call on an all-Gateway object."""
     harness = _load_configuration_label_owner()
     coordinator = harness()
     coordinator.configuration_path = SimpleNamespace(config_relative="portfolio-architect")

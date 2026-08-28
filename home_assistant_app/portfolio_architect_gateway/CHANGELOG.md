@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.55.1
+
+- The historical migration-source App now accepts production acquisition-state schema 2 as well as schema 1 and returns bounded migration failure reasons in Ingress. Normal live/CSV acquisition and provider runtime are unchanged.
+
 ## 1.55.0
 
 - Keeps the historical `portfolio_architect_gateway` App as the explicit source of the v1.55 provider-qualified Comdirect identity migration.

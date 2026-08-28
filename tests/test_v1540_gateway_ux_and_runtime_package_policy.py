@@ -1,4 +1,4 @@
-"""v1.55.0 Gateway acquisition UX and runtime-package policy contracts."""
+"""v1.55.1 Gateway acquisition UX and runtime-package policy contracts."""
 
 from __future__ import annotations
 
@@ -95,4 +95,4 @@ def test_v1540_keeps_gateway_wire_schemas_unchanged() -> None:
     rest = (ROOT / "custom_components/portfolio_architect/rest_client.py").read_text(encoding="utf-8")
     assert '"health_schema_version": min(version, 8)' in server
     assert '"requested_health_schema_version": 8' in rest
-    assert json.loads((ROOT / "custom_components/portfolio_architect/manifest.json").read_text())["version"] == "1.55.0"
+    assert json.loads((ROOT / "custom_components/portfolio_architect/manifest.json").read_text())["version"] == "1.55.1"

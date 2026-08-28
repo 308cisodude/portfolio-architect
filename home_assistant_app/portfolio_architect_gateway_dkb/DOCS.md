@@ -1,7 +1,8 @@
-# Portfolio Architect Gateway — DKB v1.55.0
+# Portfolio Architect Gateway — DKB v1.55.1
+
+Version 1.55.1: Version alignment only for the v1.55.1 Comdirect migration hotfix; DKB CSV acquisition and the anonymous FinTS research gate are unchanged.
 
 Version 1.55.0 keeps DKB `csv` acquisition and the FinTS research gate unchanged. Accepted static CSV snapshots no longer expire at the Gateway's historical cache-age boundary; they retain their original evidence timestamps and Portfolio Architect decides freshness. `fints` remains research-only and non-activatable.
-
 Version 1.53.0 adds provider-neutral health-schema-8 acquisition control metadata. DKB reports `csv` as the active/ready production method and `fints` as non-activatable `research_only`. The anonymous BPD probe remains **EXPERIMENTAL · RESEARCH ONLY** and authenticated FinTS acquisition remains disabled; CSV holdings/cash behavior is unchanged.
 
 Version 1.50.0 adds only a persisted server-side “Last probe sent” timestamp to the anonymous DKB FinTS research UI while aligning with Portfolio Architect’s source-management UX milestone. DKB CSV acquisition, independent cash evidence, cryptographic probe diagnostics and the authenticated-FinTS gate are unchanged from the live-accepted v1.49.0 baseline.

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.55.1
+
+- Version alignment only for the v1.55.1 Comdirect migration hotfix; Generic Import CSV behavior and experimental maturity are unchanged.
+
 ## 1.55.0
 
 - Version-aligns the experimental Generic Import App with the Comdirect App-identity migration release.
