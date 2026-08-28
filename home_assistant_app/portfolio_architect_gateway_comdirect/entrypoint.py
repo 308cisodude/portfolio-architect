@@ -11,6 +11,7 @@ from portfolio_architect_gateway.app import AppOptions, serve_app
 from portfolio_architect_gateway.comdirect_migration_app import serve_comdirect_migration_setup
 from portfolio_architect_gateway.comdirect_slug_migration import (
     CUTOVER_MARKER_NAME,
+    expected_legacy_hostname,
     validate_committed_migration_identity,
 )
 from portfolio_architect_gateway.supervisor_tls import (
@@ -60,10 +61,11 @@ def main() -> int:
     token = os.environ.get("SUPERVISOR_TOKEN", "")
     # Resolve the App identity while still privileged. This performs only the fixed
     # Supervisor self-info request and validates the provider-qualified hostname.
-    hostname = supervisor_app_hostname(
-        supervisor_token=token,
-        expected_suffix="-portfolio-architect-gateway-comdirect",
-    )
+    hostname = supervisor_app_hostname(supervisor_token=token)
+    # Fail closed unless Supervisor assigned exactly the provider-qualified
+    # Comdirect successor shape. The derived legacy hostname is intentionally
+    # unused here; computing it performs the bounded identity validation.
+    expected_legacy_hostname(hostname)
 
     cutover = DATA / CUTOVER_MARKER_NAME
     if not cutover.is_file():

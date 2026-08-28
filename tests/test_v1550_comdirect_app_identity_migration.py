@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+import ast
+import inspect
 from decimal import Decimal
 import json
 from pathlib import Path
@@ -129,6 +131,26 @@ def test_tampered_migration_payload_fails_closed(tmp_path: Path) -> None:
             expected_source_hostname=LEGACY_HOST,
         )
 
+
+def test_provider_qualified_entrypoint_uses_supported_supervisor_hostname_api() -> None:
+    entrypoint_path = (
+        ROOT / "home_assistant_app/portfolio_architect_gateway_comdirect/entrypoint.py"
+    )
+    source = entrypoint_path.read_text()
+    tree = ast.parse(source)
+    calls = [
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "supervisor_app_hostname"
+    ]
+    assert len(calls) == 1
+    supported = set(
+        inspect.signature(supervisor_tls.supervisor_app_hostname).parameters
+    )
+    assert {kw.arg for kw in calls[0].keywords if kw.arg is not None} <= supported
+    assert "expected_legacy_hostname(hostname)" in source
 
 def test_provider_qualified_app_is_distinguishable_and_pending_by_default() -> None:
     legacy = yaml.safe_load(
