@@ -695,3 +695,15 @@ Live acceptance of v1.45.0 proved the exact atomic DKB source cut-over but expos
 - The historical accepted-exception horizontal-overflow wart is no longer an outstanding item: the v1.36 native dynamic policy list replaced that old static presentation path.
 
 v1.41.1 retains bounded local Trade Republic cash-statement acquisition and changes only the funded-route tie-break; no new remote provider API or transaction capability is enabled. v1.42.0 adds only presentation of those already-decided instructions. v1.43.0 changes only Home Assistant-side execution-evidence governance/editing; v1.44.0 changes only Configure presentation/identity context. v1.45.0 adds local DKB CSV acquisition inside the DKB Gateway but no new remote bank API or transaction capability.
+
+## v1.55.0 — safe Comdirect App-identity migration
+
+Current structural migration milestone: introduce the provider-qualified
+`portfolio_architect_gateway_comdirect` Home Assistant App identity while retaining the
+historical `portfolio_architect_gateway` App as an explicit, temporary migration source.
+The migration preserves the existing private CA and Gateway bearer token, transfers only
+bounded allowlisted long-lived state over one-time fingerprint-pinned TLS, deliberately
+excludes Comdirect OAuth/session state, freezes the historical App before cut-over, and
+requires explicit same-CA authenticated Portfolio Architect validation before the endpoint
+changes. Canonical provider identity remains `comdirect`; acquisition/freshness semantics,
+wire schemas, planner behavior, and the advisory-only boundary remain unchanged.

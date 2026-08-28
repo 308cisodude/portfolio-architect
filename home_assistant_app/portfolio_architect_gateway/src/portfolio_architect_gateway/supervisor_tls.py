@@ -45,6 +45,19 @@ class SupervisorTlsMaterial:
     ca_sha256: str
 
 
+def supervisor_app_hostname(
+    *,
+    supervisor_url: str = "http://supervisor",
+    supervisor_token: str | None = None,
+) -> str:
+    """Return the validated Supervisor-assigned hostname for this App only."""
+    token = supervisor_token or os.environ.get("SUPERVISOR_TOKEN", "")
+    if not token or len(token) > 4096 or any(ord(ch) < 33 or ord(ch) > 126 for ch in token):
+        raise RuntimeError("Supervisor token is unavailable or invalid")
+    info = _supervisor_json("GET", "/addons/self/info", token, supervisor_url)
+    return _normalise_hostname(info.get("hostname"))
+
+
 def prepare_supervisor_tls(
     data_directory: Path,
     provider_id: str,
@@ -58,8 +71,7 @@ def prepare_supervisor_tls(
     if not token or len(token) > 4096 or any(ord(ch) < 33 or ord(ch) > 126 for ch in token):
         raise RuntimeError("Supervisor token is unavailable or invalid")
 
-    info = _supervisor_json("GET", "/addons/self/info", token, supervisor_url)
-    hostname = _normalise_hostname(info.get("hostname"))
+    hostname = supervisor_app_hostname(supervisor_url=supervisor_url, supervisor_token=token)
 
     data_directory.mkdir(mode=0o700, parents=True, exist_ok=True)
     tls_dir = data_directory / "tls"

@@ -51,6 +51,8 @@ SNAPSHOT_SHA256_HEADER: Final = "X-Portfolio-Snapshot-SHA256"
 SNAPSHOT_POSITION_COUNT_HEADER: Final = "X-Portfolio-Position-Count"
 TLS_DISCOVERY_SCHEMA_VERSION: Final = 1
 TLS_DISCOVERY_GATEWAY_PATH: Final = "/api/v1/portfolio"
+_COMDIRECT_LEGACY_APP_HOST_SUFFIX: Final = "-portfolio-architect-gateway"
+_COMDIRECT_CANONICAL_APP_HOST_SUFFIX: Final = "-portfolio-architect-gateway-comdirect"
 
 _TOKEN_RE = re.compile(r"^[\x21-\x7e]+$")
 _ALLOWED_IPV4_NETWORKS = tuple(
@@ -245,6 +247,32 @@ class GatewayTlsDiscovery:
         existing_port = existing.port or (443 if existing.scheme == "https" else 80)
         return (
             _canonical_hostname(existing.hostname or "") == self.hostname
+            and existing_port == self.port
+            and (existing.path or "/") == self.path
+        )
+
+    def matches_comdirect_slug_successor(self, endpoint_url: str) -> bool:
+        """Match only the historical -> provider-qualified Comdirect App hostname move."""
+        existing = urlsplit(normalise_rest_endpoint(endpoint_url))
+        candidate = urlsplit(self.endpoint_url)
+        if existing.scheme != "https" or candidate.scheme != "https":
+            return False
+        existing_host = _canonical_hostname(existing.hostname or "")
+        if (
+            not existing_host.endswith(_COMDIRECT_LEGACY_APP_HOST_SUFFIX)
+            or existing_host.endswith(_COMDIRECT_CANONICAL_APP_HOST_SUFFIX)
+        ):
+            return False
+        expected_host = (
+            existing_host[: -len(_COMDIRECT_LEGACY_APP_HOST_SUFFIX)]
+            + _COMDIRECT_CANONICAL_APP_HOST_SUFFIX
+        )
+        existing_port = existing.port or 443
+        candidate_port = candidate.port or 443
+        return (
+            self.provider_id == "comdirect"
+            and self.hostname == expected_host
+            and existing_port == candidate_port
             and existing_port == self.port
             and (existing.path or "/") == self.path
         )

@@ -44,6 +44,7 @@ jobs:
           )"
           for app in \
             portfolio_architect_gateway \
+            portfolio_architect_gateway_comdirect \
             portfolio_architect_gateway_dkb \
             portfolio_architect_gateway_trade_republic \
             portfolio_architect_gateway_import
@@ -68,6 +69,7 @@ jobs:
           cleanup() {
             docker rm -f "${supervisor_name}" >/dev/null 2>&1 || true
             docker rm -f \
+              portfolio-architect-portfolio_architect_gateway_comdirect-smoke \
               portfolio-architect-portfolio_architect_gateway_dkb-smoke \
               portfolio-architect-portfolio_architect_gateway_trade_republic-smoke \
               portfolio-architect-portfolio_architect_gateway_import-smoke \
@@ -83,7 +85,7 @@ jobs:
           from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
           TOKEN = os.environ["PA_VALIDATION_SUPERVISOR_TOKEN"]
-          HOSTNAME = "portfolio-architect-gateway-validation"
+          HOSTNAME = "validation-portfolio-architect-gateway-comdirect"
 
           class Handler(BaseHTTPRequestHandler):
               def _authorized(self):
@@ -136,6 +138,22 @@ jobs:
             portfolio-architect-portfolio_architect_gateway_dkb:validation \
             /mock_supervisor.py >/dev/null
           sleep 1
+
+          # The provider-qualified Comdirect App must remain in its non-discoverable
+          # migration shell on a pristine install. Smoke all three internal listeners.
+          canonical_name="portfolio-architect-portfolio_architect_gateway_comdirect-smoke"
+          docker run --detach --name "${canonical_name}" \
+            --network "${network}" \
+            --env "SUPERVISOR_TOKEN=${supervisor_token}" \
+            portfolio-architect-portfolio_architect_gateway_comdirect:validation >/dev/null
+          sleep 2
+          if ! test "$(docker inspect --format '{{.State.Running}}' "${canonical_name}")" = "true"; then
+            docker logs "${canonical_name}" >&2 || true
+            exit 1
+          fi
+          docker exec "${canonical_name}" /usr/local/bin/python3.14 -c \
+            'import socket, ssl; socket.create_connection(("127.0.0.1",8099),2).close(); socket.create_connection(("127.0.0.1",8787),2).close(); raw=socket.create_connection(("127.0.0.1",8788),2); tls=ssl._create_unverified_context().wrap_socket(raw,server_hostname="validation-portfolio-architect-gateway-comdirect"); tls.close()'
+          docker rm -f "${canonical_name}" >/dev/null
 
           for app in \
             portfolio_architect_gateway_dkb \

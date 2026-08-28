@@ -1,49 +1,48 @@
-# Portfolio Architect 1.54.0
+# Portfolio Architect 1.55.0
 
-Portfolio Architect v1.54.0 is a Gateway presentation and release-engineering cleanup prepared from the published and fully live-accepted v1.53.1 baseline. It does not change provider acquisition semantics, Portfolio Architect freshness thresholds, Gateway health schema 8, REST portfolio schema 1, private-PKI transport or planner behavior.
+Portfolio Architect v1.55.0 is a narrow structural migration release prepared from the published and fully live-accepted v1.54.0 baseline. It removes the last historical Comdirect App-identity asymmetry by introducing the provider-qualified Home Assistant App slug `portfolio_architect_gateway_comdirect` without silently replacing trust, provider authority or private state.
 
-## Consistent acquisition-state colours
+## Safe Comdirect App-identity migration
 
-Every provider App now uses the same visual meaning for acquisition status:
+The historical `portfolio_architect_gateway` App remains in the release as the explicit migration source. The provider-qualified successor is separately installable and deliberately displayed as **Portfolio Architect Gateway — Comdirect NEW** during coexistence.
 
-- green: the authoritative ACTIVE acquisition method;
-- blue: an inactive method that is ready and can be activated;
-- amber: unavailable, not-ready or research-only acquisition.
+Migration is operator-driven and fail-closed. A pristine Comdirect NEW App publishes no Portfolio Architect discovery. It creates an ephemeral TLS migration receiver and one-time code. The historical App accepts no destination URL: it derives only its exact provider-qualified successor hostname, verifies the receiver leaf SHA-256 from the one-time code, and sends a bounded allowlisted state document with per-file SHA-256 integrity metadata.
 
-This fixes the Comdirect inversion where active Live API was blue while the inactive CSV section could appear green. Trade Republic, DKB and Generic Import now use the same semantic classes rather than provider-specific colour meaning.
+Long-lived state preserved by migration includes the existing Gateway bearer token, private CA/key and leaf material, Comdirect client credentials, selected investment-account/cash-policy state, acquisition state, staged CSV holdings/cash evidence and canonical snapshot. The Comdirect OAuth/session file is deliberately excluded. This prevents old and new App identities from sharing or racing the same refresh session; a migrated Live API installation performs fresh PhotoTAN bootstrap before discovery.
 
-## One freshness-policy authority
+After import, the historical App is explicitly frozen so provider refresh and OAuth maintenance stop while its already trusted cached HTTPS snapshot remains available to Portfolio Architect. The new App renews only the hostname-specific server leaf from the preserved private CA. It does not publish discovery until health schema 8 is healthy/live with a servable Comdirect snapshot.
 
-The v1.53.1 static-retention fix established the intended architecture: active static CSV/PDF evidence remains servable with its original evidence timestamp and Portfolio Architect decides whether that evidence is fresh enough for planning. v1.54.0 therefore removes `max_cached_snapshot_age_seconds` from the user-facing configuration schema of the static-only DKB, Trade Republic and Generic Import Apps.
-
-The common static-App parser continues to accept the retired bounded key as a compatibility bridge for existing Supervisor option state, but it has no effect on active static evidence. No new freshness policy is introduced.
-
-Comdirect retains the same underlying cache-age option because live acquisition can legitimately use bounded last-known-good serving during provider failure. Its Home Assistant configuration label is now **Maximum live LKG snapshot age**, and the Comdirect Live API Ingress section explicitly states that the setting is a Gateway resilience limit only. Portfolio Architect remains authoritative for planning freshness.
-
-## Alpine runtime-package policy
-
-The v1.53.1 publication preparation demonstrated that exact-pinning an APK revision from a mutable Alpine branch is brittle: Alpine retired `openssl=3.5.7-r0` and moved to `3.5.8-r0`, causing a source-correct Docker build to fail until the release candidate was amended. v1.54.0 replaces exact `openssl=<apk revision>` installation with branch-current `apk add --no-cache openssl` in all four provider Apps.
-
-This does not relax the immutable boundaries that are actually stable: the Python/Alpine base image remains digest-pinned, GitHub Actions remain full-SHA pinned, and Python dependencies remain exact-version/hash locked. Protected validation and immutable-publication Docker builds now inspect the installed OpenSSL CLI and fail if it is older than 3.5.8; the resolved runtime version is written into the workflow step summary as build evidence. The source SPDX SBOM records the Alpine OpenSSL package identity plus the reviewed minimum instead of falsely claiming an exact mutable repository revision.
-
-## Historical compatibility references
-
-The v1.33.0 source-freshness and plan-schedule separation remains anchored to the latest valid Portfolio Architect evaluation; v1.54.0 does not change any configured freshness threshold. The later v1.39 colourful allocation view was not included in v1.38.1; that historical sequencing remains unchanged.
-
-The long-lived regression suite keeps the following published compatibility statements explicit: `payload schema 8: unchanged`; `REST portfolio schema 1: unchanged`; `Gateway health schema 8 current; schemas 1–7 remain supported`; older health `schemas 1–6 remain supported`; presentation schema 2 and broker schemas 1/2/3 remain unchanged. The historical v1.19.0-rc2 brokerage-probe exclusion remains retired and is not promoted by this release. The authenticated DKB FinTS acquisition remains disabled. The release does not move PDF parsing into Portfolio Architect; provider-specific statement parsing remains inside the Trade Republic Gateway. **No trading, order, transfer, payment, or transaction-history capability** is introduced.
+Portfolio Architect recognizes only the exact historical-Comdirect → provider-qualified-Comdirect hostname transition. It requires the already trusted CA SHA-256 to remain unchanged, reuses the existing bearer token, requires explicit user confirmation, then validates health schema 8, provider identity, no-fallback state and snapshot timestamp/count/SHA-256 before atomically changing only the primary endpoint and reloading.
 
 ## Preserved contracts
 
-- Home Assistant provider/source configuration: unchanged
-- REST portfolio schema: 1
-- Gateway health schema: 8; schemas 1-7 remain accepted
-- historical payload schema 8 compatibility contract: unchanged
-- Comdirect `live_api` / `csv` explicit no-fallback arbitration: unchanged
-- Trade Republic PDF, DKB CSV and Generic Import CSV acquisition: unchanged
-- DKB anonymous FinTS research gate: unchanged; authenticated DKB FinTS remains disabled
-- private-CA verified HTTPS and bearer authentication: unchanged
-- evidence timestamps and Portfolio Architect freshness thresholds: unchanged
-- planner, funding and execution-path semantics: unchanged
-- no trading, order, transfer, payment, sell or withdrawal capability
+- canonical PA provider identity remains `comdirect`; no duplicate provider is introduced;
+- Comdirect `live_api` / `csv` arbitration and `fallback_policy: none` are unchanged;
+- Trade Republic PDF, DKB CSV and Generic Import CSV acquisition are unchanged; this release does not move PDF parsing into Portfolio Architect;
+- evidence-kind freshness, v1.53.1 anti-rollback/static-retention behavior and v1.54 live-LKG semantics are unchanged;
+- payload schema 8, REST portfolio schema 1 and Gateway health schema 8 are unchanged; schemas 1–6 remain supported and health schema 7 remains accepted;
+- verified private-PKI HTTPS and bearer authentication remain separate trust factors;
+- the private CA must be preserved through migration; only the leaf hostname changes;
+- Alpine/OpenSSL build policy from v1.54 remains unchanged;
+- planner, provider cash, funding topology and advisory execution-path behavior are unchanged;
+- authenticated DKB FinTS acquisition remains disabled;
+- no trading, order, transfer, payment, sell, withdrawal or transaction-history capability is introduced.
 
-No dashboard YAML replacement is required.
+
+## Compatibility references
+
+The following established release contracts remain unchanged in v1.55.0:
+
+- payload schema 8: unchanged
+- REST portfolio schema 1: unchanged
+- Gateway health schema 8 current; schemas 1–7 remain supported
+- presentation schema 2: unchanged
+- broker schemas 1/2/3: unchanged
+- authenticated DKB FinTS acquisition remains disabled
+- Trade Republic statement acquisition does not move PDF parsing into Portfolio Architect
+- the v1.19.0-rc2 experimental brokerage probe is not promoted by this release
+- the v1.33.0 source-freshness and plan-schedule separation remains intact: recurring scheduling is anchored to the latest valid Portfolio Architect evaluation and this release does not change any configured freshness threshold
+- the deprecated dynamic drift implementation remains not included
+- No trading, order, transfer, payment, or transaction-history capability is introduced.
+
+No dashboard YAML replacement is required. Follow `docs/UPGRADE-1.55.0.md` exactly and do not uninstall the historical Comdirect App until PA has explicitly accepted and remained healthy on the provider-qualified endpoint.

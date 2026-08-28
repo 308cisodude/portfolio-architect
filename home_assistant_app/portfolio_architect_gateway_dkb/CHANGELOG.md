@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.55.0
+
+- Version-aligns the DKB App with the Comdirect App-identity migration release.
+- DKB CSV holdings/cash, anonymous FinTS research gate, verified HTTPS and freshness behavior are unchanged from v1.54.0.
+
 ## 1.54.0
 
 - Standardizes the active DKB CSV acquisition card to green and research-only FinTS cards to amber.

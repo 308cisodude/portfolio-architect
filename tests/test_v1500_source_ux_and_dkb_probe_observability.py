@@ -1,4 +1,4 @@
-"""v1.54.0 source-architecture UX and DKB probe observability contracts."""
+"""v1.55.0 source-architecture UX and DKB probe observability contracts."""
 from __future__ import annotations
 
 import ast

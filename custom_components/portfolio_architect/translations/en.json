@@ -109,6 +109,10 @@
         "data_description": {
           "rest_api_token": "Dedicated bearer token for this Gateway. The HTTPS endpoint and private CA are supplied through Supervisor discovery."
         }
+      },
+      "hassio_comdirect_slug_migration_confirm": {
+        "title": "Migrate Comdirect Gateway identity securely",
+        "description": "The provider-qualified Comdirect App is ready at {new_gateway}. The existing source {legacy_gateway} has the same private-CA fingerprint {ca_sha256}. Confirm to validate health schema 8, provider identity, the existing bearer token, and snapshot timestamp/count/fingerprint before atomically changing only the endpoint."
       }
     },
     "error": {
@@ -132,7 +136,9 @@
       "tls_already_configured": "This Gateway already uses the discovered verified HTTPS trust.",
       "tls_validation_failed": "The discovered HTTPS endpoint could not be validated with the supplied private CA and existing bearer token.",
       "tls_migrated": "The matching Gateway source was migrated to verified HTTPS successfully.",
-      "tls_supplemental_added": "The discovered Gateway was validated and added as a verified-HTTPS supplemental source."
+      "tls_supplemental_added": "The discovered Gateway was validated and added as a verified-HTTPS supplemental source.",
+      "comdirect_slug_validation_failed": "The provider-qualified Comdirect App did not fully validate with the existing trust and bearer token. The historical source remains unchanged.",
+      "comdirect_slug_migrated": "The Comdirect Gateway identity was migrated to the provider-qualified endpoint successfully."
     }
   },
   "entity": {
