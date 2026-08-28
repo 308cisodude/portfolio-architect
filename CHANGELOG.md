@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.56.1
+
+- Fix the canonical Comdirect App restart lifecycle after a completed App-identity migration and fresh PhotoTAN bootstrap: a newly created canonical OAuth session is no longer misclassified as forbidden migrated state on later restarts.
+- Keep OAuth state strictly excluded from migration export/staging/commit and rejected before the first canonical runtime. A post-cut-over session is accepted only when the preserved private-PKI leaf/key genuinely validates for the exact provider-qualified successor hostname, which is established only after the original migration validator has passed.
+- Preserve the import marker's `oauth_session_transferred: false`, same-CA fingerprint, exact predecessor/successor hostname relationship, bearer continuity, explicit cut-over, acquisition authority, wire schemas, freshness/LKG behavior, `fallback_policy: none`, planner semantics, v1.56.0 UX/hygiene changes, and disabled authenticated DKB FinTS boundary.
+
 ## 1.56.0
 
 - Render DKB anonymous-probe dispatch timestamps deterministically in `Europe/Berlin` plus authoritative UTC; add Alpine `tzdata` to the DKB runtime image.

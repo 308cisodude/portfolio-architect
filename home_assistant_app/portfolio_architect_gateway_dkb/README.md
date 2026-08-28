@@ -1,15 +1,6 @@
-# Portfolio Architect Gateway — DKB v1.56.0
+# Portfolio Architect Gateway — DKB v1.56.1
 
-Version 1.56.0 renders the anonymous BPD probe dispatch timestamp deterministically as **Europe/Berlin** plus authoritative **UTC** and adds the required timezone database to the runtime image. DKB CSV acquisition remains authoritative and authenticated FinTS remains disabled.
-
-Version 1.55.0 keeps DKB `csv` acquisition and the FinTS research gate unchanged. Accepted static CSV snapshots no longer expire at the Gateway's historical cache-age boundary; they retain their original evidence timestamps and Portfolio Architect decides freshness. `fints` remains research-only and non-activatable.
-Version 1.53.0 adds provider-neutral health-schema-8 acquisition control metadata. DKB reports `csv` as the active/ready production method and `fints` as non-activatable `research_only`. The anonymous BPD probe remains **EXPERIMENTAL · RESEARCH ONLY** and authenticated FinTS acquisition remains disabled; CSV holdings/cash behavior is unchanged.
-
-Version 1.50.0 adds only a persisted server-side “Last probe sent” timestamp to the anonymous DKB FinTS research UI while aligning with Portfolio Architect’s source-management UX milestone. DKB CSV acquisition, independent cash evidence, cryptographic probe diagnostics and the authenticated-FinTS gate are unchanged from the live-accepted v1.49.0 baseline.
-
-Version 1.48.1 aligns the DKB App package with Portfolio Architect’s acquisition-aware freshness correction. DKB CSV acquisition, independent cash evidence, FinTS research boundary and Ingress UX are unchanged from v1.48.0.
-
-Version 1.48.0 keeps DKB CSV/FinTS acquisition semantics unchanged and makes the existing boundary visually explicit: static DKB CSV acquisition is separated from the unavailable/research-only authenticated FinTS live section.
+Version 1.56.1 is release-aligned with the Comdirect migration-lifecycle hotfix and makes no DKB runtime change. The v1.56.0 deterministic Europe/Berlin plus authoritative UTC anonymous-probe timestamp remains in place. DKB CSV acquisition remains authoritative and authenticated FinTS remains disabled.
 
 ## DKB depot CSV holdings
 

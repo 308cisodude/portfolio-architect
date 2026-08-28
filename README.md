@@ -1,6 +1,6 @@
-# Portfolio Architect v1.56.0
+# Portfolio Architect v1.56.1
 
-Version 1.56.0 is a deliberately narrow UX/hygiene release from the fully live-accepted v1.55.1 baseline. It makes DKB probe time presentation deterministic (`Europe/Berlin` plus authoritative UTC), improves Generic Import token/discovery privacy hygiene, consolidates runtime-health incident/LKG presentation, retires the temporary `Comdirect NEW` display label, and quiets routine Ingress polling logs. Provider acquisition, wire schemas, freshness, private-PKI trust, planner behavior, and authenticated DKB FinTS remain unchanged.
+Version 1.56.1 is a narrow Comdirect migration-lifecycle hotfix from the published v1.56.0 baseline. It preserves the migration rule that OAuth state is never transferred or accepted before the first canonical cut-over, while allowing the fresh canonical OAuth session created after PhotoTAN bootstrap to survive later App restarts. The v1.56.0 UX/hygiene changes, provider acquisition, wire schemas, freshness, private-PKI trust, planner behavior, and authenticated DKB FinTS boundary are unchanged.
 
 Portfolio Architect is a Home Assistant-native portfolio overview, policy-check,
 and deterministic investment-planning system. It supports provider-isolated acquisition, multi-source consolidation, cost-aware recommendations, and separate read-only Gateway Apps, including DKB depot-CSV acquisition inside the DKB Gateway and simultaneous aggregation of multiple local Gateway REST snapshots.

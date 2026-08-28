@@ -1,15 +1,16 @@
-# v1.56.0 validation
+# v1.56.1 validation
 
-Portfolio Architect v1.56.0 is prepared from the exact fully published and fully live-accepted v1.55.1 tracked-source baseline. It is intentionally limited to operator-facing UX, discovery lifecycle hygiene, deterministic timestamp presentation, naming, and routine log-noise reduction.
+Portfolio Architect v1.56.1 is prepared from the exact published v1.56.0 tracked-source baseline. It is intentionally limited to the canonical Comdirect post-cut-over OAuth-session restart lifecycle plus aligned version/release metadata and executable regression coverage.
 
 Release validation must establish that:
 
-- all integration/common Gateway/all five published App version markers align to 1.56.0 while historical release documentation remains historical;
-- the DKB probe timestamp remains UTC-canonical in persisted/status data and renders deterministically with `ZoneInfo("Europe/Berlin")` plus authoritative UTC;
-- the DKB runtime contains Alpine `tzdata`, while authenticated DKB FinTS remains disabled and CSV remains authoritative;
-- Generic Import persists only its Supervisor discovery UUID, removes only that exact UUID during graceful shutdown, retains it for later reconciliation if Supervisor cleanup fails, and never republishes a duplicate while retained cleanup is unresolved;
-- Generic Import bearer material is below the normal operational/import content and hidden behind an explicit collapsed disclosure control;
-- canonical Comdirect is displayed without `NEW`, historical Comdirect is visibly `LEGACY` and is the only App marked `stage: deprecated`; v1.56.x is its final published line before planned v1.57.0 repository withdrawal, while both slugs/security migration contracts are unchanged;
-- successful routine Ingress request-completion logging is DEBUG-only while meaningful lifecycle/acquisition/error messages retain their existing levels;
-- the bilingual reference dashboard has one consolidated attention reason/action tile and one LKG snapshot-state presentation without removing the underlying entities;
-- `git diff --check`, Python compilation, structured JSON/YAML parsing, the complete 779-test regression suite, strict publication/privacy checks, provider-source synchronization, deterministic release builds, release verification, artifact privacy, and exact v1.55.1→v1.56.0 overlay/patch replay pass before handoff.
+- all integration/common Gateway/all five published App version markers align to 1.56.1 while historical release documentation remains historical;
+- Comdirect migration export, staging and commit continue to exclude `comdirect-session.json` and the import marker remains `oauth_session_transferred: false`;
+- a session present before the first canonical runtime still fails closed;
+- changing only `tls/hostname` cannot bypass that gate: an independent certificate-chain/hostname verifier must validate the actual private-PKI leaf for the exact canonical successor hostname even if the generic leaf-usability helper reports success;
+- the canonical entrypoint validates committed migration identity before `prepare_supervisor_tls()` can renew the migrated leaf;
+- after that valid successor-bound leaf exists, a fresh canonical OAuth session survives a later App restart;
+- preserved CA identity, predecessor/successor hostname binding, explicit cut-over, bearer continuity, acquisition mode, health/wire schemas, freshness/LKG semantics and `fallback_policy: none` remain unchanged;
+- all v1.56.0 DKB/Generic Import/dashboard/logging/deprecation contracts remain unchanged;
+- authenticated DKB FinTS and capability-level acquisition arbitration remain disabled/deferred;
+- `git diff --check`, Python compilation, structured JSON/YAML parsing, the complete regression suite, strict publication/privacy checks, provider-source synchronization, deterministic release builds, release verification, artifact privacy, and exact v1.56.0→v1.56.1 overlay/patch replay pass before handoff.

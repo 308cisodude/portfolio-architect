@@ -696,6 +696,14 @@ Live acceptance of v1.45.0 proved the exact atomic DKB source cut-over but expos
 
 v1.41.1 retains bounded local Trade Republic cash-statement acquisition and changes only the funded-route tie-break; no new remote provider API or transaction capability is enabled. v1.42.0 adds only presentation of those already-decided instructions. v1.43.0 changes only Home Assistant-side execution-evidence governance/editing; v1.44.0 changes only Configure presentation/identity context. v1.45.0 adds local DKB CSV acquisition inside the DKB Gateway but no new remote bank API or transaction capability.
 
+## v1.56.1 — Comdirect post-cut-over restart hotfix
+
+- keep OAuth/session state excluded from migration staging, commit, import markers and first canonical cut-over;
+- recognize a later fresh canonical OAuth session only when the preserved private PKI has already been renewed to and remains valid for the provider-qualified Comdirect successor hostname;
+- preserve same-CA identity, exact predecessor/successor hostname binding, bearer-token continuity, explicit cut-over, `fallback_policy: none`, and all v1.56.0 UX/hygiene behavior;
+- no acquisition architecture, authenticated DKB FinTS, wire-schema, planner, or dashboard change.
+
+
 ## v1.56.0 — UX and hygiene consolidation
 
 - deterministic DKB anonymous-probe time presentation in Europe/Berlin plus authoritative UTC;

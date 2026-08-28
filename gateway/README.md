@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway runtime v1.56.0
+# Portfolio Architect Gateway runtime v1.56.1
 
-Version 1.56.0 keeps REST schema 1, health schema 8, provider acquisition authority, freshness, private-PKI trust, and no-fallback semantics unchanged while tightening operator-facing UX and discovery lifecycle hygiene.
+Version 1.56.1 fixes the canonical Comdirect post-cut-over restart lifecycle: a migrated installation still rejects OAuth state before its first canonical startup, but a fresh canonical session created after successful cut-over/PhotoTAN bootstrap is accepted on later restarts when the preserved private PKI is already validly bound to the canonical successor hostname. REST schema 1, health schema 8, provider acquisition authority, freshness, private-PKI trust, and no-fallback semantics are unchanged.
 
 Version 1.55.0 keeps health schema 8 and REST schema 1 unchanged. Static `csv`/`pdf` acquisition snapshots are no longer expired by the live-source LKG cache TTL; their immutable evidence timestamps remain visible and Portfolio Architect applies the configured static freshness policy. Live acquisition methods retain the configured bounded cache age.
 

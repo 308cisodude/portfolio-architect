@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.56.1
+
+- Version alignment only for the Comdirect migration-lifecycle hotfix; DKB acquisition and anonymous-probe behavior are unchanged from v1.56.0.
+
 ## 1.56.0
 
 DKB probe dispatch time is rendered deterministically in Europe/Berlin plus authoritative UTC; tzdata is installed and authenticated FinTS remains disabled. Routine Ingress request-completion logs move to DEBUG.

@@ -17,7 +17,7 @@ generic acquisition formats itself.
 
 ## Official App identities and current maturity
 
-| Capability owner | Display name | App slug | v1.56.0 maturity |
+| Capability owner | Display name | App slug | v1.56.1 maturity |
 | --- | --- | --- | --- |
 | Comdirect | Portfolio Architect Gateway — Comdirect | `portfolio_architect_gateway_comdirect` | **stable** — live API or explicit static CSV, auto-start |
 | DKB | Portfolio Architect Gateway — DKB | `portfolio_architect_gateway_dkb` | **stable** — depot/cash CSV, auto-start; anonymous FinTS probe remains experimental/research-only |

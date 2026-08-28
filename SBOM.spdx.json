@@ -7,8 +7,8 @@
     ]
   },
   "dataLicense": "CC0-1.0",
-  "documentNamespace": "urn:uuid:64c8e387-4fb5-5dd4-97b2-df42812f5ef2",
-  "name": "Portfolio Architect v1.56.0 SBOM",
+  "documentNamespace": "urn:uuid:22171de9-d80a-537d-9de0-01c9048a651a",
+  "name": "Portfolio Architect v1.56.1 SBOM",
   "packages": [
     {
       "SPDXID": "SPDXRef-Package-Integration",
@@ -19,7 +19,7 @@
       "licenseDeclared": "MIT",
       "name": "Portfolio Architect Home Assistant integration",
       "supplier": "Organization: Portfolio Architect contributors",
-      "versionInfo": "1.56.0"
+      "versionInfo": "1.56.1"
     },
     {
       "SPDXID": "SPDXRef-Package-Gateway",
@@ -30,7 +30,7 @@
       "licenseDeclared": "MIT",
       "name": "Portfolio Architect Gateway \u2014 Comdirect LEGACY App",
       "supplier": "Organization: Portfolio Architect contributors",
-      "versionInfo": "1.56.0"
+      "versionInfo": "1.56.1"
     },
     {
       "SPDXID": "SPDXRef-Package-Gateway-ComdirectCanonical",
@@ -41,7 +41,7 @@
       "licenseDeclared": "MIT",
       "name": "Portfolio Architect Gateway \u2014 Comdirect App",
       "supplier": "Organization: Portfolio Architect contributors",
-      "versionInfo": "1.56.0"
+      "versionInfo": "1.56.1"
     },
     {
       "SPDXID": "SPDXRef-Package-PythonBase",
@@ -69,7 +69,7 @@
       "licenseDeclared": "MIT",
       "name": "Portfolio Architect Gateway \u2014 DKB App",
       "supplier": "Organization: Portfolio Architect contributors",
-      "versionInfo": "1.56.0"
+      "versionInfo": "1.56.1"
     },
     {
       "SPDXID": "SPDXRef-Package-Gateway-TradeRepublic",
@@ -79,7 +79,7 @@
       "licenseDeclared": "MIT",
       "name": "Portfolio Architect Gateway \u2014 Trade Republic App",
       "supplier": "Organization: Portfolio Architect contributors",
-      "versionInfo": "1.56.0"
+      "versionInfo": "1.56.1"
     },
     {
       "SPDXID": "SPDXRef-Package-Gateway-GenericImport",
@@ -89,7 +89,7 @@
       "licenseDeclared": "MIT",
       "name": "Portfolio Architect Gateway \u2014 Generic Import App",
       "supplier": "Organization: Portfolio Architect contributors",
-      "versionInfo": "1.56.0"
+      "versionInfo": "1.56.1"
     },
     {
       "SPDXID": "SPDXRef-Package-pypdf",

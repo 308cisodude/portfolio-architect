@@ -1,4 +1,4 @@
-"""v1.56.0 UX, discovery-lifecycle, and presentation hygiene contracts."""
+"""v1.56.1 UX, discovery-lifecycle, and presentation hygiene contracts."""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ GENERIC = APPS / "portfolio_architect_gateway_import"
 
 def test_v156_version_alignment_and_security_non_goals() -> None:
     manifest = json.loads((ROOT / "custom_components/portfolio_architect/manifest.json").read_text())
-    assert manifest["version"] == "1.56.0"
+    assert manifest["version"] == "1.56.1"
     for slug in (
         "portfolio_architect_gateway",
         "portfolio_architect_gateway_comdirect",
@@ -26,7 +26,7 @@ def test_v156_version_alignment_and_security_non_goals() -> None:
         "portfolio_architect_gateway_trade_republic",
         "portfolio_architect_gateway_import",
     ):
-        assert yaml.safe_load((APPS / slug / "config.yaml").read_text())["version"] == "1.56.0"
+        assert yaml.safe_load((APPS / slug / "config.yaml").read_text())["version"] == "1.56.1"
     dkb_source = (DKB / "src/portfolio_architect_gateway/dkb_app.py").read_text()
     assert "Authenticated FinTS acquisition is not enabled" in dkb_source
     assert "cannot replace or fall back from CSV evidence" in dkb_source
@@ -148,7 +148,7 @@ def test_routine_ingress_polling_logs_are_debug_only() -> None:
 
 def test_sbom_records_dkb_timezone_runtime_dependency() -> None:
     sbom = json.loads((ROOT / "SBOM.spdx.json").read_text())
-    assert sbom["name"] == "Portfolio Architect v1.56.0 SBOM"
+    assert sbom["name"] == "Portfolio Architect v1.56.1 SBOM"
     tzdata = next(pkg for pkg in sbom["packages"] if pkg["SPDXID"] == "SPDXRef-Package-Tzdata")
     assert tzdata["versionInfo"] == "build-resolved"
     assert any(ref["referenceLocator"] == "pkg:apk/alpine/tzdata" for ref in tzdata["externalRefs"])

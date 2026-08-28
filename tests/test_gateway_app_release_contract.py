@@ -10,7 +10,7 @@ APP = ROOT / "home_assistant_app" / "portfolio_architect_gateway"
 
 def test_app_config_is_private_and_least_privilege() -> None:
     config = yaml.safe_load((APP / "config.yaml").read_text(encoding="utf-8"))
-    assert config["version"] == "1.56.0"
+    assert config["version"] == "1.56.1"
     assert config["slug"] == "portfolio_architect_gateway"
     assert config["startup"] == "services"
     assert config["ingress"] is True
@@ -36,7 +36,7 @@ def test_app_image_and_runtime_contract() -> None:
     assert 'io.hass.version="${BUILD_VERSION}"' in dockerfile
     assert 'io.hass.type="app"' in dockerfile
     assert 'io.hass.arch="${BUILD_ARCH}"' in dockerfile
-    assert "ARG BUILD_VERSION=1.56.0" in dockerfile
+    assert "ARG BUILD_VERSION=1.56.1" in dockerfile
     assert "AppOptions.load" in entrypoint
     assert "os.setgid(APP_GID)" in entrypoint
     assert "os.setuid(APP_UID)" in entrypoint

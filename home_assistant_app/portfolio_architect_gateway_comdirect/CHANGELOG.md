@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.56.1
+
+- Fix canonical App restart after a successful migration and fresh PhotoTAN bootstrap: the newly created canonical OAuth session is no longer misclassified as migrated state.
+- Keep pre-cut-over OAuth state fail-closed. Post-cut-over session presence is accepted only with a valid preserved-CA TLS leaf for the exact canonical successor hostname.
+- Preserve `oauth_session_transferred: false`, same-CA identity, bearer continuity, explicit cut-over, acquisition authority and `fallback_policy: none`.
+
 ## 1.56.0
 
 Canonical provider-qualified App now displays simply as Comdirect; the temporary NEW label is retired with no slug/runtime/migration-security change.

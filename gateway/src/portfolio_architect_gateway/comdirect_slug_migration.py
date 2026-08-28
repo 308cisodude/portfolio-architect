@@ -30,7 +30,13 @@ from typing import Any, Final
 
 from .models import parse_snapshot_bytes, validate_snapshot
 from .runtime_config import normalise_secret
-from .supervisor_tls import _certificate_sha256, _read_ca_certificate, _validate_tls_directory
+from .supervisor_tls import (
+    _certificate_sha256,
+    _leaf_is_usable,
+    _read_ca_certificate,
+    _read_small_text,
+    _validate_tls_directory,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -947,6 +953,44 @@ def cutover_marker_document(path: Path) -> dict[str, Any] | None:
     return document
 
 
+def _successor_leaf_is_cryptographically_bound(
+    tls_directory: Path,
+    successor_hostname: str,
+) -> bool:
+    """Return whether the current leaf is validly bound to the exact successor host.
+
+    ``openssl x509 -checkhost`` has historically exposed version-dependent CLI exit
+    semantics, so it must not be the sole migration-lifecycle proof.  Keep the
+    normal TLS material/key-pair validation and independently require OpenSSL's
+    certificate verifier to authenticate the leaf under the preserved CA for the
+    provider-qualified successor hostname.
+    """
+    successor = _normalise_hostname(successor_hostname)
+    if not _leaf_is_usable(tls_directory, successor):
+        return False
+    try:
+        subprocess.run(
+            (
+                "/usr/bin/openssl",
+                "verify",
+                "-verify_hostname",
+                successor,
+                "-CAfile",
+                str(tls_directory / "ca-cert.pem"),
+                str(tls_directory / "server-cert.pem"),
+            ),
+            check=True,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=15,
+            env={"PATH": "/usr/bin:/bin"},
+        )
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return True
+
+
 def validate_committed_migration_identity(
     data_directory: Path,
     *,
@@ -957,6 +1001,8 @@ def validate_committed_migration_identity(
     ``None`` denotes an explicitly approved fresh setup. A migrated installation must
     have matching import/cut-over markers, the exact predecessor/successor hostname
     relationship, and the same private CA that was staged from the historical App.
+    OAuth state remains forbidden before the first canonical runtime; on later restarts
+    it is accepted only after that preserved PKI is validly bound to the successor host.
     """
     data_directory = Path(data_directory)
     cutover = cutover_marker_document(data_directory / CUTOVER_MARKER_NAME)
@@ -979,8 +1025,30 @@ def validate_committed_migration_identity(
         raise ValueError("Comdirect cut-over trust identity does not match imported state")
     if not secrets.compare_digest(source_ca_fingerprint(data_directory), ca_sha256):
         raise ValueError("Migrated Comdirect private CA fingerprint changed before cut-over")
-    if (data_directory / "comdirect-session.json").exists():
-        raise ValueError("Migrated Comdirect OAuth session must not be present before cut-over")
+
+    session_path = data_directory / "comdirect-session.json"
+    if session_path.exists():
+        # OAuth state is forbidden at migration/cut-over time, but a successful
+        # first canonical runtime intentionally creates a new provider session.
+        # The migrated TLS leaf starts bound to the historical hostname and is
+        # renewed to the provider-qualified successor only after this validator
+        # has passed once.  Therefore a valid successor-bound leaf is durable,
+        # private evidence that this is a later canonical restart rather than a
+        # transferred/pre-cut-over OAuth session.
+        tls_directory = data_directory / "tls"
+        successor = _normalise_hostname(successor_hostname)
+        try:
+            stored_hostname = _read_small_text(tls_directory / "hostname", 253)
+        except RuntimeError as err:
+            raise ValueError(
+                "Migrated Comdirect OAuth session appeared before canonical cut-over"
+            ) from err
+        if stored_hostname != successor or not _successor_leaf_is_cryptographically_bound(
+            tls_directory, successor
+        ):
+            raise ValueError(
+                "Migrated Comdirect OAuth session appeared before canonical cut-over"
+            )
     return ca_sha256
 
 def _supervisor_request_document(

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.56.1
+
+- Version alignment only for the Comdirect migration-lifecycle hotfix; Trade Republic acquisition and freshness behavior are unchanged from v1.56.0.
+
 ## 1.56.0
 
 Routine successful Ingress request-completion logging moves from INFO to DEBUG; acquisition and statement semantics are unchanged.
