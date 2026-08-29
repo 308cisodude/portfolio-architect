@@ -13,3 +13,7 @@ Release validation must establish that:
 - authenticated DKB FinTS and capability-level acquisition arbitration remain disabled/deferred;
 - REST portfolio schema 1, Gateway health schema 8, payload schema 8, config-entry schema 12, `fallback_policy: none`, freshness/LKG/anti-rollback semantics, planner economics, verified private-PKI transport and the advisory-only boundary remain unchanged;
 - `git diff --check`, Python compilation, JSON/YAML parsing, the complete regression suite, strict publication/privacy checks, provider-source synchronization, deterministic release builds, release verification, artifact privacy, and exact v1.56.1→v1.57.0 overlay/patch replay pass before handoff.
+
+
+### v1.57 history-only branding exception
+The complete-history privacy scan permits exactly the retired Comdirect Legacy `icon.png` and `logo.png` paths when they occur in immutable pre-v1.57 Git history. The same paths remain forbidden in the current tree and in release artifacts; this history-only exception prevents App withdrawal from requiring history rewriting.

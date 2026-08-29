@@ -83,6 +83,9 @@ def test_release_and_publication_tooling_no_longer_carries_legacy_app() -> None:
 
     assert '"portfolio_architect_gateway",\n' not in texts["privacy"]
     assert '"home_assistant_app/portfolio_architect_gateway",\n' not in texts["privacy"]
+    assert '"home_assistant_app/portfolio_architect_gateway/icon.png"' in texts["privacy"]
+    assert '"home_assistant_app/portfolio_architect_gateway/logo.png"' in texts["privacy"]
+    assert "historical=True" in texts["privacy"]
 
 
 def test_canonical_comdirect_retains_supported_legacy_receiver_contract() -> None:

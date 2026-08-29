@@ -87,6 +87,11 @@ ALLOWED_CSV_PATHS = {
     "tests/fixtures/dkb-depot.csv",
 }
 
+HISTORICAL_ALLOWED_IMAGE_PATHS = {
+    "home_assistant_app/portfolio_architect_gateway/icon.png",
+    "home_assistant_app/portfolio_architect_gateway/logo.png",
+}
+
 ALLOWED_IMAGE_NAMES = {
     "icon.png",
     "icon@2x.png",
@@ -186,7 +191,7 @@ def is_allowed_png(relative: str) -> bool:
     }
 
 
-def path_findings(relative: str) -> list[Finding]:
+def path_findings(relative: str, *, historical: bool = False) -> list[Finding]:
     normalized = normalize_member_path(relative)
     path = PurePosixPath(normalized)
     findings: list[Finding] = []
@@ -207,7 +212,9 @@ def path_findings(relative: str) -> list[Finding]:
     if suffix in FORBIDDEN_SUFFIXES:
         findings.append(Finding("forbidden-private-filetype", relative))
     if suffix == ".png" and not is_allowed_png(normalized):
-        findings.append(Finding("unexpected-image", relative))
+        historical_exception = historical and normalized in HISTORICAL_ALLOWED_IMAGE_PATHS
+        if not historical_exception:
+            findings.append(Finding("unexpected-image", relative))
     if suffix == ".csv" and normalized not in ALLOWED_CSV_PATHS:
         findings.append(Finding("unapproved-csv", relative))
     return findings
@@ -360,7 +367,7 @@ def scan_history(root: Path, private_literals: tuple[str, ...]) -> list[Finding]
     for raw in names.split(b"\0"):
         name = raw.decode("utf-8", errors="replace").strip("\r\n")
         if name:
-            findings.extend(path_findings(name))
+            findings.extend(path_findings(name, historical=True))
 
     patch = _git_bytes(root, "log", "-p", "--all", "--no-ext-diff", "--text", "--", ".")
     text = patch.decode("utf-8", errors="replace")

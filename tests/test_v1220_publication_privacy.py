@@ -145,6 +145,53 @@ def test_complete_git_history_catches_deleted_private_material(tmp_path: Path) -
     assert "forbidden-private-filetype" in rules
 
 
+
+def test_history_only_branding_exception_does_not_weaken_current_tree_policy() -> None:
+    legacy_icon = "home_assistant_app/portfolio_architect_gateway/icon.png"
+    legacy_logo = "home_assistant_app/portfolio_architect_gateway/logo.png"
+
+    # The withdrawn Legacy package must never be accepted in the current tree.
+    assert {item.rule for item in privacy.path_findings(legacy_icon)} == {"unexpected-image"}
+    assert {item.rule for item in privacy.path_findings(legacy_logo)} == {"unexpected-image"}
+
+    # Immutable pre-v1.57 history legitimately contains exactly these two branding files.
+    assert privacy.path_findings(legacy_icon, historical=True) == []
+    assert privacy.path_findings(legacy_logo, historical=True) == []
+
+    # The history exception is exact and must not become a generic image bypass.
+    assert {
+        item.rule
+        for item in privacy.path_findings(
+            "home_assistant_app/portfolio_architect_gateway/screenshot.png",
+            historical=True,
+        )
+    } == {"unexpected-image"}
+
+
+def test_history_scan_accepts_only_withdrawn_legacy_branding_paths(tmp_path: Path) -> None:
+    repository = tmp_path / "legacy-branding-history"
+    legacy = repository / "home_assistant_app" / "portfolio_architect_gateway"
+    legacy.mkdir(parents=True)
+    subprocess.run(["git", "init", "-q"], cwd=repository, check=True)
+    subprocess.run(["git", "config", "user.name", "Synthetic Maintainer"], cwd=repository, check=True)
+    subprocess.run(["git", "config", "user.email", "synthetic@example.invalid"], cwd=repository, check=True)
+
+    (legacy / "icon.png").write_bytes(b"synthetic historical icon")
+    (legacy / "logo.png").write_bytes(b"synthetic historical logo")
+    subprocess.run(["git", "add", "."], cwd=repository, check=True)
+    subprocess.run(["git", "commit", "-q", "-m", "historical legacy branding"], cwd=repository, check=True)
+
+    shutil.rmtree(repository / "home_assistant_app")
+    (repository / "README.md").write_text("withdrawn legacy app\n", encoding="utf-8")
+    subprocess.run(["git", "add", "-A"], cwd=repository, check=True)
+    subprocess.run(["git", "commit", "-q", "-m", "withdraw legacy app"], cwd=repository, check=True)
+
+    assert privacy.scan_source(repository, ()) == []
+    assert not any(
+        finding.rule == "unexpected-image"
+        for finding in privacy.scan_history(repository, ())
+    )
+
 def test_source_scan_rejects_symlinks(tmp_path: Path) -> None:
     root = tmp_path / "repository"
     root.mkdir()
