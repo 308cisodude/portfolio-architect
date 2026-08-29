@@ -9,11 +9,15 @@ import threading
 from typing import Callable, Final
 
 from .acquisition_control import (
+    AUTHORITY_ACTIVE_METHOD,
+    CAPABILITY_CASH,
+    CAPABILITY_HOLDINGS,
     CHANGE_REASON_OPERATOR,
     METHOD_NOT_READY,
     METHOD_READY,
     AcquisitionControl,
     AcquisitionMethod,
+    capability,
     method_inventory,
 )
 from .cash_policy import load_investment_cash_policy
@@ -107,6 +111,22 @@ class ComdirectAcquisitionProvider:
                 previous_method=str(previous) if previous is not None else None,
                 last_method_change_at=changed_at,
                 last_method_change_reason=str(reason) if reason is not None else None,
+                capabilities=(
+                    capability(
+                        CAPABILITY_HOLDINGS,
+                        active,
+                        MODE_LIVE_API,
+                        MODE_CSV,
+                        authority_reason=AUTHORITY_ACTIVE_METHOD,
+                    ),
+                    capability(
+                        CAPABILITY_CASH,
+                        active,
+                        MODE_LIVE_API,
+                        MODE_CSV,
+                        authority_reason=AUTHORITY_ACTIVE_METHOD,
+                    ),
+                ),
             )
 
     @contextmanager

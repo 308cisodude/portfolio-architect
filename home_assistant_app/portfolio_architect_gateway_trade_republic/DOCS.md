@@ -1,3 +1,3 @@
-# Portfolio Architect Gateway — Trade Republic v1.57.0
+# Portfolio Architect Gateway — Trade Republic v1.58.0
 
-Version 1.57.0 is release-aligned with the historical Comdirect App withdrawal and makes no Trade Republic runtime change. PDF holdings/cash statement acquisition, evidence timestamps, freshness semantics and quieter routine Ingress logging remain unchanged.
+Version 1.58.0 adds health-schema-9 holdings/cash capability authority. Trade Republic `pdf` remains authoritative; `live_api` remains unavailable and cannot become authoritative. PDF acquisition behavior is unchanged.

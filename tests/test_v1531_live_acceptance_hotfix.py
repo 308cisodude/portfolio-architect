@@ -137,6 +137,6 @@ def test_static_gateway_retention_is_pa_freshness_owned() -> None:
 def test_v1531_does_not_change_gateway_health_or_portfolio_wire_schema() -> None:
     server = (ROOT / "gateway/src/portfolio_architect_gateway/server.py").read_text(encoding="utf-8")
     rest = (COMPONENT / "rest_client.py").read_text(encoding="utf-8")
-    assert '"health_schema_version": min(version, 8)' in server
-    assert '"requested_health_schema_version": 8' in rest
-    assert json.loads((COMPONENT / "manifest.json").read_text())["version"] == "1.57.0"
+    assert '"health_schema_version": min(version, 9)' in server
+    assert '"requested_health_schema_version": 9' in rest
+    assert json.loads((COMPONENT / "manifest.json").read_text())["version"] == "1.58.0"

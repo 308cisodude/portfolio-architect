@@ -1,4 +1,4 @@
-# Portfolio Architect v1.57.0
+# Portfolio Architect v1.58.0
 
 Version 1.57.0 completes the planned Comdirect App-identity retirement. The deprecated historical `portfolio_architect_gateway` package is removed from the active Home Assistant App repository and release artifacts, while canonical `portfolio_architect_gateway_comdirect` retains the bounded v1.55/v1.56 migration receiver for already-installed supported Legacy instances. No provider acquisition, wire-schema, freshness, private-PKI, planner, or authenticated DKB FinTS behavior changes.
 
@@ -20,7 +20,7 @@ transfer, payment, or account-transaction capability.
 - Explicit provider-scoped funding topology that keeps cash pools separate and combines funding source with execution-route economics without moving money.
 - Bounded graceful degradation: trusted LKG holdings stay informationally available while stale bank cash and new investment actions fail closed.
 - Evidence-based Gateway refresh diagnostics and locally time-derived snapshot freshness.
-- Provider-aware Gateway health schema 8 with bounded acquisition-method inventories, readiness, explicit no-fallback policy and operator switch history while retaining backward-compatible negotiation through schemas 1–7.
+- Provider-aware Gateway health schema 9 with bounded acquisition-method inventories, readiness, explicit no-fallback policy and operator switch history while retaining backward-compatible negotiation through schemas 1–7.
 - Separate scheduled-execution, last-evaluation, and current-actionability semantics; past schedule dates never imply transaction execution.
 - Explicit transaction-cost and execution policies.
 - Reproducible release archives, SHA-256 manifests, SPDX 2.3 SBOMs, and release

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.58.0
+
+- Version 1.58.0 adds health-schema-9 holdings/cash capability authority. DKB `csv` remains authoritative; `fints` remains `research_only`, cannot become authoritative, and authenticated FinTS remains disabled.
+
 ## 1.57.0
 
 - Version alignment only for the historical Comdirect App withdrawal; DKB acquisition and anonymous-probe behavior are unchanged from v1.56.1.

@@ -304,7 +304,7 @@ def test_execution_path_entity_is_bilingual_bounded_and_wire_schemas_stay_unchan
     for contract in (
         "payload schema 8: unchanged",
         "REST portfolio schema 1: unchanged",
-        "Gateway health schema 8 current; schemas 1–7 remain supported",
+        "Gateway health schema 9 current; schemas 1–8 remain supported",
         "presentation schema 2",
         "broker schemas 1/2/3",
     ):

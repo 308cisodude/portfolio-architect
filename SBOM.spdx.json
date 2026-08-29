@@ -1,14 +1,14 @@
 {
   "SPDXID": "SPDXRef-DOCUMENT",
   "creationInfo": {
-    "created": "2026-08-28T00:00:00Z",
+    "created": "2026-08-29T00:00:00Z",
     "creators": [
       "Tool: Portfolio Architect release tooling"
     ]
   },
   "dataLicense": "CC0-1.0",
-  "documentNamespace": "urn:uuid:a893fd04-4f15-58a0-97f5-b154909f77fb",
-  "name": "Portfolio Architect v1.57.0 SBOM",
+  "documentNamespace": "urn:uuid:348d94d2-73b1-5918-9e4b-ea550e54f8e5",
+  "name": "Portfolio Architect v1.58.0 SBOM",
   "packages": [
     {
       "SPDXID": "SPDXRef-Package-Integration",
@@ -19,7 +19,7 @@
       "licenseDeclared": "MIT",
       "name": "Portfolio Architect Home Assistant integration",
       "supplier": "Organization: Portfolio Architect contributors",
-      "versionInfo": "1.57.0"
+      "versionInfo": "1.58.0"
     },
     {
       "SPDXID": "SPDXRef-Package-Gateway-ComdirectCanonical",
@@ -30,7 +30,7 @@
       "licenseDeclared": "MIT",
       "name": "Portfolio Architect Gateway \u2014 Comdirect App",
       "supplier": "Organization: Portfolio Architect contributors",
-      "versionInfo": "1.57.0"
+      "versionInfo": "1.58.0"
     },
     {
       "SPDXID": "SPDXRef-Package-PythonBase",
@@ -58,7 +58,7 @@
       "licenseDeclared": "MIT",
       "name": "Portfolio Architect Gateway \u2014 DKB App",
       "supplier": "Organization: Portfolio Architect contributors",
-      "versionInfo": "1.57.0"
+      "versionInfo": "1.58.0"
     },
     {
       "SPDXID": "SPDXRef-Package-Gateway-TradeRepublic",
@@ -68,7 +68,7 @@
       "licenseDeclared": "MIT",
       "name": "Portfolio Architect Gateway \u2014 Trade Republic App",
       "supplier": "Organization: Portfolio Architect contributors",
-      "versionInfo": "1.57.0"
+      "versionInfo": "1.58.0"
     },
     {
       "SPDXID": "SPDXRef-Package-Gateway-GenericImport",
@@ -78,7 +78,7 @@
       "licenseDeclared": "MIT",
       "name": "Portfolio Architect Gateway \u2014 Generic Import App",
       "supplier": "Organization: Portfolio Architect contributors",
-      "versionInfo": "1.57.0"
+      "versionInfo": "1.58.0"
     },
     {
       "SPDXID": "SPDXRef-Package-pypdf",

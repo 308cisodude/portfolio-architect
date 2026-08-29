@@ -3,6 +3,15 @@
 This roadmap records intended sequencing rather than a compatibility promise. Each
 milestone remains subject to design, security review, tests, and live acceptance.
 
+
+## v1.58.0 — capability-level acquisition arbitration — completed
+
+Introduces health-schema-9 capability authority for holdings and cash while preserving one canonical provider snapshot per Gateway. Authority is explicit, bounded and fail-closed; every capability uses `fallback_policy: none`. Current effective authorities remain Comdirect `live_api`, Trade Republic `pdf`, and DKB `csv`; authenticated DKB FinTS remains disabled.
+
+## Next — arbitration UX and future provider methods
+
+Build operator-facing authority/status presentation on the schema-9 foundation before adding any new authenticated provider method. A future DKB FinTS implementation may plug into this model only after real capability evidence exists; it must not be developed by weakening the research gate or adding silent fallback.
+
 ## v1.22.0 — publication and privacy hardening
 
 Completed: source/history/artifact privacy gates and immutable secret scanning are

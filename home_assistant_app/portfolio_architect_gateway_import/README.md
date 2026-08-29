@@ -1,3 +1,3 @@
-# Portfolio Architect Gateway — Generic Import v1.57.0
+# Portfolio Architect Gateway — Generic Import v1.58.0
 
-Version 1.57.0 is release-aligned with the historical Comdirect App withdrawal and makes no Generic Import acquisition change. The lower collapsed sensitive-token section and exact Supervisor discovery-UUID cleanup/reconciliation remain unchanged; experimental maturity is unchanged.
+Version 1.58.0 adds health-schema-9 fixed `csv` holdings capability authority for the experimental Generic Import Gateway. Import behavior, privacy placement, and discovery cleanup are unchanged.

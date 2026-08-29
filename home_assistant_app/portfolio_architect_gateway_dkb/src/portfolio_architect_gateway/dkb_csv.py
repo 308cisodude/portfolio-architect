@@ -23,7 +23,17 @@ from .dkb_cash_csv import (
     load_cash_snapshot,
     save_cash_snapshot,
 )
-from .acquisition_control import METHOD_READY, METHOD_RESEARCH_ONLY, AcquisitionControl, AcquisitionMethod, method_inventory
+from .acquisition_control import (
+    AUTHORITY_PROVIDER_FIXED,
+    CAPABILITY_CASH,
+    CAPABILITY_HOLDINGS,
+    METHOD_READY,
+    METHOD_RESEARCH_ONLY,
+    AcquisitionControl,
+    AcquisitionMethod,
+    capability,
+    method_inventory,
+)
 from .errors import ConfigurationError, ProtocolError
 from .models import PortfolioSnapshot, Position, validate_snapshot
 from .store import load_snapshot
@@ -140,6 +150,22 @@ class DkbCsvProvider:
             methods=method_inventory(
                 AcquisitionMethod("csv", METHOD_READY, True, True),
                 AcquisitionMethod("fints", METHOD_RESEARCH_ONLY, False, False),
+            ),
+            capabilities=(
+                capability(
+                    CAPABILITY_HOLDINGS,
+                    "csv",
+                    "csv",
+                    "fints",
+                    authority_reason=AUTHORITY_PROVIDER_FIXED,
+                ),
+                capability(
+                    CAPABILITY_CASH,
+                    "csv",
+                    "csv",
+                    "fints",
+                    authority_reason=AUTHORITY_PROVIDER_FIXED,
+                ),
             ),
         )
 

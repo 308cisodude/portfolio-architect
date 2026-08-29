@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.58.0
+
+- Add health-schema-9 capability-level acquisition authority for holdings and cash.
+- Preserve explicit provider authority and `fallback_policy: none`; no silent live-to-static fallback.
+- Keep Comdirect `live_api`, Trade Republic `pdf`, and DKB `csv` as the live-accepted authorities.
+- Keep authenticated DKB FinTS disabled and all portfolio/planner/security semantics unchanged.
+
 ## 1.57.0
 
 - Withdraw the deprecated historical `portfolio_architect_gateway` / Comdirect LEGACY App from the active Home Assistant App repository and stop building/publishing its release artifact.

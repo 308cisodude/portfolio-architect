@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.58.0
+
+- Version 1.58.0 adds health-schema-9 fixed `csv` holdings capability authority for the experimental Generic Import Gateway. Import behavior, privacy placement, and discovery cleanup are unchanged.
+
 ## 1.57.0
 
 - Version alignment only for the historical Comdirect App withdrawal; Generic Import privacy/discovery cleanup and mapped-CSV acquisition are unchanged from v1.56.1.
