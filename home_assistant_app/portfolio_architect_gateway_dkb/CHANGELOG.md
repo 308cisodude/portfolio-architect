@@ -1,8 +1,8 @@
 # Changelog
 
-## 1.56.1
+## 1.57.0
 
-- Version alignment only for the Comdirect migration-lifecycle hotfix; DKB acquisition and anonymous-probe behavior are unchanged from v1.56.0.
+- Version alignment only for the historical Comdirect App withdrawal; DKB acquisition and anonymous-probe behavior are unchanged from v1.56.1.
 
 ## 1.56.0
 

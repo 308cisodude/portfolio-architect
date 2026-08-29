@@ -5,7 +5,6 @@ import shutil
 
 ROOT=Path(__file__).resolve().parents[1]
 MASTER=ROOT/"gateway"/"src"/"portfolio_architect_gateway"
-COMDIRECT=ROOT/"home_assistant_app"/"portfolio_architect_gateway"/"src"/"portfolio_architect_gateway"
 COMDIRECT_CANONICAL=ROOT/"home_assistant_app"/"portfolio_architect_gateway_comdirect"/"src"/"portfolio_architect_gateway"
 DKB=ROOT/"home_assistant_app"/"portfolio_architect_gateway_dkb"/"src"/"portfolio_architect_gateway"
 TRADE_REPUBLIC=ROOT/"home_assistant_app"/"portfolio_architect_gateway_trade_republic"/"src"/"portfolio_architect_gateway"
@@ -27,7 +26,7 @@ def _sync_shell(target: Path, *, provider_files: set[str]) -> None:
 
 
 def main():
-    for target in (COMDIRECT, COMDIRECT_CANONICAL):
+    for target in (COMDIRECT_CANONICAL,):
         target.mkdir(parents=True,exist_ok=True)
         for p in target.glob("*.py"):
             p.unlink()

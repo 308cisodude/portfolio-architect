@@ -1,3 +1,3 @@
-# Portfolio Architect Gateway — Comdirect v1.56.1
+# Portfolio Architect Gateway — Comdirect v1.57.0
 
-Version 1.56.1 fixes the post-cut-over restart lifecycle for migrated installations. OAuth/session state remains forbidden during migration and before the first canonical startup, but a fresh session created later by the canonical runtime after PhotoTAN bootstrap is accepted on restart when the preserved private-PKI leaf genuinely validates for this exact provider-qualified hostname. Same-CA trust, bearer preservation, explicit cut-over and acquisition behavior are unchanged.
+Version 1.57.0 completes the planned retirement of the historical unqualified Comdirect App from the active repository. This canonical provider-qualified App remains the sole published Comdirect package and retains the established bounded migration receiver for already-installed supported v1.55/v1.56 Legacy instances. Migration trust, post-cut-over OAuth-session handling, acquisition behavior, verified private-PKI HTTPS and `fallback_policy: none` are unchanged.

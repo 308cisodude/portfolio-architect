@@ -1,50 +1,26 @@
-# Portfolio Architect 1.56.1
+# Portfolio Architect v1.57.0
 
-Portfolio Architect v1.56.1 is a narrow Comdirect App-identity migration lifecycle hotfix prepared from the exact published v1.56.0 source baseline. It does not change provider acquisition, REST portfolio schema 1, Gateway health schema 8 (payload schema 8), `fallback_policy: none`, freshness policy, private-PKI trust anchors, planner economics, dashboard entities, or the advisory-only boundary.
+Portfolio Architect v1.57.0 completes the planned historical Comdirect App withdrawal from the exact published/live-accepted v1.56.1 baseline.
 
-## Fixed: canonical Comdirect restart after fresh PhotoTAN bootstrap
+- The deprecated historical Home Assistant App `portfolio_architect_gateway` / **Comdirect LEGACY** is removed from the active repository and no v1.57.0 `portfolio-architect-gateway-app` artifact is produced. Immutable v1.56.x and older tags/releases remain the archival source of that retired package.
+- Canonical `portfolio_architect_gateway_comdirect` remains **Portfolio Architect Gateway — Comdirect**, stable, and retains the bounded migration receiver so an already-installed supported v1.55/v1.56 Legacy App can still complete the established explicit migration. The historical slug is not reused.
+- Build, verification, Docker/OpenSSL workflow, source synchronization, CODEOWNERS, publication checks, privacy allowlists, SBOM and documentation now describe only the four active Apps: Comdirect, DKB, Trade Republic and Generic Import.
+- The v1.56.1 post-cut-over Comdirect restart fix remains unchanged: migration still forbids OAuth transfer/pre-cut-over session state and validates the exact successor-bound private-PKI leaf before accepting a later canonical session.
+- The v1.56 deterministic DKB Europe/Berlin + UTC timestamp presentation, Generic Import sensitive-token placement and Supervisor discovery cleanup, consolidated reference-dashboard incident/LKG presentation, canonical Comdirect naming, and quieter routine Ingress logging remain unchanged. No dashboard YAML replacement is required for v1.57.0. Home Assistant Core may retain an already-open Hass.io discovery config-flow card until Core restarts even after Supervisor has deleted the discovery; Portfolio Architect adds no elevated-permission workaround.
 
-The v1.55 migration correctly excluded `comdirect-session.json` from the historical-to-canonical App transfer. The canonical startup validator also required that file to be absent before cut-over. After cut-over, however, a required fresh PhotoTAN bootstrap legitimately creates a new canonical OAuth session. The validator was re-running the pre-cut-over absence rule on every later App startup, so the first restart after a successful fresh bootstrap could falsely classify the canonical session as transferred legacy state and terminate the App with:
+REST portfolio schema 1, Gateway health schema 8, payload schema 8, config-entry schema 12, provider identities, acquisition modes, `fallback_policy: none`, evidence clocks/freshness, LKG/anti-rollback behavior, planner economics, private-PKI HTTPS, bearer authentication, DNS pinning and source-set atomicity remain unchanged. No trading, order, transfer, payment, or transaction-history capability is added. Authenticated DKB FinTS remains disabled.
 
-`Migrated Comdirect OAuth session must not be present before cut-over`
+## Retained compatibility contracts
 
-v1.56.1 keeps the fail-closed boundary and makes the lifecycle distinction explicit:
-
-- migration export/staging/commit still never transfers `comdirect-session.json`;
-- the import marker still requires `oauth_session_transferred: false`;
-- the first canonical startup after migration still rejects any OAuth session that appears before cut-over;
-- the canonical entrypoint still validates committed migration identity **before** renewing the migrated TLS leaf;
-- only after the preserved private-PKI leaf has been genuinely renewed and validated for the exact provider-qualified successor hostname may a later canonical restart accept the fresh OAuth session created by the canonical runtime;
-- changing only TLS hostname metadata is insufficient because an independent certificate verifier validates the actual leaf under the preserved CA for the successor hostname; this proof does not rely on `openssl x509 -checkhost` exit semantics.
-
-The preserved CA fingerprint, exact predecessor/successor hostname relationship, Gateway bearer secret, explicit cut-over marker, imported snapshot identity, Supervisor options reconciliation and all other migration invariants remain enforced.
-
-## v1.56.0 UX/hygiene scope retained unchanged
-
-The deterministic DKB Europe/Berlin + authoritative UTC probe timestamp, Generic Import sensitive-token placement and discovery cleanup, consolidated reference-dashboard incident/LKG presentation, canonical Comdirect naming, Comdirect LEGACY deprecation, and quieter routine Ingress logging remain unchanged.
-
-Historical `portfolio_architect_gateway` remains the final deprecated v1.56.x migration-source line; the active App repository is scheduled to withdraw `portfolio_architect_gateway` in v1.57.0. Canonical `portfolio_architect_gateway_comdirect` remains the production Comdirect identity.
-
-## Compatibility and non-goals
-
-The v1.33.0 source-freshness and plan-schedule separation remains intact: execution timing is anchored to the latest valid Portfolio Architect evaluation, and v1.56.1 does not change any configured freshness threshold.
+The v1.57.0 repository-withdrawal change does not alter the established machine-readable compatibility surface:
 
 - payload schema 8: unchanged
 - REST portfolio schema 1: unchanged
 - Gateway health schema 8 current; schemas 1–7 remain supported
-- schemas 1–6 remain supported as part of that health-schema compatibility range
+- schemas 1–6 remain supported for the earlier health-negotiation compatibility covered by retained regressions
+- presentation schema 2 remains unchanged
+- broker schemas 1/2/3 remain supported
 - authenticated DKB FinTS acquisition remains disabled
-- Trade Republic remains Gateway-owned PDF acquisition; this release does not move PDF parsing into Portfolio Architect
-- the historical v1.19.0-rc2 brokerage capability probe is not promoted by this release and no brokerage probe code is included
-- presentation schema 2: unchanged
-- No dashboard YAML replacement is required for v1.56.1.
-- broker schemas 1/2/3: unchanged
-- Comdirect explicit `live_api` / complete static `csv` acquisition: unchanged
-- Trade Republic PDF acquisition: unchanged
-- DKB CSV acquisition: unchanged
-- Generic Import mapped CSV acquisition: unchanged
-- Authenticated DKB FinTS acquisition remains disabled.
-- capability-level acquisition arbitration: not included
-- No trading, order, transfer, payment, or transaction-history capability is added.
-
-The affected v1.56.0 installation may update directly to v1.56.1; it should not delete the valid canonical OAuth session, reset private-PKI trust, or reinstall the historical App as part of recovery.
+- Trade Republic statement/PDF parsing remains inside the provider Gateway; this release does not move PDF parsing into Portfolio Architect
+- The historical experimental `v1.19.0-rc2` brokerage probe is not promoted by this release and its probe module is not included in the stable runtime
+- The v1.33.0 source-freshness and plan-schedule separation remains intact: recurring scheduling stays anchored to the latest valid Portfolio Architect evaluation and this release does not change any configured freshness threshold

@@ -9,7 +9,7 @@ import yaml
 
 ROOT = Path(__file__).parents[1]
 COMPONENT = ROOT / "custom_components" / "portfolio_architect"
-COMDIRECT_APP = ROOT / "home_assistant_app" / "portfolio_architect_gateway"
+COMDIRECT_APP = ROOT / "home_assistant_app" / "portfolio_architect_gateway_comdirect"
 
 
 def _text(path: Path) -> str:
@@ -55,7 +55,7 @@ def test_comdirect_gateway_keeps_complete_csv_acquisition_and_no_fallback() -> N
     config = yaml.safe_load(_text(COMDIRECT_APP / "config.yaml"))
     app = _text(COMDIRECT_APP / "src" / "portfolio_architect_gateway" / "app.py")
     comdirect_csv = _text(COMDIRECT_APP / "src" / "portfolio_architect_gateway" / "comdirect_csv.py")
-    assert config["slug"] == "portfolio_architect_gateway"
+    assert config["slug"] == "portfolio_architect_gateway_comdirect"
     acquisition = _text(COMDIRECT_APP / "src" / "portfolio_architect_gateway" / "acquisition.py")
     assert 'return "comdirect"' in acquisition
     assert "ComdirectAcquisitionProvider" in app

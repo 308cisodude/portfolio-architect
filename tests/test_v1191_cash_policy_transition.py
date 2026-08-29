@@ -4,7 +4,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).parents[1]
 GATEWAY = ROOT / "gateway" / "src" / "portfolio_architect_gateway"
-APP = ROOT / "home_assistant_app" / "portfolio_architect_gateway" / "src" / "portfolio_architect_gateway"
+APP = ROOT / "home_assistant_app" / "portfolio_architect_gateway_comdirect" / "src" / "portfolio_architect_gateway"
 
 
 def test_gateway_and_app_keep_identical_policy_transition_source() -> None:

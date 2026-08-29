@@ -21,7 +21,7 @@ from resilience import (  # noqa: E402
     snapshot_within_retention,
 )
 
-APP = ROOT / "home_assistant_app" / "portfolio_architect_gateway"
+APP = ROOT / "home_assistant_app" / "portfolio_architect_gateway_comdirect"
 UTC = timezone.utc
 
 
@@ -238,9 +238,9 @@ def test_ai_assistance_is_disclosed_without_claiming_ohf_compliance() -> None:
 def test_v1200_version_and_schema_compatibility() -> None:
     manifest = json.loads((COMPONENT / "manifest.json").read_text(encoding="utf-8"))
     app = yaml.safe_load((APP / "config.yaml").read_text(encoding="utf-8"))
-    assert manifest["version"] == "1.56.1"
-    assert app["version"] == "1.56.1"
-    assert app["stage"] == "deprecated"
+    assert manifest["version"] == "1.57.0"
+    assert app["version"] == "1.57.0"
+    assert app["stage"] == "stable"
     # Resilience is integration-side; wire schemas stay backward compatible.
     init_source = (ROOT / "custom_components" / "portfolio_architect" / "__init__.py").read_text(
         encoding="utf-8"

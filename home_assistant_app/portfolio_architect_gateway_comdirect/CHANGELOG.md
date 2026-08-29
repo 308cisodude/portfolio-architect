@@ -1,10 +1,8 @@
 # Changelog
 
-## 1.56.1
+## 1.57.0
 
-- Fix canonical App restart after a successful migration and fresh PhotoTAN bootstrap: the newly created canonical OAuth session is no longer misclassified as migrated state.
-- Keep pre-cut-over OAuth state fail-closed. Post-cut-over session presence is accepted only with a valid preserved-CA TLS leaf for the exact canonical successor hostname.
-- Preserve `oauth_session_transferred: false`, same-CA identity, bearer continuity, explicit cut-over, acquisition authority and `fallback_policy: none`.
+- Historical `portfolio_architect_gateway` is no longer published; canonical Comdirect remains stable and retains bounded migration-receiver compatibility for already-installed supported v1.55/v1.56 Legacy instances. Runtime, acquisition and migration-security semantics are unchanged from v1.56.1.
 
 ## 1.56.0
 

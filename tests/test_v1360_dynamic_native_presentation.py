@@ -151,14 +151,14 @@ def test_presentation_slots_are_explicitly_ephemeral_diagnostic_projection() -> 
 
 
 def test_current_version_metadata_is_aligned() -> None:
-    assert 'version = "1.56.1"' in (ROOT / "pyproject.toml").read_text()
-    assert '"version": "1.56.1"' in (COMPONENT / "manifest.json").read_text()
-    assert 'VERSION: Final = "1.56.1"' in (COMPONENT / "const.py").read_text()
-    assert '__version__ = "1.56.1"' in (COMPONENT / "engine" / "__init__.py").read_text()
+    assert 'version = "1.57.0"' in (ROOT / "pyproject.toml").read_text()
+    assert '"version": "1.57.0"' in (COMPONENT / "manifest.json").read_text()
+    assert 'VERSION: Final = "1.57.0"' in (COMPONENT / "const.py").read_text()
+    assert '__version__ = "1.57.0"' in (COMPONENT / "engine" / "__init__.py").read_text()
     for app in (
-        "portfolio_architect_gateway",
+        "portfolio_architect_gateway_comdirect",
         "portfolio_architect_gateway_dkb",
         "portfolio_architect_gateway_trade_republic",
     ):
         config = yaml.safe_load((ROOT / "home_assistant_app" / app / "config.yaml").read_text())
-        assert config["version"] == "1.56.1"
+        assert config["version"] == "1.57.0"

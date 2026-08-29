@@ -139,4 +139,4 @@ def test_v1531_does_not_change_gateway_health_or_portfolio_wire_schema() -> None
     rest = (COMPONENT / "rest_client.py").read_text(encoding="utf-8")
     assert '"health_schema_version": min(version, 8)' in server
     assert '"requested_health_schema_version": 8' in rest
-    assert json.loads((COMPONENT / "manifest.json").read_text())["version"] == "1.56.1"
+    assert json.loads((COMPONENT / "manifest.json").read_text())["version"] == "1.57.0"

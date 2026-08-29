@@ -5,13 +5,13 @@ import yaml
 
 ROOT = Path(__file__).parents[1]
 COMPONENT = ROOT / "custom_components" / "portfolio_architect"
-APP = ROOT / "home_assistant_app" / "portfolio_architect_gateway"
+APP = ROOT / "home_assistant_app" / "portfolio_architect_gateway_comdirect"
 
 
-def test_historical_gateway_app_is_deprecated_and_versioned() -> None:
+def test_canonical_gateway_app_is_stable_and_versioned() -> None:
     config = yaml.safe_load((APP / "config.yaml").read_text(encoding="utf-8"))
-    assert config["version"] == "1.56.1"
-    assert config["stage"] == "deprecated"
+    assert config["version"] == "1.57.0"
+    assert config["stage"] == "stable"
 
 
 def test_health_contract_is_bounded_authenticated_and_same_origin() -> None:

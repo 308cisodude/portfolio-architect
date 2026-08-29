@@ -58,7 +58,6 @@ jobs:
           PYAPPVERSION
           )"
           for app in \
-            portfolio_architect_gateway \
             portfolio_architect_gateway_comdirect \
             portfolio_architect_gateway_dkb \
             portfolio_architect_gateway_trade_republic \

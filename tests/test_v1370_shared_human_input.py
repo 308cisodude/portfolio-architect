@@ -126,7 +126,7 @@ def test_invalid_comdirect_input_preserves_existing_private_policy_state(tmp_pat
 def test_helper_is_mirrored_but_exact_protocol_fields_do_not_opt_in() -> None:
     master = GATEWAY_SRC / "portfolio_architect_gateway" / "human_input.py"
     app_roots = (
-        ROOT / "home_assistant_app" / "portfolio_architect_gateway" / "src" / "portfolio_architect_gateway",
+        ROOT / "home_assistant_app" / "portfolio_architect_gateway_comdirect" / "src" / "portfolio_architect_gateway",
         ROOT / "home_assistant_app" / "portfolio_architect_gateway_dkb" / "src" / "portfolio_architect_gateway",
         ROOT / "home_assistant_app" / "portfolio_architect_gateway_trade_republic" / "src" / "portfolio_architect_gateway",
     )
@@ -148,22 +148,22 @@ def test_v1370_version_metadata_and_sync_contract_are_aligned() -> None:
     import json  # noqa: PLC0415
     import yaml  # noqa: PLC0415
 
-    assert 'version = "1.56.1"' in (ROOT / "pyproject.toml").read_text()
+    assert 'version = "1.57.0"' in (ROOT / "pyproject.toml").read_text()
     manifest = json.loads((ROOT / "custom_components" / "portfolio_architect" / "manifest.json").read_text())
-    assert manifest["version"] == "1.56.1"
-    assert 'VERSION: Final = "1.56.1"' in (
+    assert manifest["version"] == "1.57.0"
+    assert 'VERSION: Final = "1.57.0"' in (
         ROOT / "custom_components" / "portfolio_architect" / "const.py"
     ).read_text()
-    assert '__version__ = "1.56.1"' in (
+    assert '__version__ = "1.57.0"' in (
         ROOT / "custom_components" / "portfolio_architect" / "engine" / "__init__.py"
     ).read_text()
     for app in (
-        "portfolio_architect_gateway",
+        "portfolio_architect_gateway_comdirect",
         "portfolio_architect_gateway_dkb",
         "portfolio_architect_gateway_trade_republic",
     ):
         config = yaml.safe_load((ROOT / "home_assistant_app" / app / "config.yaml").read_text())
-        assert config["version"] == "1.56.1"
+        assert config["version"] == "1.57.0"
 
     sync = (ROOT / "tools" / "sync_gateway_app_sources.py").read_text()
     assert '"human_input.py"' in sync
