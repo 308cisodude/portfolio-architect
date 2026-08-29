@@ -20,7 +20,7 @@ GATEWAY_SRC = ROOT / "gateway" / "src"
 GATEWAY = GATEWAY_SRC / "portfolio_architect_gateway"
 APPS = ROOT / "home_assistant_app"
 APP_SLUGS = (
-    "portfolio_architect_gateway",
+    "portfolio_architect_gateway_comdirect",
     "portfolio_architect_gateway_dkb",
     "portfolio_architect_gateway_trade_republic",
 )

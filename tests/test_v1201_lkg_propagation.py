@@ -9,7 +9,7 @@ import yaml
 
 ROOT = Path(__file__).parents[1]
 COMPONENT = ROOT / "custom_components" / "portfolio_architect"
-APP = ROOT / "home_assistant_app" / "portfolio_architect_gateway"
+APP = ROOT / "home_assistant_app" / "portfolio_architect_gateway_comdirect"
 
 
 def test_coordinator_notifies_entities_when_only_degraded_metadata_changes() -> None:
@@ -87,12 +87,12 @@ def test_v1201_version_alignment_and_wire_compatibility() -> None:
         encoding="utf-8"
     )
 
-    assert manifest["version"] == "1.56.1"
-    assert app["version"] == "1.56.1"
-    assert 'VERSION: Final = "1.56.1"' in const
-    assert '__version__ = "1.56.1"' in engine
-    assert '__version__ = "1.56.1"' in gateway
-    assert app["stage"] == "deprecated"
+    assert manifest["version"] == "1.57.0"
+    assert app["version"] == "1.57.0"
+    assert 'VERSION: Final = "1.57.0"' in const
+    assert '__version__ = "1.57.0"' in engine
+    assert '__version__ = "1.57.0"' in gateway
+    assert app["stage"] == "stable"
 
     # v1.20.1 is propagation/repair hygiene only. No payload or wire-schema bump.
     integration_init = (COMPONENT / "__init__.py").read_text(encoding="utf-8")

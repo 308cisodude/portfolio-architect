@@ -1,8 +1,8 @@
 # Changelog
 
-## 1.56.1
+## 1.57.0
 
-- Version alignment only for the Comdirect migration-lifecycle hotfix; Trade Republic acquisition and freshness behavior are unchanged from v1.56.0.
+- Version alignment only for the historical Comdirect App withdrawal; Trade Republic acquisition and freshness behavior are unchanged from v1.56.1.
 
 ## 1.56.0
 

@@ -1277,8 +1277,9 @@ def _legacy_migration_html(
     }
     retirement_notice = (
         '<p class="warn" role="alert"><strong>Final legacy release.</strong> '
-        'This historical Comdirect App identity is deprecated in v1.56.0 and is '
-        'scheduled to be withdrawn from the App repository in v1.57.0. Complete '
+        'This historical Comdirect App identity was withdrawn from the active App '
+        'repository in v1.57.0 after its final v1.56.x release. If this already-installed '
+        'Legacy instance is still running, complete '
         'the migration to <strong>Portfolio Architect Gateway — Comdirect</strong> '
         'before upgrading beyond v1.56.x. Existing migration safety gates remain '
         'unchanged.</p>'

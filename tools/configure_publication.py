@@ -80,7 +80,6 @@ def configure(root: Path, repository: str, codeowners: list[str]) -> None:
         f"/tools/run_gitleaks_ci.sh {owners}\n"
         f"/tools/release_check.sh {owners}\n"
         f"/custom_components/portfolio_architect/ {owners}\n"
-        f"/home_assistant_app/portfolio_architect_gateway/ {owners}\n"
         f"/home_assistant_app/portfolio_architect_gateway_comdirect/ {owners}\n"
         f"/home_assistant_app/portfolio_architect_gateway_dkb/ {owners}\n"
         f"/home_assistant_app/portfolio_architect_gateway_trade_republic/ {owners}\n"

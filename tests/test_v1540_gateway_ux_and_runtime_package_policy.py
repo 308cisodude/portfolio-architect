@@ -50,9 +50,9 @@ def test_static_apps_no_longer_expose_gateway_freshness_option() -> None:
 
 
 def test_comdirect_cache_setting_is_explicitly_live_lkg_only() -> None:
-    config = yaml.safe_load((APPS / "portfolio_architect_gateway/config.yaml").read_text(encoding="utf-8"))
+    config = yaml.safe_load((APPS / "portfolio_architect_gateway_comdirect/config.yaml").read_text(encoding="utf-8"))
     assert config["schema"]["max_cached_snapshot_age_seconds"] == "int(0,2592000)"
-    english = yaml.safe_load((APPS / "portfolio_architect_gateway/translations/en.yaml").read_text(encoding="utf-8"))
+    english = yaml.safe_load((APPS / "portfolio_architect_gateway_comdirect/translations/en.yaml").read_text(encoding="utf-8"))
     option = english["configuration"]["max_cached_snapshot_age_seconds"]
     assert option["name"] == "Maximum live LKG snapshot age"
     assert "resilience" in option["description"].lower()
@@ -64,7 +64,7 @@ def test_comdirect_cache_setting_is_explicitly_live_lkg_only() -> None:
 
 def test_alpine_runtime_package_is_not_exact_revision_pinned() -> None:
     for app in (
-        "portfolio_architect_gateway",
+        "portfolio_architect_gateway_comdirect",
         "portfolio_architect_gateway_dkb",
         "portfolio_architect_gateway_trade_republic",
         "portfolio_architect_gateway_import",
@@ -95,4 +95,4 @@ def test_v1540_keeps_gateway_wire_schemas_unchanged() -> None:
     rest = (ROOT / "custom_components/portfolio_architect/rest_client.py").read_text(encoding="utf-8")
     assert '"health_schema_version": min(version, 8)' in server
     assert '"requested_health_schema_version": 8' in rest
-    assert json.loads((ROOT / "custom_components/portfolio_architect/manifest.json").read_text())["version"] == "1.56.1"
+    assert json.loads((ROOT / "custom_components/portfolio_architect/manifest.json").read_text())["version"] == "1.57.0"

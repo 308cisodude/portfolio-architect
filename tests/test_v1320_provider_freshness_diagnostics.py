@@ -23,7 +23,7 @@ TR_SRC = (
 COMDIRECT_SRC = (
     ROOT
     / "home_assistant_app"
-    / "portfolio_architect_gateway"
+    / "portfolio_architect_gateway_comdirect"
     / "src"
     / "portfolio_architect_gateway"
 )

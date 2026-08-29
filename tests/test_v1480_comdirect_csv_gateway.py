@@ -12,7 +12,7 @@ import sys
 import pytest
 
 ROOT = Path(__file__).parents[1]
-APP = ROOT / "home_assistant_app" / "portfolio_architect_gateway"
+APP = ROOT / "home_assistant_app" / "portfolio_architect_gateway_comdirect"
 PACKAGE = APP / "src" / "portfolio_architect_gateway"
 FIXTURE = ROOT / "tests" / "fixtures" / "comdirect-depot-sanitized.csv"
 TEST_PACKAGE = "portfolio_architect_gateway_comdirect_v1480_test"

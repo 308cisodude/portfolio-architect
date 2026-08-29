@@ -7,8 +7,8 @@
     ]
   },
   "dataLicense": "CC0-1.0",
-  "documentNamespace": "urn:uuid:22171de9-d80a-537d-9de0-01c9048a651a",
-  "name": "Portfolio Architect v1.56.1 SBOM",
+  "documentNamespace": "urn:uuid:a893fd04-4f15-58a0-97f5-b154909f77fb",
+  "name": "Portfolio Architect v1.57.0 SBOM",
   "packages": [
     {
       "SPDXID": "SPDXRef-Package-Integration",
@@ -19,18 +19,7 @@
       "licenseDeclared": "MIT",
       "name": "Portfolio Architect Home Assistant integration",
       "supplier": "Organization: Portfolio Architect contributors",
-      "versionInfo": "1.56.1"
-    },
-    {
-      "SPDXID": "SPDXRef-Package-Gateway",
-      "copyrightText": "Copyright 2026 Portfolio Architect contributors",
-      "downloadLocation": "NOASSERTION",
-      "filesAnalyzed": false,
-      "licenseConcluded": "MIT",
-      "licenseDeclared": "MIT",
-      "name": "Portfolio Architect Gateway \u2014 Comdirect LEGACY App",
-      "supplier": "Organization: Portfolio Architect contributors",
-      "versionInfo": "1.56.1"
+      "versionInfo": "1.57.0"
     },
     {
       "SPDXID": "SPDXRef-Package-Gateway-ComdirectCanonical",
@@ -41,7 +30,7 @@
       "licenseDeclared": "MIT",
       "name": "Portfolio Architect Gateway \u2014 Comdirect App",
       "supplier": "Organization: Portfolio Architect contributors",
-      "versionInfo": "1.56.1"
+      "versionInfo": "1.57.0"
     },
     {
       "SPDXID": "SPDXRef-Package-PythonBase",
@@ -69,7 +58,7 @@
       "licenseDeclared": "MIT",
       "name": "Portfolio Architect Gateway \u2014 DKB App",
       "supplier": "Organization: Portfolio Architect contributors",
-      "versionInfo": "1.56.1"
+      "versionInfo": "1.57.0"
     },
     {
       "SPDXID": "SPDXRef-Package-Gateway-TradeRepublic",
@@ -79,7 +68,7 @@
       "licenseDeclared": "MIT",
       "name": "Portfolio Architect Gateway \u2014 Trade Republic App",
       "supplier": "Organization: Portfolio Architect contributors",
-      "versionInfo": "1.56.1"
+      "versionInfo": "1.57.0"
     },
     {
       "SPDXID": "SPDXRef-Package-Gateway-GenericImport",
@@ -89,7 +78,7 @@
       "licenseDeclared": "MIT",
       "name": "Portfolio Architect Gateway \u2014 Generic Import App",
       "supplier": "Organization: Portfolio Architect contributors",
-      "versionInfo": "1.56.1"
+      "versionInfo": "1.57.0"
     },
     {
       "SPDXID": "SPDXRef-Package-pypdf",
@@ -153,16 +142,6 @@
       "spdxElementId": "SPDXRef-DOCUMENT"
     },
     {
-      "relatedSpdxElement": "SPDXRef-Package-Gateway",
-      "relationshipType": "DESCRIBES",
-      "spdxElementId": "SPDXRef-DOCUMENT"
-    },
-    {
-      "relatedSpdxElement": "SPDXRef-Package-PythonBase",
-      "relationshipType": "DEPENDS_ON",
-      "spdxElementId": "SPDXRef-Package-Gateway"
-    },
-    {
       "relatedSpdxElement": "SPDXRef-Package-Gateway-DKB",
       "relationshipType": "DESCRIBES",
       "spdxElementId": "SPDXRef-DOCUMENT"
@@ -191,11 +170,6 @@
       "relatedSpdxElement": "SPDXRef-Package-pypdf",
       "relationshipType": "DEPENDS_ON",
       "spdxElementId": "SPDXRef-Package-Gateway-TradeRepublic"
-    },
-    {
-      "relatedSpdxElement": "SPDXRef-Package-OpenSSL",
-      "relationshipType": "DEPENDS_ON",
-      "spdxElementId": "SPDXRef-Package-Gateway"
     },
     {
       "relatedSpdxElement": "SPDXRef-Package-OpenSSL",

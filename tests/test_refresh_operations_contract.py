@@ -5,7 +5,7 @@ import json
 
 ROOT = Path(__file__).parents[1]
 COMPONENT = ROOT / "custom_components" / "portfolio_architect"
-APP = ROOT / "home_assistant_app" / "portfolio_architect_gateway"
+APP = ROOT / "home_assistant_app" / "portfolio_architect_gateway_comdirect"
 
 
 def test_health_schema_four_and_fixed_cadence_are_implemented() -> None:

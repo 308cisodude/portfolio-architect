@@ -142,13 +142,6 @@ def verify_integration_archive_layouts(directory: Path, release_version: str) ->
 def verify_gateway_app_archive_layouts(directory: Path, release_version: str) -> None:
     """Verify provider App identity, archive roots, and shell isolation."""
     specs = {
-        "portfolio-architect-gateway-app-v%s.zip" % release_version: (
-            "portfolio_architect_gateway",
-            "portfolio_architect_gateway",
-            "deprecated",
-            None,
-            "auto",
-        ),
         "portfolio-architect-gateway-comdirect-app-v%s.zip" % release_version: (
             "portfolio_architect_gateway_comdirect",
             "portfolio_architect_gateway_comdirect",
@@ -256,7 +249,6 @@ def verify_expected_files(directory: Path, release_version: str) -> None:
     expected = {
         f"portfolio-architect-v{release_version}-ha-dropin.zip",
         "portfolio_architect.zip",
-        f"portfolio-architect-gateway-app-v{release_version}.zip",
         f"portfolio-architect-gateway-comdirect-app-v{release_version}.zip",
         f"portfolio-architect-gateway-dkb-app-v{release_version}.zip",
         f"portfolio-architect-gateway-trade-republic-app-v{release_version}.zip",

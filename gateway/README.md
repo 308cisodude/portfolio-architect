@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway runtime v1.56.1
+# Portfolio Architect Gateway runtime v1.57.0
 
-Version 1.56.1 fixes the canonical Comdirect post-cut-over restart lifecycle: a migrated installation still rejects OAuth state before its first canonical startup, but a fresh canonical session created after successful cut-over/PhotoTAN bootstrap is accepted on later restarts when the preserved private PKI is already validly bound to the canonical successor hostname. REST schema 1, health schema 8, provider acquisition authority, freshness, private-PKI trust, and no-fallback semantics are unchanged.
+Version 1.57.0 changes release/repository packaging only: the historical unqualified Comdirect App is withdrawn, while the common runtime and canonical provider-qualified Comdirect App retain the bounded migration receiver required by already-installed v1.55/v1.56 Legacy instances. REST schema 1, health schema 8, provider acquisition authority, freshness, private-PKI trust, and `fallback_policy: none` are unchanged.
 
 Version 1.55.0 keeps health schema 8 and REST schema 1 unchanged. Static `csv`/`pdf` acquisition snapshots are no longer expired by the live-source LKG cache TTL; their immutable evidence timestamps remain visible and Portfolio Architect applies the configured static freshness policy. Live acquisition methods retain the configured bounded cache age.
 
@@ -25,9 +25,7 @@ cadence, and validated provider-neutral snapshots. Comdirect OAuth/bootstrap,
 account discovery, selected-account persistence, cash authorization and upstream
 API behavior remain isolated in the Comdirect implementation.
 
-The released Home Assistant App is displayed as **Portfolio Architect Gateway —
-Comdirect**. Its established slug remains `portfolio_architect_gateway`, preserving
-in-place App updates and App-private state.
+The released Comdirect Home Assistant App is **Portfolio Architect Gateway — Comdirect** with canonical slug `portfolio_architect_gateway_comdirect`. The historical unqualified `portfolio_architect_gateway` package was withdrawn from the active repository in v1.57.0 after its final v1.56.x migration-source line; the canonical App still accepts the established bounded migration from an already-installed supported Legacy instance.
 
 ## Security boundary
 

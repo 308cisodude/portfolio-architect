@@ -128,7 +128,6 @@ def validate_version(version: str) -> None:
         "integration": json.loads(
             (PROJECT_ROOT / "custom_components/portfolio_architect/manifest.json").read_text()
         )["version"],
-        "gateway_comdirect_legacy": __import__("yaml").safe_load((PROJECT_ROOT / "home_assistant_app/portfolio_architect_gateway/config.yaml").read_text())["version"],
         "gateway_comdirect": __import__("yaml").safe_load((PROJECT_ROOT / "home_assistant_app/portfolio_architect_gateway_comdirect/config.yaml").read_text())["version"],
         "gateway_dkb": __import__("yaml").safe_load((PROJECT_ROOT / "home_assistant_app/portfolio_architect_gateway_dkb/config.yaml").read_text())["version"],
         "gateway_trade_republic": __import__("yaml").safe_load((PROJECT_ROOT / "home_assistant_app/portfolio_architect_gateway_trade_republic/config.yaml").read_text())["version"],
@@ -170,11 +169,11 @@ def build(output: Path) -> list[Path]:
         hacs_archive = output / "portfolio_architect.zip"
         write_reproducible_zip(hacs_stage, hacs_archive)
 
-        # Home Assistant provider Gateway Apps. Keep the historical Comdirect asset
-        # during the explicit v1.55 identity migration and publish the provider-qualified
-        # successor as a separate package.
+        # Active Home Assistant provider Gateway Apps. The historical unqualified
+        # Comdirect App was withdrawn from the repository in v1.57.0; the canonical
+        # provider-qualified App retains the bounded migration receiver for already-
+        # installed supported legacy instances.
         app_specs = (
-            ("portfolio_architect_gateway", f"portfolio-architect-gateway-app-v{version}.zip"),
             ("portfolio_architect_gateway_comdirect", f"portfolio-architect-gateway-comdirect-app-v{version}.zip"),
             ("portfolio_architect_gateway_dkb", f"portfolio-architect-gateway-dkb-app-v{version}.zip"),
             ("portfolio_architect_gateway_trade_republic", f"portfolio-architect-gateway-trade-republic-app-v{version}.zip"),

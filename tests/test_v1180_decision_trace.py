@@ -243,9 +243,9 @@ def test_storage_and_diagnostics_keep_the_trace_private_and_integrity_checked() 
 
 def test_v1180_metadata_and_compatibility_contracts_are_aligned() -> None:
     manifest = json.loads((COMPONENT / "manifest.json").read_text())
-    assert manifest["version"] == "1.56.1"
-    assert 'VERSION: Final = "1.56.1"' in (COMPONENT / "const.py").read_text()
-    assert '__version__ = "1.56.1"' in (COMPONENT / "engine" / "__init__.py").read_text()
+    assert manifest["version"] == "1.57.0"
+    assert 'VERSION: Final = "1.57.0"' in (COMPONENT / "const.py").read_text()
+    assert '__version__ = "1.57.0"' in (COMPONENT / "engine" / "__init__.py").read_text()
     release_notes = (ROOT / "docs" / "RELEASE-NOTES.md").read_text()
     assert "payload schema 8" in release_notes.lower()
     assert "REST portfolio schema 1" in release_notes

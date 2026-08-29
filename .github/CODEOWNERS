@@ -8,7 +8,6 @@
 /tools/run_gitleaks_ci.sh @308cisodude
 /tools/release_check.sh @308cisodude
 /custom_components/portfolio_architect/ @308cisodude
-/home_assistant_app/portfolio_architect_gateway/ @308cisodude
 /home_assistant_app/portfolio_architect_gateway_comdirect/ @308cisodude
 /home_assistant_app/portfolio_architect_gateway_dkb/ @308cisodude
 /home_assistant_app/portfolio_architect_gateway_trade_republic/ @308cisodude

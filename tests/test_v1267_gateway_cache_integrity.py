@@ -14,7 +14,7 @@ def test_release_version_and_wire_contracts_remain_aligned() -> None:
     manifest = json.loads(
         (ROOT / "custom_components" / "portfolio_architect" / "manifest.json").read_text()
     )
-    assert manifest["version"] == "1.56.1"
+    assert manifest["version"] == "1.57.0"
     notes = (ROOT / "docs" / "RELEASE-NOTES.md").read_text(encoding="utf-8")
     assert "payload schema 8: unchanged" in notes
     assert "REST portfolio schema 1: unchanged" in notes
@@ -48,7 +48,7 @@ def test_common_integrity_fix_is_synced_to_provider_apps() -> None:
     master_models = (GATEWAY / "models.py").read_bytes()
     master_server = (GATEWAY / "server.py").read_bytes()
     for slug in (
-        "portfolio_architect_gateway",
+        "portfolio_architect_gateway_comdirect",
         "portfolio_architect_gateway_dkb",
         "portfolio_architect_gateway_trade_republic",
     ):

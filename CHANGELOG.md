@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.57.0
+
+- Withdraw the deprecated historical `portfolio_architect_gateway` / Comdirect LEGACY App from the active Home Assistant App repository and stop building/publishing its release artifact.
+- Retain the bounded migration receiver in canonical `portfolio_architect_gateway_comdirect` for already-installed supported v1.55/v1.56 Legacy instances; do not reuse the historical slug.
+- Remove the retired package from active release verification, Docker/OpenSSL workflows, source synchronization, CODEOWNERS/publication contracts, privacy allowlists and the active SPDX SBOM.
+- Preserve v1.56.1 Comdirect migration security/restart behavior, all v1.56 UX/hygiene changes, provider acquisition, wire schemas, freshness, private-PKI/LKG semantics, planner behavior and the disabled authenticated-DKB-FinTS boundary.
+
 ## 1.56.1
 
 - Fix the canonical Comdirect App restart lifecycle after a completed App-identity migration and fresh PhotoTAN bootstrap: a newly created canonical OAuth session is no longer misclassified as forbidden migrated state on later restarts.

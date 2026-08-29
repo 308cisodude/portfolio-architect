@@ -729,9 +729,16 @@ requires explicit same-CA authenticated Portfolio Architect validation before th
 changes. Canonical provider identity remains `comdirect`; acquisition/freshness semantics,
 wire schemas, planner behavior, and the advisory-only boundary remain unchanged.
 
-### Historical Comdirect App withdrawal (v1.57.0)
+### Historical Comdirect App withdrawal (v1.57.0) — completed
 
-- Remove the deprecated historical `portfolio_architect_gateway` package from the active Home Assistant App repository after its final v1.56.x migration-source release.
-- Stop building and publishing the historical Comdirect App artifact and remove its active-repository validation/publication wiring.
-- Retain bounded migration-receiver compatibility in canonical `portfolio_architect_gateway_comdirect` long enough for already-installed v1.55/v1.56 legacy instances to complete the established fail-closed migration.
-- Do not reuse the historical slug for another provider or purpose. Immutable historical tags/releases remain the archival source of the retired package.
+- Removed the deprecated historical `portfolio_architect_gateway` package from the active Home Assistant App repository after its final v1.56.x migration-source release.
+- Stopped building/publishing the historical Comdirect App artifact and removed its active-repository validation/publication wiring.
+- Retained bounded migration-receiver compatibility in canonical `portfolio_architect_gateway_comdirect` for already-installed supported v1.55/v1.56 Legacy instances.
+- The historical slug is not reused. Immutable historical tags/releases remain the archival source of the retired package.
+
+### Capability-level acquisition arbitration (planned after v1.57.0)
+
+- Model configured authority separately from capability availability for multi-method provider Gateways.
+- Keep acquisition changes explicit; never silently fall back from an authoritative live method to older static upload evidence.
+- Define method-scoped evidence clocks, LKG/anti-rollback behavior and safe operator transitions before adding further authenticated acquisition methods.
+- DKB authenticated FinTS remains a later evidence-gated capability and is not enabled merely because the Comdirect identity migration is complete.

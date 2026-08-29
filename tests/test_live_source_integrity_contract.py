@@ -6,7 +6,7 @@ import yaml
 
 ROOT = Path(__file__).parents[1]
 COMPONENT = ROOT / "custom_components" / "portfolio_architect"
-APP = ROOT / "home_assistant_app" / "portfolio_architect_gateway"
+APP = ROOT / "home_assistant_app" / "portfolio_architect_gateway_comdirect"
 
 
 def test_component_versions_are_compatible() -> None:
@@ -15,12 +15,12 @@ def test_component_versions_are_compatible() -> None:
     engine = (COMPONENT / "engine" / "__init__.py").read_text()
     app = yaml.safe_load((APP / "config.yaml").read_text())
     gateway = (APP / "src" / "portfolio_architect_gateway" / "__init__.py").read_text()
-    assert manifest["version"] == "1.56.1"
-    assert 'VERSION: Final = "1.56.1"' in const
-    assert '__version__ = "1.56.1"' in engine
-    assert app["version"] == "1.56.1"
-    assert '__version__ = "1.56.1"' in gateway
-    assert app["stage"] == "deprecated"
+    assert manifest["version"] == "1.57.0"
+    assert 'VERSION: Final = "1.57.0"' in const
+    assert '__version__ = "1.57.0"' in engine
+    assert app["version"] == "1.57.0"
+    assert '__version__ = "1.57.0"' in gateway
+    assert app["stage"] == "stable"
 
 
 def test_integrity_headers_and_versioned_health_are_implemented() -> None:

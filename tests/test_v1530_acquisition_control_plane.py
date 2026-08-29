@@ -9,17 +9,17 @@ COMPONENT = ROOT / "custom_components" / "portfolio_architect"
 
 
 def test_v1530_versions_and_health_schema_are_aligned() -> None:
-    assert json.loads((COMPONENT / "manifest.json").read_text())["version"] == "1.56.1"
-    assert 'VERSION: Final = "1.56.1"' in (COMPONENT / "const.py").read_text()
-    assert '__version__ = "1.56.1"' in (ROOT / "gateway/src/portfolio_architect_gateway/__init__.py").read_text()
+    assert json.loads((COMPONENT / "manifest.json").read_text())["version"] == "1.57.0"
+    assert 'VERSION: Final = "1.57.0"' in (COMPONENT / "const.py").read_text()
+    assert '__version__ = "1.57.0"' in (ROOT / "gateway/src/portfolio_architect_gateway/__init__.py").read_text()
     for app in (
-        "portfolio_architect_gateway",
+        "portfolio_architect_gateway_comdirect",
         "portfolio_architect_gateway_dkb",
         "portfolio_architect_gateway_trade_republic",
         "portfolio_architect_gateway_import",
     ):
         config = yaml.safe_load((ROOT / "home_assistant_app" / app / "config.yaml").read_text())
-        assert config["version"] == "1.56.1"
+        assert config["version"] == "1.57.0"
     rest = (COMPONENT / "rest_client.py").read_text()
     server = (ROOT / "gateway/src/portfolio_architect_gateway/server.py").read_text()
     assert 'HEALTH_V8_MEDIA_TYPE' in rest

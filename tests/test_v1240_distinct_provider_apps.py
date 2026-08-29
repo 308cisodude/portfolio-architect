@@ -8,7 +8,7 @@ import yaml
 ROOT=Path(__file__).parents[1]
 MASTER=ROOT/"gateway"/"src"/"portfolio_architect_gateway"
 APPS={
- "comdirect": ROOT/"home_assistant_app"/"portfolio_architect_gateway",
+ "comdirect": ROOT/"home_assistant_app"/"portfolio_architect_gateway_comdirect",
  "dkb": ROOT/"home_assistant_app"/"portfolio_architect_gateway_dkb",
  "trade_republic": ROOT/"home_assistant_app"/"portfolio_architect_gateway_trade_republic",
 }
@@ -18,13 +18,13 @@ TR_PROVIDER_FILES={"trade_republic_app.py","trade_republic_statement.py","trade_
 
 def test_three_provider_apps_have_unique_lifecycle_identities_and_isolated_storage():
     configs={k:yaml.safe_load((p/"config.yaml").read_text(encoding="utf-8")) for k,p in APPS.items()}
-    assert configs["comdirect"]["name"]=="Portfolio Architect Gateway — Comdirect LEGACY"
-    assert configs["comdirect"]["slug"]=="portfolio_architect_gateway"
-    assert configs["comdirect"]["stage"]=="deprecated"
+    assert configs["comdirect"]["name"]=="Portfolio Architect Gateway — Comdirect"
+    assert configs["comdirect"]["slug"]=="portfolio_architect_gateway_comdirect"
+    assert configs["comdirect"]["stage"]=="stable"
     assert configs["dkb"]["slug"]=="portfolio_architect_gateway_dkb"
     assert configs["trade_republic"]["slug"]=="portfolio_architect_gateway_trade_republic"
     assert len({c["slug"] for c in configs.values()})==3
-    assert all(c["version"]=="1.56.1" for c in configs.values())
+    assert all(c["version"]=="1.57.0" for c in configs.values())
     for key in ("dkb","trade_republic"):
         assert configs[key]["stage"]=="stable"
         assert configs[key]["host_network"] is False
@@ -72,10 +72,10 @@ def test_server_state_is_provider_neutral_at_configuration_boundary():
     assert "create_server(config.server, state)" in source
     assert "self._config.server." not in source
 
-def test_release_builder_publishes_three_distinct_gateway_archives():
+def test_release_builder_publishes_canonical_provider_archives():
     build=(ROOT/"tools"/"build_release.py").read_text(encoding="utf-8")
     verify=(ROOT/"tools"/"verify_release.py").read_text(encoding="utf-8")
-    for stem in ("gateway-app","gateway-dkb-app","gateway-trade-republic-app"):
+    for stem in ("gateway-comdirect-app","gateway-dkb-app","gateway-trade-republic-app"):
         assert f"portfolio-architect-{stem}-v{{version}}.zip" in build
         assert f"portfolio-architect-{stem}-v{{release_version}}.zip" in verify
 
@@ -92,7 +92,7 @@ def test_provider_capability_boundaries_are_explicit():
 
 def test_current_release_version_is_1280():
     manifest=json.loads((ROOT/"custom_components"/"portfolio_architect"/"manifest.json").read_text())
-    assert manifest["version"]=="1.56.1"
+    assert manifest["version"]=="1.57.0"
 
 
 def test_protected_workflows_build_all_provider_app_images_before_publication():

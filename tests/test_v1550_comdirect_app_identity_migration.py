@@ -164,25 +164,22 @@ def test_provider_qualified_entrypoint_uses_supported_supervisor_hostname_api() 
     assert {kw.arg for kw in calls[0].keywords if kw.arg is not None} <= supported
     assert "expected_legacy_hostname(hostname)" in source
 
-def test_provider_qualified_app_is_distinguishable_and_pending_by_default() -> None:
-    legacy = yaml.safe_load(
-        (ROOT / "home_assistant_app/portfolio_architect_gateway/config.yaml").read_text()
-    )
+def test_provider_qualified_app_remains_migration_receiver_after_legacy_withdrawal() -> None:
+    assert not (ROOT / "home_assistant_app/portfolio_architect_gateway").exists()
     new = yaml.safe_load(
         (ROOT / "home_assistant_app/portfolio_architect_gateway_comdirect/config.yaml").read_text()
     )
-    assert legacy["slug"] == "portfolio_architect_gateway"
     assert new["slug"] == "portfolio_architect_gateway_comdirect"
     assert new["name"] == "Portfolio Architect Gateway — Comdirect"
     assert new["panel_title"] == "Portfolio Gateway — Comdirect"
-    assert "Comdirect LEGACY" in legacy["name"]
-    assert "Comdirect LEGACY" in legacy["panel_title"]
+    assert new["stage"] == "stable"
     assert new["ports"]["8787/tcp"] is None
     entrypoint = (
         ROOT / "home_assistant_app/portfolio_architect_gateway_comdirect/entrypoint.py"
     ).read_text()
     assert "serve_comdirect_migration_setup" in entrypoint
     assert "validate_committed_migration_identity" in entrypoint
+    assert "expected_legacy_hostname(hostname)" in entrypoint
     assert "ready_when_live=True" in entrypoint
     assert "expected_ca_sha256" in entrypoint
 
@@ -204,7 +201,7 @@ def test_pa_cutover_is_explicit_same_ca_and_integrity_validated() -> None:
     )[1].split("async_step_hassio_confirm", 1)[0]
 
 
-def test_release_tooling_carries_both_comdirect_apps() -> None:
+def test_release_tooling_carries_only_canonical_comdirect_but_keeps_receiver() -> None:
     build = (ROOT / "tools/build_release.py").read_text()
     sync = (ROOT / "tools/sync_gateway_app_sources.py").read_text()
     verify = (ROOT / "tools/verify_release.py").read_text()
@@ -212,7 +209,9 @@ def test_release_tooling_carries_both_comdirect_apps() -> None:
     release = (ROOT / ".github/workflows/release.yml").read_text()
     for text in (build, sync, verify, validate, release):
         assert "portfolio_architect_gateway_comdirect" in text
+        assert 'home_assistant_app/portfolio_architect_gateway/' not in text
     assert "portfolio-architect-gateway-comdirect-app-v{version}.zip" in build
+    assert "portfolio-architect-gateway-app-v{version}.zip" not in build
     assert "comdirect-migration-receiver" in (
         ROOT / "gateway/src/portfolio_architect_gateway/comdirect_migration_app.py"
     ).read_text()
@@ -224,7 +223,7 @@ def test_current_release_is_v1550_and_wire_contracts_remain_unchanged() -> None:
     manifest = json.loads(
         (ROOT / "custom_components/portfolio_architect/manifest.json").read_text()
     )
-    assert manifest["version"] == "1.56.1"
+    assert manifest["version"] == "1.57.0"
     server = (ROOT / "gateway/src/portfolio_architect_gateway/server.py").read_text()
     rest = (ROOT / "custom_components/portfolio_architect/rest_client.py").read_text()
     assert '"health_schema_version": min(version, 8)' in server

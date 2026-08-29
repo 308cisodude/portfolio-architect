@@ -42,7 +42,7 @@ def test_live_observed_cash_amount_formats_are_accepted(mode: str, token: str, e
 
 def test_gateway_source_mirrors_keep_locale_parser_and_bounded_error_ux_aligned() -> None:
     common = ROOT / "gateway" / "src" / "portfolio_architect_gateway"
-    app = ROOT / "home_assistant_app" / "portfolio_architect_gateway" / "src" / "portfolio_architect_gateway"
+    app = ROOT / "home_assistant_app" / "portfolio_architect_gateway_comdirect" / "src" / "portfolio_architect_gateway"
     for relative in ("cash_policy.py", "app.py"):
         assert (common / relative).read_bytes() == (app / relative).read_bytes()
 
