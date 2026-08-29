@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.58.0
+
+- Version 1.58.0 adds health-schema-9 holdings/cash capability authority for `live_api` and complete `csv`. The explicitly active Comdirect acquisition method remains authoritative for both capabilities, with `fallback_policy: none`; no automatic fallback or provider runtime behavior changes.
+
 ## 1.57.0
 
 - Historical `portfolio_architect_gateway` is no longer published; canonical Comdirect remains stable and retains bounded migration-receiver compatibility for already-installed supported v1.55/v1.56 Legacy instances. Runtime, acquisition and migration-security semantics are unchanged from v1.56.1.

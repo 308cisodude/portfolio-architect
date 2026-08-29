@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway — DKB v1.57.0
+# Portfolio Architect Gateway — DKB v1.58.0
 
-Version 1.57.0 is release-aligned with the historical Comdirect App withdrawal and makes no DKB runtime change. DKB CSV holdings/cash acquisition remains authoritative, deterministic Europe/Berlin plus UTC probe-time presentation remains in place, and authenticated FinTS remains disabled.
+Version 1.58.0 adds health-schema-9 holdings/cash capability authority. DKB `csv` remains authoritative; `fints` remains `research_only`, cannot become authoritative, and authenticated FinTS remains disabled.
 
 ## DKB depot CSV holdings
 

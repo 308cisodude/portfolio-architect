@@ -179,7 +179,7 @@ class GenericCsvProvider:
 
     @property
     def acquisition_control(self) -> AcquisitionControl:
-        return single_method_control("csv")
+        return single_method_control("csv", cash=False)
 
     @property
     def poll_interval_seconds(self) -> int:

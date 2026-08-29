@@ -120,6 +120,10 @@ async def async_get_config_entry_diagnostics(
                     for item in coordinator.gateway_health.acquisition_methods
                 ],
                 "fallback_policy": coordinator.gateway_health.fallback_policy,
+                "acquisition_capabilities": [
+                    item.as_public_dict()
+                    for item in coordinator.gateway_health.acquisition_capabilities
+                ],
                 "previous_acquisition_method": (
                     coordinator.gateway_health.previous_acquisition_method
                 ),
@@ -150,6 +154,9 @@ async def async_get_config_entry_diagnostics(
                     item.as_public_dict() for item in health.acquisition_methods
                 ],
                 "fallback_policy": health.fallback_policy,
+                "acquisition_capabilities": [
+                    item.as_public_dict() for item in health.acquisition_capabilities
+                ],
                 "previous_acquisition_method": health.previous_acquisition_method,
                 "last_acquisition_method_change_at": _isoformat(
                     health.last_acquisition_method_change_at

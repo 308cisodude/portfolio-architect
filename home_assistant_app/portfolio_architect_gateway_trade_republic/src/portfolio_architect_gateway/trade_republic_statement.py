@@ -14,7 +14,17 @@ from pathlib import Path
 import re
 from typing import Final
 
-from .acquisition_control import METHOD_READY, METHOD_UNAVAILABLE, AcquisitionControl, AcquisitionMethod, method_inventory
+from .acquisition_control import (
+    AUTHORITY_PROVIDER_FIXED,
+    CAPABILITY_CASH,
+    CAPABILITY_HOLDINGS,
+    METHOD_READY,
+    METHOD_UNAVAILABLE,
+    AcquisitionControl,
+    AcquisitionMethod,
+    capability,
+    method_inventory,
+)
 from .errors import ConfigurationError, ProtocolError
 from .models import PortfolioSnapshot, Position, validate_snapshot
 from .store import load_snapshot
@@ -106,6 +116,22 @@ class TradeRepublicStatementProvider:
             methods=method_inventory(
                 AcquisitionMethod("pdf", METHOD_READY, True, True),
                 AcquisitionMethod("live_api", METHOD_UNAVAILABLE, False, False),
+            ),
+            capabilities=(
+                capability(
+                    CAPABILITY_HOLDINGS,
+                    "pdf",
+                    "pdf",
+                    "live_api",
+                    authority_reason=AUTHORITY_PROVIDER_FIXED,
+                ),
+                capability(
+                    CAPABILITY_CASH,
+                    "pdf",
+                    "pdf",
+                    "live_api",
+                    authority_reason=AUTHORITY_PROVIDER_FIXED,
+                ),
             ),
         )
 

@@ -243,13 +243,13 @@ def test_storage_and_diagnostics_keep_the_trace_private_and_integrity_checked() 
 
 def test_v1180_metadata_and_compatibility_contracts_are_aligned() -> None:
     manifest = json.loads((COMPONENT / "manifest.json").read_text())
-    assert manifest["version"] == "1.57.0"
-    assert 'VERSION: Final = "1.57.0"' in (COMPONENT / "const.py").read_text()
-    assert '__version__ = "1.57.0"' in (COMPONENT / "engine" / "__init__.py").read_text()
+    assert manifest["version"] == "1.58.0"
+    assert 'VERSION: Final = "1.58.0"' in (COMPONENT / "const.py").read_text()
+    assert '__version__ = "1.58.0"' in (COMPONENT / "engine" / "__init__.py").read_text()
     release_notes = (ROOT / "docs" / "RELEASE-NOTES.md").read_text()
     assert "payload schema 8" in release_notes.lower()
     assert "REST portfolio schema 1" in release_notes
-    assert "Gateway health schema 8" in release_notes
+    assert "Gateway health schema 9" in release_notes
     assert "schemas 1–6 remain supported" in release_notes
     assert not (ROOT / "gateway" / "src" / "portfolio_architect_gateway" / "trade_republic.py").exists()
     assert "authenticated DKB FinTS acquisition remains disabled" in release_notes

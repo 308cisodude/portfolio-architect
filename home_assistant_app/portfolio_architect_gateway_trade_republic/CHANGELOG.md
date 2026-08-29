@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.58.0
+
+- Version 1.58.0 adds health-schema-9 holdings/cash capability authority. Trade Republic `pdf` remains authoritative; `live_api` remains unavailable and cannot become authoritative. PDF acquisition behavior is unchanged.
+
 ## 1.57.0
 
 - Version alignment only for the historical Comdirect App withdrawal; Trade Republic acquisition and freshness behavior are unchanged from v1.56.1.

@@ -2674,6 +2674,10 @@ class PortfolioGatewayStatusSensor(
                 if health else []
             ),
             "fallback_policy": health.fallback_policy if health else None,
+            "acquisition_capabilities": (
+                [item.as_public_dict() for item in health.acquisition_capabilities]
+                if health else []
+            ),
             "previous_acquisition_method": (
                 health.previous_acquisition_method if health else None
             ),
@@ -3745,6 +3749,9 @@ def _acquisition_controls(
                 "provider_id": health.provider_id,
                 "active_method": health.active_acquisition_method,
                 "methods": [item.as_public_dict() for item in health.acquisition_methods],
+                "capabilities": [
+                    item.as_public_dict() for item in health.acquisition_capabilities
+                ],
                 "fallback_policy": health.fallback_policy,
                 "previous_method": health.previous_acquisition_method,
                 "last_method_change_at": _isoformat(

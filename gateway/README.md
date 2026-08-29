@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway runtime v1.57.0
+# Portfolio Architect Gateway runtime v1.58.0
 
-Version 1.57.0 changes release/repository packaging only: the historical unqualified Comdirect App is withdrawn, while the common runtime and canonical provider-qualified Comdirect App retain the bounded migration receiver required by already-installed v1.55/v1.56 Legacy instances. REST schema 1, health schema 8, provider acquisition authority, freshness, private-PKI trust, and `fallback_policy: none` are unchanged.
+Version 1.58.0 adds additive health-schema-9 capability-level acquisition authority while retaining health schemas 1–8 and REST schema 1. Provider Gateways remain the sole acquisition authority; capability fallback is explicitly `none`, and current live/static acquisition behavior is unchanged.
 
 Version 1.55.0 keeps health schema 8 and REST schema 1 unchanged. Static `csv`/`pdf` acquisition snapshots are no longer expired by the live-source LKG cache TTL; their immutable evidence timestamps remain visible and Portfolio Architect applies the configured static freshness policy. Live acquisition methods retain the configured bounded cache age.
 

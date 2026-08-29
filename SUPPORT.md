@@ -39,3 +39,5 @@ material, account metadata, or portfolio data.
 The project does not provide investment advice, trade execution, order placement,
 payment initiation, tax calculation, or guarantees about broker availability,
 pricing, or data accuracy.
+
+Version 1.58.0 adds provider-neutral capability-level acquisition authority in health schema 9 while preserving explicit no-fallback provider acquisition and the v1.57.0 Legacy withdrawal.
