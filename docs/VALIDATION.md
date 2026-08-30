@@ -1,22 +1,23 @@
-# v1.60.0 validation
+# v1.61.0 validation
 
-Exact baseline: published and fully live-accepted v1.59.0 tracked source.
+The release-preparation contract for v1.61.0 requires the exact published/live-accepted v1.60.0 tracked-source baseline and verifies the Configure removal-confirmation UX without changing runtime architecture.
 
-Validation requires:
+Required gates include:
 
-- all integration/Gateway/App package versions aligned to v1.60.0;
-- Gateway health schema 9 and health schemas 1–8 compatibility unchanged;
-- one common read-only acquisition-authority renderer synchronized into all official provider App build contexts;
-- canonical holdings/cash evidence clocks derived only from the already-published Gateway snapshot;
-- inactive staged provider evidence excluded from the authoritative evidence display;
-- independent holdings/cash timestamps visible where canonical provider state carries separate clocks;
-- missing capability evidence rendered explicitly without mutating method authority or fallback state;
-- Comdirect explicit `live_api`/complete-`csv` switching semantics unchanged and provider-local only;
-- DKB `csv` authority with FinTS still `research_only`, inactive and non-activatable; authenticated FinTS remains disabled;
-- Trade Republic `pdf` authority with live API unavailable and non-activatable;
-- Generic Import fixed CSV holdings-only and experimental;
+- all integration/Gateway/App package versions aligned to v1.61.0;
+- executable regression coverage for all four two-step selected-object removal flows;
+- complete bilingual English/German removal selection + confirmation copy and immutable context placeholders;
+- the primary REST source remains non-removable;
+- complete regression suite;
+- Python compilation and JSON/YAML parsing;
+- `git diff --check`;
+- strict publication readiness and repository/history privacy;
 - provider-source synchronization idempotence;
-- complete regression, Python/JSON/YAML parsing, publication, repository/history privacy, OpenSSL floor and deterministic-release gates;
-- independent source-release, Git-overlay and binary-patch replay from the exact v1.59.0 baseline.
+- OpenSSL runtime floor positive/negative evidence;
+- three independent byte-identical release builds;
+- release verification and artifact privacy for every build;
+- exact source-release correspondence;
+- independent Git-overlay and binary-patch replay from v1.60.0;
+- deterministic complete handoff packaging.
 
-Protected GitHub workflows remain authoritative for actual Docker/Supervisor/private-PKI/OpenSSL image execution where Docker is unavailable in the preparation environment.
+Protected GitHub workflows remain authoritative for actual Docker/Supervisor/private-PKI runtime smoke, resolved image OpenSSL evidence and workflow-pinned full-history Gitleaks execution when those facilities are unavailable locally.

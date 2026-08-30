@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.61.0
+
+- Version 1.61.0 aligns package metadata with Portfolio Architect's Home Assistant-side Configure removal-confirmation release; provider acquisition, authority, evidence clocks, wire/security contracts and fallback behavior are unchanged from v1.60.0.
+
 ## 1.60.0
 
 - Version 1.60.0 adds canonical authoritative evidence availability and UTC timestamps for holdings/cash. Inactive staged CSV evidence is excluded; explicit live API/CSV activation, authority and no-fallback behavior are unchanged.

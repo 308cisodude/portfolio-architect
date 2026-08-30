@@ -1,6 +1,8 @@
-# Portfolio Architect Gateway runtime v1.60.0
+# Portfolio Architect Gateway runtime v1.61.0
 
-Version 1.60.0 adds a bounded read-only helper that derives per-capability evidence clocks from the already-published canonical Gateway snapshot and displays them beside the existing health-schema-9 acquisition authority. The helper does not inspect inactive staged provider evidence and cannot mutate acquisition state. Health schema 9, schemas 1–8 compatibility, REST schema 1, provider authority and no-fallback semantics are unchanged.
+Version 1.61.0 is package alignment for Portfolio Architect's Home Assistant-side Configure removal-confirmation UX. Common Gateway runtime, health schema 9, schemas 1–8 compatibility, REST schema 1, provider authority, canonical evidence clocks and no-fallback semantics are unchanged from the fully live-accepted v1.60.0 baseline.
+
+Version 1.60.0 added the bounded read-only helper that derives per-capability evidence clocks from the already-published canonical Gateway snapshot.
 
 Version 1.59.0 adds only common read-only operator presentation for the existing health-schema-9 acquisition authority and method status. Health schema 9, schemas 1–8 compatibility, REST schema 1, provider authority and no-fallback semantics are unchanged.
 

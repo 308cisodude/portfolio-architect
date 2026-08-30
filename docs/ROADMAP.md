@@ -16,6 +16,10 @@ Adds one common read-only acquisition-authority/status presentation to every off
 
 Binds the common acquisition-authority cards to the canonical evidence clocks that are actually being published for holdings and cash. The display uses only the current canonical Gateway snapshot, deliberately excludes inactive staged method evidence, and makes independent DKB/TR holdings/cash timestamps visible without changing health schema 9, freshness policy, acquisition authority or fallback semantics.
 
+## v1.61.0 — Configure destructive-action confirmation — completed
+
+Completes the native Configure consistency work by separating object selection from destructive mutation. Supplemental REST Gateways, execution providers, savings-plan routes and directed funding relationships now require a second confirmation form that displays immutable identity/context before removal. The primary REST Gateway remains identity-preserving and non-removable. Provider runtimes, acquisition authority, schemas, planner behavior and dashboard presentation are unchanged.
+
 ## Next — future provider methods remain evidence-gated
 
 Do not add an authenticated provider method merely because the capability-control plane, operator UX and evidence-clock presentation now exist. A future DKB FinTS implementation may plug into this model only after real capability evidence exists; it must not weaken the research gate or introduce silent fallback.

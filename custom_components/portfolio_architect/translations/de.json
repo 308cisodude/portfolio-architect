@@ -2551,9 +2551,16 @@
       },
       "remove_rest_gateway": {
         "title": "REST-Gateway entfernen",
-        "description": "Ein zusätzliches Gateway nicht mehr einlesen. Gateway-App und private Daten werden dadurch nicht verändert.",
+        "description": "Wähle ein zusätzliches Gateway aus. Vor dem folgenden Bestätigungsschritt wird keine Quelle entfernt.",
         "data": {
           "provider_id": "Provider"
+        }
+      },
+      "remove_rest_gateway_details": {
+        "title": "Entfernen des REST-Gateways bestätigen",
+        "description": "**Entfernen:** {provider} (`{provider_id}`) · `{endpoint}`\n\nPortfolio Architect liest dieses zusätzliche Gateway anschließend nicht mehr ein. Primärquelle, Gateway-App und deren private Daten bleiben unverändert.",
+        "data": {
+          "confirm_remove": "Entfernen bestätigen"
         }
       },
       "plan_schedule": {
@@ -2638,9 +2645,16 @@
       },
       "remove_execution_provider": {
         "title": "Ausführungsanbieter entfernen",
-        "description": "Ein Anbieter mit referenzierter Finanzierungsbeziehung kann erst nach Entfernen dieser Beziehung gelöscht werden.",
+        "description": "Wähle einen Anbieter aus. Vor dem folgenden Bestätigungsschritt wird keine Ausführungskonfiguration entfernt.",
         "data": {
           "broker_provider_id": "Anbieter"
+        }
+      },
+      "remove_execution_provider_details": {
+        "title": "Entfernen des Ausführungsanbieters bestätigen",
+        "description": "**Entfernen:** {provider_name} · Anbieter-ID `{provider_id}`\n\nDies entfernt den Anbieter und seine enthaltenen Sparplanrouten aus der Ausführungsplanung. Ein Anbieter mit referenzierter Finanzierungsbeziehung kann erst nach Entfernen dieser Beziehung gelöscht werden.",
+        "data": {
+          "confirm_remove": "Entfernen bestätigen"
         }
       },
       "broker_savings_plans": {
@@ -2687,9 +2701,16 @@
       },
       "remove_savings_plan_route": {
         "title": "Sparplanroute entfernen",
-        "description": "Entferne eine explizite Anbieter-/Instrument-Route.",
+        "description": "Wähle eine konfigurierte Anbieter-/Instrumentroute aus. Vor dem folgenden Bestätigungsschritt wird keine Route entfernt.",
         "data": {
           "broker_savings_route": "Sparplanroute"
+        }
+      },
+      "remove_savings_plan_route_details": {
+        "title": "Entfernen der Sparplanroute bestätigen",
+        "description": "**Entfernen:** {provider_name} [`{provider_id}`] · ISIN `{isin}`\n\nDies entfernt nur diese explizite Anbieter-/Instrument-Sparplanroute und ihren routenspezifischen Nachweis.",
+        "data": {
+          "confirm_remove": "Entfernen bestätigen"
         }
       },
       "funding_topology": {
@@ -2715,9 +2736,16 @@
       },
       "remove_funding_transfer": {
         "title": "Finanzierungsbeziehung entfernen",
-        "description": "Entferne eine gerichtete Finanzierungsbeziehung.",
+        "description": "Wähle eine konfigurierte gerichtete Finanzierungsbeziehung aus. Vor dem folgenden Bestätigungsschritt wird keine Beziehung entfernt.",
         "data": {
           "broker_funding_edge": "Finanzierungsbeziehung"
+        }
+      },
+      "remove_funding_transfer_details": {
+        "title": "Entfernen der Finanzierungsbeziehung bestätigen",
+        "description": "**Entfernen:** {from_provider_name} [`{from_provider_id}`] → {to_provider_name} [`{to_provider_id}`]\n\nDies entfernt nur diese exakte gerichtete beratende Finanzierungsbeziehung. Die Gegenrichtung bleibt unverändert.",
+        "data": {
+          "confirm_remove": "Entfernen bestätigen"
         }
       },
       "edit_funding_transfer": {

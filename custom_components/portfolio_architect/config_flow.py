@@ -148,6 +148,7 @@ CONF_BROKER_TRANSFER_FEE_EUR = "broker_transfer_fee_eur"
 CONF_BROKER_SETTLEMENT_DAYS = "broker_settlement_business_days"
 CONF_BROKER_TRANSFER_SOURCE = "broker_transfer_source"
 CONF_BROKER_TRANSFER_AS_OF = "broker_transfer_as_of"
+CONF_CONFIRM_REMOVE = "confirm_remove"
 
 
 from .engine.execution import ExecutionConfig
@@ -1184,29 +1185,17 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
     async def async_step_remove_rest_gateway(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Remove one additional Gateway without touching the primary source."""
-        options = dict(self.config_entry.options)
-        raw_sources = options.get(CONF_SUPPLEMENTAL_REST_SOURCES, [])
-        stored = (
-            [
-                SupplementalRestSourceConfig.from_mapping(item)
-                for item in raw_sources
-                if isinstance(item, dict)
-            ]
-            if isinstance(raw_sources, list)
-            else []
-        )
+        """Select one supplemental Gateway for explicit removal confirmation."""
+        stored = self._supplemental_rest_sources()
         if not stored:
             return self.async_abort(reason="no_rest_gateways")
         provider_ids = [item.provider_id for item in stored]
         if user_input is not None:
             selected = str(user_input["provider_id"])
-            options[CONF_SUPPLEMENTAL_REST_SOURCES] = [
-                item.as_storage_dict() for item in stored if item.provider_id != selected
-            ]
-            if not options[CONF_SUPPLEMENTAL_REST_SOURCES]:
-                options.pop(CONF_SUPPLEMENTAL_REST_SOURCES, None)
-            return self.async_create_entry(data=options)
+            if selected not in provider_ids:
+                return self.async_abort(reason="no_rest_gateways")
+            self._rest_gateway_provider_id = selected
+            return await self.async_step_remove_rest_gateway_details()
         return self.async_show_form(
             step_id="remove_rest_gateway",
             data_schema=vol.Schema(
@@ -1219,6 +1208,45 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
                     )
                 }
             ),
+        )
+
+    async def async_step_remove_rest_gateway_details(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Confirm removal of one immutable supplemental Gateway identity."""
+        selected = self._rest_gateway_provider_id
+        stored = self._supplemental_rest_sources()
+        existing = next((item for item in stored if item.provider_id == selected), None)
+        if existing is None:
+            return self.async_abort(reason="no_rest_gateways")
+        if user_input is not None and bool(user_input.get(CONF_CONFIRM_REMOVE)):
+            options = dict(self.config_entry.options)
+            remaining = [
+                item.as_storage_dict()
+                for item in stored
+                if item.provider_id != existing.provider_id
+            ]
+            if remaining:
+                options[CONF_SUPPLEMENTAL_REST_SOURCES] = remaining
+            else:
+                options.pop(CONF_SUPPLEMENTAL_REST_SOURCES, None)
+            self._rest_gateway_provider_id = None
+            return self.async_create_entry(data=options)
+        return self.async_show_form(
+            step_id="remove_rest_gateway_details",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_CONFIRM_REMOVE, default=False): BooleanSelector(
+                        BooleanSelectorConfig()
+                    )
+                }
+            ),
+            description_placeholders={
+                "provider": existing.provider_id.replace("_", " ").title(),
+                "provider_id": existing.provider_id,
+                "endpoint": existing.endpoint_url,
+            },
+            last_step=True,
         )
 
     async def async_step_plan_schedule(
@@ -1677,28 +1705,65 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
     async def async_step_remove_execution_provider(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Remove one provider after its transfer edges have been removed."""
-        errors: dict[str, str] = {}
+        """Select one execution provider for explicit removal confirmation."""
         try:
             context = await self._async_broker_context()
             options = _broker_provider_select_options(context.document)
         except (OSError, ValueError, PortfolioSourcePathError):
             return self.async_abort(reason="broker_editor_unavailable")
+        if not options:
+            return self.async_abort(reason="broker_editor_unavailable")
         if user_input is not None:
+            selected = str(user_input[CONF_BROKER_PROVIDER_ID])
+            if selected not in {item["value"] for item in options}:
+                return self.async_abort(reason="broker_editor_unavailable")
+            self._broker_provider_id = selected
+            return await self.async_step_remove_execution_provider_details()
+        return self.async_show_form(
+            step_id="remove_execution_provider",
+            data_schema=_broker_provider_select_schema(options),
+        )
+
+    async def async_step_remove_execution_provider_details(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Confirm removal of one immutable execution-provider identity."""
+        provider_id = self._broker_provider_id
+        errors: dict[str, str] = {}
+        try:
+            context = await self._async_broker_context()
+            providers = context.document.get("providers", {})
+            provider = providers.get(provider_id) if isinstance(providers, dict) else None
+            if not isinstance(provider_id, str) or not isinstance(provider, dict):
+                raise ValueError("provider disappeared")
+        except (OSError, ValueError, PortfolioSourcePathError):
+            return self.async_abort(reason="broker_editor_unavailable")
+        if user_input is not None and bool(user_input.get(CONF_CONFIRM_REMOVE)):
             try:
                 updated = remove_provider(
                     context.document,
-                    provider_id=str(user_input[CONF_BROKER_PROVIDER_ID]),
+                    provider_id=provider_id,
                     evaluated_on=dt_util.now().date(),
                 )
                 await self._async_write_broker(context.path, updated)
             except (OSError, ValueError):
                 errors["base"] = "invalid_broker_config"
             else:
+                self._broker_provider_id = None
                 return self.async_create_entry(data=dict(self.config_entry.options))
         return self.async_show_form(
-            step_id="remove_execution_provider",
-            data_schema=_broker_provider_select_schema(options),
+            step_id="remove_execution_provider_details",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_CONFIRM_REMOVE, default=False): BooleanSelector(
+                        BooleanSelectorConfig()
+                    )
+                }
+            ),
+            description_placeholders={
+                "provider_name": str(provider.get("name") or provider_id),
+                "provider_id": provider_id,
+            },
             errors=errors,
             last_step=True,
         )
@@ -1856,8 +1921,7 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
     async def async_step_remove_savings_plan_route(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Remove one explicit savings-plan route."""
-        errors: dict[str, str] = {}
+        """Select one savings-plan route for explicit removal confirmation."""
         try:
             context = await self._async_broker_context()
             routes = _broker_savings_route_options(context.document)
@@ -1867,8 +1931,35 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
             return self.async_abort(reason="broker_editor_unavailable")
         if user_input is not None:
             token = str(user_input[CONF_BROKER_SAVINGS_ROUTE])
+            if token not in {item["value"] for item in routes}:
+                return self.async_abort(reason="broker_editor_unavailable")
+            self._broker_route_token = token
+            return await self.async_step_remove_savings_plan_route_details()
+        return self.async_show_form(
+            step_id="remove_savings_plan_route",
+            data_schema=_broker_route_select_schema(routes),
+        )
+
+    async def async_step_remove_savings_plan_route_details(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Confirm removal of one immutable provider/ISIN savings-plan route."""
+        token = self._broker_route_token
+        if token is None or "|" not in token:
+            return self.async_abort(reason="broker_editor_unavailable")
+        provider_id, isin = token.split("|", 1)
+        errors: dict[str, str] = {}
+        try:
+            context = await self._async_broker_context()
+            providers = context.document.get("providers", {})
+            provider = providers.get(provider_id) if isinstance(providers, dict) else None
+            plans = provider.get("savings_plans", {}) if isinstance(provider, dict) else {}
+            if not isinstance(provider, dict) or not isinstance(plans, dict) or isin not in plans:
+                raise ValueError("route disappeared")
+        except (OSError, ValueError, PortfolioSourcePathError):
+            return self.async_abort(reason="broker_editor_unavailable")
+        if user_input is not None and bool(user_input.get(CONF_CONFIRM_REMOVE)):
             try:
-                provider_id, isin = token.split("|", 1)
                 updated = remove_savings_plan(
                     context.document,
                     provider_id=provider_id,
@@ -1879,10 +1970,22 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
             except (OSError, ValueError):
                 errors["base"] = "invalid_broker_config"
             else:
+                self._broker_route_token = None
                 return self.async_create_entry(data=dict(self.config_entry.options))
         return self.async_show_form(
-            step_id="remove_savings_plan_route",
-            data_schema=_broker_route_select_schema(routes),
+            step_id="remove_savings_plan_route_details",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_CONFIRM_REMOVE, default=False): BooleanSelector(
+                        BooleanSelectorConfig()
+                    )
+                }
+            ),
+            description_placeholders={
+                "provider_name": str(provider.get("name") or provider_id),
+                "provider_id": provider_id,
+                "isin": isin,
+            },
             errors=errors,
             last_step=True,
         )
@@ -2045,8 +2148,7 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
     async def async_step_remove_funding_transfer(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Remove one directed funding edge without inferring its reverse."""
-        errors: dict[str, str] = {}
+        """Select one directed funding edge for explicit removal confirmation."""
         try:
             context = await self._async_broker_context()
             edges = _broker_funding_edge_options(context.document)
@@ -2055,8 +2157,45 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
         if not edges:
             return self.async_abort(reason="broker_editor_unavailable")
         if user_input is not None:
+            token = str(user_input[CONF_BROKER_FUNDING_EDGE])
+            if token not in {item["value"] for item in edges}:
+                return self.async_abort(reason="broker_editor_unavailable")
+            self._broker_funding_token = token
+            return await self.async_step_remove_funding_transfer_details()
+        return self.async_show_form(
+            step_id="remove_funding_transfer",
+            data_schema=_broker_funding_edge_select_schema(edges),
+        )
+
+    async def async_step_remove_funding_transfer_details(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Confirm removal of one immutable directed funding edge."""
+        token = self._broker_funding_token
+        if token is None or "|" not in token:
+            return self.async_abort(reason="broker_editor_unavailable")
+        source, destination = token.split("|", 1)
+        errors: dict[str, str] = {}
+        try:
+            context = await self._async_broker_context()
+            providers = _broker_provider_select_options(context.document)
+            edges = context.document.get("funding_transfers", [])
+            edge = next(
+                (
+                    item
+                    for item in edges
+                    if isinstance(item, dict)
+                    and item.get("from_provider") == source
+                    and item.get("to_provider") == destination
+                ),
+                None,
+            )
+            if not isinstance(edge, dict):
+                raise ValueError("funding edge disappeared")
+        except (OSError, ValueError, PortfolioSourcePathError):
+            return self.async_abort(reason="broker_editor_unavailable")
+        if user_input is not None and bool(user_input.get(CONF_CONFIRM_REMOVE)):
             try:
-                source, destination = str(user_input[CONF_BROKER_FUNDING_EDGE]).split("|", 1)
                 updated = remove_funding_transfer(
                     context.document,
                     from_provider=source,
@@ -2067,10 +2206,24 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
             except (OSError, ValueError):
                 errors["base"] = "invalid_broker_config"
             else:
+                self._broker_funding_token = None
                 return self.async_create_entry(data=dict(self.config_entry.options))
+        provider_names = {item["value"]: item["label"] for item in providers}
         return self.async_show_form(
-            step_id="remove_funding_transfer",
-            data_schema=_broker_funding_edge_select_schema(edges),
+            step_id="remove_funding_transfer_details",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_CONFIRM_REMOVE, default=False): BooleanSelector(
+                        BooleanSelectorConfig()
+                    )
+                }
+            ),
+            description_placeholders={
+                "from_provider_name": provider_names.get(source, source),
+                "from_provider_id": source,
+                "to_provider_name": provider_names.get(destination, destination),
+                "to_provider_id": destination,
+            },
             errors=errors,
             last_step=True,
         )

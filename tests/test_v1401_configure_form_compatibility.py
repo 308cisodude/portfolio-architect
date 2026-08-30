@@ -116,7 +116,7 @@ def test_options_flow_rendered_steps_are_bilingual_and_menu_targets_exist() -> N
                 if isinstance(value, list):
                     literal_menu_targets.update(item for item in value if isinstance(item, str))
 
-    assert len(rendered_steps) == 35
+    assert len(rendered_steps) == 39
     assert literal_menu_targets <= methods
     for language in ("en", "de"):
         translations = json.loads(

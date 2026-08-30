@@ -1,4 +1,6 @@
-# Portfolio Architect Gateway — DKB v1.60.0
+# Portfolio Architect Gateway — DKB v1.61.0
+
+Version 1.61.0 is package alignment for Portfolio Architect's Home Assistant-side Configure removal-confirmation UX. DKB acquisition, health schema 9, canonical evidence clocks, private-PKI transport and no-fallback behavior are unchanged from v1.60.0.
 
 Version 1.60.0 adds read-only authoritative holdings/cash evidence availability and UTC timestamps to the existing Acquisition authority cards. The two clocks remain independent and come only from the canonical CSV snapshot. DKB `csv` remains authoritative; `fints` remains `research_only`, inactive, non-activatable, and authenticated FinTS acquisition remains disabled.
 
