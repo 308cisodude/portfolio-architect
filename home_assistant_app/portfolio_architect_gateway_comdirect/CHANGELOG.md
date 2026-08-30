@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.60.0
+
+- Version 1.60.0 adds canonical authoritative evidence availability and UTC timestamps for holdings/cash. Inactive staged CSV evidence is excluded; explicit live API/CSV activation, authority and no-fallback behavior are unchanged.
+
 ## 1.59.0
 
 - Version 1.59.0 adds common read-only capability authority and method-status cards. Existing explicit live API/CSV activation remains provider-local; no fallback or acquisition behavior changes.

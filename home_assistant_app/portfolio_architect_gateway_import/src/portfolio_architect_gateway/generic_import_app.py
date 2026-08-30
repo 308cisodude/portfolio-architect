@@ -292,7 +292,10 @@ class GenericImportIngressHandler(ProviderShellIngressHandler):
                 f"<p><strong>{escape(diagnostic['outcome'])}</strong> · "
                 f"{escape(diagnostic['recorded_at'])}</p><p>{escape(diagnostic['message'])}</p>"
             )
-        authority_html = render_acquisition_authority(self.import_server.generic_provider.acquisition_control)
+        authority_html = render_acquisition_authority(
+            self.import_server.generic_provider.acquisition_control,
+            evidence_timestamps=self.import_server.gateway_state.capability_evidence_timestamps(),
+        )
         body = f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Portfolio Architect Gateway — Generic Import</title>

@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway — DKB v1.59.0
+# Portfolio Architect Gateway — DKB v1.60.0
 
-Version 1.59.0 adds the common read-only Acquisition authority/status presentation. DKB `csv` remains authoritative for holdings/cash; `fints` remains `research_only`, inactive, non-activatable, and authenticated FinTS acquisition remains disabled.
+Version 1.60.0 adds read-only authoritative holdings/cash evidence availability and UTC timestamps to the existing Acquisition authority cards. The two clocks remain independent and come only from the canonical CSV snapshot. DKB `csv` remains authoritative; `fints` remains `research_only`, inactive, non-activatable, and authenticated FinTS acquisition remains disabled.
 
 ## DKB depot CSV holdings
 

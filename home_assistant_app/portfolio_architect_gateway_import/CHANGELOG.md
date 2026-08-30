@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.60.0
+
+- Version 1.60.0 adds canonical authoritative holdings-evidence availability and UTC timestamp. Generic Import remains experimental fixed-CSV holdings-only; a no-import state reports evidence unavailable without changing authority.
+
 ## 1.59.0
 
 - Version 1.59.0 adds common read-only capability authority and method-status cards. Generic Import remains experimental fixed-CSV holdings-only.

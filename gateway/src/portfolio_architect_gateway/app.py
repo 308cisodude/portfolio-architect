@@ -1168,7 +1168,10 @@ class IngressRequestHandler(BaseHTTPRequestHandler):
             if not csv_active and csv_method.get("can_activate") else ""
         )
         authority_html = (
-            render_acquisition_authority(controller.acquisition.acquisition_control)
+            render_acquisition_authority(
+                controller.acquisition.acquisition_control,
+                evidence_timestamps=controller.gateway_state.capability_evidence_timestamps(),
+            )
             if controller.acquisition is not None
             else ""
         )

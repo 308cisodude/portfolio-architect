@@ -12,9 +12,13 @@ Introduces health-schema-9 capability authority for holdings and cash while pres
 
 Adds one common read-only acquisition-authority/status presentation to every official Gateway Ingress UI. Capability authority, authority reason, supported method readiness/active state and mandatory no-fallback policy are now visible without adding any common method-control endpoint. Existing Comdirect explicit activation remains provider-local; DKB FinTS remains research-only and authenticated acquisition remains disabled.
 
+## v1.60.0 — authoritative capability evidence UX — completed
+
+Binds the common acquisition-authority cards to the canonical evidence clocks that are actually being published for holdings and cash. The display uses only the current canonical Gateway snapshot, deliberately excludes inactive staged method evidence, and makes independent DKB/TR holdings/cash timestamps visible without changing health schema 9, freshness policy, acquisition authority or fallback semantics.
+
 ## Next — future provider methods remain evidence-gated
 
-Do not add an authenticated provider method merely because the capability-control plane and operator UX now exist. A future DKB FinTS implementation may plug into this model only after real capability evidence exists; it must not weaken the research gate or introduce silent fallback.
+Do not add an authenticated provider method merely because the capability-control plane, operator UX and evidence-clock presentation now exist. A future DKB FinTS implementation may plug into this model only after real capability evidence exists; it must not weaken the research gate or introduce silent fallback.
 
 ## v1.22.0 — publication and privacy hardening
 

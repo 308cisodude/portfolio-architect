@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.60.0
+
+- Version 1.60.0 adds canonical authoritative holdings/cash evidence availability and independent UTC timestamps. PDF remains authoritative; live API remains unavailable and non-activatable.
+
 ## 1.59.0
 
 - Version 1.59.0 adds common read-only capability authority and method-status cards. PDF remains authoritative; live API remains unavailable and non-activatable.

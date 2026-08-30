@@ -48,7 +48,7 @@ Provider identity and acquisition method are deliberately separate. One provider
 
 Comdirect is the first switchable implementation: `live_api` and `csv` may be prepared independently, inactive CSV requires both holdings and cash evidence before activation, and explicit switching is crash-safe/atomic with `fallback_policy: none`. Interrupted activation restores the prior mode and invalidates any ambiguous canonical cache before startup refresh; malformed inactive CSV candidate state is merely not-ready and cannot disrupt the active live method. DKB advertises `csv` plus non-activatable research-only `fints`; Trade Republic advertises `pdf` plus non-activatable unavailable `live_api`; Generic Import is fixed `csv`.
 
-Capability-level mixed arbitration (for example DKB holdings from CSV and cash from FinTS) is intentionally deferred until provider-level switching is live-proven.
+Health schema 9 (introduced in v1.58.0) now models authority independently per capability. The current live-accepted providers still use one method for both holdings and cash—Comdirect `live_api` on the current configuration, DKB `csv`, and Trade Republic `pdf`—but the model can represent a separately justified supplemental authority without duplicating the provider in Portfolio Architect. Any future mixed-method provider configuration remains evidence-gated, explicit and `fallback_policy: none`; authenticated DKB FinTS is not enabled by this capability model. v1.60.0 additionally displays the evidence clock of the canonical snapshot currently published for each capability, never staged inactive evidence.
 
 ## Shared source and packaging rule
 

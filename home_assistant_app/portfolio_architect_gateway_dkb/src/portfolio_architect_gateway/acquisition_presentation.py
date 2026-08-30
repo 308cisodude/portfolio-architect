@@ -7,8 +7,9 @@ persists no state, and cannot alter acquisition authority or fallback policy.
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from html import escape
-from typing import Final
+from typing import Final, Mapping
 
 from .acquisition_control import (
     AcquisitionControl,
@@ -17,7 +18,7 @@ from .acquisition_control import (
 )
 
 ACQUISITION_AUTHORITY_CSS: Final = """
-.pa-authority-intro{margin-bottom:14px}.pa-capability-grid,.pa-method-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}.pa-capability-card,.pa-method-card{border:1px solid #64748b55;border-radius:12px;padding:13px;background:#64748b0d}.pa-capability-card h3,.pa-method-card h3{margin:.1rem 0 .65rem;font-size:1.05rem}.pa-authority-row{display:flex;justify-content:space-between;gap:12px;align-items:baseline;margin:.45rem 0}.pa-authority-row span:first-child{opacity:.78}.pa-pill{display:inline-block;font-size:.76rem;font-weight:800;letter-spacing:.04em;padding:3px 8px;margin:2px 4px 2px 0;border-radius:999px;border:1px solid currentColor}.pa-pill.authority,.pa-pill.active{color:#4ade80}.pa-pill.ready{color:#60a5fa}.pa-pill.warning{color:#fbbf24}.pa-method-card.active,.pa-method-card.authority{border:2px solid #22c55eaa;background:#22c55e12}.pa-method-card.ready{border:2px solid #3b82f6aa;background:#3b82f612}.pa-method-card.warning{border:2px solid #f59e0baa;background:#f59e0b12}.pa-method-meta{font-size:.9rem;opacity:.86}.pa-supported{margin:.45rem 0}.pa-no-fallback{font-weight:800}.pa-authority-note{font-size:.9rem;opacity:.82}@media(max-width:600px){.pa-authority-row{display:block}.pa-authority-row span{display:block;margin-top:3px}}
+.pa-authority-intro{margin-bottom:14px}.pa-capability-grid,.pa-method-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}.pa-capability-card,.pa-method-card{border:1px solid #64748b55;border-radius:12px;padding:13px;background:#64748b0d}.pa-capability-card h3,.pa-method-card h3{margin:.1rem 0 .65rem;font-size:1.05rem}.pa-authority-row{display:flex;justify-content:space-between;gap:12px;align-items:baseline;margin:.45rem 0}.pa-authority-row span:first-child{opacity:.78}.pa-pill{display:inline-block;font-size:.76rem;font-weight:800;letter-spacing:.04em;padding:3px 8px;margin:2px 4px 2px 0;border-radius:999px;border:1px solid currentColor}.pa-pill.authority,.pa-pill.active{color:#4ade80}.pa-pill.ready{color:#60a5fa}.pa-pill.warning{color:#fbbf24}.pa-method-card.active,.pa-method-card.authority{border:2px solid #22c55eaa;background:#22c55e12}.pa-method-card.ready{border:2px solid #3b82f6aa;background:#3b82f612}.pa-method-card.warning{border:2px solid #f59e0baa;background:#f59e0b12}.pa-method-meta{font-size:.9rem;opacity:.86}.pa-supported{margin:.45rem 0}.pa-no-fallback{font-weight:800}.pa-authority-note{font-size:.9rem;opacity:.82}.pa-pill.evidence-available{color:#4ade80}.pa-pill.evidence-missing{color:#fbbf24}.pa-evidence-time{font-size:.82rem;word-break:break-all}@media(max-width:600px){.pa-authority-row{display:block}.pa-authority-row span{display:block;margin-top:3px}}
 """.strip()
 
 _STATE_LABELS: Final = {
@@ -61,9 +62,31 @@ def _display_id(value: str) -> str:
     return escape(value)
 
 
-def render_acquisition_authority(control: AcquisitionControl) -> str:
-    """Render one bounded, read-only acquisition authority/status section."""
+def _evidence_rows(value: datetime | None) -> str:
+    if value is None:
+        return (
+            '<div class="pa-authority-row"><span>Authoritative evidence</span>'
+            '<span class="pa-pill evidence-missing">NOT AVAILABLE</span></div>'
+            '<div class="pa-authority-row"><span>Evidence timestamp</span>'
+            '<span class="pa-evidence-time">not available</span></div>'
+        )
+    timestamp = value.astimezone(timezone.utc).isoformat(timespec="seconds")
+    return (
+        '<div class="pa-authority-row"><span>Authoritative evidence</span>'
+        '<span class="pa-pill evidence-available">AVAILABLE</span></div>'
+        '<div class="pa-authority-row"><span>Evidence timestamp</span>'
+        f'<code class="pa-evidence-time">{escape(timestamp)}</code></div>'
+    )
+
+
+def render_acquisition_authority(
+    control: AcquisitionControl,
+    *,
+    evidence_timestamps: Mapping[str, datetime | None] | None = None,
+) -> str:
+    """Render bounded read-only acquisition authority and canonical evidence clocks."""
     methods = {item.method_id: item for item in control.methods}
+    evidence_timestamps = evidence_timestamps or {}
 
     capability_cards: list[str] = []
     for item in control.capabilities:
@@ -84,6 +107,7 @@ def render_acquisition_authority(control: AcquisitionControl) -> str:
             "<strong>{reason}</strong></div>"
             '<div class="pa-authority-row"><span>Automatic fallback</span>'
             '<strong class="pa-no-fallback">{fallback}</strong></div>'
+            '{evidence_rows}'
             '<div class="pa-supported"><span class="pa-authority-note">Supported methods</span><br>{supported}</div>'
             "</article>".format(
                 capability=_display_id(item.capability_id),
@@ -91,6 +115,7 @@ def render_acquisition_authority(control: AcquisitionControl) -> str:
                 authority=_display_id(item.authoritative_method),
                 reason=escape(_REASON_LABELS.get(item.authority_reason, item.authority_reason)),
                 fallback=escape(item.fallback_policy),
+                evidence_rows=_evidence_rows(evidence_timestamps.get(item.capability_id)),
                 supported=supported,
             )
         )
@@ -127,9 +152,9 @@ def render_acquisition_authority(control: AcquisitionControl) -> str:
     return (
         '<section class="pa-acquisition-authority" aria-labelledby="pa-acquisition-authority-heading">'
         '<h2 id="pa-acquisition-authority-heading">Acquisition authority</h2>'
-        '<p class="pa-authority-intro">Read-only capability authority and method readiness. '
+        '<p class="pa-authority-intro">Read-only capability authority and method readiness, with canonical evidence clocks. '
         'A supported method is not necessarily active or authoritative; authority changes only through '
-        'the provider Gateway\'s explicit control path. Automatic fallback remains disabled.</p>'
+        'the provider Gateway\'s explicit control path. Evidence timestamps describe the currently published authoritative snapshot, not inactive staged evidence. Automatic fallback remains disabled.</p>'
         f'<div class="pa-capability-grid">{capability_html}</div>'
         '<h3>Method inventory</h3>'
         f'<div class="pa-method-grid">{"".join(method_cards)}</div>'

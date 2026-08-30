@@ -1,4 +1,6 @@
-# Portfolio Architect Gateway runtime v1.59.0
+# Portfolio Architect Gateway runtime v1.60.0
+
+Version 1.60.0 adds a bounded read-only helper that derives per-capability evidence clocks from the already-published canonical Gateway snapshot and displays them beside the existing health-schema-9 acquisition authority. The helper does not inspect inactive staged provider evidence and cannot mutate acquisition state. Health schema 9, schemas 1–8 compatibility, REST schema 1, provider authority and no-fallback semantics are unchanged.
 
 Version 1.59.0 adds only common read-only operator presentation for the existing health-schema-9 acquisition authority and method status. Health schema 9, schemas 1–8 compatibility, REST schema 1, provider authority and no-fallback semantics are unchanged.
 

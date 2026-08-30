@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.60.0
+
+- Add authoritative capability-evidence availability and UTC evidence timestamps to the common Gateway Acquisition authority cards.
+- Derive those clocks only from the already-published canonical snapshot; inactive staged method evidence is deliberately excluded and cannot appear authoritative.
+- Preserve independent holdings/cash clocks for DKB and Trade Republic and clarify the Generic Import no-snapshot state without changing authority.
+- Keep health schema 9, provider authority, explicit no-fallback behavior, freshness/LKG/private-PKI/planner semantics and the authenticated-DKB-FinTS research gate unchanged.
+
 ## 1.59.0
 
 - Add a common read-only Acquisition authority presentation to all official Gateway Ingress UIs.

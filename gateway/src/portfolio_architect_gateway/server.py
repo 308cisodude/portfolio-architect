@@ -313,6 +313,25 @@ class GatewayState:
             return 0
         return self._config.max_cached_snapshot_age_seconds
 
+    def capability_evidence_timestamps(self) -> dict[str, datetime | None]:
+        """Return current canonical holdings/cash evidence clocks for read-only UX.
+
+        The values come only from the already-published canonical Gateway snapshot.
+        Inactive staged provider evidence is deliberately excluded so this helper cannot
+        imply fallback or authority that the control plane has not published.
+        """
+        with self._lock:
+            snapshot = self._snapshot
+        if snapshot is None:
+            return {"holdings": None, "cash": None}
+        holdings = snapshot.generated_at.astimezone(timezone.utc)
+        cash: datetime | None = None
+        if snapshot.investment_cash is not None:
+            cash = snapshot.investment_cash.as_of.astimezone(timezone.utc)
+        elif snapshot.investment_reserve_as_of is not None:
+            cash = snapshot.investment_reserve_as_of.astimezone(timezone.utc)
+        return {"holdings": holdings, "cash": cash}
+
     def snapshot_view(self) -> SnapshotView | None:
         with self._lock:
             snapshot = self._snapshot

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.60.0
+
+- Version 1.60.0 adds canonical authoritative holdings/cash evidence availability and independent UTC timestamps. CSV remains authoritative; FinTS remains research-only, inactive, non-activatable and unauthenticated.
+
 ## 1.59.0
 
 - Version 1.59.0 adds common read-only capability authority and method-status cards. CSV remains authoritative; FinTS remains research-only, inactive, non-activatable and unauthenticated.

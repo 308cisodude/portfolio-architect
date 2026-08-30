@@ -1,6 +1,6 @@
-# Portfolio Architect v1.59.0
+# Portfolio Architect v1.60.0
 
-Version 1.59.0 adds a consistent read-only acquisition-authority/status view to every official Gateway Ingress page. It presents the health-schema-9 capability authority and method readiness without adding a common switch path, automatic fallback, new provider acquisition, or authenticated DKB FinTS.
+Version 1.60.0 extends the live-accepted acquisition-authority UX with **authoritative capability evidence clocks**. Every official Gateway Ingress capability card now shows whether canonical evidence is currently available and the UTC timestamp of the evidence that is actually published for that capability. The display is derived only from the already-published canonical Gateway snapshot, so inactive staged evidence cannot look authoritative and cannot imply fallback. Health schema 9, provider authority, acquisition switching, freshness policy and authenticated DKB FinTS remain unchanged.
 
 Portfolio Architect is a Home Assistant-native portfolio overview, policy-check,
 and deterministic investment-planning system. It supports provider-isolated acquisition, multi-source consolidation, cost-aware recommendations, and separate read-only Gateway Apps, including DKB depot-CSV acquisition inside the DKB Gateway and simultaneous aggregation of multiple local Gateway REST snapshots.
@@ -35,6 +35,8 @@ transfer, payment, or account-transaction capability.
   the authenticated connection while preserving Host/SNI/certificate identity.
 
 ## Provider Gateway Apps
+
+Version 1.60.0 adds **Authoritative evidence** and **Evidence timestamp** rows to the common schema-9 capability cards. Holdings and cash clocks remain independent where the provider snapshot carries independent evidence (notably DKB and Trade Republic). Comdirect shows the clocks from the currently published active-method snapshot; prepared inactive CSV evidence is deliberately excluded until an explicit method switch publishes it. Generic Import shows holdings evidence only, and an empty installation explicitly shows that authoritative evidence is not available yet.
 
 Version 1.59.0 renders the schema-9 control plane consistently inside every official Gateway Ingress UI: per-capability authoritative method, authority reason, supported-method readiness/active state, and `fallback_policy: none`, plus a read-only method inventory. Green remains active/authoritative, blue ready-but-inactive, and amber unavailable/not-ready/research-only. Comdirect retains its existing explicit provider-local activation controls; the common presentation adds no control endpoint.
 
