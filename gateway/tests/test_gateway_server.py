@@ -10,7 +10,7 @@ from portfolio_architect_gateway.errors import (
     GatewayError,
     ReauthenticationRequired,
 )
-from portfolio_architect_gateway.models import PortfolioSnapshot, Position
+from portfolio_architect_gateway.models import InvestmentCash, PortfolioSnapshot, Position
 from portfolio_architect_gateway.server import GatewayHttpServer, GatewayState
 from portfolio_architect_gateway.store import save_snapshot
 
@@ -611,3 +611,33 @@ def test_static_acquisition_snapshot_is_not_expired_by_live_lkg_cache_ttl(tmp_pa
         assert health["max_cached_snapshot_age_seconds"] == 0
         assert health["snapshot_expires_in_seconds"] is None
         assert health["active_acquisition_method"] == method
+
+
+def test_capability_evidence_timestamps_come_only_from_canonical_snapshot(tmp_path: Path) -> None:
+    config = _config(tmp_path)
+    holdings_at = datetime(2026, 8, 24, 0, 0, tzinfo=timezone.utc)
+    cash_at = datetime(2026, 8, 22, 22, 0, tzinfo=timezone.utc)
+    save_snapshot(
+        config.server.snapshot_file,
+        PortfolioSnapshot(
+            generated_at=holdings_at,
+            positions=(
+                Position("A1XB5U", "ETF One", Decimal("123.45"), instrument_type="ETF"),
+            ),
+            investment_reserve_eur=Decimal("267.08"),
+            investment_reserve_as_of=cash_at,
+            investment_cash=InvestmentCash(
+                account_balance_eur=Decimal("267.08"),
+                eligible_eur=Decimal("267.08"),
+                authorized_eur=Decimal("267.08"),
+                policy="all_available",
+                as_of=cash_at,
+            ),
+        ),
+    )
+    state = GatewayState(config.server, NoNetworkClient())
+
+    assert state.capability_evidence_timestamps() == {
+        "holdings": holdings_at,
+        "cash": cash_at,
+    }
