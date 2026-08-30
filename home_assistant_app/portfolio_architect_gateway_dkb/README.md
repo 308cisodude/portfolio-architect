@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway — DKB v1.58.0
+# Portfolio Architect Gateway — DKB v1.59.0
 
-Version 1.58.0 adds health-schema-9 holdings/cash capability authority. DKB `csv` remains authoritative; `fints` remains `research_only`, cannot become authoritative, and authenticated FinTS remains disabled.
+Version 1.59.0 adds the common read-only Acquisition authority/status presentation. DKB `csv` remains authoritative for holdings/cash; `fints` remains `research_only`, inactive, non-activatable, and authenticated FinTS acquisition remains disabled.
 
 ## DKB depot CSV holdings
 

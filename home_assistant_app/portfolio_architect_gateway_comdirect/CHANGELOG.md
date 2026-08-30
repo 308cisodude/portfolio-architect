@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.59.0
+
+- Version 1.59.0 adds common read-only capability authority and method-status cards. Existing explicit live API/CSV activation remains provider-local; no fallback or acquisition behavior changes.
+
 ## 1.58.0
 
 - Version 1.58.0 adds health-schema-9 holdings/cash capability authority for `live_api` and complete `csv`. The explicitly active Comdirect acquisition method remains authoritative for both capabilities, with `fallback_policy: none`; no automatic fallback or provider runtime behavior changes.

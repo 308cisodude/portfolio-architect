@@ -16,6 +16,7 @@ from typing import Any, Final
 from urllib.parse import urlsplit
 
 from . import __version__
+from .acquisition_presentation import ACQUISITION_AUTHORITY_CSS, render_acquisition_authority
 from .errors import ProtocolError
 from .generic_csv import (
     CSV_DELIMITERS,
@@ -291,15 +292,17 @@ class GenericImportIngressHandler(ProviderShellIngressHandler):
                 f"<p><strong>{escape(diagnostic['outcome'])}</strong> · "
                 f"{escape(diagnostic['recorded_at'])}</p><p>{escape(diagnostic['message'])}</p>"
             )
+        authority_html = render_acquisition_authority(self.import_server.generic_provider.acquisition_control)
         body = f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Portfolio Architect Gateway — Generic Import</title>
 <style>
-:root{{color-scheme:dark}}body{{font-family:system-ui,sans-serif;max-width:920px;margin:2rem auto;padding:0 1rem;background:#111;color:#eee}}section{{border:1px solid #444;border-radius:12px;padding:1rem;margin:1rem 0}}.mode-card.active{{border:2px solid #22c55eaa;background:#22c55e12}}.mode-head{{display:flex;justify-content:space-between;align-items:center;gap:12px}}.badge{{font-size:.78rem;font-weight:800;padding:4px 9px;border-radius:999px;border:1px solid currentColor;color:#4ade80}}.good{{color:#7bd88f}}.warn{{color:#ffca28}}.bad{{color:#ff7b7b}}code{{word-break:break-all}}label{{display:block;margin:.7rem 0 .2rem}}input,select{{box-sizing:border-box;width:100%;max-width:680px;padding:.55rem;background:#1b1b1b;color:#eee;border:1px solid #555;border-radius:6px}}button{{margin-top:1rem;padding:.65rem 1rem;border-radius:7px;border:1px solid #6b9db7;background:#173b4d;color:#fff;font-weight:600}}.grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:.75rem}}small{{color:#bbb}}
+:root{{color-scheme:dark}}body{{font-family:system-ui,sans-serif;max-width:920px;margin:2rem auto;padding:0 1rem;background:#111;color:#eee}}section{{border:1px solid #444;border-radius:12px;padding:1rem;margin:1rem 0}}.mode-card.active{{border:2px solid #22c55eaa;background:#22c55e12}}.mode-head{{display:flex;justify-content:space-between;align-items:center;gap:12px}}.badge{{font-size:.78rem;font-weight:800;padding:4px 9px;border-radius:999px;border:1px solid currentColor;color:#4ade80}}.good{{color:#7bd88f}}.warn{{color:#ffca28}}.bad{{color:#ff7b7b}}code{{word-break:break-all}}label{{display:block;margin:.7rem 0 .2rem}}input,select{{box-sizing:border-box;width:100%;max-width:680px;padding:.55rem;background:#1b1b1b;color:#eee;border:1px solid #555;border-radius:6px}}button{{margin-top:1rem;padding:.65rem 1rem;border-radius:7px;border:1px solid #6b9db7;background:#173b4d;color:#fff;font-weight:600}}.grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:.75rem}}small{{color:#bbb}}{ACQUISITION_AUTHORITY_CSS}
 </style></head><body><main>
 <h1>Portfolio Architect Gateway — Generic Import</h1>
 <section class="mode-card active"><div class="mode-head"><h2>Static acquisition · mapped CSV</h2><span class="badge">ACTIVE</span></div><p>This Gateway is an explicit provider-neutral escape hatch. Raw CSV bytes are parsed transiently and are never persisted.</p><p>Provider ID: <code>generic_csv</code> · Acquisition mode: <code>csv</code></p><p>Current snapshot: <strong>{snapshot_text}</strong></p></section>
 <section><h2>Runtime</h2><p>Gateway status: <strong class="{status_class}">{status}</strong></p></section>
+{authority_html}
 <section><h2>Import mapped CSV</h2>{mapping_error}
 <form method="post" action="import" enctype="multipart/form-data">
 <input type="hidden" name="nonce" value="{escape(self.import_server.import_nonce)}">

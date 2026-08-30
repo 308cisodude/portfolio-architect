@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.59.0
+
+- Add a common read-only Acquisition authority presentation to all official Gateway Ingress UIs.
+- Show per-capability authority, authority reason, supported method state, no-fallback policy, and a common method inventory using established green/blue/amber semantics.
+- Keep Comdirect explicit switching provider-local; add no common activation endpoint and no Portfolio Architect method-control authority.
+- Preserve health schema 9, schemas 1–8 compatibility, current provider authorities, freshness/LKG/private-PKI/planner semantics, and the disabled authenticated-DKB-FinTS boundary.
+
 ## 1.58.0
 
 - Add health-schema-9 capability-level acquisition authority for holdings and cash.

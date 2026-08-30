@@ -8,9 +8,13 @@ milestone remains subject to design, security review, tests, and live acceptance
 
 Introduces health-schema-9 capability authority for holdings and cash while preserving one canonical provider snapshot per Gateway. Authority is explicit, bounded and fail-closed; every capability uses `fallback_policy: none`. Current effective authorities remain Comdirect `live_api`, Trade Republic `pdf`, and DKB `csv`; authenticated DKB FinTS remains disabled.
 
-## Next — arbitration UX and future provider methods
+## v1.59.0 — acquisition authority UX — completed
 
-Build operator-facing authority/status presentation on the schema-9 foundation before adding any new authenticated provider method. A future DKB FinTS implementation may plug into this model only after real capability evidence exists; it must not be developed by weakening the research gate or adding silent fallback.
+Adds one common read-only acquisition-authority/status presentation to every official Gateway Ingress UI. Capability authority, authority reason, supported method readiness/active state and mandatory no-fallback policy are now visible without adding any common method-control endpoint. Existing Comdirect explicit activation remains provider-local; DKB FinTS remains research-only and authenticated acquisition remains disabled.
+
+## Next — future provider methods remain evidence-gated
+
+Do not add an authenticated provider method merely because the capability-control plane and operator UX now exist. A future DKB FinTS implementation may plug into this model only after real capability evidence exists; it must not weaken the research gate or introduce silent fallback.
 
 ## v1.22.0 — publication and privacy hardening
 
