@@ -2551,9 +2551,16 @@
       },
       "remove_rest_gateway": {
         "title": "Remove REST Gateway",
-        "description": "Stop consuming one additional Gateway. The Gateway App and its private data are not changed.",
+        "description": "Select one additional Gateway. No source is removed until the following confirmation step.",
         "data": {
           "provider_id": "Provider"
+        }
+      },
+      "remove_rest_gateway_details": {
+        "title": "Confirm REST Gateway removal",
+        "description": "**Removing:** {provider} (`{provider_id}`) · `{endpoint}`\n\nPortfolio Architect will stop consuming this supplemental Gateway. The primary source, Gateway App and its private data are not changed.",
+        "data": {
+          "confirm_remove": "Confirm removal"
         }
       },
       "plan_schedule": {
@@ -2638,9 +2645,16 @@
       },
       "remove_execution_provider": {
         "title": "Remove execution provider",
-        "description": "A provider referenced by a funding edge cannot be removed until that edge is removed.",
+        "description": "Select a provider. No execution configuration is removed until the following confirmation step.",
         "data": {
           "broker_provider_id": "Provider"
+        }
+      },
+      "remove_execution_provider_details": {
+        "title": "Confirm execution-provider removal",
+        "description": "**Removing:** {provider_name} · provider ID `{provider_id}`\n\nThis removes the provider and its nested savings-plan routes from execution planning. A provider referenced by a funding relationship cannot be removed until that relationship is removed.",
+        "data": {
+          "confirm_remove": "Confirm removal"
         }
       },
       "broker_savings_plans": {
@@ -2687,9 +2701,16 @@
       },
       "remove_savings_plan_route": {
         "title": "Remove savings-plan route",
-        "description": "Remove one explicit provider/instrument route.",
+        "description": "Select one configured provider/instrument route. No route is removed until the following confirmation step.",
         "data": {
           "broker_savings_route": "Savings-plan route"
+        }
+      },
+      "remove_savings_plan_route_details": {
+        "title": "Confirm savings-plan route removal",
+        "description": "**Removing:** {provider_name} [`{provider_id}`] · ISIN `{isin}`\n\nThis removes only this explicit provider/instrument savings-plan route and its route-level evidence.",
+        "data": {
+          "confirm_remove": "Confirm removal"
         }
       },
       "funding_topology": {
@@ -2715,9 +2736,16 @@
       },
       "remove_funding_transfer": {
         "title": "Remove funding transfer",
-        "description": "Remove one directed funding relationship.",
+        "description": "Select one configured directed funding relationship. No relationship is removed until the following confirmation step.",
         "data": {
           "broker_funding_edge": "Funding relationship"
+        }
+      },
+      "remove_funding_transfer_details": {
+        "title": "Confirm funding-transfer removal",
+        "description": "**Removing:** {from_provider_name} [`{from_provider_id}`] → {to_provider_name} [`{to_provider_id}`]\n\nThis removes only this exact directed advisory funding relationship. The reverse direction is not changed.",
+        "data": {
+          "confirm_remove": "Confirm removal"
         }
       },
       "edit_funding_transfer": {

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.61.0
+
+- Version 1.61.0 aligns package metadata with Portfolio Architect's Home Assistant-side Configure removal-confirmation release; provider acquisition, authority, evidence clocks, wire/security contracts and fallback behavior are unchanged from v1.60.0.
+
 ## 1.60.0
 
 - Version 1.60.0 adds canonical authoritative holdings-evidence availability and UTC timestamp. Generic Import remains experimental fixed-CSV holdings-only; a no-import state reports evidence unavailable without changing authority.

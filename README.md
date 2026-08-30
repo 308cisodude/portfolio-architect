@@ -1,6 +1,8 @@
-# Portfolio Architect v1.60.0
+# Portfolio Architect v1.61.0
 
-Version 1.60.0 extends the live-accepted acquisition-authority UX with **authoritative capability evidence clocks**. Every official Gateway Ingress capability card now shows whether canonical evidence is currently available and the UTC timestamp of the evidence that is actually published for that capability. The display is derived only from the already-published canonical Gateway snapshot, so inactive staged evidence cannot look authoritative and cannot imply fallback. Health schema 9, provider authority, acquisition switching, freshness policy and authenticated DKB FinTS remain unchanged.
+Version 1.61.0 completes the native **Configure destructive-action UX**: removing a supplemental REST Gateway, execution provider, savings-plan route, or directed funding relationship is now a two-step operation with an explicit immutable identity/context confirmation before any configuration is changed. The single primary source still has no remove action. This is Home Assistant-side UX/safety hardening only; acquisition authority, health schema 9, freshness, private-PKI transport, planner economics, dashboard behavior and authenticated DKB FinTS remain unchanged.
+
+Version 1.60.0 added authoritative capability-evidence clocks to the Gateway Ingress acquisition-authority UX; that live-accepted behavior remains unchanged.
 
 Portfolio Architect is a Home Assistant-native portfolio overview, policy-check,
 and deterministic investment-planning system. It supports provider-isolated acquisition, multi-source consolidation, cost-aware recommendations, and separate read-only Gateway Apps, including DKB depot-CSV acquisition inside the DKB Gateway and simultaneous aggregation of multiple local Gateway REST snapshots.

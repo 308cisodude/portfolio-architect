@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.61.0
+
+- Make every selected-object removal below Configure explicitly two-step: select the supplemental Gateway, execution provider, savings-plan route or directed funding relationship, then confirm its immutable identity/context before mutation.
+- Keep the single primary REST Gateway identity-preserving and non-removable; supplemental removal never changes the primary source or the Gateway App/private data.
+- Make execution-provider removal explicitly disclose that nested savings-plan routes are removed with the provider and that referenced funding relationships must be removed first.
+- Preserve v1.60 acquisition authority/evidence UX, health schema 9, freshness/LKG/anti-rollback/source-set semantics, private-PKI transport, planner economics, dashboard behavior and the authenticated-DKB-FinTS research gate.
+
 ## 1.60.0
 
 - Add authoritative capability-evidence availability and UTC evidence timestamps to the common Gateway Acquisition authority cards.
