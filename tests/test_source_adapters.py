@@ -116,6 +116,6 @@ def test_generic_csv_rejects_duplicate_headers_and_identifiers() -> None:
 def test_schema_12_migration_is_fail_closed_for_active_local_csv() -> None:
     setup = (COMPONENT / "__init__.py").read_text(encoding="utf-8")
     assert "entry.version < 12" in setup
-    assert "Generic Import v1.58.0" in setup
+    assert "Generic Import v1.59.0" in setup
     assert "Cannot migrate Portfolio Architect to schema 12 while local CSV" in setup
     assert "return False" in setup

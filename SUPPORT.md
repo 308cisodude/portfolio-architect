@@ -40,4 +40,6 @@ The project does not provide investment advice, trade execution, order placement
 payment initiation, tax calculation, or guarantees about broker availability,
 pricing, or data accuracy.
 
+Version 1.59.0 adds common read-only Gateway Ingress presentation for health-schema-9 acquisition authority and method readiness. Provider acquisition, fallback, freshness and security semantics remain unchanged from the fully live-accepted v1.58.0 baseline.
+
 Version 1.58.0 adds provider-neutral capability-level acquisition authority in health schema 9 while preserving explicit no-fallback provider acquisition and the v1.57.0 Legacy withdrawal.

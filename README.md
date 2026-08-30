@@ -1,6 +1,6 @@
-# Portfolio Architect v1.58.0
+# Portfolio Architect v1.59.0
 
-Version 1.57.0 completes the planned Comdirect App-identity retirement. The deprecated historical `portfolio_architect_gateway` package is removed from the active Home Assistant App repository and release artifacts, while canonical `portfolio_architect_gateway_comdirect` retains the bounded v1.55/v1.56 migration receiver for already-installed supported Legacy instances. No provider acquisition, wire-schema, freshness, private-PKI, planner, or authenticated DKB FinTS behavior changes.
+Version 1.59.0 adds a consistent read-only acquisition-authority/status view to every official Gateway Ingress page. It presents the health-schema-9 capability authority and method readiness without adding a common switch path, automatic fallback, new provider acquisition, or authenticated DKB FinTS.
 
 Portfolio Architect is a Home Assistant-native portfolio overview, policy-check,
 and deterministic investment-planning system. It supports provider-isolated acquisition, multi-source consolidation, cost-aware recommendations, and separate read-only Gateway Apps, including DKB depot-CSV acquisition inside the DKB Gateway and simultaneous aggregation of multiple local Gateway REST snapshots.
@@ -20,7 +20,7 @@ transfer, payment, or account-transaction capability.
 - Explicit provider-scoped funding topology that keeps cash pools separate and combines funding source with execution-route economics without moving money.
 - Bounded graceful degradation: trusted LKG holdings stay informationally available while stale bank cash and new investment actions fail closed.
 - Evidence-based Gateway refresh diagnostics and locally time-derived snapshot freshness.
-- Provider-aware Gateway health schema 9 with bounded acquisition-method inventories, readiness, explicit no-fallback policy and operator switch history while retaining backward-compatible negotiation through schemas 1–7.
+- Provider-aware Gateway health schema 9 with bounded acquisition-method inventories, readiness, explicit no-fallback policy and operator switch history while retaining backward-compatible negotiation through schemas 1–8.
 - Separate scheduled-execution, last-evaluation, and current-actionability semantics; past schedule dates never imply transaction execution.
 - Explicit transaction-cost and execution policies.
 - Reproducible release archives, SHA-256 manifests, SPDX 2.3 SBOMs, and release
@@ -35,6 +35,8 @@ transfer, payment, or account-transaction capability.
   the authenticated connection while preserving Host/SNI/certificate identity.
 
 ## Provider Gateway Apps
+
+Version 1.59.0 renders the schema-9 control plane consistently inside every official Gateway Ingress UI: per-capability authoritative method, authority reason, supported-method readiness/active state, and `fallback_policy: none`, plus a read-only method inventory. Green remains active/authoritative, blue ready-but-inactive, and amber unavailable/not-ready/research-only. Comdirect retains its existing explicit provider-local activation controls; the common presentation adds no control endpoint.
 
 Version 1.53.0 adds a provider-neutral acquisition-method control plane without giving Portfolio Architect provider-control authority. Comdirect is the first dual-method implementation: live API and complete static CSV evidence can be prepared independently and switched explicitly/crash-safely with no automatic fallback. DKB advertises CSV plus research-only FinTS, Trade Republic advertises PDF plus unavailable live acquisition, and Generic Import remains fixed CSV. Health schema 8 carries the bounded read-only control state while schemas 1–7 remain compatible.
 

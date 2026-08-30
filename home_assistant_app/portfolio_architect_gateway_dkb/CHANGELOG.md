@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.59.0
+
+- Version 1.59.0 adds common read-only capability authority and method-status cards. CSV remains authoritative; FinTS remains research-only, inactive, non-activatable and unauthenticated.
+
 ## 1.58.0
 
 - Version 1.58.0 adds health-schema-9 holdings/cash capability authority. DKB `csv` remains authoritative; `fints` remains `research_only`, cannot become authoritative, and authenticated FinTS remains disabled.

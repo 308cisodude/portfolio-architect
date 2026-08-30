@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway runtime v1.58.0
+# Portfolio Architect Gateway runtime v1.59.0
 
-Version 1.58.0 adds additive health-schema-9 capability-level acquisition authority while retaining health schemas 1–8 and REST schema 1. Provider Gateways remain the sole acquisition authority; capability fallback is explicitly `none`, and current live/static acquisition behavior is unchanged.
+Version 1.59.0 adds only common read-only operator presentation for the existing health-schema-9 acquisition authority and method status. Health schema 9, schemas 1–8 compatibility, REST schema 1, provider authority and no-fallback semantics are unchanged.
 
 Version 1.55.0 keeps health schema 8 and REST schema 1 unchanged. Static `csv`/`pdf` acquisition snapshots are no longer expired by the live-source LKG cache TTL; their immutable evidence timestamps remain visible and Portfolio Architect applies the configured static freshness policy. Live acquisition methods retain the configured bounded cache age.
 
