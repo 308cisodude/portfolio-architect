@@ -48,10 +48,13 @@ HEALTH_V6_MEDIA_TYPE: Final = "application/vnd.portfolio-architect.health+json;v
 HEALTH_V7_MEDIA_TYPE: Final = "application/vnd.portfolio-architect.health+json;version=7"
 HEALTH_V8_MEDIA_TYPE: Final = "application/vnd.portfolio-architect.health+json;version=8"
 HEALTH_V9_MEDIA_TYPE: Final = "application/vnd.portfolio-architect.health+json;version=9"
+HEALTH_V10_MEDIA_TYPE: Final = "application/vnd.portfolio-architect.health+json;version=10"
 SNAPSHOT_SHA256_HEADER: Final = "X-Portfolio-Snapshot-SHA256"
 SNAPSHOT_POSITION_COUNT_HEADER: Final = "X-Portfolio-Position-Count"
 TLS_DISCOVERY_SCHEMA_VERSION: Final = 1
+TLS_DISCOVERY_PROFILE_SCHEMA_VERSION: Final = 2
 TLS_DISCOVERY_GATEWAY_PATH: Final = "/api/v1/portfolio"
+_TLS_DISCOVERY_PROFILE_PATH_RE: Final = re.compile(r"^/api/v1/providers/([a-z][a-z0-9_]{1,31})/portfolio$")
 _COMDIRECT_LEGACY_APP_HOST_SUFFIX: Final = "-portfolio-architect-gateway"
 _COMDIRECT_CANONICAL_APP_HOST_SUFFIX: Final = "-portfolio-architect-gateway-comdirect"
 
@@ -121,7 +124,7 @@ class RestSourceConfig:
             "response_limit_bytes": MAX_REST_RESPONSE_BYTES,
             "request_timeout_seconds": REST_REQUEST_TIMEOUT_SECONDS,
             "snapshot_integrity": "sha256_etag_position_count",
-            "requested_health_schema_version": 9,
+            "requested_health_schema_version": 10,
         }
 
 
@@ -196,6 +199,7 @@ class GatewayTlsDiscovery:
     """Strict Supervisor-distributed HTTPS trust description for one Gateway."""
 
     provider_id: str
+    provider_name: str | None
     hostname: str
     port: int
     path: str
@@ -204,7 +208,8 @@ class GatewayTlsDiscovery:
 
     @classmethod
     def from_mapping(cls, raw: dict[str, Any]) -> "GatewayTlsDiscovery":
-        if raw.get("transport_schema_version") != TLS_DISCOVERY_SCHEMA_VERSION:
+        schema_version = raw.get("transport_schema_version")
+        if schema_version not in {TLS_DISCOVERY_SCHEMA_VERSION, TLS_DISCOVERY_PROFILE_SCHEMA_VERSION}:
             raise PortfolioRestTlsError("Gateway TLS discovery schema is unsupported")
         provider_id = raw.get("provider_id")
         if not isinstance(provider_id, str) or re.fullmatch(r"[a-z][a-z0-9_]{1,31}", provider_id) is None:
@@ -225,9 +230,31 @@ class GatewayTlsDiscovery:
         port = raw.get("port")
         if isinstance(port, bool) or not isinstance(port, int) or not 1 <= port <= 65535:
             raise PortfolioRestTlsError("Gateway TLS discovery port is invalid")
+        provider_name: str | None = None
+        if schema_version >= TLS_DISCOVERY_PROFILE_SCHEMA_VERSION:
+            provider_name_raw = raw.get("provider_name")
+            if (
+                not isinstance(provider_name_raw, str)
+                or not provider_name_raw.strip()
+                or len(provider_name_raw.strip()) > 64
+                or any(ord(char) < 32 or ord(char) == 127 for char in provider_name_raw)
+            ):
+                raise PortfolioRestTlsError("Gateway TLS discovery provider name is invalid")
+            provider_name = provider_name_raw.strip()
+        elif "provider_name" in raw:
+            raise PortfolioRestTlsError("Gateway TLS discovery provider name is unexpected")
         path = raw.get("path")
-        if path != TLS_DISCOVERY_GATEWAY_PATH:
-            raise PortfolioRestTlsError("Gateway TLS discovery path is invalid")
+        if schema_version == TLS_DISCOVERY_SCHEMA_VERSION:
+            if path != TLS_DISCOVERY_GATEWAY_PATH:
+                raise PortfolioRestTlsError("Gateway TLS discovery path is invalid")
+        else:
+            if not isinstance(path, str):
+                raise PortfolioRestTlsError("Gateway TLS discovery path is invalid")
+            profile_match = _TLS_DISCOVERY_PROFILE_PATH_RE.fullmatch(path)
+            if path != TLS_DISCOVERY_GATEWAY_PATH and (
+                profile_match is None or profile_match.group(1) != provider_id
+            ):
+                raise PortfolioRestTlsError("Gateway TLS discovery path is invalid")
         ca_certificate = normalise_rest_ca_certificate(raw.get("ca_certificate"))
         if ca_certificate is None:
             raise PortfolioRestTlsError("Gateway TLS discovery CA certificate is missing")
@@ -235,7 +262,7 @@ class GatewayTlsDiscovery:
         actual_sha256 = _certificate_sha256(ca_certificate)
         if not isinstance(ca_sha256, str) or not secrets_compare_digest_hex(ca_sha256, actual_sha256):
             raise PortfolioRestTlsError("Gateway TLS discovery CA fingerprint is invalid")
-        return cls(provider_id, hostname, port, path, ca_certificate, actual_sha256)
+        return cls(provider_id, provider_name, hostname, port, path, ca_certificate, actual_sha256)
 
     @property
     def endpoint_url(self) -> str:
@@ -455,6 +482,7 @@ class GatewayHealth:
     recommended_action: str | None = None
     retry_after_seconds: int | None = None
     provider_id: str | None = None
+    provider_name: str | None = None
     acquisition_mode: str | None = None
     active_acquisition_method: str | None = None
     acquisition_methods: tuple[GatewayAcquisitionMethod, ...] = ()
@@ -594,9 +622,15 @@ async def async_validate_local_rest_endpoint(
 
 
 def gateway_health_url(endpoint_url: str) -> str:
-    """Return the fixed health endpoint on the same validated local origin."""
+    """Return the health endpoint corresponding to one validated portfolio path."""
     parsed = urlsplit(endpoint_url)
-    return urlunsplit(SplitResult(parsed.scheme, parsed.netloc, "/healthz", "", ""))
+    match = _TLS_DISCOVERY_PROFILE_PATH_RE.fullmatch(parsed.path or "")
+    path = (
+        f"/api/v1/providers/{match.group(1)}/healthz"
+        if match is not None
+        else "/healthz"
+    )
+    return urlunsplit(SplitResult(parsed.scheme, parsed.netloc, path, "", ""))
 
 
 async def async_fetch_gateway_health(
@@ -610,6 +644,7 @@ async def async_fetch_gateway_health(
     headers = {
         "Accept": ", ".join(
             (
+                HEALTH_V10_MEDIA_TYPE,
                 HEALTH_V9_MEDIA_TYPE,
                 HEALTH_V8_MEDIA_TYPE,
                 HEALTH_V7_MEDIA_TYPE,
@@ -723,6 +758,7 @@ def _parse_gateway_health(payload: Any) -> GatewayHealth:
         "last_acquisition_method_change_reason",
     }
     v9_fields = v8_fields | {"acquisition_capabilities"}
+    v10_fields = v9_fields | {"provider_name"}
     keys = set(payload)
     if keys == base_fields:
         health_schema_version = 1
@@ -742,6 +778,8 @@ def _parse_gateway_health(payload: Any) -> GatewayHealth:
         health_schema_version = 8
     elif keys == v9_fields and payload.get("health_schema_version") == 9:
         health_schema_version = 9
+    elif keys == v10_fields and payload.get("health_schema_version") == 10:
+        health_schema_version = 10
     else:
         raise PortfolioRestError("Local gateway health document has an unexpected schema")
 
@@ -781,6 +819,7 @@ def _parse_gateway_health(payload: Any) -> GatewayHealth:
     recommended_action = None
     retry_after_seconds = None
     provider_id = None
+    provider_name = None
     acquisition_mode = None
     active_acquisition_method = None
     acquisition_methods: tuple[GatewayAcquisitionMethod, ...] = ()
@@ -1144,6 +1183,17 @@ def _parse_gateway_health(payload: Any) -> GatewayHealth:
             raise PortfolioRestError("Local gateway acquisition capabilities lack holdings authority")
         acquisition_capabilities = tuple(parsed_capabilities)
 
+    if health_schema_version >= 10:
+        provider_name = payload["provider_name"]
+        if (
+            not isinstance(provider_name, str)
+            or not provider_name.strip()
+            or len(provider_name.strip()) > 64
+            or provider_name != provider_name.strip()
+            or any(ord(char) < 32 or ord(char) == 127 for char in provider_name)
+        ):
+            raise PortfolioRestError("Local gateway provider name is invalid")
+
     return GatewayHealth(
         gateway_version=version,
         status=status,
@@ -1178,6 +1228,7 @@ def _parse_gateway_health(payload: Any) -> GatewayHealth:
         recommended_action=recommended_action,
         retry_after_seconds=retry_after_seconds,
         provider_id=provider_id,
+        provider_name=provider_name,
         acquisition_mode=acquisition_mode,
         active_acquisition_method=active_acquisition_method,
         acquisition_methods=acquisition_methods,

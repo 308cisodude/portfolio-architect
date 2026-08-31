@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.62.0
+
+- Add backward-compatible health schema 10 `provider_name` metadata and align package version with the Generic Import graduation release. Supported PDF holdings/cash acquisition is unchanged and no live trading/API acquisition is introduced.
+
 ## 1.61.2
 
 - Version 1.61.2 aligns package metadata with Portfolio Architect's Home Assistant-side primary-Gateway identity-context hotfix; App runtime, provider acquisition, authority, evidence clocks, wire/security contracts and fallback behavior are unchanged from v1.61.1.

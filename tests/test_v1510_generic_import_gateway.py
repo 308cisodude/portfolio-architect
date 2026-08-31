@@ -37,8 +37,8 @@ def _generic():
 
 
 def test_release_versions_and_schema_are_aligned() -> None:
-    assert json.loads((COMPONENT / "manifest.json").read_text())["version"] == "1.61.2"
-    assert 'VERSION: Final = "1.61.2"' in (COMPONENT / "const.py").read_text()
+    assert json.loads((COMPONENT / "manifest.json").read_text())["version"] == "1.62.0"
+    assert 'VERSION: Final = "1.62.0"' in (COMPONENT / "const.py").read_text()
     assert 'VERSION = 12' in (COMPONENT / "config_flow.py").read_text()
     for slug in (
         "portfolio_architect_gateway_comdirect",
@@ -46,7 +46,7 @@ def test_release_versions_and_schema_are_aligned() -> None:
         "portfolio_architect_gateway_trade_republic",
         "portfolio_architect_gateway_import",
     ):
-        assert yaml.safe_load((APPS / slug / "config.yaml").read_text())["version"] == "1.61.2"
+        assert yaml.safe_load((APPS / slug / "config.yaml").read_text())["version"] == "1.62.0"
 
 
 def test_portfolio_architect_runtime_is_acquisition_format_neutral() -> None:
@@ -62,7 +62,7 @@ def test_schema_12_local_csv_migration_is_explicit_and_fail_closed() -> None:
     setup = (COMPONENT / "__init__.py").read_text()
     schema12 = setup.split("if entry.version < 12:", 1)[1].split("if migrated_entities:", 1)[0]
     assert "SOURCE_TYPE_LOCAL_FILES" in schema12
-    assert "Portfolio Architect Gateway — Generic Import v1.61.2" in schema12
+    assert "Portfolio Architect Gateway — Generic Import v1.62.0" in schema12
     assert "return False" in schema12
     assert "version=12" in schema12
 
@@ -77,7 +77,9 @@ def test_generic_import_app_has_fixed_identity_and_no_privileged_ha_api() -> Non
     assert config["docker_api"] is False
     assert config["ports"]["8787/tcp"] is None
     entrypoint = (IMPORT_APP / "entrypoint.py").read_text()
-    assert 'if provider_id != "generic_csv"' in entrypoint
+    assert 'package_provider_id = normalise_provider_id' in entrypoint
+    assert 'if package_provider_id != "generic_csv"' in entrypoint
+    assert '_GenericDiscoveryLifecycle' in entrypoint
 
 
 def test_generic_csv_import_uses_explicit_import_time_and_eur_only() -> None:
@@ -112,11 +114,13 @@ def test_generic_csv_import_uses_explicit_import_time_and_eur_only() -> None:
 
 def test_generic_import_persists_only_normalized_state_not_raw_csv() -> None:
     source = (IMPORT_PACKAGE / "generic_import_app.py").read_text()
+    profiles = (IMPORT_PACKAGE / "generic_profiles.py").read_text()
     server = (IMPORT_PACKAGE / "server.py").read_text()
-    assert "save_json_state" in source
+    assert "save_json_state" in profiles
     assert "save_snapshot" in server
     for forbidden in ("write_bytes(", "csv_filename", "original_filename", "raw_csv"):
         assert forbidden not in source
+        assert forbidden not in profiles
     assert "Raw CSV bytes are parsed transiently and are never persisted" in source
 
 

@@ -167,12 +167,12 @@ def test_v1210_does_not_add_transaction_or_execution_evidence_semantics() -> Non
 def test_v1210_version_and_wire_contracts_are_aligned() -> None:
     manifest = json.loads((COMPONENT / "manifest.json").read_text(encoding="utf-8"))
     app = yaml.safe_load((ROOT / "home_assistant_app" / "portfolio_architect_gateway_comdirect" / "config.yaml").read_text(encoding="utf-8"))
-    assert manifest["version"] == "1.61.2"
-    assert app["version"] == "1.61.2"
-    assert 'VERSION: Final = "1.61.2"' in (COMPONENT / "const.py").read_text(encoding="utf-8")
-    assert '__version__ = "1.61.2"' in (COMPONENT / "engine" / "__init__.py").read_text(encoding="utf-8")
+    assert manifest["version"] == "1.62.0"
+    assert app["version"] == "1.62.0"
+    assert 'VERSION: Final = "1.62.0"' in (COMPONENT / "const.py").read_text(encoding="utf-8")
+    assert '__version__ = "1.62.0"' in (COMPONENT / "engine" / "__init__.py").read_text(encoding="utf-8")
     assert manifest["version"] == app["version"]
     # Execution semantics are additive Home Assistant entities only.
     assert '"schema_version": 8' in (COMPONENT / "engine" / "calculator.py").read_text(encoding="utf-8")
     gateway_server = (ROOT / "gateway" / "src" / "portfolio_architect_gateway" / "server.py").read_text(encoding="utf-8")
-    assert '"health_schema_version": min(version, 9)' in gateway_server
+    assert '"health_schema_version": min(version, 10)' in gateway_server

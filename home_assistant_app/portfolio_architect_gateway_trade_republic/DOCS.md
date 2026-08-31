@@ -1,5 +1,5 @@
-# Portfolio Architect Gateway — Trade Republic v1.61.2
+# Portfolio Architect Gateway — Trade Republic v1.62.0
 
-Version 1.61.2 is package alignment for Portfolio Architect's Home Assistant-side primary-Gateway identity-context hotfix. Provider acquisition, health schema 9, canonical evidence clocks, private-PKI transport and no-fallback behavior are unchanged from v1.61.1.
+Version 1.62.0 aligns this stable App with the additive common Gateway contracts used by Generic Import graduation: health schema 10 adds bounded `provider_name` while schemas 1–9 remain compatible. Supported PDF holdings/cash acquisition is unchanged and no live trading/API acquisition is introduced.
 
-Version 1.60.0 adds read-only authoritative holdings/cash evidence availability and UTC timestamps to the existing Acquisition authority cards. DEPOTAUSZUG holdings and KONTOAUSZUG cash retain independent canonical evidence clocks. Trade Republic `pdf` remains authoritative; `live_api` remains unavailable, inactive and non-activatable.
+Private-PKI HTTPS, bearer authentication, provider identity, canonical evidence, `fallback_policy: none` and advisory-only semantics are unchanged.

@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.62.0
+
+- Graduate Generic Import from experimental to stable.
+- Add up to eight independent Generic source profiles with immutable generated provider IDs, editable labels, independent mappings/snapshots, optional provider-local cash and separate holdings/cash evidence clocks.
+- Preserve an existing experimental `generic_csv` source identity and legacy REST path during migration.
+- Keep raw CSV bytes transient; successful imports replace only normalized canonical state and rejected imports retain the previous valid snapshot.
+- Publish discovery only for profiles with validated holdings and use discovery transport schema 2 for exact per-profile paths/provider names.
+- Add health schema 10 `provider_name` while retaining schemas 1–9 and all private-PKI/bearer/no-fallback boundaries.
+
 ## 1.61.2
 
 - Version 1.61.2 aligns package metadata with Portfolio Architect's Home Assistant-side primary-Gateway identity-context hotfix; App runtime, provider acquisition, authority, evidence clocks, wire/security contracts and fallback behavior are unchanged from v1.61.1.

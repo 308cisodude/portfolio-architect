@@ -42,14 +42,14 @@ def _config(app: Path) -> dict[str, object]:
 def test_current_release_versions_and_app_maturity_are_aligned() -> None:
     assert json.loads(
         (ROOT / "custom_components" / "portfolio_architect" / "manifest.json").read_text()
-    )["version"] == "1.61.2"
+    )["version"] == "1.62.0"
     assert _config(COMDIRECT)["stage"] == "stable"
     assert _config(DKB)["stage"] == "stable"
     assert _config(TR)["stage"] == "stable"
-    assert _config(GENERIC)["stage"] == "experimental"
+    assert _config(GENERIC)["stage"] == "stable"
     assert not (APPS / "portfolio_architect_gateway").exists()
     for app in (COMDIRECT, DKB, TR, GENERIC):
-        assert _config(app)["version"] == "1.61.2"
+        assert _config(app)["version"] == "1.62.0"
 
 
 def test_dkb_stability_is_scoped_to_csv_while_fints_probe_stays_experimental() -> None:
@@ -96,15 +96,17 @@ def test_synthetic_generic_import_reference_csv_is_a_standalone_smoke_fixture() 
     assert all(item.market_value_eur >= 0 for item in snapshot.positions)
 
 
-def test_generic_import_remains_experimental_and_live_smoke_is_isolated() -> None:
+def test_generic_import_is_stable_multi_profile_and_remains_unprivileged() -> None:
     config = _config(GENERIC)
-    assert config["stage"] == "experimental"
+    assert config["stage"] == "stable"
     assert config["environment"]["PA_PROVIDER_ID"] == "generic_csv"
-    assert "Experimental isolated provider-neutral" in str(config["description"])
-    guide = (ROOT / "docs" / "UPGRADE-1.61.2.md").read_text(encoding="utf-8")
-    assert "do **not**" in guide and "adopt it as a real" in guide
-    assert "must not alter the real" in guide
-    assert "uninstalled after this standalone" in guide and "smoke test" in guide
+    assert "Supported provider-neutral multi-profile CSV Gateway" in str(config["description"])
+    assert config["hassio_api"] is False
+    assert config["homeassistant_api"] is False
+    guide = (ROOT / "docs" / "UPGRADE-1.62.0.md").read_text(encoding="utf-8")
+    assert "One Generic App supports at most eight profiles" in guide
+    assert "Raw CSV bytes are parsed transiently" in guide
+    assert "Remove an adopted Generic provider from Portfolio Architect before deleting" in guide
 
 
 def test_sbom_describes_all_four_gateway_apps() -> None:
@@ -121,4 +123,4 @@ def test_sbom_describes_all_four_gateway_apps() -> None:
         for package in sbom["packages"]
         if package["name"] == "Portfolio Architect Gateway — Generic Import App"
     )
-    assert generic["versionInfo"] == "1.61.2"
+    assert generic["versionInfo"] == "1.62.0"

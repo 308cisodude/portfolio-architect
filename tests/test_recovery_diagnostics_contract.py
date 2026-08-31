@@ -14,7 +14,7 @@ def test_current_health_schema_is_requested_and_served() -> None:
     assert "HEALTH_V6_MEDIA_TYPE" in server
     assert "HEALTH_V5_MEDIA_TYPE" in server
     assert 'health_document(version=8)' in (APP / "src" / "portfolio_architect_gateway" / "app.py").read_text()
-    assert '"requested_health_schema_version": 9' in client
+    assert '"requested_health_schema_version": 10' in client
     for field in (
         "last_refresh_failure_at",
         "last_refresh_failure_class",

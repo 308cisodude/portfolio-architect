@@ -31,7 +31,7 @@ def test_v1570_withdraws_legacy_package_and_keeps_only_four_active_apps() -> Non
     manifest = json.loads(
         (ROOT / "custom_components/portfolio_architect/manifest.json").read_text()
     )
-    assert manifest["version"] == "1.61.2"
+    assert manifest["version"] == "1.62.0"
     assert not LEGACY.exists()
 
     active = {
@@ -51,8 +51,8 @@ def test_v1570_withdraws_legacy_package_and_keeps_only_four_active_apps() -> Non
     assert active["portfolio_architect_gateway_comdirect"]["stage"] == "stable"
     assert active["portfolio_architect_gateway_dkb"]["stage"] == "stable"
     assert active["portfolio_architect_gateway_trade_republic"]["stage"] == "stable"
-    assert active["portfolio_architect_gateway_import"]["stage"] == "experimental"
-    assert all(config["version"] == "1.61.2" for config in active.values())
+    assert active["portfolio_architect_gateway_import"]["stage"] == "stable"
+    assert all(config["version"] == "1.62.0" for config in active.values())
 
 
 def test_release_and_publication_tooling_no_longer_carries_legacy_app() -> None:

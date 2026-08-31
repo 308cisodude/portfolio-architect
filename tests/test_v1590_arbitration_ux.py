@@ -42,6 +42,7 @@ def test_v1590_does_not_advance_wire_schemas_or_dkb_fints_gate() -> None:
     )
 
     assert 'HEALTH_V9_MEDIA_TYPE = "application/vnd.portfolio-architect.health+json;version=9"' in server
-    assert "min(version, 9)" in server
-    assert '"requested_health_schema_version": 9' in rest_client
+    assert "min(version, 10)" in server
+    assert 'HEALTH_V10_MEDIA_TYPE = "application/vnd.portfolio-architect.health+json;version=10"' in server
+    assert '"requested_health_schema_version": 10' in rest_client
     assert 'AcquisitionMethod("fints", METHOD_RESEARCH_ONLY, False, False)' in dkb

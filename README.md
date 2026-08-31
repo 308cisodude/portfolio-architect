@@ -1,8 +1,10 @@
-# Portfolio Architect v1.61.2
+# Portfolio Architect v1.62.0
 
-Version 1.61.2 fixes the live-observed **Primary REST Gateway identity-context** edge case. If a one-off fresh health request fails while the running coordinator still carries an already-validated primary Gateway identity, Configure now continues to display that identity instead of degrading to `Unknown`. Presentation fallback does not weaken mutation safety: changing the primary endpoint still requires a successful fresh identity read and full verified-HTTPS, provider, health and snapshot-integrity validation before saving.
+Version 1.62.0 graduates **Portfolio Architect Gateway — Generic Import** to a stable, supported provider and makes it a bounded multi-profile Gateway. A user can now run Portfolio Architect with only Generic Import, or represent several otherwise unsupported banks/brokers as independent providers without merging their holdings, cash or evidence clocks.
 
-Version 1.61.1's provider-neutral Supervisor-discovery lifecycle, singleton first-run bootstrap, internal supplemental-candidate handling and top-level discovery-card suppression remain unchanged. Version 1.61.0's two-step destructive-action confirmation also remains unchanged. Gateway runtime/acquisition authority, health schema 9, freshness, private-PKI transport, planner economics, dashboard behavior and authenticated DKB FinTS are unchanged.
+Each new Generic profile receives an immutable generated `generic_<stable-id>` provider identity and a separately editable human name. Existing experimental `generic_csv` state retains that provider identity and legacy REST path. Holdings CSV data is parsed transiently; successful imports atomically replace only the selected profile's canonical holdings, optional provider-local EUR investment cash has its own evidence timestamp, and rejected imports retain the previous valid snapshot.
+
+Gateway health schema 10 adds a bounded human `provider_name` while schemas 1–9 remain compatible. Supervisor discovery schema 2 adds exact per-profile REST paths and provider names. Provider identity, transport trust, snapshot integrity and all mutation boundaries remain fail-closed.
 
 Portfolio Architect is a Home Assistant-native portfolio overview, policy-check,
 and deterministic investment-planning system. It supports provider-isolated acquisition, multi-source consolidation, cost-aware recommendations, and separate read-only Gateway Apps, including DKB depot-CSV acquisition inside the DKB Gateway and simultaneous aggregation of multiple local Gateway REST snapshots.
@@ -37,6 +39,8 @@ transfer, payment, or account-transaction capability.
   the authenticated connection while preserving Host/SNI/certificate identity.
 
 ## Provider Gateway Apps
+
+Version 1.62.0 graduates Generic Import to stable multi-profile operation. Up to eight independently identified Generic source profiles can be hosted by one App/private-PKI origin. Each ready profile is discovered separately, retains its own canonical holdings and optional cash evidence, and appears to Portfolio Architect as an ordinary provider rather than a special multi-provider payload.
 
 Version 1.60.0 adds **Authoritative evidence** and **Evidence timestamp** rows to the common schema-9 capability cards. Holdings and cash clocks remain independent where the provider snapshot carries independent evidence (notably DKB and Trade Republic). Comdirect shows the clocks from the currently published active-method snapshot; prepared inactive CSV evidence is deliberately excluded until an explicit method switch publishes it. Generic Import shows holdings evidence only, and an empty installation explicitly shows that authoritative evidence is not available yet.
 

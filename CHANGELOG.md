@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.62.0
+
+- Graduate **Portfolio Architect Gateway — Generic Import** from experimental to stable and make it usable as a standalone Portfolio Architect provider.
+- Replace the former single logical `generic_csv` model with up to eight independent Generic source profiles. Each new profile receives an immutable random `generic_<stable-id>` provider identity plus a separately editable human label; an existing experimental `generic_csv` installation retains that provider identity and legacy REST path during migration.
+- Add optional provider-local EUR investment cash to each Generic profile with an evidence timestamp independent from holdings. New successful holdings imports atomically replace only that profile's canonical holdings while retaining its independently recorded cash; rejected imports retain the last valid canonical snapshot. Raw CSV bytes, filenames, unmapped columns and rows remain transient and are not persisted.
+- Publish Supervisor discovery only for Generic profiles with validated holdings. Discovery schema 2 carries the exact logical provider path and bounded human provider name while preserving schema-1 compatibility for existing fixed-provider Apps. One Generic App/private-PKI/bearer boundary can therefore expose several independently validated PA providers without merging their holdings or cash.
+- Add Gateway health schema 10 with bounded `provider_name`; schemas 1–9 remain accepted. Portfolio Architect uses the human name for source presentation while provider identity remains the immutable `provider_id`.
+- Raise the bounded supplemental REST-source limit from four to eight so the supported multi-profile Generic Gateway can coexist with native providers without changing the singleton PA config-entry architecture.
+- Preserve `fallback_policy: none`, private-PKI HTTPS, bearer authentication, DNS pinning, evidence freshness, LKG/anti-rollback/source-set atomicity, planner/funding semantics, advisory-only behavior and the authenticated-DKB-FinTS research gate.
+
 ## 1.61.2
 
 - Keep the Primary REST Gateway Configure form self-identifying when a transient fresh health lookup fails by using the already-validated runtime coordinator Gateway identity for presentation.
