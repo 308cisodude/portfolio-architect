@@ -90,7 +90,7 @@
       },
       "hassio_confirm": {
         "title": "Entdecktes Portfolio-Architect-Gateway sicher verbinden",
-        "description": "Home Assistant Supervisor hat verifiziertes Private-CA-Vertrauen für {gateway} bereitgestellt. Vorhandenes Gateway-Bearer-Token und Portfolio-Architect-Konfigurationsverzeichnis eingeben; der HTTPS-Endpunkt wird vor Abschluss validiert.",
+        "description": "Home Assistant Supervisor hat verifiziertes Private-CA-Vertrauen für Provider {provider_id} unter {gateway} bereitgestellt. Vorhandenes Gateway-Bearer-Token und Portfolio-Architect-Konfigurationsverzeichnis eingeben; HTTPS-Endpunkt, Provideridentität und Portfolio-Snapshot werden validiert, bevor dieses Gateway den einzigen Portfolio-Architect-Eintrag erstellt.",
         "data": {
           "config_directory": "Verzeichnis der Portfolio-Konfiguration",
           "rest_api_token": "Bearer-Token des Gateways"
@@ -98,16 +98,6 @@
         "data_description": {
           "config_directory": "Relativ zu /config. Muss die Portfolio-Architect-Richtlinien- und Konfigurationsdateien enthalten.",
           "rest_api_token": "Dediziertes Bearer-Token für dieses Gateway. Das TLS-Vertrauen wird separat über die Supervisor-Erkennung bereitgestellt."
-        }
-      },
-      "hassio_add_supplemental_confirm": {
-        "title": "Entdecktes Portfolio-Architect-Gateway sicher hinzufügen",
-        "description": "Home Assistant Supervisor hat {provider} unter {gateway} erkannt und dessen private CA bereitgestellt. Das vorhandene Bearer-Token dieses Gateways eingeben, um es als zusätzliche Portfolioquelle zu validieren und hinzuzufügen.",
-        "data": {
-          "rest_api_token": "Bearer-Token des Gateways"
-        },
-        "data_description": {
-          "rest_api_token": "Dediziertes Bearer-Token dieses Gateways. HTTPS-Endpunkt und private CA werden über die Supervisor-Erkennung bereitgestellt."
         }
       },
       "hassio_comdirect_slug_migration_confirm": {
@@ -130,13 +120,11 @@
       "reauth_successful": "Token des lokalen Gateways wurde erfolgreich aktualisiert.",
       "reauth_not_supported": "Eine erneute Authentifizierung ist nur für den lokalen REST-Gateway-Adapter verfügbar.",
       "invalid_tls_discovery": "Ungültige TLS-Erkennungsdaten des Gateways wurden abgewiesen.",
-      "tls_discovery_not_primary": "Dieses entdeckte Gateway kann den primären Portfolio-Architect-Eintrag nicht erstellen.",
       "tls_discovery_not_applicable": "Das entdeckte Gateway entspricht keiner konfigurierten Portfolio-Architect-REST-Quelle.",
       "tls_trust_changed": "Das Gateway meldet für eine bereits abgesicherte Quelle eine andere private CA. Ein automatischer Vertrauensaustausch wird verweigert.",
       "tls_already_configured": "Dieses Gateway verwendet bereits das entdeckte verifizierte HTTPS-Vertrauen.",
       "tls_validation_failed": "Der entdeckte HTTPS-Endpunkt konnte mit der bereitgestellten privaten CA und dem vorhandenen Bearer-Token nicht validiert werden.",
       "tls_migrated": "Die passende Gateway-Quelle wurde erfolgreich auf verifiziertes HTTPS migriert.",
-      "tls_supplemental_added": "Das entdeckte Gateway wurde validiert und als zusätzliche verifizierte HTTPS-Quelle hinzugefügt.",
       "comdirect_slug_validation_failed": "Die providerqualifizierte Comdirect-App konnte mit dem vorhandenen Vertrauen und Bearer-Token nicht vollständig validiert werden. Die bisherige Quelle bleibt unverändert.",
       "comdirect_slug_migrated": "Die Comdirect-Gateway-Identität wurde erfolgreich auf den providerqualifizierten Endpunkt umgestellt."
     }
@@ -2532,9 +2520,27 @@
         "title": "Zusätzliche REST-Gateways",
         "description": "Optionale providerisolierte Ergänzungen zur einen Primärquelle verwalten. Ein konkretes Gateway kann hinzugefügt, bearbeitet oder entfernt werden, ohne die Primärquelle zu ändern.",
         "menu_options": {
-          "add_rest_gateway": "REST-Gateway hinzufügen",
+          "add_discovered_rest_gateway": "Entdecktes REST-Gateway hinzufügen",
+          "add_rest_gateway": "REST-Gateway manuell hinzufügen",
           "edit_rest_gateway": "REST-Gateway bearbeiten",
           "remove_rest_gateway": "REST-Gateway entfernen"
+        }
+      },
+      "add_discovered_rest_gateway": {
+        "title": "Entdecktes REST-Gateway hinzufügen",
+        "description": "Wähle ein noch nicht konfiguriertes ergänzendes Gateway aus, das Home Assistant Supervisor bereits erkannt hat. Die Auswahl allein ändert die Portfolio-Architect-Konfiguration nicht.",
+        "data": {
+          "provider_id": "Provider"
+        }
+      },
+      "add_discovered_rest_gateway_details": {
+        "title": "Entdecktes REST-Gateway sicher verbinden",
+        "description": "**Entdeckt:** {provider} (`{provider_id}`) · `{endpoint}`\n\nSupervisor hat den Private-CA-Fingerabdruck `{ca_sha256}` bereitgestellt. Gib das vorhandene Bearer-Token des Gateways ein. Portfolio Architect validiert verifiziertes HTTPS, Provider-Identität, Gateway-Health und Snapshot-Integrität, bevor dieser Provider dem vorhandenen Portfolio-Architect-Eintrag hinzugefügt wird.",
+        "data": {
+          "rest_api_token": "Bearer-Token des Gateways"
+        },
+        "data_description": {
+          "rest_api_token": "Dediziertes Bearer-Token mit minimalen Rechten für dieses Gateway. HTTPS-Endpunkt und private CA stammen aus der Supervisor-Erkennung; das Token wird nur in den Optionen des vorhandenen Home-Assistant-Konfigurationseintrags gespeichert."
         }
       },
       "add_rest_gateway": {
@@ -2820,7 +2826,8 @@
       "plan_already_uses_yaml": "Der Anlageplan verwendet bereits portfolio.yaml.",
       "no_rest_gateways": "Es sind keine zusätzlichen REST-Gateways konfiguriert.",
       "rest_gateways_require_rest_primary": "Zusätzliche REST-Gateways erfordern ein REST-Gateway als primäre Portfolio-Architect-Quelle.",
-      "broker_editor_unavailable": "broker.yaml muss vorhanden sein und das anbieterbezogene Schema 2 oder 3 verwenden, bevor der native Editor genutzt werden kann."
+      "broker_editor_unavailable": "broker.yaml muss vorhanden sein und das anbieterbezogene Schema 2 oder 3 verwenden, bevor der native Editor genutzt werden kann.",
+      "no_discovered_rest_gateways": "Aktuell ist kein noch unkonfiguriertes ergänzendes Gateway aus der Supervisor-Erkennung verfügbar."
     }
   },
   "selector": {

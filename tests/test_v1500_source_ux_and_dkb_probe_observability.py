@@ -105,6 +105,7 @@ def test_source_ux_has_complete_bilingual_primary_and_add_edit_remove_labels() -
             "rest_gateways",
         ]
         assert list(steps["rest_gateways"]["menu_options"]) == [
+            "add_discovered_rest_gateway",
             "add_rest_gateway",
             "edit_rest_gateway",
             "remove_rest_gateway",

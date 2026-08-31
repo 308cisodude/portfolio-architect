@@ -259,8 +259,9 @@ def test_config_flow_migrates_only_after_verified_https_health_and_never_replace
     assert "if entry.version > 12:" in init_source
     assert "if entry.version < 9:" in init_source
     assert "async def async_step_hassio" in source
-    assert "async def async_step_hassio_add_supplemental_confirm" in source
-    assert 'reason="tls_supplemental_added"' in source
+    assert "async def async_step_hassio_add_supplemental_confirm" not in source
+    assert "_remember_hassio_discovery_candidate(self.hass, discovery)" in source
+    assert "async def async_step_add_discovered_rest_gateway" in source
     assert 'reason="tls_trust_changed"' in source
     assert 'reason="tls_migrated"' in source
     # Any already-HTTPS source is an established trust decision: only an

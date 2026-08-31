@@ -20,6 +20,10 @@ Binds the common acquisition-authority cards to the canonical evidence clocks th
 
 Completes the native Configure consistency work by separating object selection from destructive mutation. Supplemental REST Gateways, execution providers, savings-plan routes and directed funding relationships now require a second confirmation form that displays immutable identity/context before removal. The primary REST Gateway remains identity-preserving and non-removable. Provider runtimes, acquisition authority, schemas, planner behavior and dashboard presentation are unchanged.
 
+## v1.61.1 — provider-neutral discovery lifecycle hotfix — completed
+
+Closes the v1.61.0 live-acceptance discovery UX regression and removes the inherited Comdirect-only bootstrap assumption. With no Portfolio Architect entry, any validated Gateway may create the singleton entry; concurrent discoveries use the same singleton unique ID so only one first-run Add flow remains visible while other providers are retained as candidates. Once the entry exists, every unconfigured provider—including Comdirect under a non-Comdirect primary—is retained only as a provider-keyed internal candidate and immediately aborts the top-level flow. Explicit adoption remains under Additional REST Gateways and still requires bearer authentication plus verified-HTTPS/provider/health/snapshot-integrity validation. Existing migration/trust paths are unchanged.
+
 ## Next — future provider methods remain evidence-gated
 
 Do not add an authenticated provider method merely because the capability-control plane, operator UX and evidence-clock presentation now exist. A future DKB FinTS implementation may plug into this model only after real capability evidence exists; it must not weaken the research gate or introduce silent fallback.
