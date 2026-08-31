@@ -802,11 +802,15 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
         existing = RestSourceConfig.from_mapping(dict(self.config_entry.data))
         supplemental = self._supplemental_rest_sources()
         runtime_provider_id: str | None = None
+        runtime_provider_name: str | None = None
         coordinator = getattr(self.config_entry, "runtime_data", None)
         runtime_health = getattr(coordinator, "gateway_health", None)
         candidate_runtime_provider_id = getattr(runtime_health, "provider_id", None)
         if isinstance(candidate_runtime_provider_id, str) and candidate_runtime_provider_id:
             runtime_provider_id = candidate_runtime_provider_id
+        candidate_runtime_provider_name = getattr(runtime_health, "provider_name", None)
+        if isinstance(candidate_runtime_provider_name, str) and candidate_runtime_provider_name:
+            runtime_provider_name = candidate_runtime_provider_name
 
         current_provider_id: str | None = None
         try:
@@ -871,9 +875,11 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
                     data[CONF_REST_TLS_CA_CERTIFICATE] = candidate.tls_ca_certificate
                 self.hass.config_entries.async_update_entry(self.config_entry, data=data)
                 return self.async_create_entry(data=dict(self.config_entry.options))
-        provider_label = (runtime_provider_id or current_provider_id or "unknown").replace(
-            "_", " "
-        ).title()
+        provider_label = (
+            runtime_provider_name
+            or (current_health.provider_name if current_health is not None else None)
+            or (runtime_provider_id or current_provider_id or "unknown").replace("_", " ").title()
+        )
         return self.async_show_form(
             step_id="primary_rest_gateway",
             data_schema=self.add_suggested_values_to_schema(

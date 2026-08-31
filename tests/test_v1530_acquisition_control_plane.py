@@ -9,9 +9,9 @@ COMPONENT = ROOT / "custom_components" / "portfolio_architect"
 
 
 def test_v1530_versions_and_health_schema_are_aligned() -> None:
-    assert json.loads((COMPONENT / "manifest.json").read_text())["version"] == "1.61.2"
-    assert 'VERSION: Final = "1.61.2"' in (COMPONENT / "const.py").read_text()
-    assert '__version__ = "1.61.2"' in (ROOT / "gateway/src/portfolio_architect_gateway/__init__.py").read_text()
+    assert json.loads((COMPONENT / "manifest.json").read_text())["version"] == "1.62.0"
+    assert 'VERSION: Final = "1.62.0"' in (COMPONENT / "const.py").read_text()
+    assert '__version__ = "1.62.0"' in (ROOT / "gateway/src/portfolio_architect_gateway/__init__.py").read_text()
     for app in (
         "portfolio_architect_gateway_comdirect",
         "portfolio_architect_gateway_dkb",
@@ -19,13 +19,13 @@ def test_v1530_versions_and_health_schema_are_aligned() -> None:
         "portfolio_architect_gateway_import",
     ):
         config = yaml.safe_load((ROOT / "home_assistant_app" / app / "config.yaml").read_text())
-        assert config["version"] == "1.61.2"
+        assert config["version"] == "1.62.0"
     rest = (COMPONENT / "rest_client.py").read_text()
     server = (ROOT / "gateway/src/portfolio_architect_gateway/server.py").read_text()
     assert 'HEALTH_V9_MEDIA_TYPE' in rest
-    assert '"requested_health_schema_version": 9' in rest
+    assert '"requested_health_schema_version": 10' in rest
     assert 'HEALTH_V9_MEDIA_TYPE' in server
-    assert '"health_schema_version": min(version, 9)' in server
+    assert '"health_schema_version": min(version, 10)' in server
 
 
 def test_control_plane_is_provider_neutral_read_only_and_no_fallback() -> None:
@@ -50,7 +50,7 @@ def test_official_provider_method_inventories_are_explicit() -> None:
     assert 'AcquisitionMethod("fints", METHOD_RESEARCH_ONLY, False, False)' in dkb
     assert 'AcquisitionMethod("pdf", METHOD_READY, True, True)' in tr
     assert 'AcquisitionMethod("live_api", METHOD_UNAVAILABLE, False, False)' in tr
-    assert 'single_method_control("csv", cash=False)' in generic
+    assert 'single_method_control("csv", cash=True)' in generic
 
 
 def test_comdirect_switch_is_gateway_local_atomic_and_requires_complete_csv_candidate() -> None:

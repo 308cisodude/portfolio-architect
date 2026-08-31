@@ -147,18 +147,18 @@ def test_v1380_cash_context_and_copy_friendly_purchase_interaction_are_preserved
 
 
 def test_v1381_release_metadata_notes_and_wire_contracts_are_aligned() -> None:
-    assert 'version = "1.61.2"' in (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    assert 'version = "1.62.0"' in (ROOT / "pyproject.toml").read_text(encoding="utf-8")
     manifest = json.loads((COMPONENT / "manifest.json").read_text(encoding="utf-8"))
-    assert manifest["version"] == "1.61.2"
-    assert 'VERSION: Final = "1.61.2"' in (COMPONENT / "const.py").read_text(encoding="utf-8")
-    assert '__version__ = "1.61.2"' in (COMPONENT / "engine" / "__init__.py").read_text(encoding="utf-8")
+    assert manifest["version"] == "1.62.0"
+    assert 'VERSION: Final = "1.62.0"' in (COMPONENT / "const.py").read_text(encoding="utf-8")
+    assert '__version__ = "1.62.0"' in (COMPONENT / "engine" / "__init__.py").read_text(encoding="utf-8")
     for app in (
         "portfolio_architect_gateway_comdirect",
         "portfolio_architect_gateway_dkb",
         "portfolio_architect_gateway_trade_republic",
     ):
         config = yaml.safe_load((ROOT / "home_assistant_app" / app / "config.yaml").read_text())
-        assert config["version"] == "1.61.2"
+        assert config["version"] == "1.62.0"
 
     assert (ROOT / "docs" / "UPGRADE-1.38.1.md").is_file()
     release_notes = (ROOT / "docs" / "RELEASE-NOTES.md").read_text(encoding="utf-8")
@@ -167,7 +167,7 @@ def test_v1381_release_metadata_notes_and_wire_contracts_are_aligned() -> None:
     for contract in (
         "payload schema 8: unchanged",
         "REST portfolio schema 1: unchanged",
-        "Gateway health schema 9 current; schemas 1–8 remain supported",
+        "Gateway health schema 10",
         "presentation schema 2",
         "broker schemas 1/2/3",
     ):

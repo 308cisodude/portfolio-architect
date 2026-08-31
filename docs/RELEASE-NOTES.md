@@ -1,85 +1,78 @@
-# Portfolio Architect v1.61.2 release notes
+# Portfolio Architect v1.62.0 release notes
 
-v1.61.2 is a narrow Home Assistant-side primary-Gateway identity-context hotfix prepared from the exact published v1.61.1 baseline. Live acceptance of v1.61.1 proved its discovery-card suppression, but also exposed that **Configure → Portfolio sources → Primary REST Gateway** could render `Primary source: Unknown` when its one-off fresh health lookup failed even though the running Portfolio Architect coordinator still held the already-validated primary provider identity.
+v1.62.0 graduates **Portfolio Architect Gateway — Generic Import** from experimental to stable and turns it into a supported standalone or supplemental provider for users whose institution has no dedicated Portfolio Architect Gateway.
 
-## Primary Gateway identity context
+The release also removes the former one-logical-provider limitation before the Generic contract becomes stable: one Generic Import App can host up to eight independent source profiles. Portfolio Architect still consumes ordinary provider-shaped Gateway snapshots; it does not receive a special multi-provider payload.
 
-The Primary REST Gateway form now treats presentation identity and mutation identity as deliberately separate concerns. For display, the form first uses the already-validated `gateway_health.provider_id` carried by the running coordinator and falls back to a fresh health result when runtime identity is unavailable. A transient fresh health failure therefore no longer erases known immutable context from the operator-facing form.
+## Stable multi-profile Generic Import
 
-Mutation remains fail-closed. The runtime display identity is **not** accepted as a substitute for the fresh current-primary identity needed when the endpoint changes. A changed endpoint is saved only after the existing primary identity can be freshly established and the candidate independently passes verified HTTPS, exact provider identity, healthy/non-reauth state and snapshot timestamp/count/SHA-256 integrity validation. If the fresh current-primary identity cannot be obtained, the changed endpoint is rejected even when the candidate itself reports the expected provider.
+Each new Generic profile has:
 
-This is presentation/context hardening only. It does not alter the canonical source set, provider authority, acquisition behavior, trust material, LKG state or planner calculations.
+- an immutable randomly allocated `generic_<stable-id>` provider identity;
+- a separately editable human provider name;
+- its own CSV mapping;
+- its own normalized canonical holdings snapshot;
+- optional provider-local EUR investment cash;
+- independent holdings and cash evidence timestamps;
+- bounded privacy-safe action diagnostics; and
+- its own authenticated REST portfolio/health paths under the shared Generic App private-PKI origin.
 
-## Provider-neutral singleton bootstrap
+An existing experimental Generic Import installation is migrated conservatively: if legacy Generic state exists, the first migrated profile retains provider identity `generic_csv`, its existing private snapshot/mapping/diagnostic files, and the legacy `/api/v1/portfolio` REST path. No remove/re-add or provider-identity substitution is required solely because of the upgrade.
 
-Portfolio Architect still creates exactly one canonical Home Assistant config entry. On a fresh installation, however, **any validated Portfolio Architect Gateway may bootstrap that entry**. Comdirect is not mandatory. DKB, Trade Republic, Comdirect and a healthy Generic Import Gateway all use the same verified Supervisor-discovery bootstrap path.
+## Import and persistence semantics
 
-The first configured Gateway becomes the **primary REST Gateway** only because its transport is stored in config-entry data; it has no provider-preference semantics. Supervisor supplies the endpoint/private-CA trust, while the operator supplies the App-private bearer token and Portfolio Architect configuration directory. Setup completes only after verified HTTPS, exact provider identity, healthy Gateway state and a usable portfolio snapshot validate.
+Raw CSV bytes are parsed transiently and are never persisted. The App does not persist upload filenames, unmapped columns, source rows, account identifiers or other raw document material.
 
-All first-run discoveries claim the same `INSTANCE_UNIQUE_ID`. Home Assistant therefore collapses concurrent provider discoveries to one visible Portfolio Architect Add flow. Discovery is remembered before that singleton claim, so other providers that arrive while the first flow is in progress remain internal provider-keyed candidates. Once the first source is configured, those candidates can be adopted through the existing Options flow instead of creating competing integration instances.
+A successful holdings import validates the complete candidate before publishing it and atomically replaces only the selected profile's normalized canonical holdings. Independently recorded cash is retained. A rejected import leaves the last valid canonical snapshot unchanged.
 
-## Existing-entry discovery suppression
+Optional investment cash is entered separately as a non-negative EUR amount. Its submission time is the independent cash evidence timestamp; changing or clearing cash does not change the holdings evidence timestamp. Holdings must exist before cash can be recorded.
 
-Once the canonical Portfolio Architect config entry exists, a newly discovered unconfigured Gateway can no longer open a second Portfolio Architect Add flow. Supervisor discovery is retained only as an internal, in-memory candidate keyed by immutable `provider_id`.
+Profiles survive normal App restarts through cold-backup-compatible `/data` state. Renaming a profile changes only its human label; the immutable provider ID is unchanged. Profile deletion is explicit, two-step in the Ingress UI and scoped to that profile's normalized private state. The Generic App deliberately retains no Home Assistant API privilege, so an adopted profile must be removed from Portfolio Architect before deleting it from the App.
 
-Unconfigured candidates are exposed only inside the existing entry at **Configure → Portfolio sources → Additional REST Gateways → Add discovered REST Gateway**. Selecting a candidate is non-destructive. Portfolio Architect still requires that Gateway's App-private bearer token and then validates:
+## Discovery and wire contracts
 
-- the Supervisor-discovered verified-HTTPS endpoint and private CA;
-- exact provider identity;
-- primary and supplemental Gateway health;
-- reauthentication/snapshot availability;
-- snapshot timestamp, position count and SHA-256 integrity metadata;
-- duplicate provider and endpoint exclusion.
+A Generic profile is advertised through Home Assistant Supervisor discovery only after it has a validated holdings snapshot. Each ready profile is published separately.
 
-Only after those checks pass is the supplemental source written to the existing config-entry options. No second Portfolio Architect config entry or provider-specific PA unique ID is created.
+Supervisor discovery transport schema 2 adds:
 
-Repeated discovery for the same provider replaces the prior in-memory candidate instead of multiplying candidates. A candidate is removed when the provider becomes configured. The candidate path is now provider-neutral: if DKB or Trade Republic is primary, a later Comdirect discovery may be offered as a supplemental candidate rather than being discarded by a Comdirect-specific filter.
+- the exact provider-specific REST path; and
+- a bounded human `provider_name`.
 
-## Preserved discovery and migration behavior
+Existing fixed-provider discovery schema 1 remains supported and unchanged.
 
-The correction changes initial eligibility and unconfigured-provider routing only. Established secured-source paths remain intact:
+Gateway health schema 10 adds the bounded human `provider_name`; schemas 1–9 remain supported. The immutable `provider_id` remains the security and portfolio identity. Portfolio Architect verifies requested provider identity against health and snapshot integrity exactly as for native providers.
 
-- bounded legacy primary HTTP → verified-HTTPS migration;
-- bounded supplemental HTTP → verified-HTTPS migration;
-- explicit historical → provider-qualified Comdirect App endpoint migration;
-- trust-change refusal for already-secured sources.
+One shared private CA and App-level bearer token protect the Generic App origin. Profiles remain logically isolated because each path is bound to one immutable provider identity; holdings and cash from different Generic profiles are never merged inside the Gateway.
 
-Configured Gateways therefore keep their existing migration/trust handling. The single-entry invariant is preserved both before and after setup.
+## Portfolio Architect integration changes
 
-## Security and compatibility boundary
+Portfolio Architect negotiates health schema 10 and uses `provider_name` for presentation while preserving `provider_id` as canonical identity. The bounded supplemental REST-source limit rises from four to eight so multi-profile Generic sources can coexist with native providers without changing the singleton config-entry architecture.
 
-The in-memory candidate registry contains only Supervisor discovery material already intended for local trust bootstrapping: provider identity, local endpoint identity, public private-CA certificate/fingerprint and related bounded discovery fields. It does not contain the App bearer token or provider credentials. Bearer material is supplied only through the existing Portfolio Architect Options flow when the operator explicitly adopts a candidate.
+A fresh installation can be bootstrapped by a ready Generic profile through the provider-neutral discovery lifecycle introduced in v1.61.1. Once the singleton PA entry exists, additional ready Generic profiles remain internal discovered candidates until explicitly adopted under **Configure → Portfolio sources → Additional REST Gateways**.
 
-This release does not change provider acquisition, Gateway runtime, Gateway health schema 9 or schemas 1–8 compatibility, REST portfolio schema 1, Portfolio payload schema 8, config-entry schema 12, canonical evidence clocks, freshness, `fallback_policy: none`, LKG/anti-rollback/source-set atomicity, DNS pinning, planner economics, funding topology, dashboard YAML, or the advisory-only boundary. Authenticated DKB FinTS remains disabled/research-only. There is no trading, order, transfer, payment, transaction-history, sell or withdrawal capability.
-There is **no silent fallback** between acquisition methods. The historical **Comdirect LEGACY** App remains removed from the active repository; canonical Comdirect retains only its bounded migration receiver for already-installed supported Legacy instances.
+## Preserved boundaries
 
-All four official Gateway App packages are version-aligned to v1.61.2 for release hygiene only; their runtime behavior is unchanged from v1.61.1.
+Comdirect, DKB and Trade Republic acquisition behavior is unchanged. REST portfolio schema 1, payload schema 8, config-entry schema 12, acquisition authority, `fallback_policy: none`, evidence freshness, verified private-PKI HTTPS, bearer authentication, DNS pinning, LKG/anti-rollback/source-set atomicity, planner/funding behavior and advisory-only semantics remain intact.
 
-## Preserved compatibility contracts
+The DKB anonymous FinTS capability probe remains experimental/research-only; authenticated DKB FinTS acquisition remains disabled and evidence-gated.
 
-The preserved compatibility contracts remain explicit:
+No trading, order, transfer, payment, or transaction-history capability is introduced by this release.
 
-- Portfolio payload schema 8: unchanged;
-- REST portfolio schema 1: unchanged;
-- Gateway health schema 9 current; schemas 1–8 remain supported;
-- historical early compatibility remains explicit: schemas 1–6 remain supported;
-- presentation schema 2: unchanged;
-- broker schemas 1/2/3: unchanged;
-- config-entry schema 12: unchanged;
-- acquisition authority and `fallback_policy: none`: unchanged;
-- canonical capability evidence clocks and freshness: unchanged;
-- private-PKI HTTPS, bearer authentication and DNS pinning: unchanged;
-- LKG, anti-rollback and source-set atomicity: unchanged;
-- planner economics, funding-route semantics and advisory-only boundary: unchanged;
-- authenticated DKB FinTS acquisition remains disabled;
-- no dashboard YAML replacement is required.
+No dashboard YAML replacement is required.
 
-No trading, order, transfer, payment, or transaction-history capability is introduced. Sell and withdrawal capability also remain absent.
+## Preserved historical release invariants
 
-## Historical compatibility notes retained
+For regression clarity, the following established contracts are explicitly preserved by v1.62.0:
 
-The historical v1.19.0-rc2 brokerage probe remains historical, is not included in this stable release, and is not promoted by this release. The v1.39 colourful allocation view was not included in v1.38.1; that historical sequencing remains documented and unchanged.
-
-Trade Republic provider-specific statement parsing remains inside its Gateway; v1.61.2 does not move PDF parsing into Portfolio Architect.
-
-The v1.33.0 source-freshness and plan-schedule separation remains intact: recurring scheduling remains anchored to the latest valid Portfolio Architect evaluation and this release does not change any configured freshness threshold. Acquisition authority remains explicit with `fallback_policy: none`; there is no silent fallback between methods.
+- payload schema 8: unchanged
+- REST portfolio schema 1: unchanged
+- Gateway health schema 10 is current; schemas 1–9 remain supported
+- presentation schema 2: unchanged
+- broker schemas 1/2/3: unchanged
+- The v1.33.0 source-freshness and plan-schedule separation remains in force: recurring schedule anchoring uses the latest valid Portfolio Architect evaluation and this release does not change any configured freshness threshold.
+- Trade Republic provider-specific PDF parsing stays in its Gateway; this release does not move PDF parsing into Portfolio Architect.
+- The historical `v1.19.0-rc2` brokerage-probe idea is not promoted by this release.
+- Comdirect LEGACY was removed from the active repository in v1.57.0 and the historical slug is not reused.
+- Acquisition remains explicit with no silent fallback.
+- No trading, order, transfer, payment, or transaction-history capability is introduced.
+- The v1.38.1 dynamic drift presentation is included through the established presentation schema; it is not included as a separate alternate calculation path.

@@ -162,8 +162,16 @@ class GenericCsvImportSummary:
 class GenericCsvProvider:
     """Static provider publishing only the latest canonical generic snapshot."""
 
-    def __init__(self, snapshot_file: Path) -> None:
+    def __init__(
+        self,
+        snapshot_file: Path,
+        *,
+        provider_id: str = PROVIDER_ID,
+        provider_name: str = "Generic Import",
+    ) -> None:
         self._snapshot_file = Path(snapshot_file)
+        self._provider_id = provider_id
+        self._provider_name = provider_name
         try:
             self._snapshot = load_snapshot(self._snapshot_file)
         except ProtocolError as err:
@@ -171,7 +179,11 @@ class GenericCsvProvider:
 
     @property
     def provider_id(self) -> str:
-        return PROVIDER_ID
+        return self._provider_id
+
+    @property
+    def provider_name(self) -> str:
+        return self._provider_name
 
     @property
     def acquisition_mode(self) -> str:
@@ -179,7 +191,7 @@ class GenericCsvProvider:
 
     @property
     def acquisition_control(self) -> AcquisitionControl:
-        return single_method_control("csv", cash=False)
+        return single_method_control("csv", cash=True)
 
     @property
     def poll_interval_seconds(self) -> int:

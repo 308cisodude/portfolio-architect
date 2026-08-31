@@ -44,6 +44,8 @@ Version 1.59.0 adds common read-only Gateway Ingress presentation for health-sch
 
 Version 1.58.0 adds provider-neutral capability-level acquisition authority in health schema 9 while preserving explicit no-fallback provider acquisition and the v1.57.0 Legacy withdrawal.
 
+Version 1.62.0 graduates Generic Import to stable multi-profile operation and adds backward-compatible health schema 10/provider-aware Supervisor discovery schema 2. Generic profiles remain isolated providers with transient raw CSV handling, independent canonical evidence and no Home Assistant API privilege. Native provider acquisition and the authenticated-DKB-FinTS research gate are unchanged.
+
 Version 1.61.2 fixes only the Home Assistant Configure presentation of the primary REST Gateway identity when a transient fresh health lookup fails. The already-validated runtime coordinator identity remains visible, while a changed endpoint still requires fresh verified identity plus verified-HTTPS, health and snapshot-integrity validation before saving. Gateway runtime, provider acquisition and the v1.61.1 discovery lifecycle are unchanged.
 
 Version 1.61.1 fixes the Home Assistant Supervisor-discovery lifecycle provider-neutrally: any validated Gateway can bootstrap the singleton entry on a fresh installation, concurrent discoveries collapse onto one initial Add flow, and after the entry exists an unconfigured provider is retained as an internal candidate instead of creating another top-level Add card. Explicit adoption remains inside Configure and preserves verified-HTTPS, bearer-authentication and snapshot-integrity validation. Gateway runtimes and provider acquisition are unchanged from v1.61.0.

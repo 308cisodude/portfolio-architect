@@ -10,7 +10,7 @@ APP = ROOT / "home_assistant_app" / "portfolio_architect_gateway_comdirect"
 
 def test_canonical_gateway_app_is_stable_and_versioned() -> None:
     config = yaml.safe_load((APP / "config.yaml").read_text(encoding="utf-8"))
-    assert config["version"] == "1.61.2"
+    assert config["version"] == "1.62.0"
     assert config["stage"] == "stable"
 
 
@@ -21,7 +21,9 @@ def test_health_contract_is_bounded_authenticated_and_same_origin() -> None:
     server = (APP / "src" / "portfolio_architect_gateway" / "server.py").read_text(encoding="utf-8")
     assert "MAX_REST_HEALTH_RESPONSE_BYTES: Final = 16 * 1024" in transport
     assert '"Authorization": f"Bearer {config.api_token}"' in transport
-    assert 'SplitResult(parsed.scheme, parsed.netloc, "/healthz"' in transport
+    assert 'def gateway_health_url(endpoint_url: str)' in transport
+    assert 'f"/api/v1/providers/{match.group(1)}/healthz"' in transport
+    assert 'else "/healthz"' in transport
     assert "allow_redirects=False" in transport
     assert '"gateway_version": __version__' in server
     assert "async_fetch_gateway_health" in coordinator

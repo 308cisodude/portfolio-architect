@@ -22,7 +22,7 @@ generic acquisition formats itself.
 | Comdirect | Portfolio Architect Gateway — Comdirect | `portfolio_architect_gateway_comdirect` | **stable** — live API or explicit static CSV, auto-start |
 | DKB | Portfolio Architect Gateway — DKB | `portfolio_architect_gateway_dkb` | **stable** — depot/cash CSV, auto-start; anonymous FinTS probe remains experimental/research-only |
 | Trade Republic | Portfolio Architect Gateway — Trade Republic | `portfolio_architect_gateway_trade_republic` | **stable** — DEPOTAUSZUG/KONTOAUSZUG PDF import, auto-start |
-| Generic Import | Portfolio Architect Gateway — Generic Import | `portfolio_architect_gateway_import` | **experimental** — provider-neutral mapped CSV, auto-start |
+| Generic Import | Portfolio Architect Gateway — Generic Import | `portfolio_architect_gateway_import` | **stable** — provider-neutral multi-profile mapped CSV + optional EUR cash, auto-start |
 
 The provider-qualified Comdirect slug `portfolio_architect_gateway_comdirect` is canonical from v1.55.1 onward after the controlled identity migration. The historical `portfolio_architect_gateway` package was labelled **Comdirect LEGACY** and deprecated through its final v1.56.x migration-source line, then withdrawn from the active App repository in v1.57.0. An already-installed supported v1.55/v1.56 Legacy instance can still use the unchanged explicit same-CA/bearer migration receiver in canonical Comdirect; the historical slug is not reused. Every active provider App has a distinct slug and independent App-private `/data` volume.
 
@@ -178,3 +178,6 @@ recurring plan review dates. Version 1.33.1 changes only the Home Assistant recu
 generic target identity/presentation architecture in the Home Assistant/engine layer; Provider Apps
 receive package/User-Agent alignment only and the v1.32 diagnostic evidence policy remains
 authoritative.
+
+
+v1.62.0 adds health schema 10 `provider_name` and Supervisor discovery transport schema 2 for exact per-profile paths. One Generic App may expose up to eight isolated logical providers while Portfolio Architect continues to consume one canonical snapshot per provider; holdings/cash are never merged inside the Gateway. Existing `generic_csv` state retains its identity for compatibility.

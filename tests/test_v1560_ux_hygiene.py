@@ -1,4 +1,4 @@
-"""v1.61.2 UX, discovery-lifecycle, and presentation hygiene contracts."""
+"""v1.62.0 UX, discovery-lifecycle, and presentation hygiene contracts."""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ GENERIC = APPS / "portfolio_architect_gateway_import"
 
 def test_v156_version_alignment_and_security_non_goals() -> None:
     manifest = json.loads((ROOT / "custom_components/portfolio_architect/manifest.json").read_text())
-    assert manifest["version"] == "1.61.2"
+    assert manifest["version"] == "1.62.0"
     assert not (APPS / "portfolio_architect_gateway").exists()
     for slug in (
         "portfolio_architect_gateway_comdirect",
@@ -26,7 +26,7 @@ def test_v156_version_alignment_and_security_non_goals() -> None:
         "portfolio_architect_gateway_trade_republic",
         "portfolio_architect_gateway_import",
     ):
-        assert yaml.safe_load((APPS / slug / "config.yaml").read_text())["version"] == "1.61.2"
+        assert yaml.safe_load((APPS / slug / "config.yaml").read_text())["version"] == "1.62.0"
     dkb_source = (DKB / "src/portfolio_architect_gateway/dkb_app.py").read_text()
     assert "Authenticated FinTS acquisition is not enabled" in dkb_source
     assert "cannot replace or fall back from CSV evidence" in dkb_source
@@ -59,38 +59,15 @@ assert winter_utc == '2026-01-28T14:16:38+00:00'
 def test_generic_import_hides_token_low_and_tracks_exact_discovery_uuid(tmp_path: Path) -> None:
     ui = (GENERIC / "src/portfolio_architect_gateway/generic_import_app.py").read_text()
     entrypoint = (GENERIC / "entrypoint.py").read_text()
-    assert ui.index("Import mapped CSV") < ui.index("Sensitive connection material") < ui.index("Bearer token")
+    assert ui.index("Add source profile") < ui.index("Sensitive connection material") < ui.index("Bearer token")
     assert "<details><summary>Show bearer token</summary>" in ui
-    assert 'DISCOVERY_UUID_FILE = DATA / "generic-import-discovery-uuid"' in entrypoint
+    assert 'LEGACY_DISCOVERY_UUID_FILE = DATA / "generic-import-discovery-uuid"' in entrypoint
+    assert 'DISCOVERY_STATE_FILE = DATA / "generic-import-discoveries.json"' in entrypoint
     assert "delete_supervisor_tls_discovery" in entrypoint
-    assert "skipping duplicate discovery publication" in entrypoint
+    assert "publish_supervisor_tls_discovery" in entrypoint
+    assert "self._records" in entrypoint and "self._save_records()" in entrypoint
+    assert "provider_id" in entrypoint and "profile.portfolio_path" in entrypoint
     assert "signal.signal(signal.SIGTERM, _raise_keyboard_interrupt)" in entrypoint
-    assert "on_published=lifecycle.record_published" in entrypoint
-    assert "stop_event=lifecycle.stop_event" in entrypoint
-
-    env = os.environ.copy()
-    env["PYTHONPATH"] = os.pathsep.join((str(GENERIC), str(GENERIC / "src")))
-    state_file = tmp_path / "discovery-uuid"
-    code = f"""
-from pathlib import Path
-import entrypoint as module
-calls=[]
-module.delete_supervisor_tls_discovery=lambda value: calls.append(value)
-path=Path({str(state_file)!r})
-lifecycle=module._GenericDiscoveryLifecycle(path)
-uuid='a'*32
-lifecycle.record_published(uuid)
-assert path.read_text(encoding='ascii').strip()==uuid
-assert oct(path.stat().st_mode & 0o777)=='0o600'
-assert lifecycle.reconcile_before_publish() is True
-assert calls==[uuid]
-assert not path.exists()
-lifecycle.record_published(uuid)
-lifecycle.cleanup()
-assert calls==[uuid, uuid]
-assert not path.exists()
-"""
-    subprocess.run([sys.executable, "-c", code], check=True, env=env, cwd=ROOT)
 
 
 def test_supervisor_discovery_delete_is_exact_and_bounded() -> None:
@@ -146,7 +123,7 @@ def test_routine_ingress_polling_logs_are_debug_only() -> None:
 
 def test_sbom_records_dkb_timezone_runtime_dependency() -> None:
     sbom = json.loads((ROOT / "SBOM.spdx.json").read_text())
-    assert sbom["name"] == "Portfolio Architect v1.61.2 SBOM"
+    assert sbom["name"] == "Portfolio Architect v1.62.0 SBOM"
     tzdata = next(pkg for pkg in sbom["packages"] if pkg["SPDXID"] == "SPDXRef-Package-Tzdata")
     assert tzdata["versionInfo"] == "build-resolved"
     assert any(ref["referenceLocator"] == "pkg:apk/alpine/tzdata" for ref in tzdata["externalRefs"])

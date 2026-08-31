@@ -7,7 +7,7 @@ from homeassistant.const import Platform
 DOMAIN: Final = "portfolio_architect"
 INSTANCE_UNIQUE_ID: Final = "portfolio_architect"
 NAME: Final = "Portfolio Architect"
-VERSION: Final = "1.61.2"
+VERSION: Final = "1.62.0"
 
 CONF_SOURCE_TYPE: Final = "source_type"
 
@@ -85,7 +85,7 @@ MAX_PLAN_EXECUTION_DAY: Final = 28
 DEFAULT_UPDATE_INTERVAL_MINUTES: Final = 15
 DEFAULT_HOME_ASSISTANT_LKG_MAX_AGE_SECONDS: Final = 7 * 24 * 60 * 60
 MAX_SUPPLEMENTAL_SOURCES: Final = 8
-MAX_SUPPLEMENTAL_REST_SOURCES: Final = 4
+MAX_SUPPLEMENTAL_REST_SOURCES: Final = 8
 
 PLAN_BUDGET_BASIS_PERIOD: Final = "per_period"
 PLAN_BUDGET_BASIS_EXECUTION: Final = "per_execution"

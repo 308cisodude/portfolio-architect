@@ -166,7 +166,7 @@ def verify_gateway_app_archive_layouts(directory: Path, release_version: str) ->
         "portfolio-architect-gateway-import-app-v%s.zip" % release_version: (
             "portfolio_architect_gateway_import",
             "portfolio_architect_gateway_import",
-            "experimental",
+            "stable",
             "generic_csv",
             "auto",
         ),

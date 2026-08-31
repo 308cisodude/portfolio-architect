@@ -1,5 +1,5 @@
-# Portfolio Architect Gateway — Comdirect v1.61.2
+# Portfolio Architect Gateway — Comdirect v1.62.0
 
-Version 1.61.2 is package alignment for Portfolio Architect's Home Assistant-side primary-Gateway identity-context hotfix. Provider acquisition, health schema 9, canonical evidence clocks, private-PKI transport and no-fallback behavior are unchanged from v1.61.1.
+Version 1.62.0 aligns this stable App with the additive common Gateway contracts used by Generic Import graduation: health schema 10 adds bounded `provider_name` while schemas 1–9 remain compatible. Provider acquisition remains unchanged: explicit `live_api` or operator-selected complete `csv`, with no silent fallback.
 
-Version 1.60.0 adds read-only authoritative capability-evidence availability and UTC timestamps to the existing Acquisition authority cards. The evidence clocks come only from the canonical snapshot of the explicitly active method; prepared inactive CSV evidence is deliberately excluded. Existing explicit Comdirect live API/CSV activation and `fallback_policy: none` are unchanged.
+Private-PKI HTTPS, bearer authentication, provider identity, canonical evidence, `fallback_policy: none` and advisory-only semantics are unchanged.

@@ -1470,6 +1470,7 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
                     if self.gateway_health is not None and self.gateway_health.provider_id is not None
                     else PROVIDER_LOCAL_REST_JSON
                 ),
+                self.gateway_health.provider_name if self.gateway_health is not None else None,
                 self.gateway_health.acquisition_mode if self.gateway_health is not None else None,
                 {
                     provider_id: health.acquisition_mode
@@ -1959,7 +1960,7 @@ def _validate_supplemental_rest_integrity(
     return PortfolioSourceSnapshot(
         source_id=config.provider_id,
         provider=config.provider_id,
-        label=_provider_display_name(config.provider_id),
+        label=health.provider_name or _provider_display_name(config.provider_id),
         generated_at=snapshot.generated_at,
         positions=snapshot.positions,
     )
@@ -2086,6 +2087,7 @@ def _calculate_rest_payload(
     endpoint_url: str,
     supplemental_rest_snapshots: tuple[PortfolioSourceSnapshot, ...],
     primary_provider_id: str,
+    primary_provider_name: str | None,
     primary_acquisition_mode: str | None,
     supplemental_acquisition_modes: dict[str, str],
     investment_reserve_eur,
@@ -2097,7 +2099,7 @@ def _calculate_rest_payload(
     primary = PortfolioSourceSnapshot(
         source_id=primary_provider_id,
         provider=primary_provider_id,
-        label=_provider_display_name(primary_provider_id),
+        label=primary_provider_name or _provider_display_name(primary_provider_id),
         generated_at=generated_at,
         positions=positions,
     )
@@ -2128,7 +2130,7 @@ def _calculate_rest_payload(
     if investment_reserve_eur is not None and investment_reserve_as_of is not None:
         primary_cash: dict[str, Any] = {
             "provider_id": primary_provider_id,
-            "provider_name": _provider_display_name(primary_provider_id),
+            "provider_name": primary_provider_name or _provider_display_name(primary_provider_id),
             "available_eur": investment_reserve_eur,
             "as_of": investment_reserve_as_of.isoformat(),
         }
@@ -2150,7 +2152,7 @@ def _calculate_rest_payload(
         evaluated_at=max(item.generated_at for item in sources),
         plan_override=plan_override,
         source_provider=provider,
-        source_label=(f"{len(sources)} sources" if has_supplements else _provider_display_name(primary_provider_id)),
+        source_label=(f"{len(sources)} sources" if has_supplements else (primary_provider_name or _provider_display_name(primary_provider_id))),
         source_metadata={
             **_aggregation_metadata(
                 aggregation,

@@ -158,19 +158,19 @@ def test_cash_sensors_expose_context_attributes_without_changing_wire_contracts(
     for contract in (
         "payload schema 8: unchanged",
         "REST portfolio schema 1: unchanged",
-        "Gateway health schema 9 current; schemas 1–8 remain supported",
+        "Gateway health schema 10",
         "presentation schema 2",
     ):
         assert contract in release_notes
 
 
 def test_v1380_metadata_dashboard_and_translation_contracts_are_aligned() -> None:
-    assert 'version = "1.61.2"' in (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    assert 'version = "1.62.0"' in (ROOT / "pyproject.toml").read_text(encoding="utf-8")
     manifest = json.loads((COMPONENT / "manifest.json").read_text(encoding="utf-8"))
-    assert manifest["version"] == "1.61.2"
-    assert 'VERSION: Final = "1.61.2"' in (COMPONENT / "const.py").read_text(encoding="utf-8")
-    assert '__version__ = "1.61.2"' in (COMPONENT / "engine" / "__init__.py").read_text(encoding="utf-8")
-    assert (ROOT / "docs" / "UPGRADE-1.61.2.md").is_file()
+    assert manifest["version"] == "1.62.0"
+    assert 'VERSION: Final = "1.62.0"' in (COMPONENT / "const.py").read_text(encoding="utf-8")
+    assert '__version__ = "1.62.0"' in (COMPONENT / "engine" / "__init__.py").read_text(encoding="utf-8")
+    assert (ROOT / "docs" / "UPGRADE-1.62.0.md").is_file()
 
     source = DASHBOARD.read_text(encoding="utf-8")
     lowered = source.casefold()

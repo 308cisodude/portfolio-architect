@@ -14,11 +14,11 @@ def test_release_version_and_wire_contracts_remain_aligned() -> None:
     manifest = json.loads(
         (ROOT / "custom_components" / "portfolio_architect" / "manifest.json").read_text()
     )
-    assert manifest["version"] == "1.61.2"
+    assert manifest["version"] == "1.62.0"
     notes = (ROOT / "docs" / "RELEASE-NOTES.md").read_text(encoding="utf-8")
     assert "payload schema 8: unchanged" in notes
     assert "REST portfolio schema 1: unchanged" in notes
-    assert "Gateway health schema 9 current; schemas 1–8 remain supported" in notes
+    assert "Gateway health schema 10" in notes
 
 
 def test_cache_parser_restores_optional_quantity() -> None:

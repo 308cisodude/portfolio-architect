@@ -21,6 +21,7 @@ from urllib.request import ProxyHandler, Request, build_opener
 
 DISCOVERY_SERVICE: Final = "portfolio_architect"
 DISCOVERY_TRANSPORT_SCHEMA_VERSION: Final = 1
+DISCOVERY_PROFILE_TRANSPORT_SCHEMA_VERSION: Final = 2
 GATEWAY_PORT: Final = 8787
 GATEWAY_PATH: Final = "/api/v1/portfolio"
 MAX_SUPERVISOR_RESPONSE_BYTES: Final = 64 * 1024
@@ -107,6 +108,8 @@ def start_supervisor_tls_discovery_publisher(
     material: SupervisorTlsMaterial,
     provider_id: str,
     *,
+    path: str = GATEWAY_PATH,
+    provider_name: str | None = None,
     on_published: Callable[[str], None] | None = None,
     stop_event: threading.Event | None = None,
 ) -> threading.Thread:
@@ -119,7 +122,9 @@ def start_supervisor_tls_discovery_publisher(
             if stop_event is not None and stop_event.is_set():
                 return
             try:
-                discovery_uuid = publish_supervisor_tls_discovery(material, provider)
+                discovery_uuid = publish_supervisor_tls_discovery(
+                    material, provider, path=path, provider_name=provider_name
+                )
                 if stop_event is not None and stop_event.is_set():
                     try:
                         delete_supervisor_tls_discovery(discovery_uuid)
@@ -156,11 +161,20 @@ def publish_supervisor_tls_discovery(
     material: SupervisorTlsMaterial,
     provider_id: str,
     *,
+    path: str = GATEWAY_PATH,
+    provider_name: str | None = None,
     supervisor_url: str = "http://supervisor",
     supervisor_token: str | None = None,
 ) -> str:
     """Publish public trust material through Supervisor discovery after HTTPS is live."""
     provider = _normalise_provider_id(provider_id)
+    discovery_path = _normalise_discovery_path(path, provider)
+    display_name = _normalise_optional_provider_name(provider_name)
+    schema_version = (
+        DISCOVERY_PROFILE_TRANSPORT_SCHEMA_VERSION
+        if display_name is not None or discovery_path != GATEWAY_PATH
+        else DISCOVERY_TRANSPORT_SCHEMA_VERSION
+    )
     token = supervisor_token or os.environ.get("SUPERVISOR_TOKEN", "")
     if not token:
         raise RuntimeError("Supervisor token is unavailable")
@@ -172,11 +186,12 @@ def publish_supervisor_tls_discovery(
         payload={
             "service": DISCOVERY_SERVICE,
             "config": {
-                "transport_schema_version": DISCOVERY_TRANSPORT_SCHEMA_VERSION,
+                "transport_schema_version": schema_version,
                 "provider_id": provider,
+                **({"provider_name": display_name} if display_name is not None else {}),
                 "host": material.hostname,
                 "port": GATEWAY_PORT,
-                "path": GATEWAY_PATH,
+                "path": discovery_path,
                 "ca_certificate": material.ca_certificate_pem,
                 "ca_sha256": material.ca_sha256,
             },
@@ -186,6 +201,25 @@ def publish_supervisor_tls_discovery(
     if not isinstance(uuid, str) or re.fullmatch(r"[0-9a-f]{32}", uuid) is None:
         raise RuntimeError("Supervisor returned an invalid discovery identifier")
     return uuid
+
+
+
+def _normalise_discovery_path(value: str, provider_id: str) -> str:
+    if value == GATEWAY_PATH:
+        return value
+    expected = f"/api/v1/providers/{provider_id}/portfolio"
+    if value != expected:
+        raise RuntimeError("Supervisor discovery path is invalid")
+    return value
+
+
+def _normalise_optional_provider_name(value: str | None) -> str | None:
+    if value is None:
+        return None
+    cleaned = value.strip()
+    if not cleaned or len(cleaned) > 64 or any(ord(ch) < 32 or ord(ch) == 127 for ch in cleaned):
+        raise RuntimeError("Supervisor discovery provider name is invalid")
+    return cleaned
 
 
 def delete_supervisor_tls_discovery(

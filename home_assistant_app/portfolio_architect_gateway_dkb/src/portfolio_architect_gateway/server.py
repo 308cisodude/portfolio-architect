@@ -34,8 +34,10 @@ from .errors import (
 from .models import PortfolioSnapshot
 from .provider import (
     PortfolioProvider,
+    default_provider_name,
     normalise_poll_interval_seconds,
     normalise_provider_id,
+    normalise_provider_name,
 )
 from .store import load_snapshot, save_snapshot
 
@@ -49,6 +51,7 @@ HEALTH_V6_MEDIA_TYPE = "application/vnd.portfolio-architect.health+json;version=
 HEALTH_V7_MEDIA_TYPE = "application/vnd.portfolio-architect.health+json;version=7"
 HEALTH_V8_MEDIA_TYPE = "application/vnd.portfolio-architect.health+json;version=8"
 HEALTH_V9_MEDIA_TYPE = "application/vnd.portfolio-architect.health+json;version=9"
+HEALTH_V10_MEDIA_TYPE = "application/vnd.portfolio-architect.health+json;version=10"
 REFRESH_TRIGGERS = frozenset({"startup", "scheduled", "manual", "bootstrap"})
 MANUAL_REFRESH_MIN_INTERVAL_SECONDS = 60
 STATIC_ACQUISITION_METHODS = frozenset({"csv", "pdf"})
@@ -71,6 +74,9 @@ class GatewayState:
         self._config = config
         self._client = client
         self._provider_id = normalise_provider_id(client.provider_id)
+        self._provider_name = normalise_provider_name(
+            getattr(client, "provider_name", default_provider_name(self._provider_id))
+        )
         self._poll_interval_seconds = normalise_poll_interval_seconds(
             client.poll_interval_seconds
         )
@@ -418,7 +424,7 @@ class GatewayState:
         if version >= 2:
             document.update(
                 {
-                    "health_schema_version": min(version, 9),
+                    "health_schema_version": min(version, 10),
                     "snapshot_sha256": view.sha256 if view is not None else None,
                     "snapshot_position_count": (
                         view.position_count if view is not None else None
@@ -493,6 +499,9 @@ class GatewayState:
             document.update(
                 control.as_health_fields(include_capabilities=version >= 9)
             )
+        if version >= 10:
+            document["health_schema_version"] = 10
+            document["provider_name"] = self._provider_name
         return document
 
 
@@ -538,6 +547,11 @@ class GatewayRequestHandler(BaseHTTPRequestHandler):
     def gateway_server(self) -> GatewayHttpServer:
         return self.server  # type: ignore[return-value]
 
+    @property
+    def request_gateway_state(self) -> GatewayState:
+        """Return the provider state selected for this request."""
+        return self.gateway_server.gateway_state
+
     def do_GET(self) -> None:  # noqa: N802
         if not self._headers_within_limit():
             self._send_error(HTTPStatus.REQUEST_HEADER_FIELDS_TOO_LARGE)
@@ -576,7 +590,7 @@ class GatewayRequestHandler(BaseHTTPRequestHandler):
         self._method_not_allowed()
 
     def _serve_portfolio(self) -> None:
-        view = self.gateway_server.gateway_state.snapshot_view()
+        view = self.request_gateway_state.snapshot_view()
         if view is None:
             self._send_error(HTTPStatus.SERVICE_UNAVAILABLE, retry_after=60)
             return
@@ -614,28 +628,31 @@ class GatewayRequestHandler(BaseHTTPRequestHandler):
 
     def _serve_health(self) -> None:
         accept = self.headers.get("Accept", "")
-        use_v9 = HEALTH_V9_MEDIA_TYPE in accept
-        use_v8 = not use_v9 and HEALTH_V8_MEDIA_TYPE in accept
-        use_v7 = not use_v9 and not use_v8 and HEALTH_V7_MEDIA_TYPE in accept
-        use_v6 = not use_v9 and not use_v8 and not use_v7 and HEALTH_V6_MEDIA_TYPE in accept
-        use_v5 = not use_v9 and not use_v8 and not use_v7 and not use_v6 and HEALTH_V5_MEDIA_TYPE in accept
-        use_v4 = not use_v9 and not use_v8 and not use_v7 and not use_v6 and not use_v5 and HEALTH_V4_MEDIA_TYPE in accept
-        use_v3 = not use_v9 and not use_v8 and not use_v7 and not use_v6 and not use_v5 and not use_v4 and HEALTH_V3_MEDIA_TYPE in accept
+        use_v10 = HEALTH_V10_MEDIA_TYPE in accept
+        use_v9 = not use_v10 and HEALTH_V9_MEDIA_TYPE in accept
+        use_v8 = not use_v10 and not use_v9 and HEALTH_V8_MEDIA_TYPE in accept
+        use_v7 = not use_v10 and not use_v9 and not use_v8 and HEALTH_V7_MEDIA_TYPE in accept
+        use_v6 = not use_v10 and not use_v9 and not use_v8 and not use_v7 and HEALTH_V6_MEDIA_TYPE in accept
+        use_v5 = not use_v10 and not use_v9 and not use_v8 and not use_v7 and not use_v6 and HEALTH_V5_MEDIA_TYPE in accept
+        use_v4 = not use_v10 and not use_v9 and not use_v8 and not use_v7 and not use_v6 and not use_v5 and HEALTH_V4_MEDIA_TYPE in accept
+        use_v3 = not use_v10 and not use_v9 and not use_v8 and not use_v7 and not use_v6 and not use_v5 and not use_v4 and HEALTH_V3_MEDIA_TYPE in accept
         use_v2 = (
-            not use_v9 and not use_v8 and not use_v7 and not use_v6 and not use_v5 and not use_v4 and not use_v3
+            not use_v10 and not use_v9 and not use_v8 and not use_v7 and not use_v6 and not use_v5 and not use_v4 and not use_v3
             and HEALTH_V2_MEDIA_TYPE in accept
         )
         version = (
-            9 if use_v9 else 8 if use_v8 else 7 if use_v7 else 6 if use_v6 else 5 if use_v5 else 4 if use_v4 else 3 if use_v3 else 2 if use_v2 else 1
+            10 if use_v10 else 9 if use_v9 else 8 if use_v8 else 7 if use_v7 else 6 if use_v6 else 5 if use_v5 else 4 if use_v4 else 3 if use_v3 else 2 if use_v2 else 1
         )
         body = json.dumps(
-            self.gateway_server.gateway_state.health_document(version=version),
+            self.request_gateway_state.health_document(version=version),
             sort_keys=True,
             separators=(",", ":"),
         ).encode("utf-8")
         self.send_response(HTTPStatus.OK)
         content_type = (
-            HEALTH_V9_MEDIA_TYPE
+            HEALTH_V10_MEDIA_TYPE
+            if use_v10
+            else HEALTH_V9_MEDIA_TYPE
             if use_v9
             else HEALTH_V8_MEDIA_TYPE
             if use_v8

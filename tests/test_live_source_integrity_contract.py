@@ -15,11 +15,11 @@ def test_component_versions_are_compatible() -> None:
     engine = (COMPONENT / "engine" / "__init__.py").read_text()
     app = yaml.safe_load((APP / "config.yaml").read_text())
     gateway = (APP / "src" / "portfolio_architect_gateway" / "__init__.py").read_text()
-    assert manifest["version"] == "1.61.2"
-    assert 'VERSION: Final = "1.61.2"' in const
-    assert '__version__ = "1.61.2"' in engine
-    assert app["version"] == "1.61.2"
-    assert '__version__ = "1.61.2"' in gateway
+    assert manifest["version"] == "1.62.0"
+    assert 'VERSION: Final = "1.62.0"' in const
+    assert '__version__ = "1.62.0"' in engine
+    assert app["version"] == "1.62.0"
+    assert '__version__ = "1.62.0"' in gateway
     assert app["stage"] == "stable"
 
 
@@ -76,4 +76,4 @@ def test_last_known_good_health_entities_are_present() -> None:
     assert "PortfolioGatewayUsingLastKnownGoodSnapshot" in binary
     assert '"operating_mode"' in diagnostics
     assert '"consecutive_refresh_failures"' in diagnostics
-    assert '"requested_health_schema_version": 9' in transport
+    assert '"requested_health_schema_version": 10' in transport
