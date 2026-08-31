@@ -90,7 +90,7 @@
       },
       "hassio_confirm": {
         "title": "Connect discovered Portfolio Architect Gateway securely",
-        "description": "Home Assistant Supervisor provided verified private-CA trust for {gateway}. Enter the existing Gateway bearer token and Portfolio Architect configuration directory; the HTTPS endpoint is validated before setup completes.",
+        "description": "Home Assistant Supervisor provided verified private-CA trust for provider {provider_id} at {gateway}. Enter the existing Gateway bearer token and Portfolio Architect configuration directory; the HTTPS endpoint, provider identity and portfolio snapshot are validated before this Gateway creates the single Portfolio Architect entry.",
         "data": {
           "config_directory": "Portfolio configuration directory",
           "rest_api_token": "Gateway bearer token"
@@ -98,16 +98,6 @@
         "data_description": {
           "config_directory": "Relative to /config. It must contain the Portfolio Architect policy/configuration files.",
           "rest_api_token": "Dedicated bearer token for this Gateway. TLS trust is supplied separately through Supervisor discovery."
-        }
-      },
-      "hassio_add_supplemental_confirm": {
-        "title": "Add discovered Portfolio Architect Gateway securely",
-        "description": "Home Assistant Supervisor discovered {provider} at {gateway} and supplied its private CA. Enter that Gateway’s existing bearer token to validate and add it as an additional portfolio source.",
-        "data": {
-          "rest_api_token": "Gateway bearer token"
-        },
-        "data_description": {
-          "rest_api_token": "Dedicated bearer token for this Gateway. The HTTPS endpoint and private CA are supplied through Supervisor discovery."
         }
       },
       "hassio_comdirect_slug_migration_confirm": {
@@ -130,13 +120,11 @@
       "reauth_successful": "Local gateway token updated successfully.",
       "reauth_not_supported": "Reauthentication is only available for the local REST gateway adapter.",
       "invalid_tls_discovery": "Gateway TLS discovery data was invalid and was rejected.",
-      "tls_discovery_not_primary": "This discovered Gateway cannot create the primary Portfolio Architect entry.",
       "tls_discovery_not_applicable": "The discovered Gateway does not match a configured Portfolio Architect REST source.",
       "tls_trust_changed": "The Gateway presented a different private CA for an already-secured source. Automatic trust replacement is refused.",
       "tls_already_configured": "This Gateway already uses the discovered verified HTTPS trust.",
       "tls_validation_failed": "The discovered HTTPS endpoint could not be validated with the supplied private CA and existing bearer token.",
       "tls_migrated": "The matching Gateway source was migrated to verified HTTPS successfully.",
-      "tls_supplemental_added": "The discovered Gateway was validated and added as a verified-HTTPS supplemental source.",
       "comdirect_slug_validation_failed": "The provider-qualified Comdirect App did not fully validate with the existing trust and bearer token. The historical source remains unchanged.",
       "comdirect_slug_migrated": "The Comdirect Gateway identity was migrated to the provider-qualified endpoint successfully."
     }
@@ -2532,9 +2520,27 @@
         "title": "Additional REST Gateways",
         "description": "Manage optional provider-isolated supplements to the single primary source. Add, edit or remove one exact Gateway without changing the primary source.",
         "menu_options": {
-          "add_rest_gateway": "Add REST Gateway",
+          "add_discovered_rest_gateway": "Add discovered REST Gateway",
+          "add_rest_gateway": "Add REST Gateway manually",
           "edit_rest_gateway": "Edit REST Gateway",
           "remove_rest_gateway": "Remove REST Gateway"
+        }
+      },
+      "add_discovered_rest_gateway": {
+        "title": "Add discovered REST Gateway",
+        "description": "Select one unconfigured supplemental Gateway already discovered by Home Assistant Supervisor. Selecting it does not change Portfolio Architect configuration.",
+        "data": {
+          "provider_id": "Provider"
+        }
+      },
+      "add_discovered_rest_gateway_details": {
+        "title": "Connect discovered REST Gateway securely",
+        "description": "**Discovered:** {provider} (`{provider_id}`) · `{endpoint}`\n\nSupervisor supplied private-CA fingerprint `{ca_sha256}`. Enter the existing Gateway bearer token. Portfolio Architect validates verified HTTPS, provider identity, Gateway health and snapshot integrity before adding this provider to the existing Portfolio Architect entry.",
+        "data": {
+          "rest_api_token": "Gateway bearer token"
+        },
+        "data_description": {
+          "rest_api_token": "Dedicated low-privilege bearer token for this Gateway. The HTTPS endpoint and private CA come from Supervisor discovery; the token is stored only in the existing Home Assistant config entry options."
         }
       },
       "add_rest_gateway": {
@@ -2820,7 +2826,8 @@
       "plan_already_uses_yaml": "The investment plan already uses portfolio.yaml.",
       "no_rest_gateways": "No additional REST Gateways are configured.",
       "rest_gateways_require_rest_primary": "Additional REST Gateways require the primary Portfolio Architect source to be a REST Gateway.",
-      "broker_editor_unavailable": "broker.yaml must exist and use provider-aware schema 2 or 3 before the native editor can be used."
+      "broker_editor_unavailable": "broker.yaml must exist and use provider-aware schema 2 or 3 before the native editor can be used.",
+      "no_discovered_rest_gateways": "No unconfigured supplemental Gateways are currently available from Supervisor discovery."
     }
   },
   "selector": {

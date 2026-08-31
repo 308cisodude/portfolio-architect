@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.61.1
+
+- Version 1.61.1 aligns package metadata with Portfolio Architect's Home Assistant-side provider-neutral Supervisor-discovery lifecycle hotfix; App runtime, provider acquisition, authority, evidence clocks, wire/security contracts and fallback behavior are unchanged from v1.61.0.
+
 ## 1.61.0
 
 - Version 1.61.0 aligns package metadata with Portfolio Architect's Home Assistant-side Configure removal-confirmation release; provider acquisition, authority, evidence clocks, wire/security contracts and fallback behavior are unchanged from v1.60.0.

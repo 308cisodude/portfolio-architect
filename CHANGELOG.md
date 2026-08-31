@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.61.1
+
+- Make initial Supervisor bootstrap provider-neutral: on a fresh installation, any validated Portfolio Architect Gateway can create the single canonical config entry; Comdirect is not required.
+- Claim the existing singleton Portfolio Architect unique ID for first-run discovery so concurrent Gateway discoveries collapse to one visible Add flow while other providers remain internal candidates for later adoption.
+- Suppress the misleading top-level Portfolio Architect discovery/Add card for every unconfigured provider once the canonical entry exists; candidates remain keyed by immutable `provider_id` and are adopted only below **Configure → Portfolio sources → Additional REST Gateways**.
+- Allow Comdirect to be a supplemental candidate when another provider is primary, while explicit adoption still requires the App-private bearer token and full verified-HTTPS, provider-identity, health and snapshot-integrity validation.
+- Preserve established HTTP→HTTPS and Comdirect-slug migration/trust behavior, v1.61.0 removal confirmation, provider acquisition, wire schemas, freshness/LKG/planner semantics, **no silent fallback**, the removed **Comdirect LEGACY** package state and the authenticated-DKB-FinTS research gate.
+
 ## 1.61.0
 
 - Make every selected-object removal below Configure explicitly two-step: select the supplemental Gateway, execution provider, savings-plan route or directed funding relationship, then confirm its immutable identity/context before mutation.

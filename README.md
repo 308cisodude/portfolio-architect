@@ -1,8 +1,8 @@
-# Portfolio Architect v1.61.0
+# Portfolio Architect v1.61.1
 
-Version 1.61.0 completes the native **Configure destructive-action UX**: removing a supplemental REST Gateway, execution provider, savings-plan route, or directed funding relationship is now a two-step operation with an explicit immutable identity/context confirmation before any configuration is changed. The single primary source still has no remove action. This is Home Assistant-side UX/safety hardening only; acquisition authority, health schema 9, freshness, private-PKI transport, planner economics, dashboard behavior and authenticated DKB FinTS remain unchanged.
+Version 1.61.1 fixes and completes the Supervisor-discovery lifecycle exposed during v1.61.0 live acceptance. On a fresh installation, **any validated Portfolio Architect Gateway** may bootstrap the one canonical Portfolio Architect config entry; Comdirect is not mandatory. Concurrent first-run discoveries share the singleton integration unique ID so Home Assistant exposes only one initial Add flow, while other discovered providers remain internal candidates. After the canonical entry exists, any unconfigured Gateway—including Comdirect when another provider is primary—can be adopted only through **Configure → Portfolio sources → Additional REST Gateways** with explicit bearer-token and live integrity validation instead of creating another top-level Add card.
 
-Version 1.60.0 added authoritative capability-evidence clocks to the Gateway Ingress acquisition-authority UX; that live-accepted behavior remains unchanged.
+Version 1.61.0 added two-step destructive-action confirmation; that behavior remains unchanged. Gateway runtime, acquisition authority, health schema 9, freshness, private-PKI transport, planner economics, dashboard behavior and authenticated DKB FinTS are unchanged.
 
 Portfolio Architect is a Home Assistant-native portfolio overview, policy-check,
 and deterministic investment-planning system. It supports provider-isolated acquisition, multi-source consolidation, cost-aware recommendations, and separate read-only Gateway Apps, including DKB depot-CSV acquisition inside the DKB Gateway and simultaneous aggregation of multiple local Gateway REST snapshots.

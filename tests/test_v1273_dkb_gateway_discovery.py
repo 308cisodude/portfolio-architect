@@ -37,20 +37,22 @@ def test_dkb_gateway_is_the_only_active_dkb_provider_identity() -> None:
     assert not importers.exists()
 
 
-def test_dkb_discovery_uses_normal_explicit_supplemental_gateway_path() -> None:
+def test_dkb_discovery_is_internal_after_the_single_pa_entry_exists() -> None:
     source = (COMPONENT / "config_flow.py").read_text(encoding="utf-8")
-    hassio = _step(source, "async_step_hassio", "async_step_hassio_confirm")
-    assert "async_step_hassio_add_supplemental_confirm" in hassio
+    hassio = _step(source, "async_step_hassio", "async_step_hassio_comdirect_slug_migration_confirm")
+    assert "_remember_hassio_discovery_candidate(self.hass, discovery)" in hassio
+    assert "async_step_hassio_add_supplemental_confirm" not in source
+    assert "async_step_add_discovered_rest_gateway" in source
     assert "gateway_provider_conflicts_with_dkb_csv" not in hassio
     assert "async_step_hassio_migrate_dkb_csv_confirm" not in source
 
 
-def test_manual_and_discovered_gateway_paths_have_no_legacy_dkb_collision_rule() -> None:
+def test_manual_and_internal_discovered_gateway_paths_have_no_legacy_dkb_collision_rule() -> None:
     source = (COMPONENT / "config_flow.py").read_text(encoding="utf-8")
     discovered = _step(
         source,
-        "async_step_hassio_add_supplemental_confirm",
-        "_async_migrate_primary_tls",
+        "async_step_add_discovered_rest_gateway_details",
+        "async_step_add_rest_gateway",
     )
     manual = _step(source, "async_step_add_rest_gateway", "async_step_remove_rest_gateway")
     assert "gateway_provider_conflicts_with_dkb_csv" not in discovered
