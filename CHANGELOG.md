@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.61.2
+
+- Keep the Primary REST Gateway Configure form self-identifying when a transient fresh health lookup fails by using the already-validated runtime coordinator Gateway identity for presentation.
+- Keep save-time identity verification separate and fail closed: changing the primary endpoint still requires a successful fresh read of the current primary identity plus full verified-HTTPS, provider, health and snapshot-integrity validation of the candidate.
+- Preserve v1.61.1 provider-neutral Supervisor discovery, singleton bootstrap/candidate handling, v1.61.0 removal confirmation, provider acquisition, wire schemas, freshness/LKG/planner semantics, `fallback_policy: none`, the removed Comdirect LEGACY package state and the authenticated-DKB-FinTS research gate.
+
 ## 1.61.1
 
 - Make initial Supervisor bootstrap provider-neutral: on a fresh installation, any validated Portfolio Architect Gateway can create the single canonical config entry; Comdirect is not required.
