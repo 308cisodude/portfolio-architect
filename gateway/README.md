@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway runtime v1.61.1
+# Portfolio Architect Gateway runtime v1.61.2
 
-Version 1.61.1 is package alignment for Portfolio Architect's Home Assistant-side provider-neutral Supervisor-discovery lifecycle hotfix. Common Gateway runtime, health schema 9, schemas 1–8 compatibility, REST schema 1, provider authority, canonical evidence clocks and no-fallback semantics are unchanged from v1.61.0.
+Version 1.61.2 is package alignment for Portfolio Architect's Home Assistant-side primary-Gateway identity-context hotfix. Common Gateway runtime, health schema 9, schemas 1–8 compatibility, REST schema 1, provider authority, canonical evidence clocks, private-PKI transport and no-fallback behavior are unchanged from v1.61.1.
 
 Version 1.60.0 added the bounded read-only helper that derives per-capability evidence clocks from the already-published canonical Gateway snapshot.
 

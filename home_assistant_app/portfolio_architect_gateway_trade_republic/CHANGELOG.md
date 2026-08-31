@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.61.2
+
+- Version 1.61.2 aligns package metadata with Portfolio Architect's Home Assistant-side primary-Gateway identity-context hotfix; App runtime, provider acquisition, authority, evidence clocks, wire/security contracts and fallback behavior are unchanged from v1.61.1.
+
 ## 1.61.1
 
 - Version 1.61.1 aligns package metadata with Portfolio Architect's Home Assistant-side provider-neutral Supervisor-discovery lifecycle hotfix; App runtime, provider acquisition, authority, evidence clocks, wire/security contracts and fallback behavior are unchanged from v1.61.0.

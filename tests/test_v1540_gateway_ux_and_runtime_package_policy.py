@@ -95,4 +95,4 @@ def test_v1540_keeps_gateway_wire_schemas_unchanged() -> None:
     rest = (ROOT / "custom_components/portfolio_architect/rest_client.py").read_text(encoding="utf-8")
     assert '"health_schema_version": min(version, 9)' in server
     assert '"requested_health_schema_version": 9' in rest
-    assert json.loads((ROOT / "custom_components/portfolio_architect/manifest.json").read_text())["version"] == "1.61.1"
+    assert json.loads((ROOT / "custom_components/portfolio_architect/manifest.json").read_text())["version"] == "1.61.2"

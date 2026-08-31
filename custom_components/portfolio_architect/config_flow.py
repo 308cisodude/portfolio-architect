@@ -801,6 +801,13 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
             return self.async_abort(reason="rest_gateways_require_rest_primary")
         existing = RestSourceConfig.from_mapping(dict(self.config_entry.data))
         supplemental = self._supplemental_rest_sources()
+        runtime_provider_id: str | None = None
+        coordinator = getattr(self.config_entry, "runtime_data", None)
+        runtime_health = getattr(coordinator, "gateway_health", None)
+        candidate_runtime_provider_id = getattr(runtime_health, "provider_id", None)
+        if isinstance(candidate_runtime_provider_id, str) and candidate_runtime_provider_id:
+            runtime_provider_id = candidate_runtime_provider_id
+
         current_provider_id: str | None = None
         try:
             current_health = await async_fetch_gateway_health(self.hass, existing)
@@ -864,7 +871,9 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
                     data[CONF_REST_TLS_CA_CERTIFICATE] = candidate.tls_ca_certificate
                 self.hass.config_entries.async_update_entry(self.config_entry, data=data)
                 return self.async_create_entry(data=dict(self.config_entry.options))
-        provider_label = (current_provider_id or "unknown").replace("_", " ").title()
+        provider_label = (runtime_provider_id or current_provider_id or "unknown").replace(
+            "_", " "
+        ).title()
         return self.async_show_form(
             step_id="primary_rest_gateway",
             data_schema=self.add_suggested_values_to_schema(

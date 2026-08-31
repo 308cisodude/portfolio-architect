@@ -1,6 +1,14 @@
-# Portfolio Architect v1.61.1 release notes
+# Portfolio Architect v1.61.2 release notes
 
-v1.61.1 is a narrow Home Assistant-side Supervisor-discovery lifecycle hotfix prepared from the exact published v1.61.0 baseline. It fixes the issue exposed during v1.61.0 live acceptance—an unconfigured supplemental Gateway could create another top-level **Discovered → Portfolio Architect → Add** card—and removes the inherited Comdirect-only first-run bootstrap assumption.
+v1.61.2 is a narrow Home Assistant-side primary-Gateway identity-context hotfix prepared from the exact published v1.61.1 baseline. Live acceptance of v1.61.1 proved its discovery-card suppression, but also exposed that **Configure → Portfolio sources → Primary REST Gateway** could render `Primary source: Unknown` when its one-off fresh health lookup failed even though the running Portfolio Architect coordinator still held the already-validated primary provider identity.
+
+## Primary Gateway identity context
+
+The Primary REST Gateway form now treats presentation identity and mutation identity as deliberately separate concerns. For display, the form first uses the already-validated `gateway_health.provider_id` carried by the running coordinator and falls back to a fresh health result when runtime identity is unavailable. A transient fresh health failure therefore no longer erases known immutable context from the operator-facing form.
+
+Mutation remains fail-closed. The runtime display identity is **not** accepted as a substitute for the fresh current-primary identity needed when the endpoint changes. A changed endpoint is saved only after the existing primary identity can be freshly established and the candidate independently passes verified HTTPS, exact provider identity, healthy/non-reauth state and snapshot timestamp/count/SHA-256 integrity validation. If the fresh current-primary identity cannot be obtained, the changed endpoint is rejected even when the candidate itself reports the expected provider.
+
+This is presentation/context hardening only. It does not alter the canonical source set, provider authority, acquisition behavior, trust material, LKG state or planner calculations.
 
 ## Provider-neutral singleton bootstrap
 
@@ -45,7 +53,7 @@ The in-memory candidate registry contains only Supervisor discovery material alr
 This release does not change provider acquisition, Gateway runtime, Gateway health schema 9 or schemas 1–8 compatibility, REST portfolio schema 1, Portfolio payload schema 8, config-entry schema 12, canonical evidence clocks, freshness, `fallback_policy: none`, LKG/anti-rollback/source-set atomicity, DNS pinning, planner economics, funding topology, dashboard YAML, or the advisory-only boundary. Authenticated DKB FinTS remains disabled/research-only. There is no trading, order, transfer, payment, transaction-history, sell or withdrawal capability.
 There is **no silent fallback** between acquisition methods. The historical **Comdirect LEGACY** App remains removed from the active repository; canonical Comdirect retains only its bounded migration receiver for already-installed supported Legacy instances.
 
-All four official Gateway App packages are version-aligned to v1.61.1 for release hygiene only; their runtime behavior is unchanged from v1.61.0.
+All four official Gateway App packages are version-aligned to v1.61.2 for release hygiene only; their runtime behavior is unchanged from v1.61.1.
 
 ## Preserved compatibility contracts
 
@@ -72,6 +80,6 @@ No trading, order, transfer, payment, or transaction-history capability is intro
 
 The historical v1.19.0-rc2 brokerage probe remains historical, is not included in this stable release, and is not promoted by this release. The v1.39 colourful allocation view was not included in v1.38.1; that historical sequencing remains documented and unchanged.
 
-Trade Republic provider-specific statement parsing remains inside its Gateway; v1.61.1 does not move PDF parsing into Portfolio Architect.
+Trade Republic provider-specific statement parsing remains inside its Gateway; v1.61.2 does not move PDF parsing into Portfolio Architect.
 
 The v1.33.0 source-freshness and plan-schedule separation remains intact: recurring scheduling remains anchored to the latest valid Portfolio Architect evaluation and this release does not change any configured freshness threshold. Acquisition authority remains explicit with `fallback_policy: none`; there is no silent fallback between methods.
