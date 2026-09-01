@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from decimal import Decimal, ROUND_FLOOR
+from functools import partial
 from urllib.parse import urlsplit
 from typing import Any
 
@@ -71,6 +72,7 @@ from .const import (
     CONF_SOURCE_PROVIDER,
     CONF_SUPPLEMENTAL_REST_SOURCES,
     CONF_SOURCE_TYPE,
+    CONF_SETUP_STATE,
     DEFAULT_CONFIG_DIRECTORY,
     DEFAULT_REST_ENDPOINT_URL,
     DEFAULT_FRESHNESS_HOURS,
@@ -103,6 +105,9 @@ from .const import (
     PLAN_FREQUENCY_WEEKLY,
     PLAN_FREQUENCY_YEARLY,
     SOURCE_TYPE_REST_API,
+    SETUP_STATE_CONFIGURED,
+    SETUP_STATE_PLAN_REQUIRED,
+    SETUP_STATE_SOURCE_REQUIRED,
 )
 from .broker_editor import (
     TIE_BREAK_FALLBACK,
@@ -119,6 +124,14 @@ from .broker_editor import (
     upsert_provider,
     upsert_savings_plan,
     write_broker_document_atomic,
+)
+from .bootstrap import (
+    BootstrapInstrument,
+    BootstrapPlan,
+    build_configuration_documents,
+    configuration_complete,
+    initialize_configuration_directory,
+    write_initial_configuration,
 )
 from .engine import calculate_portfolio_payload_from_positions
 from .gateway_provider_ids import GATEWAY_PROVIDER_COMDIRECT
@@ -215,7 +228,7 @@ def _forget_hassio_discovery_candidate(hass: Any, provider_id: str) -> None:
 class PortfolioArchitectConfigFlow(ConfigFlow, domain=DOMAIN):
     """Configure the single canonical REST Gateway source architecture."""
 
-    VERSION = 12
+    VERSION = 13
     _source_draft: dict[str, Any]
     _existing_source_data: dict[str, Any]
     _reconfigure_mode: bool = False
@@ -236,22 +249,21 @@ class PortfolioArchitectConfigFlow(ConfigFlow, domain=DOMAIN):
         except PortfolioRestError:
             return self.async_abort(reason="invalid_tls_discovery")
 
+        # Gateway Apps provide acquisition only. They never create the Portfolio
+        # Architect service or its investment configuration. Remember every valid
+        # Supervisor discovery so an already initialized PA entry can adopt it, but
+        # a virgin installation must be initialized explicitly through Add
+        # integration -> Portfolio Architect first.
+        _remember_hassio_discovery_candidate(self.hass, discovery)
         entries = self.hass.config_entries.async_entries(DOMAIN)
         if not entries:
-            # Any verified Portfolio Architect Gateway may bootstrap the singleton
-            # integration entry. Remember discovery before claiming the singleton
-            # flow ID so concurrent discoveries collapse to one visible Add flow
-            # while the other provider candidates remain available for later
-            # adoption as supplemental sources.
-            _remember_hassio_discovery_candidate(self.hass, discovery)
-            await self.async_set_unique_id(INSTANCE_UNIQUE_ID)
-            self._abort_if_unique_id_configured()
-            self._hassio_discovery = discovery
-            return await self.async_step_hassio_confirm()
+            return self.async_abort(reason="pa_not_initialized")
         if len(entries) != 1:
             return self.async_abort(reason="tls_discovery_not_applicable")
 
         entry = entries[0]
+        if entry.data.get(CONF_SOURCE_TYPE) is None:
+            return self.async_abort(reason="tls_discovery_not_applicable")
         if entry.data.get(CONF_SOURCE_TYPE) == SOURCE_TYPE_REST_API:
             endpoint = entry.data.get(CONF_REST_ENDPOINT_URL)
             if (
@@ -314,9 +326,6 @@ class PortfolioArchitectConfigFlow(ConfigFlow, domain=DOMAIN):
         # PA config entry already exists. Adoption remains explicit under Configure
         # -> Portfolio sources -> Additional REST Gateways and still requires the
         # App-private bearer token plus full live health/snapshot validation.
-        if entry.data.get(CONF_SOURCE_TYPE) == SOURCE_TYPE_REST_API:
-            _remember_hassio_discovery_candidate(self.hass, discovery)
-
         return self.async_abort(reason="tls_discovery_not_applicable")
 
     async def async_step_hassio_comdirect_slug_migration_confirm(
@@ -399,52 +408,16 @@ class PortfolioArchitectConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_hassio_confirm(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Create the singleton REST entry from verified Supervisor discovery."""
-        discovery = self._hassio_discovery
-        if discovery is None:
-            return self.async_abort(reason="invalid_tls_discovery")
-        errors: dict[str, str] = {}
-        suggested = {
-            CONF_CONFIG_DIRECTORY: DEFAULT_CONFIG_DIRECTORY,
-            CONF_REST_API_TOKEN: "",
-        }
-        if user_input is not None:
-            suggested.update(user_input)
-            candidate = {
-                CONF_SOURCE_TYPE: SOURCE_TYPE_REST_API,
-                CONF_SOURCE_PROVIDER: PROVIDER_LOCAL_REST_JSON,
-                CONF_CONFIG_DIRECTORY: user_input[CONF_CONFIG_DIRECTORY],
-                CONF_REST_ENDPOINT_URL: discovery.endpoint_url,
-                CONF_REST_API_TOKEN: user_input[CONF_REST_API_TOKEN],
-                CONF_REST_TLS_CA_CERTIFICATE: discovery.ca_certificate,
-            }
-            try:
-                cleaned = await self._async_validate_rest_source_data(candidate)
-                health = await async_fetch_gateway_health(
-                    self.hass, RestSourceConfig.from_mapping(cleaned)
-                )
-                if health.health_schema_version < 6 or health.provider_id != discovery.provider_id:
-                    raise PortfolioRestTlsError("Discovered Gateway provider identity did not validate")
-            except PortfolioRestAuthenticationError:
-                errors["base"] = "invalid_auth"
-            except PortfolioSourcePathError:
-                errors["base"] = "invalid_path"
-            except (OSError, ValueError, PortfolioRestError, PortfolioArchitectDataError):
-                errors["base"] = "invalid_rest_source"
-            else:
-                _forget_hassio_discovery_candidate(self.hass, discovery.provider_id)
-                return self.async_create_entry(title=NAME, data=cleaned)
-        return self.async_show_form(
-            step_id="hassio_confirm",
-            data_schema=self.add_suggested_values_to_schema(
-                _hassio_rest_source_schema(), suggested
-            ),
-            errors=errors,
-            description_placeholders={
-                "gateway": discovery.hostname,
-                "provider_id": discovery.provider_id,
-            },
-        )
+        """Retire the pre-v1.62.1 discovery-owned bootstrap step safely.
+
+        A stale in-progress flow from v1.62.0 must never create the Portfolio
+        Architect service after the integration-owned lifecycle is installed.
+        Existing source migrations use their dedicated steps and do not enter here.
+        """
+        del user_input
+        if not self.hass.config_entries.async_entries(DOMAIN):
+            return self.async_abort(reason="pa_not_initialized")
+        return self.async_abort(reason="tls_discovery_not_applicable")
 
     async def _async_migrate_primary_tls(
         self, entry: ConfigEntry, discovery: GatewayTlsDiscovery
@@ -518,16 +491,56 @@ class PortfolioArchitectConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        # Do not use manifest single_config_entry here: Supervisor discovery must be
-        # allowed to start a hassio flow so it can migrate the one existing entry
-        # from legacy HTTP to verified HTTPS. Manual setup remains strictly
-        # single-instance, including legacy entries that may not have a unique ID.
+        """Initialize the singleton Portfolio Architect service before any source."""
         if self.hass.config_entries.async_entries(DOMAIN):
             return self.async_abort(reason="already_configured")
         await self.async_set_unique_id(INSTANCE_UNIQUE_ID)
         self._abort_if_unique_id_configured()
-        self._reconfigure_mode = False
-        return await self._async_provider_step("user", user_input, None)
+        return await self.async_step_initialize(user_input)
+
+    async def async_step_initialize(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Create the PA-owned configuration directory without inventing a plan."""
+        suggested = {CONF_CONFIG_DIRECTORY: DEFAULT_CONFIG_DIRECTORY}
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            suggested.update(user_input)
+            try:
+                resolved = resolve_configuration_directory(
+                    self.hass, user_input[CONF_CONFIG_DIRECTORY], require_exists=False
+                )
+                state = await self.hass.async_add_executor_job(
+                    initialize_configuration_directory, resolved.config_directory
+                )
+            except (OSError, ValueError, PortfolioSourcePathError):
+                errors["base"] = "invalid_initialization_directory"
+            else:
+                # Existing complete YAML is preserved for advanced/migrating users;
+                # an empty PA-owned directory remains an explicit setup state. In
+                # both cases the service itself exists before any Gateway source.
+                return self.async_create_entry(
+                    title=NAME,
+                    data={
+                        CONF_CONFIG_DIRECTORY: resolved.config_relative,
+                        CONF_SETUP_STATE: SETUP_STATE_SOURCE_REQUIRED,
+                    },
+                )
+        return self.async_show_form(
+            step_id="initialize",
+            data_schema=self.add_suggested_values_to_schema(
+                vol.Schema(
+                    {
+                        vol.Required(CONF_CONFIG_DIRECTORY): TextSelector(
+                            TextSelectorConfig(multiline=False)
+                        )
+                    }
+                ),
+                suggested,
+            ),
+            errors=errors,
+            last_step=True,
+        )
 
     async def async_step_reconfigure(
         self, user_input: dict[str, Any] | None = None
@@ -730,21 +743,35 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
     _broker_funding_token: str | None = None
     _rest_gateway_provider_id: str | None = None
     _discovered_rest_gateway_provider_id: str | None = None
+    _bootstrap_context: PlanEditorContext | None = None
+    _bootstrap_selected_isins: list[str]
+    _bootstrap_instrument_index: int
+    _bootstrap_plan_draft: dict[str, Any]
+    _bootstrap_instruments: list[dict[str, Any]]
+    _bootstrap_source_positions: dict[str, Any]
+    _bootstrap_source_generated_at: Any = None
+    _bootstrap_source_provider_id: str | None = None
+    _bootstrap_source_provider_name: str | None = None
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         """Present native configuration areas."""
         del user_input
+        source_configured = self.config_entry.data.get(CONF_SOURCE_TYPE) == SOURCE_TYPE_REST_API
+        setup_state = self.config_entry.data.get(CONF_SETUP_STATE, SETUP_STATE_CONFIGURED)
+        if not source_configured:
+            return self.async_show_menu(step_id="init", menu_options=["sources"])
+        if setup_state != SETUP_STATE_CONFIGURED:
+            return self.async_show_menu(
+                step_id="init",
+                menu_options=["initial_setup", "sources", "runtime"],
+            )
         menu_options = ["plan", "plan_schedule", "execution", "execution_providers", "runtime"]
-        if self.config_entry.data.get(CONF_SOURCE_TYPE) == SOURCE_TYPE_REST_API:
-            menu_options.insert(4, "sources")
+        menu_options.insert(4, "sources")
         if self.config_entry.options.get(CONF_PLAN_OVERRIDE_ENABLED):
             menu_options.append("reset_plan")
-        return self.async_show_menu(
-            step_id="init",
-            menu_options=menu_options,
-        )
+        return self.async_show_menu(step_id="init", menu_options=menu_options)
 
     async def async_step_sources(
         self, user_input: dict[str, Any] | None = None
@@ -752,7 +779,10 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
         """Model the one primary REST source separately from supplemental Gateways."""
         del user_input
         if self.config_entry.data.get(CONF_SOURCE_TYPE) != SOURCE_TYPE_REST_API:
-            return self.async_abort(reason="rest_gateways_require_rest_primary")
+            menu = ["add_primary_rest_gateway"]
+            if self._discovered_supplemental_gateways():
+                menu.insert(0, "add_discovered_primary_rest_gateway")
+            return self.async_show_menu(step_id="sources", menu_options=menu)
         return self.async_show_menu(
             step_id="sources",
             menu_options=["primary_rest_gateway", "rest_gateways"],
@@ -777,6 +807,509 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
             for provider_id, discovery in _hassio_discovery_candidates(self.hass).items()
             if provider_id not in configured
         }
+
+    async def _async_validate_primary_candidate(
+        self,
+        candidate: RestSourceConfig,
+        *,
+        expected_provider_id: str | None = None,
+    ):
+        """Validate one first/primary Gateway without requiring an investment plan."""
+        health = await async_fetch_gateway_health(self.hass, candidate)
+        if (
+            health.health_schema_version < 6
+            or health.provider_id is None
+            or health.status != "ok"
+            or health.reauthentication_required
+            or not health.snapshot_available
+        ):
+            raise PortfolioRestError("Gateway is not ready for Portfolio Architect use")
+        if expected_provider_id is not None and health.provider_id != expected_provider_id:
+            raise PortfolioRestTlsError("Discovered Gateway provider identity did not validate")
+        result = await async_fetch_rest_snapshot(self.hass, candidate)
+        snapshot = result.snapshot
+        if (
+            snapshot is None
+            or result.snapshot_sha256 is None
+            or result.position_count is None
+            or result.position_count != len(snapshot.positions)
+            or health.snapshot_generated_at is None
+            or health.snapshot_generated_at != snapshot.generated_at
+            or health.snapshot_position_count != len(snapshot.positions)
+            or health.snapshot_sha256 != result.snapshot_sha256
+        ):
+            raise PortfolioRestError("Gateway health does not match its live snapshot")
+        return health, result
+
+    async def _async_commit_first_source(
+        self,
+        candidate: RestSourceConfig,
+        *,
+        expected_provider_id: str | None = None,
+    ) -> ConfigFlowResult:
+        """Attach the first Gateway to the existing singleton PA service."""
+        health, _result = await self._async_validate_primary_candidate(
+            candidate, expected_provider_id=expected_provider_id
+        )
+        config_relative = self.config_entry.data.get(
+            CONF_CONFIG_DIRECTORY, DEFAULT_CONFIG_DIRECTORY
+        )
+        configuration = resolve_configuration_directory(
+            self.hass, config_relative, require_exists=False
+        )
+        complete = await self.hass.async_add_executor_job(
+            configuration_complete, configuration.config_directory
+        )
+        data = dict(self.config_entry.data)
+        data.update(
+            {
+                CONF_SOURCE_TYPE: SOURCE_TYPE_REST_API,
+                CONF_SOURCE_PROVIDER: PROVIDER_LOCAL_REST_JSON,
+                CONF_CONFIG_DIRECTORY: configuration.config_relative,
+                CONF_REST_ENDPOINT_URL: candidate.endpoint_url,
+                CONF_REST_API_TOKEN: candidate.api_token,
+                CONF_SETUP_STATE: (
+                    SETUP_STATE_CONFIGURED if complete else SETUP_STATE_PLAN_REQUIRED
+                ),
+            }
+        )
+        if candidate.tls_ca_certificate is None:
+            data.pop(CONF_REST_TLS_CA_CERTIFICATE, None)
+        else:
+            data[CONF_REST_TLS_CA_CERTIFICATE] = candidate.tls_ca_certificate
+        self.hass.config_entries.async_update_entry(self.config_entry, data=data)
+        if health.provider_id is not None:
+            _forget_hassio_discovery_candidate(self.hass, health.provider_id)
+        if complete:
+            # Advanced users who initialized against an existing complete config can
+            # become operational as soon as the first source validates.
+            await self.hass.config_entries.async_reload(self.config_entry.entry_id)
+        return self.async_create_entry(data=dict(self.config_entry.options))
+
+    async def async_step_add_discovered_primary_rest_gateway(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Select one discovered Gateway as the first source of initialized PA."""
+        if self.config_entry.data.get(CONF_SOURCE_TYPE) is not None:
+            return self.async_abort(reason="primary_rest_gateway_already_configured")
+        candidates = self._discovered_supplemental_gateways()
+        if not candidates:
+            return self.async_abort(reason="no_discovered_rest_gateways")
+        provider_ids = sorted(candidates)
+        if user_input is not None:
+            selected = str(user_input["provider_id"])
+            if selected not in candidates:
+                return self.async_abort(reason="no_discovered_rest_gateways")
+            self._discovered_rest_gateway_provider_id = selected
+            return await self.async_step_add_discovered_primary_rest_gateway_details()
+        return self.async_show_form(
+            step_id="add_discovered_primary_rest_gateway",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("provider_id"): SelectSelector(
+                        SelectSelectorConfig(
+                            options=[
+                                {
+                                    "value": provider_id,
+                                    "label": (
+                                        candidates[provider_id].provider_name
+                                        or provider_id.replace("_", " ").title()
+                                    ),
+                                }
+                                for provider_id in provider_ids
+                            ],
+                            mode=SelectSelectorMode.DROPDOWN,
+                        )
+                    )
+                }
+            ),
+        )
+
+    async def async_step_add_discovered_primary_rest_gateway_details(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Authenticate and attach one discovered Gateway as PA's first source."""
+        provider_id = self._discovered_rest_gateway_provider_id
+        candidates = self._discovered_supplemental_gateways()
+        discovery = candidates.get(provider_id) if provider_id is not None else None
+        if discovery is None:
+            return self.async_abort(reason="no_discovered_rest_gateways")
+        errors: dict[str, str] = {}
+        suggested = {CONF_REST_API_TOKEN: ""}
+        if user_input is not None:
+            suggested.update(user_input)
+            try:
+                candidate = RestSourceConfig.from_mapping(
+                    {
+                        CONF_REST_ENDPOINT_URL: discovery.endpoint_url,
+                        CONF_REST_API_TOKEN: user_input[CONF_REST_API_TOKEN],
+                        CONF_REST_TLS_CA_CERTIFICATE: discovery.ca_certificate,
+                    }
+                )
+                return await self._async_commit_first_source(
+                    candidate, expected_provider_id=discovery.provider_id
+                )
+            except PortfolioRestAuthenticationError:
+                errors["base"] = "invalid_auth"
+            except (OSError, ValueError, PortfolioRestError, PortfolioSourcePathError):
+                errors["base"] = "invalid_rest_gateway"
+        return self.async_show_form(
+            step_id="add_discovered_primary_rest_gateway_details",
+            data_schema=self.add_suggested_values_to_schema(
+                vol.Schema({vol.Required(CONF_REST_API_TOKEN): TextSelector(
+                    TextSelectorConfig(
+                        type=TextSelectorType.PASSWORD,
+                        autocomplete="current-password",
+                        multiline=False,
+                    )
+                )}),
+                suggested,
+            ),
+            errors=errors,
+            description_placeholders={
+                "provider": discovery.provider_name or discovery.provider_id,
+                "provider_id": discovery.provider_id,
+                "endpoint": discovery.endpoint_url,
+                "ca_sha256": discovery.ca_sha256,
+            },
+            last_step=True,
+        )
+
+    async def async_step_add_primary_rest_gateway(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Manually attach one system-PKI HTTPS Gateway as the first PA source."""
+        if self.config_entry.data.get(CONF_SOURCE_TYPE) is not None:
+            return self.async_abort(reason="primary_rest_gateway_already_configured")
+        suggested = {CONF_REST_ENDPOINT_URL: "", CONF_REST_API_TOKEN: ""}
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            suggested.update(user_input)
+            try:
+                candidate = RestSourceConfig.from_mapping(user_input)
+                if urlsplit(candidate.endpoint_url).scheme != "https":
+                    raise PortfolioRestTlsError("Primary Gateway must use verified HTTPS")
+                return await self._async_commit_first_source(candidate)
+            except PortfolioRestAuthenticationError:
+                errors["base"] = "invalid_auth"
+            except (OSError, ValueError, PortfolioRestError, PortfolioSourcePathError):
+                errors["base"] = "invalid_rest_gateway"
+        return self.async_show_form(
+            step_id="add_primary_rest_gateway",
+            data_schema=self.add_suggested_values_to_schema(
+                _rest_source_schema(), suggested
+            ),
+            errors=errors,
+            last_step=True,
+        )
+
+    async def _async_bootstrap_source(self):
+        """Fetch the configured first Gateway directly while PA is setup-required."""
+        if self.config_entry.data.get(CONF_SOURCE_TYPE) != SOURCE_TYPE_REST_API:
+            raise ValueError("Portfolio source is not configured")
+        candidate = RestSourceConfig.from_mapping(dict(self.config_entry.data))
+        return await self._async_validate_primary_candidate(candidate)
+
+    async def _async_bootstrap_plan_context(self) -> PlanEditorContext:
+        """Build initial-plan candidates from live holdings without YAML assumptions."""
+        if self._bootstrap_context is not None:
+            return self._bootstrap_context
+        health, result = await self._async_bootstrap_source()
+        snapshot = result.snapshot
+        assert snapshot is not None
+        candidates: list[PlanCandidate] = []
+        positions_by_isin: dict[str, Any] = {}
+        for position in snapshot.positions.values():
+            isin = str(position.isin or "").strip().upper()
+            if len(isin) != 12 or isin in positions_by_isin:
+                continue
+            positions_by_isin[isin] = position
+            candidates.append(
+                PlanCandidate(
+                    target_id=None,
+                    wkn=str(position.wkn or "").strip().upper(),
+                    isin=isin,
+                    name=position.name,
+                    instrument_type=position.instrument_type,
+                    target_pct=Decimal("0"),
+                    buy_enabled=True,
+                    selected=False,
+                )
+            )
+        if not candidates:
+            raise ValueError("No source holdings with valid ISIN identity are available")
+        self._bootstrap_source_positions = dict(snapshot.positions)
+        self._bootstrap_source_generated_at = snapshot.generated_at
+        self._bootstrap_source_provider_id = health.provider_id
+        self._bootstrap_source_provider_name = health.provider_name
+        self._bootstrap_context = PlanEditorContext(
+            plan_name="",
+            budget_amount=0.0,
+            candidates=tuple(sorted(candidates, key=lambda item: item.label)),
+        )
+        return self._bootstrap_context
+
+    async def async_step_initial_setup(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Create the first real investment configuration from explicit user choices."""
+        if self.config_entry.data.get(CONF_SETUP_STATE) == SETUP_STATE_CONFIGURED:
+            return self.async_abort(reason="initial_setup_already_complete")
+        try:
+            context = await self._async_bootstrap_plan_context()
+        except (OSError, ValueError, PortfolioRestError):
+            return self.async_abort(reason="initial_setup_source_unavailable")
+        suggested: dict[str, Any] = {}
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            suggested.update(user_input)
+            selected = list(dict.fromkeys(user_input.get("selected_instruments", [])))
+            known = {item.isin for item in context.candidates}
+            if not 1 <= len(selected) <= MAX_PLAN_INSTRUMENTS:
+                errors["selected_instruments"] = "invalid_instrument_count"
+            elif any(item not in known for item in selected):
+                errors["selected_instruments"] = "invalid_instrument"
+            else:
+                self._bootstrap_selected_isins = selected
+                self._bootstrap_plan_draft = {
+                    CONF_PLAN_NAME: str(user_input[CONF_PLAN_NAME]).strip(),
+                    CONF_PLAN_BUDGET_AMOUNT: float(user_input[CONF_PLAN_BUDGET_AMOUNT]),
+                    "corridor_pp": float(user_input["corridor_pp"]),
+                    "minimum_trade_eur": float(user_input["minimum_trade_eur"]),
+                    "rounding_step_eur": float(user_input["rounding_step_eur"]),
+                }
+                self._bootstrap_instruments = []
+                self._bootstrap_instrument_index = 0
+                return await self.async_step_initial_setup_instrument()
+        options = [item.to_option() for item in context.candidates]
+        schema = vol.Schema(
+            {
+                vol.Required(CONF_PLAN_NAME): TextSelector(TextSelectorConfig(multiline=False)),
+                vol.Required(CONF_PLAN_BUDGET_AMOUNT): NumberSelector(
+                    NumberSelectorConfig(
+                        min=MIN_PLAN_BUDGET_EUR,
+                        max=MAX_PLAN_BUDGET_EUR,
+                        step=0.01,
+                        mode=NumberSelectorMode.BOX,
+                        unit_of_measurement="EUR",
+                    )
+                ),
+                vol.Required("selected_instruments"): SelectSelector(
+                    SelectSelectorConfig(
+                        options=options,
+                        multiple=True,
+                        mode=SelectSelectorMode.DROPDOWN,
+                    )
+                ),
+                vol.Required("corridor_pp"): NumberSelector(
+                    NumberSelectorConfig(min=0, max=100, step=0.1, mode=NumberSelectorMode.BOX)
+                ),
+                vol.Required("minimum_trade_eur"): NumberSelector(
+                    NumberSelectorConfig(min=0.01, max=1000000, step=0.01, mode=NumberSelectorMode.BOX, unit_of_measurement="EUR")
+                ),
+                vol.Required("rounding_step_eur"): NumberSelector(
+                    NumberSelectorConfig(min=0.01, max=1000000, step=0.01, mode=NumberSelectorMode.BOX, unit_of_measurement="EUR")
+                ),
+            }
+        )
+        return self.async_show_form(
+            step_id="initial_setup",
+            data_schema=self.add_suggested_values_to_schema(schema, suggested),
+            errors=errors,
+        )
+
+    async def async_step_initial_setup_instrument(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Collect target weight and policy metadata for one initial target."""
+        context = await self._async_bootstrap_plan_context()
+        by_isin = {item.isin: item for item in context.candidates}
+        isin = self._bootstrap_selected_isins[self._bootstrap_instrument_index]
+        candidate = by_isin[isin]
+        suggested: dict[str, Any] = {}
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            suggested.update(user_input)
+            domicile = str(user_input["domicile"]).strip().upper()
+            currency = str(user_input["fund_currency"]).strip().upper()
+            source = str(user_input["metadata_source"]).strip()
+            target = Decimal(str(user_input["target_pct"]))
+            ter = Decimal(str(user_input["ter_pct"]))
+            size = Decimal(str(user_input["fund_size_eur"]))
+            if not target.is_finite() or target <= 0 or target > 100:
+                errors["target_pct"] = "invalid_target"
+            elif len(domicile) != 2 or not domicile.isalpha():
+                errors["domicile"] = "invalid_metadata"
+            elif len(currency) != 3 or not currency.isalpha():
+                errors["fund_currency"] = "invalid_metadata"
+            elif not ter.is_finite() or ter < 0 or ter > 10:
+                errors["ter_pct"] = "invalid_metadata"
+            elif not size.is_finite() or size < 0 or size > Decimal("1000000000000000"):
+                errors["fund_size_eur"] = "invalid_metadata"
+            elif not source or len(source) > 160 or any(ord(char) < 32 for char in source):
+                errors["metadata_source"] = "invalid_metadata"
+            else:
+                self._bootstrap_instruments.append(
+                    {
+                        "isin": isin,
+                        "target_pct": float(target),
+                        "buy_enabled": bool(user_input["buy_enabled"]),
+                        "ucits": bool(user_input["ucits"]),
+                        "domicile": domicile,
+                        "distribution": str(user_input["distribution"]),
+                        "fund_currency": currency,
+                        "ter_pct": float(ter),
+                        "fund_size_eur": float(size),
+                        "metadata_source": source,
+                    }
+                )
+                self._bootstrap_instrument_index += 1
+                if self._bootstrap_instrument_index < len(self._bootstrap_selected_isins):
+                    return await self.async_step_initial_setup_instrument()
+                total = sum(Decimal(str(item["target_pct"])) for item in self._bootstrap_instruments)
+                if total != Decimal("100"):
+                    return await self.async_step_initial_setup_review()
+                return await self.async_step_initial_setup_policy()
+        schema = vol.Schema(
+            {
+                vol.Required("target_pct"): NumberSelector(NumberSelectorConfig(min=0.01, max=100, step=0.01, mode=NumberSelectorMode.BOX, unit_of_measurement="%")),
+                vol.Required("buy_enabled"): BooleanSelector(BooleanSelectorConfig()),
+                vol.Required("ucits"): BooleanSelector(BooleanSelectorConfig()),
+                vol.Required("domicile"): TextSelector(TextSelectorConfig(multiline=False)),
+                vol.Required("distribution"): SelectSelector(SelectSelectorConfig(options=["accumulating", "distributing"], mode=SelectSelectorMode.DROPDOWN)),
+                vol.Required("fund_currency"): TextSelector(TextSelectorConfig(multiline=False)),
+                vol.Required("ter_pct"): NumberSelector(NumberSelectorConfig(min=0, max=10, step=0.01, mode=NumberSelectorMode.BOX, unit_of_measurement="%")),
+                vol.Required("fund_size_eur"): NumberSelector(NumberSelectorConfig(min=0, max=1000000000000000, step=1, mode=NumberSelectorMode.BOX, unit_of_measurement="EUR")),
+                vol.Required("metadata_source"): TextSelector(TextSelectorConfig(multiline=False)),
+            }
+        )
+        return self.async_show_form(
+            step_id="initial_setup_instrument",
+            data_schema=self.add_suggested_values_to_schema(schema, suggested),
+            errors=errors,
+            description_placeholders=_candidate_placeholders(candidate, "new target"),
+        )
+
+    async def async_step_initial_setup_review(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Require explicit normalization when initial targets do not total 100%."""
+        total = sum(Decimal(str(item["target_pct"])) for item in self._bootstrap_instruments)
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            if not user_input.get("normalise_targets"):
+                errors["base"] = "targets_not_100"
+            else:
+                self._bootstrap_instruments = _normalise_targets(self._bootstrap_instruments)
+                return await self.async_step_initial_setup_policy()
+        return self.async_show_form(
+            step_id="initial_setup_review",
+            data_schema=vol.Schema({vol.Required("normalise_targets", default=False): BooleanSelector(BooleanSelectorConfig())}),
+            errors=errors,
+            description_placeholders={"target_total": format(total.normalize(), "f")},
+        )
+
+    async def async_step_initial_setup_policy(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Collect explicit first-run policy controls before writing any YAML."""
+        suggested: dict[str, Any] = {}
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            suggested.update(user_input)
+            try:
+                health, result = await self._async_bootstrap_source()
+                snapshot = result.snapshot
+                assert snapshot is not None
+                by_isin = {
+                    str(position.isin or "").strip().upper(): position
+                    for position in snapshot.positions.values()
+                    if str(position.isin or "").strip()
+                }
+                instruments: list[BootstrapInstrument] = []
+                for item in self._bootstrap_instruments:
+                    position = by_isin.get(item["isin"])
+                    if position is None:
+                        raise ValueError("Selected source holding changed during initial setup")
+                    instruments.append(
+                        BootstrapInstrument(
+                            position=position,
+                            target_pct=Decimal(str(item["target_pct"])),
+                            buy_enabled=bool(item["buy_enabled"]),
+                            ucits=bool(item["ucits"]),
+                            domicile=str(item["domicile"]),
+                            distribution=str(item["distribution"]),
+                            fund_currency=str(item["fund_currency"]),
+                            ter_pct=Decimal(str(item["ter_pct"])),
+                            fund_size_eur=Decimal(str(item["fund_size_eur"])),
+                            metadata_source=str(item["metadata_source"]),
+                        )
+                    )
+                plan = BootstrapPlan(
+                    name=str(self._bootstrap_plan_draft[CONF_PLAN_NAME]),
+                    budget_amount_eur=Decimal(str(self._bootstrap_plan_draft[CONF_PLAN_BUDGET_AMOUNT])),
+                    corridor_pp=Decimal(str(self._bootstrap_plan_draft["corridor_pp"])),
+                    minimum_trade_eur=Decimal(str(self._bootstrap_plan_draft["minimum_trade_eur"])),
+                    rounding_step_eur=Decimal(str(self._bootstrap_plan_draft["rounding_step_eur"])),
+                    instruments=tuple(instruments),
+                    ucits_required=bool(user_input["ucits_required"]),
+                    accumulating_preferred=bool(user_input["accumulating_preferred"]),
+                    ireland_preferred=bool(user_input["ireland_preferred"]),
+                    max_ter_pct=Decimal(str(user_input["max_ter_pct"])),
+                    minimum_fund_size_eur=Decimal(str(user_input["minimum_fund_size_eur"])),
+                    savings_plan_required=bool(user_input["savings_plan_required"]),
+                    free_savings_plan_preferred=bool(user_input["free_savings_plan_preferred"]),
+                )
+                documents = build_configuration_documents(plan)
+                configuration = resolve_configuration_directory(
+                    self.hass,
+                    self.config_entry.data.get(CONF_CONFIG_DIRECTORY, DEFAULT_CONFIG_DIRECTORY),
+                    require_exists=False,
+                )
+                payload = await self.hass.async_add_executor_job(
+                    partial(
+                        write_initial_configuration,
+                        configuration.config_directory,
+                        documents,
+                        positions=dict(snapshot.positions),
+                        evaluated_at=snapshot.generated_at,
+                        source_provider=health.provider_id or PROVIDER_LOCAL_REST_JSON,
+                        source_label=health.provider_name or health.provider_id or "Portfolio Gateway",
+                        source_metadata=None,
+                    )
+                )
+                _validate_calculated_payload(payload)
+            except PortfolioRestAuthenticationError:
+                errors["base"] = "invalid_auth"
+            except (OSError, ValueError, PortfolioRestError, PortfolioSourcePathError, PortfolioArchitectDataError):
+                errors["base"] = "initial_setup_invalid"
+            else:
+                data = dict(self.config_entry.data)
+                data[CONF_SETUP_STATE] = SETUP_STATE_CONFIGURED
+                self.hass.config_entries.async_update_entry(self.config_entry, data=data)
+                # The entry was intentionally loaded without a coordinator while
+                # setup-required. Reload now that a validated source and complete
+                # configuration both exist so entities are created immediately.
+                await self.hass.config_entries.async_reload(self.config_entry.entry_id)
+                return self.async_create_entry(data=dict(self.config_entry.options))
+        bool_selector = BooleanSelector(BooleanSelectorConfig())
+        schema = vol.Schema(
+            {
+                vol.Required("ucits_required"): bool_selector,
+                vol.Required("accumulating_preferred"): bool_selector,
+                vol.Required("ireland_preferred"): bool_selector,
+                vol.Required("max_ter_pct"): NumberSelector(NumberSelectorConfig(min=0, max=10, step=0.01, mode=NumberSelectorMode.BOX, unit_of_measurement="%")),
+                vol.Required("minimum_fund_size_eur"): NumberSelector(NumberSelectorConfig(min=0, max=1000000000000000, step=1, mode=NumberSelectorMode.BOX, unit_of_measurement="EUR")),
+                vol.Required("savings_plan_required"): bool_selector,
+                vol.Required("free_savings_plan_preferred"): bool_selector,
+            }
+        )
+        return self.async_show_form(
+            step_id="initial_setup_policy",
+            data_schema=self.add_suggested_values_to_schema(schema, suggested),
+            errors=errors,
+            last_step=True,
+        )
 
     @staticmethod
     def _rest_edit_candidate(

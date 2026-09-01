@@ -7,7 +7,13 @@ from typing import Any
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
-from .const import VERSION
+from .const import (
+    CONF_CONFIG_DIRECTORY,
+    CONF_SETUP_STATE,
+    DEFAULT_CONFIG_DIRECTORY,
+    SETUP_STATE_CONFIGURED,
+    VERSION,
+)
 from .coordinator import PortfolioArchitectCoordinator
 
 
@@ -16,6 +22,21 @@ async def async_get_config_entry_diagnostics(
     entry: ConfigEntry,
 ) -> dict[str, Any]:
     """Return privacy-conscious diagnostics for a config entry."""
+    setup_state = entry.data.get(CONF_SETUP_STATE, SETUP_STATE_CONFIGURED)
+    if setup_state != SETUP_STATE_CONFIGURED or entry.runtime_data is None:
+        # A deliberately incomplete first-run entry has no coordinator, entities or
+        # source payload yet. Diagnostics must remain available without inventing
+        # runtime state or exposing filesystem contents.
+        return {
+            "integration_version": VERSION,
+            "setup_state": setup_state,
+            "config_directory": entry.data.get(
+                CONF_CONFIG_DIRECTORY, DEFAULT_CONFIG_DIRECTORY
+            ),
+            "source_configured": bool(entry.data.get("source_type")),
+            "runtime_loaded": False,
+        }
+
     coordinator: PortfolioArchitectCoordinator = entry.runtime_data
     source_state = (
         hass.states.get(coordinator.source_entity_id)

@@ -101,14 +101,18 @@ def funding_transfers(
         raise ValueError("broker schema_version is unsupported")
 
     providers = broker.get("providers")
-    if not isinstance(providers, dict) or not providers:
+    if not isinstance(providers, dict):
         raise ValueError("broker schema 3 requires providers")
-    provider_ids = {
-        _provider_id(provider_id, field="provider id") for provider_id in providers
-    }
     raw_edges = broker.get("funding_transfers")
     if not isinstance(raw_edges, list) or len(raw_edges) > _MAX_FUNDING_TRANSFERS:
         raise ValueError("broker schema 3 requires a bounded funding_transfers list")
+    if not providers:
+        if raw_edges:
+            raise ValueError("funding transfers require configured providers")
+        return ()
+    provider_ids = {
+        _provider_id(provider_id, field="provider id") for provider_id in providers
+    }
 
     max_age_raw = broker.get("fee_data_max_age_days")
     if isinstance(max_age_raw, bool) or not isinstance(max_age_raw, int) or not 1 <= max_age_raw <= 366:

@@ -255,8 +255,8 @@ def test_config_flow_migrates_only_after_verified_https_health_and_never_replace
     const_source = (COMPONENT / "const.py").read_text(encoding="utf-8")
     rest_source = (COMPONENT / "rest_client.py").read_text(encoding="utf-8")
 
-    assert "VERSION = 12" in source
-    assert "if entry.version > 12:" in init_source
+    assert "VERSION = 13" in source
+    assert "if entry.version > 13:" in init_source
     assert "if entry.version < 9:" in init_source
     assert "async def async_step_hassio" in source
     assert "async def async_step_hassio_add_supplemental_confirm" not in source

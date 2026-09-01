@@ -394,7 +394,7 @@ def execution_providers(
     if not 1 <= max_age_days <= 366:
         raise ValueError("broker fee_data_max_age_days is invalid")
     raw_providers = broker.get("providers")
-    if not isinstance(raw_providers, dict) or not raw_providers or len(raw_providers) > _MAX_PROVIDERS:
+    if not isinstance(raw_providers, dict) or len(raw_providers) > _MAX_PROVIDERS:
         raise ValueError(f"broker schema {schema_version} requires a bounded providers map")
 
     today = evaluated_on or date.today()

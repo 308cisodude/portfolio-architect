@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.62.1
+
+- Version-align with Portfolio Architect v1.62.1. Provider acquisition/runtime behavior is unchanged; first-run service initialization is owned by the Home Assistant integration.
+
 ## 1.62.0
 
 - Graduate Generic Import from experimental to stable.

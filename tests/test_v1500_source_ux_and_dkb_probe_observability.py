@@ -100,10 +100,11 @@ def test_source_ux_has_complete_bilingual_primary_and_add_edit_remove_labels() -
             (COMPONENT / "translations" / f"{language}.json").read_text(encoding="utf-8")
         )
         steps = data["options"]["step"]
-        assert list(steps["sources"]["menu_options"]) == [
-            "primary_rest_gateway",
-            "rest_gateways",
-        ]
+        source_menu = steps["sources"]["menu_options"]
+        assert "primary_rest_gateway" in source_menu
+        assert "rest_gateways" in source_menu
+        assert "add_discovered_primary_rest_gateway" in source_menu
+        assert "add_primary_rest_gateway" in source_menu
         assert list(steps["rest_gateways"]["menu_options"]) == [
             "add_discovered_rest_gateway",
             "add_rest_gateway",

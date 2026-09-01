@@ -7,9 +7,10 @@ from homeassistant.const import Platform
 DOMAIN: Final = "portfolio_architect"
 INSTANCE_UNIQUE_ID: Final = "portfolio_architect"
 NAME: Final = "Portfolio Architect"
-VERSION: Final = "1.62.0"
+VERSION: Final = "1.62.1"
 
 CONF_SOURCE_TYPE: Final = "source_type"
+CONF_SETUP_STATE: Final = "setup_state"
 
 CONF_SOURCE_PROVIDER: Final = "source_provider"
 CONF_CSV_ENCODING: Final = "csv_encoding"
@@ -63,6 +64,15 @@ CONF_MANUAL_SETTLEMENT_FEE_EUR: Final = "manual_settlement_fee_eur"
 
 EXECUTION_POLICIES: Final = ("monthly_continuity", "balanced", "efficiency_first")
 EXECUTION_RESERVE_MODES: Final = ("contribution_only", "gateway_balance")
+
+SETUP_STATE_SOURCE_REQUIRED: Final = "source_required"
+SETUP_STATE_PLAN_REQUIRED: Final = "plan_required"
+SETUP_STATE_CONFIGURED: Final = "configured"
+SETUP_STATES: Final = (
+    SETUP_STATE_SOURCE_REQUIRED,
+    SETUP_STATE_PLAN_REQUIRED,
+    SETUP_STATE_CONFIGURED,
+)
 
 SOURCE_TYPE_LOCAL_FILES: Final = "local_files"
 SOURCE_TYPE_REST_API: Final = "rest_api"

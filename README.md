@@ -1,6 +1,6 @@
-# Portfolio Architect v1.62.0
+# Portfolio Architect v1.62.1
 
-Version 1.62.0 graduates **Portfolio Architect Gateway — Generic Import** to a stable, supported provider and makes it a bounded multi-profile Gateway. A user can now run Portfolio Architect with only Generic Import, or represent several otherwise unsupported banks/brokers as independent providers without merging their holdings, cash or evidence clocks.
+Version 1.62.1 completes the Generic Import graduation with **integration-owned first-run initialization**. New users initialize Portfolio Architect itself before adopting a Gateway; source-less and plan-less setup states are explicit and fail closed, and the native setup flow creates real configuration only from explicit user choices after source validation. Generic Import remains the stable multi-profile provider introduced in v1.62.0.
 
 Each new Generic profile receives an immutable generated `generic_<stable-id>` provider identity and a separately editable human name. Existing experimental `generic_csv` state retains that provider identity and legacy REST path. Holdings CSV data is parsed transiently; successful imports atomically replace only the selected profile's canonical holdings, optional provider-local EUR investment cash has its own evidence timestamp, and rejected imports retain the previous valid snapshot.
 

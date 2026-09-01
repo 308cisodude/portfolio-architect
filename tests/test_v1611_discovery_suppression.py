@@ -40,10 +40,10 @@ def _compile_function(source: str, name: str, namespace: dict[str, object]):
 
 
 @pytest.mark.parametrize("provider_id", ["dkb", "trade_republic", "generic_csv"])
-def test_fresh_install_can_bootstrap_from_any_discovered_gateway(provider_id: str) -> None:
+def test_fresh_gateway_discovery_waits_for_integration_owned_initialization(provider_id: str) -> None:
+    """v1.62.1 supersedes discovery-owned bootstrap without losing candidates."""
     source = CONFIG_FLOW.read_text(encoding="utf-8")
     remembered: list[object] = []
-    unique_ids: list[str] = []
     discovery = SimpleNamespace(provider_id=provider_id, hostname=f"{provider_id}.invalid")
 
     class FakeDiscoveryParser:
@@ -59,17 +59,6 @@ def test_fresh_install_can_bootstrap_from_any_discovered_gateway(provider_id: st
 
     class FakeSelf:
         hass = SimpleNamespace(config_entries=FakeConfigEntries())
-        _hassio_discovery = None
-
-        async def async_set_unique_id(self, unique_id):
-            unique_ids.append(unique_id)
-
-        def _abort_if_unique_id_configured(self):
-            return None
-
-        async def async_step_hassio_confirm(self):
-            assert self._hassio_discovery is discovery
-            return {"type": "form", "step_id": "hassio_confirm"}
 
         def async_abort(self, *, reason):
             return {"type": "abort", "reason": reason}
@@ -81,7 +70,6 @@ def test_fresh_install_can_bootstrap_from_any_discovered_gateway(provider_id: st
             "GatewayTlsDiscovery": FakeDiscoveryParser,
             "PortfolioRestError": RuntimeError,
             "DOMAIN": "portfolio_architect",
-            "INSTANCE_UNIQUE_ID": "portfolio_architect_singleton",
             "CONF_SOURCE_TYPE": "source_type",
             "SOURCE_TYPE_REST_API": "rest_api",
             "CONF_REST_ENDPOINT_URL": "rest_endpoint_url",
@@ -97,18 +85,16 @@ def test_fresh_install_can_bootstrap_from_any_discovered_gateway(provider_id: st
     result = asyncio.run(
         async_step(FakeSelf(), SimpleNamespace(config={"provider_id": provider_id}))
     )
-    assert result == {"type": "form", "step_id": "hassio_confirm"}
+    assert result == {"type": "abort", "reason": "pa_not_initialized"}
     assert remembered == [discovery]
-    assert unique_ids == ["portfolio_architect_singleton"]
+    assert "async_set_unique_id" not in ast.get_source_segment(
+        source, _function_node(ast.parse(source), "async_step_hassio")
+    )
 
 
-def test_concurrent_fresh_discoveries_collapse_to_one_singleton_flow_but_retain_candidates() -> None:
+def test_multiple_preinitialization_discoveries_remain_candidates_without_creating_pa() -> None:
     source = CONFIG_FLOW.read_text(encoding="utf-8")
     candidates: dict[str, object] = {}
-    claimed = False
-
-    class FlowAlreadyInProgress(RuntimeError):
-        pass
 
     class FakeDiscoveryParser:
         @staticmethod
@@ -123,20 +109,6 @@ def test_concurrent_fresh_discoveries_collapse_to_one_singleton_flow_but_retain_
 
     class FakeSelf:
         hass = SimpleNamespace(config_entries=FakeConfigEntries())
-        _hassio_discovery = None
-
-        async def async_set_unique_id(self, unique_id):
-            nonlocal claimed
-            assert unique_id == "portfolio_architect_singleton"
-            if claimed:
-                raise FlowAlreadyInProgress
-            claimed = True
-
-        def _abort_if_unique_id_configured(self):
-            return None
-
-        async def async_step_hassio_confirm(self):
-            return {"type": "form", "step_id": "hassio_confirm"}
 
         def async_abort(self, *, reason):
             return {"type": "abort", "reason": reason}
@@ -151,7 +123,6 @@ def test_concurrent_fresh_discoveries_collapse_to_one_singleton_flow_but_retain_
             "GatewayTlsDiscovery": FakeDiscoveryParser,
             "PortfolioRestError": RuntimeError,
             "DOMAIN": "portfolio_architect",
-            "INSTANCE_UNIQUE_ID": "portfolio_architect_singleton",
             "CONF_SOURCE_TYPE": "source_type",
             "SOURCE_TYPE_REST_API": "rest_api",
             "CONF_REST_ENDPOINT_URL": "rest_endpoint_url",
@@ -165,15 +136,11 @@ def test_concurrent_fresh_discoveries_collapse_to_one_singleton_flow_but_retain_
         },
     )
 
-    first = asyncio.run(async_step(FakeSelf(), SimpleNamespace(config={"provider_id": "dkb"})))
-    assert first == {"type": "form", "step_id": "hassio_confirm"}
-    with pytest.raises(FlowAlreadyInProgress):
-        asyncio.run(
-            async_step(
-                FakeSelf(),
-                SimpleNamespace(config={"provider_id": "trade_republic"}),
-            )
+    for provider_id in ("dkb", "trade_republic"):
+        result = asyncio.run(
+            async_step(FakeSelf(), SimpleNamespace(config={"provider_id": provider_id}))
         )
+        assert result == {"type": "abort", "reason": "pa_not_initialized"}
     assert set(candidates) == {"dkb", "trade_republic"}
 
 
@@ -239,12 +206,16 @@ def test_bootstrap_confirmation_and_supplemental_filter_are_provider_neutral() -
     confirm = source.split("async def async_step_hassio_confirm", 1)[1].split(
         "async def _async_migrate_primary_tls", 1
     )[0]
+    first_source = source.split("async def _async_commit_first_source", 1)[1].split(
+        "async def async_step_add_discovered_primary_rest_gateway", 1
+    )[0]
     helper = source.split("def _discovered_supplemental_gateways", 1)[1].split(
-        "@staticmethod", 1
+        "async def _async_validate_primary_candidate", 1
     )[0]
     assert "GATEWAY_PROVIDER_COMDIRECT" not in confirm
     assert "tls_discovery_not_primary" not in source
-    assert "_forget_hassio_discovery_candidate(self.hass, discovery.provider_id)" in confirm
+    assert 'async_abort(reason="pa_not_initialized")' in confirm
+    assert "_forget_hassio_discovery_candidate(self.hass, health.provider_id)" in first_source
     assert "GATEWAY_PROVIDER_COMDIRECT" not in helper
     assert "provider_id not in configured" in helper
 

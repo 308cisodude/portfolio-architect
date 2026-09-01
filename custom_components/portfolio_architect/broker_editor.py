@@ -147,8 +147,6 @@ def remove_provider(
     providers = updated.get("providers")
     if not isinstance(providers, dict) or provider_id not in providers:
         raise ValueError("provider does not exist")
-    if len(providers) <= 1:
-        raise ValueError("at least one execution provider is required")
     for edge in updated.get("funding_transfers", []) or []:
         if isinstance(edge, dict) and provider_id in {
             edge.get("from_provider"),

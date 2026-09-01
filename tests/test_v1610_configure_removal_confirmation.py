@@ -124,6 +124,9 @@ def test_removal_confirmation_copy_is_bilingual_and_explicit() -> None:
 def test_primary_source_is_not_offered_as_a_removal_target() -> None:
     data = json.loads((TRANSLATIONS / "en.json").read_text(encoding="utf-8"))
     sources = data["options"]["step"]["sources"]
-    assert list(sources["menu_options"]) == ["primary_rest_gateway", "rest_gateways"]
-    assert "remove" not in sources["menu_options"]["primary_rest_gateway"].lower()
+    menu_options = sources["menu_options"]
+    assert "primary_rest_gateway" in menu_options
+    assert "rest_gateways" in menu_options
+    assert "remove" not in menu_options["primary_rest_gateway"].lower()
+    assert not any(key.startswith("remove_primary") for key in menu_options)
     assert "exactly one primary source" in sources["description"]

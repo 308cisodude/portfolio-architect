@@ -37,16 +37,16 @@ def _generic():
 
 
 def test_release_versions_and_schema_are_aligned() -> None:
-    assert json.loads((COMPONENT / "manifest.json").read_text())["version"] == "1.62.0"
-    assert 'VERSION: Final = "1.62.0"' in (COMPONENT / "const.py").read_text()
-    assert 'VERSION = 12' in (COMPONENT / "config_flow.py").read_text()
+    assert json.loads((COMPONENT / "manifest.json").read_text())["version"] == "1.62.1"
+    assert 'VERSION: Final = "1.62.1"' in (COMPONENT / "const.py").read_text()
+    assert 'VERSION = 13' in (COMPONENT / "config_flow.py").read_text()
     for slug in (
         "portfolio_architect_gateway_comdirect",
         "portfolio_architect_gateway_dkb",
         "portfolio_architect_gateway_trade_republic",
         "portfolio_architect_gateway_import",
     ):
-        assert yaml.safe_load((APPS / slug / "config.yaml").read_text())["version"] == "1.62.0"
+        assert yaml.safe_load((APPS / slug / "config.yaml").read_text())["version"] == "1.62.1"
 
 
 def test_portfolio_architect_runtime_is_acquisition_format_neutral() -> None:
