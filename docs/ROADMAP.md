@@ -28,9 +28,13 @@ Closes the v1.61.0 live-acceptance discovery UX regression and removes the inher
 
 Fixes the live-observed Configure edge case where a transient fresh primary health lookup rendered `Primary source: Unknown` despite the running coordinator retaining the validated provider identity. Runtime identity is now used only for display fallback; changing the primary endpoint remains fail-closed behind a fresh current-primary identity read and full candidate trust/health/snapshot validation. v1.61.1 provider-neutral discovery and all Gateway/provider runtime semantics remain unchanged.
 
-## v1.62.0 — Generic Import graduation and multi-profile providers — prepared
+## v1.62.0 — Generic Import graduation and multi-profile providers — published; live acceptance blocked by first-run bootstrap
 
 Graduates Generic Import from experimental to stable and removes its historical one-logical-provider limitation before that contract becomes permanent. One App can host up to eight isolated Generic source profiles, each with immutable provider identity, editable human name, independent CSV mapping/canonical holdings, optional provider-local cash and separate evidence clocks. Existing `generic_csv` state retains its identity. Ready profiles are discovered independently through additive discovery schema 2, and health schema 10 exposes the bounded human provider name. Raw CSV remains transient and no HA API privilege is added. Native provider acquisition and the DKB authenticated-FinTS research gate are unchanged.
+
+## v1.62.1 — integration-owned first-run initialization — prepared
+
+Completes v1.62 clean-room acceptance by moving Portfolio Architect service initialization into the integration itself. A virgin installation can exist safely without a source or plan; ready Gateways become candidates for that existing service rather than creating it. Config-entry schema 13 records explicit setup states, and the native setup flow generates the established YAML only from explicit user choices after full validation. No source, allocation, policy or execution venue is invented. Existing installations migrate unchanged to `configured`.
 
 ## Next — future provider methods remain evidence-gated
 

@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.62.1
+
+- Make first-run lifecycle integration-owned: a new Portfolio Architect service is initialized explicitly through Home Assistant before any Gateway source is adopted. Gateway Apps remain acquisition-only and can no longer create the singleton PA entry.
+- Add fail-closed config-entry schema 13 with explicit `source_required`, `plan_required` and `configured` states. Existing entries migrate to `configured`; incomplete entries load without coordinator/entities or Gateway I/O and expose bounded setup diagnostics.
+- Create/validate the confined PA configuration directory during integration initialization without inventing source, allocation, policy, instrument metadata or execution-provider state. Partial or invalid existing configuration is refused rather than rewritten.
+- Add explicit first-source adoption under **Configure → Portfolio sources** for discovered or manually entered verified REST Gateways. Existing v1.61 HTTP→HTTPS/slug migrations and provider-keyed supplemental discovery semantics remain unchanged.
+- Add a native first-plan setup flow that writes the four established YAML documents only after explicit user choices and full staged engine validation. No investment assumptions are prefilled; source holdings require valid ISIN identity to become plan targets.
+- Allow provider-aware broker schema 3 to express zero execution providers only when funding topology is empty, so first-run setup does not invent an execution venue.
+- Preserve v1.62.0 stable multi-profile Generic Import, health schema 10/discovery schema 2, native provider acquisition, private-PKI/security, freshness/LKG/planner semantics and the authenticated-DKB-FinTS research gate.
+
 ## 1.62.0
 
 - Graduate **Portfolio Architect Gateway — Generic Import** from experimental to stable and make it usable as a standalone Portfolio Architect provider.

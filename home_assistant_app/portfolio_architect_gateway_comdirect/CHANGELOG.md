@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.62.1
+
+- Version-align with Portfolio Architect v1.62.1. Provider acquisition/runtime behavior is unchanged; first-run service initialization is owned by the Home Assistant integration.
+
 ## 1.62.0
 
 - Add backward-compatible health schema 10 `provider_name` metadata and align package version with the Generic Import graduation release. Provider acquisition remains unchanged: explicit `live_api` or operator-selected complete `csv`, with no silent fallback.

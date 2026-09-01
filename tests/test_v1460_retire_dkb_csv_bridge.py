@@ -57,7 +57,7 @@ def test_dkb_gateway_keeps_provider_specific_csv_acquisition() -> None:
 def test_schema_10_fails_closed_if_legacy_dkb_acquisition_is_still_active() -> None:
     init = _text(COMPONENT / "__init__.py")
     flow = _text(COMPONENT / "config_flow.py")
-    assert "VERSION = 12" in flow
+    assert "VERSION = 13" in flow
     assert 'entry.data.get(CONF_SOURCE_PROVIDER) == "dkb_csv"' in init
     assert 'legacy_option_key = "supplemental_dkb_csv_paths"' in init
     assert "return False" in init.split('legacy_option_key = "supplemental_dkb_csv_paths"', 1)[1]

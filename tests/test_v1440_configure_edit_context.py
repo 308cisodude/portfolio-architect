@@ -181,7 +181,12 @@ def test_every_configure_menu_has_complete_bilingual_labels_in_emission_order() 
         for step_id, targets in emitted.items():
             menu_options = steps[step_id].get("menu_options")
             assert isinstance(menu_options, dict), (language, step_id)
-            assert list(menu_options) == targets, (language, step_id, targets, menu_options)
+            translated_order = list(menu_options)
+            # Setup-state-specific menus may use only a subset of a translated step's
+            # labels. Every emitted target must still exist and preserve its relative
+            # order; extra labels are valid for alternate setup states.
+            positions = [translated_order.index(target) for target in targets]
+            assert positions == sorted(positions), (language, step_id, targets, menu_options)
             for target in targets:
                 assert isinstance(menu_options[target], str) and menu_options[target].strip()
                 assert target in steps and isinstance(steps[target].get("title"), str)

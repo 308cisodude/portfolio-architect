@@ -180,4 +180,4 @@ receive package/User-Agent alignment only and the v1.32 diagnostic evidence poli
 authoritative.
 
 
-v1.62.0 adds health schema 10 `provider_name` and Supervisor discovery transport schema 2 for exact per-profile paths. One Generic App may expose up to eight isolated logical providers while Portfolio Architect continues to consume one canonical snapshot per provider; holdings/cash are never merged inside the Gateway. Existing `generic_csv` state retains its identity for compatibility.
+v1.62.0 adds health schema 10 `provider_name` and Supervisor discovery transport schema 2 for exact per-profile paths. One Generic App may expose up to eight isolated logical providers while Portfolio Architect continues to consume one canonical snapshot per provider; holdings/cash are never merged inside the Gateway. Existing `generic_csv` state retains its identity for compatibility. v1.62.1 changes only ownership of first-run lifecycle: the Portfolio Architect integration must be initialized first, while ready Gateway discoveries are retained as source candidates for that existing singleton service. Gateway acquisition and wire contracts are unchanged.

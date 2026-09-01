@@ -223,7 +223,7 @@ def test_current_release_is_v1550_and_wire_contracts_remain_unchanged() -> None:
     manifest = json.loads(
         (ROOT / "custom_components/portfolio_architect/manifest.json").read_text()
     )
-    assert manifest["version"] == "1.62.0"
+    assert manifest["version"] == "1.62.1"
     server = (ROOT / "gateway/src/portfolio_architect_gateway/server.py").read_text()
     rest = (ROOT / "custom_components/portfolio_architect/rest_client.py").read_text()
     assert '"health_schema_version": min(version, 10)' in server

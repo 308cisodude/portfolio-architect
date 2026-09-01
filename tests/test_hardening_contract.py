@@ -9,7 +9,7 @@ COMPONENT = ROOT / "custom_components" / "portfolio_architect"
 def test_config_entry_schema_migration_is_versioned() -> None:
     config_flow = (COMPONENT / "config_flow.py").read_text(encoding="utf-8")
     setup = (COMPONENT / "__init__.py").read_text(encoding="utf-8")
-    assert "VERSION = 12" in config_flow
+    assert "VERSION = 13" in config_flow
     assert "async def async_migrate_entry" in setup
     assert "version=5" in setup
     assert "entry.version < 8" in setup
@@ -84,9 +84,9 @@ def test_current_runtime_versions_are_aligned() -> None:
     manifest = json.loads((COMPONENT / "manifest.json").read_text())
     const = (COMPONENT / "const.py").read_text(encoding="utf-8")
     engine_init = (COMPONENT / "engine" / "__init__.py").read_text(encoding="utf-8")
-    assert manifest["version"] == "1.62.0"
-    assert 'VERSION: Final = "1.62.0"' in const
-    assert '__version__ = "1.62.0"' in engine_init
+    assert manifest["version"] == "1.62.1"
+    assert 'VERSION: Final = "1.62.1"' in const
+    assert '__version__ = "1.62.1"' in engine_init
 
 
 def test_native_monthly_plan_runtime_and_policy_entities_are_registered() -> None:

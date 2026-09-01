@@ -29,7 +29,7 @@ def test_pa_runtime_no_longer_contains_comdirect_specific_csv_acquisition() -> N
 
 def test_config_flow_no_longer_contains_comdirect_csv_migration_or_selection() -> None:
     flow = _text(COMPONENT / "config_flow.py")
-    assert "VERSION = 12" in flow
+    assert "VERSION = 13" in flow
     assert "async_step_hassio_migrate_comdirect_csv_confirm" not in flow
     assert "comdirect_gateway_migration_mismatch" not in flow
     assert "legacy_positions != snapshot.positions" not in flow

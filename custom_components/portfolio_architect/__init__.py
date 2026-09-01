@@ -19,12 +19,14 @@ from .const import (
     CONF_SOURCE_ENTITY_ID,
     CONF_SOURCE_PROVIDER,
     CONF_SOURCE_TYPE,
+    CONF_SETUP_STATE,
     DEFAULT_CONFIG_DIRECTORY,
     DEFAULT_SOURCE_ENTITY_ID,
     LEGACY_COMDIRECT_CSV_PROVIDER,
     DOMAIN,
     INSTANCE_UNIQUE_ID,
     PLAN_FREQUENCY_MONTHLY,
+    SETUP_STATE_CONFIGURED,
     PLATFORMS,
     SOURCE_TYPE_LEGACY_SENSOR,
     SOURCE_TYPE_LOCAL_FILES,
@@ -72,14 +74,14 @@ async def async_migrate_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
 ) -> bool:
-    """Migrate a Portfolio Architect config entry to schema version 12."""
+    """Migrate a Portfolio Architect config entry to schema version 13."""
     _LOGGER.debug(
         "Migrating Portfolio Architect config entry from version %s.%s",
         entry.version,
         entry.minor_version,
     )
 
-    if entry.version > 12:
+    if entry.version > 13:
         _LOGGER.error(
             "Cannot migrate Portfolio Architect config entry from future version %s",
             entry.version,
@@ -277,6 +279,22 @@ async def async_migrate_entry(
             "Architect config entry; acquisition is Gateway-only in schema 12"
         )
 
+
+    if entry.version < 13:
+        # v1.62.1 makes integration-owned initialization and explicit fail-closed
+        # setup states part of the config-entry contract. Existing installations
+        # already have a source/configuration and therefore remain configured.
+        data = dict(entry.data)
+        data.setdefault(CONF_SETUP_STATE, SETUP_STATE_CONFIGURED)
+        hass.config_entries.async_update_entry(
+            entry,
+            data=data,
+            version=13,
+        )
+        _LOGGER.info(
+            "Migrated Portfolio Architect to the integration-owned setup-state schema"
+        )
+
     if migrated_entities:
         _LOGGER.info(
             "Portfolio Architect entity-ID migration renamed %s entities",
@@ -287,6 +305,18 @@ async def async_migrate_entry(
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Portfolio Architect from a config entry."""
+    setup_state = entry.data.get(CONF_SETUP_STATE, SETUP_STATE_CONFIGURED)
+    if setup_state != SETUP_STATE_CONFIGURED:
+        # A newly initialized service is deliberately loadable before it has a
+        # source or investment plan. Keep the config entry available for Configure
+        # flows, but do not create calculation entities or contact a Gateway until
+        # setup has been completed explicitly.
+        entry.runtime_data = None
+        _LOGGER.info(
+            "Portfolio Architect initialized in fail-closed setup state %s",
+            setup_state,
+        )
+        return True
     coordinator = PortfolioArchitectCoordinator(hass, entry)
     # Restore the bounded decision trace before any source refresh. It contains
     # only the two most recent provider-neutral evaluations.
@@ -334,4 +364,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a Portfolio Architect config entry."""
+    if entry.data.get(CONF_SETUP_STATE, SETUP_STATE_CONFIGURED) != SETUP_STATE_CONFIGURED:
+        return True
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)

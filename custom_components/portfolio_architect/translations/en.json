@@ -90,7 +90,7 @@
       },
       "hassio_confirm": {
         "title": "Connect discovered Portfolio Architect Gateway securely",
-        "description": "Home Assistant Supervisor provided verified private-CA trust for provider {provider_id} at {gateway}. Enter the existing Gateway bearer token and Portfolio Architect configuration directory; the HTTPS endpoint, provider identity and portfolio snapshot are validated before this Gateway creates the single Portfolio Architect entry.",
+        "description": "Legacy compatibility step for discovered provider {provider_id} at {gateway}. New installations initialize Portfolio Architect first and then adopt the Gateway through Configure.",
         "data": {
           "config_directory": "Portfolio configuration directory",
           "rest_api_token": "Gateway bearer token"
@@ -103,6 +103,16 @@
       "hassio_comdirect_slug_migration_confirm": {
         "title": "Migrate Comdirect Gateway identity securely",
         "description": "The provider-qualified Comdirect App is ready at {new_gateway}. The existing source {legacy_gateway} has the same private-CA fingerprint {ca_sha256}. Confirm to validate health schema 8, provider identity, the existing bearer token, and snapshot timestamp/count/fingerprint before atomically changing only the endpoint."
+      },
+      "initialize": {
+        "title": "Initialize Portfolio Architect",
+        "description": "Create the single Portfolio Architect service and its confined configuration directory before connecting any bank or broker. No portfolio source, allocation, investment policy or execution venue is invented during initialization.",
+        "data": {
+          "config_directory": "Portfolio configuration directory"
+        },
+        "data_description": {
+          "config_directory": "Relative to /config. A missing directory is created privately. An existing complete Portfolio Architect configuration is preserved; a partially populated directory is refused."
+        }
       }
     },
     "error": {
@@ -112,7 +122,8 @@
       "invalid_provider": "Select a supported source adapter.",
       "invalid_csv_format": "The CSV header could not be read with these format settings.",
       "invalid_rest_source": "The local REST gateway or its JSON response did not satisfy the bounded Portfolio Architect source contract.",
-      "invalid_auth": "The local REST gateway rejected the bearer token."
+      "invalid_auth": "The local REST gateway rejected the bearer token.",
+      "invalid_initialization_directory": "The Portfolio Architect configuration directory could not be initialized safely."
     },
     "abort": {
       "already_configured": "Portfolio Architect is already configured. Use Reconfigure on the existing integration entry to change its source.",
@@ -126,7 +137,8 @@
       "tls_validation_failed": "The discovered HTTPS endpoint could not be validated with the supplied private CA and existing bearer token.",
       "tls_migrated": "The matching Gateway source was migrated to verified HTTPS successfully.",
       "comdirect_slug_validation_failed": "The provider-qualified Comdirect App did not fully validate with the existing trust and bearer token. The historical source remains unchanged.",
-      "comdirect_slug_migrated": "The Comdirect Gateway identity was migrated to the provider-qualified endpoint successfully."
+      "comdirect_slug_migrated": "The Comdirect Gateway identity was migrated to the provider-qualified endpoint successfully.",
+      "pa_not_initialized": "A Portfolio Architect Gateway was discovered, but Portfolio Architect has not been initialized yet. Add the Portfolio Architect integration first; the Gateway will remain available for explicit adoption afterward."
     }
   },
   "entity": {
@@ -2390,7 +2402,8 @@
           "execution_providers": "Execution providers & funding",
           "sources": "Portfolio sources",
           "runtime": "Runtime safeguards",
-          "reset_plan": "Restore file-based plan"
+          "reset_plan": "Restore file-based plan",
+          "initial_setup": "Complete initial setup"
         }
       },
       "plan": {
@@ -2467,7 +2480,9 @@
         "description": "Portfolio Architect has exactly one primary source. Additional REST Gateways are optional provider-isolated supplements and never replace the primary source implicitly.",
         "menu_options": {
           "primary_rest_gateway": "Primary REST Gateway",
-          "rest_gateways": "Additional REST Gateways"
+          "rest_gateways": "Additional REST Gateways",
+          "add_discovered_primary_rest_gateway": "Add discovered first portfolio source",
+          "add_primary_rest_gateway": "Add first REST Gateway manually"
         }
       },
       "execution": {
@@ -2801,6 +2816,78 @@
           "rest_endpoint_url": "Verified HTTPS portfolio endpoint for this same provider.",
           "rest_api_token": "Dedicated low-privilege bearer token. Existing private-CA trust is retained automatically while the endpoint is unchanged."
         }
+      },
+      "add_discovered_primary_rest_gateway": {
+        "title": "Add discovered first portfolio source",
+        "description": "Select one ready Gateway discovered by Home Assistant Supervisor. Selecting it does not create a second Portfolio Architect service; it attaches the first source to this already-initialized service.",
+        "data": {
+          "provider_id": "Provider"
+        }
+      },
+      "add_discovered_primary_rest_gateway_details": {
+        "title": "Connect first discovered Gateway securely",
+        "description": "**Discovered:** {provider} (`{provider_id}`) · `{endpoint}`\n\nSupervisor supplied private-CA fingerprint `{ca_sha256}`. Enter the existing Gateway bearer token. Portfolio Architect validates verified HTTPS, provider identity, health and snapshot integrity before attaching this as the first portfolio source.",
+        "data": {
+          "rest_api_token": "Gateway bearer token"
+        },
+        "data_description": {
+          "rest_api_token": "Dedicated App-private bearer token. The endpoint and private CA come from Supervisor discovery."
+        }
+      },
+      "add_primary_rest_gateway": {
+        "title": "Add first REST Gateway manually",
+        "description": "Attach a system-PKI HTTPS Gateway as the first portfolio source. Official Portfolio Architect Apps should normally be adopted from Supervisor discovery so their private CA is preserved automatically.",
+        "data": {
+          "rest_endpoint_url": "Local Gateway URL",
+          "rest_api_token": "Gateway bearer token"
+        }
+      },
+      "initial_setup": {
+        "title": "Complete initial Portfolio Architect setup",
+        "description": "Choose the real target plan from holdings with valid ISIN identity. These choices create the first Portfolio Architect configuration; no target or investment assumption is selected automatically.",
+        "data": {
+          "plan_name": "Plan name",
+          "plan_budget_amount": "Monthly contribution (EUR)",
+          "selected_instruments": "Target instruments",
+          "corridor_pp": "Allocation corridor (percentage points)",
+          "minimum_trade_eur": "Minimum purchase (EUR)",
+          "rounding_step_eur": "Purchase rounding step (EUR)"
+        }
+      },
+      "initial_setup_instrument": {
+        "title": "Configure initial target · {instrument_name}",
+        "description": "**ISIN:** `{isin}` · **WKN:** `{wkn}`\n\nConfirm target weight and the instrument facts Portfolio Architect should use for policy evaluation. These values are stored as user-confirmed metadata; Portfolio Architect does not fetch or invent them.",
+        "data": {
+          "target_pct": "Target weight (%)",
+          "buy_enabled": "Allow purchases",
+          "ucits": "UCITS",
+          "domicile": "Domicile country code",
+          "distribution": "Distribution policy",
+          "fund_currency": "Fund currency",
+          "ter_pct": "TER (%)",
+          "fund_size_eur": "Fund size (EUR)",
+          "metadata_source": "Metadata source / evidence"
+        }
+      },
+      "initial_setup_review": {
+        "title": "Normalize initial target weights",
+        "description": "The entered target weights total {target_total}%. Portfolio Architect will not silently alter them. Confirm normalization to exactly 100%, or go back and edit the targets.",
+        "data": {
+          "normalise_targets": "Normalize targets to 100%"
+        }
+      },
+      "initial_setup_policy": {
+        "title": "Confirm initial investment policy",
+        "description": "Set the policy controls Portfolio Architect will evaluate. These are explicit user choices; no execution provider is created automatically. Execution venues and funding can be configured later.",
+        "data": {
+          "ucits_required": "Require UCITS",
+          "accumulating_preferred": "Prefer accumulating share classes",
+          "ireland_preferred": "Prefer Irish domicile",
+          "max_ter_pct": "Maximum TER (%)",
+          "minimum_fund_size_eur": "Minimum fund size (EUR)",
+          "savings_plan_required": "Require a savings-plan route",
+          "free_savings_plan_preferred": "Prefer zero-fee savings plans"
+        }
       }
     },
     "error": {
@@ -2818,7 +2905,9 @@
       "invalid_broker_config": "The execution-provider configuration is invalid and was not saved.",
       "provider_already_exists": "This provider ID already exists.",
       "savings_plan_route_already_exists": "This provider already has a savings-plan route for that ISIN.",
-      "funding_transfer_already_exists": "This directed funding transfer already exists."
+      "funding_transfer_already_exists": "This directed funding transfer already exists.",
+      "invalid_metadata": "Instrument metadata is invalid.",
+      "initial_setup_invalid": "The initial configuration did not validate and nothing was activated."
     },
     "abort": {
       "plan_source_unavailable": "The local portfolio files could not be read for the plan editor.",
@@ -2827,7 +2916,10 @@
       "no_rest_gateways": "No additional REST Gateways are configured.",
       "rest_gateways_require_rest_primary": "Additional REST Gateways require the primary Portfolio Architect source to be a REST Gateway.",
       "broker_editor_unavailable": "broker.yaml must exist and use provider-aware schema 2 or 3 before the native editor can be used.",
-      "no_discovered_rest_gateways": "No unconfigured supplemental Gateways are currently available from Supervisor discovery."
+      "no_discovered_rest_gateways": "No unconfigured supplemental Gateways are currently available from Supervisor discovery.",
+      "initial_setup_already_complete": "Initial Portfolio Architect setup is already complete.",
+      "initial_setup_source_unavailable": "A validated REST source with at least one holding carrying a valid ISIN is required before the investment plan can be created.",
+      "primary_rest_gateway_already_configured": "The primary portfolio source is already configured."
     }
   },
   "selector": {
