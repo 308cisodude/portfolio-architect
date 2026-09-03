@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.62.4
+
+- Version-align with Portfolio Architect v1.62.4. The v1.62.3 bounded German cash-date month matrix and all Trade Republic acquisition/reconciliation behavior remain unchanged; the hotfix is Home Assistant integration-only.
+
 ## 1.62.3
 
 - Accept the complete bounded German abbreviated month-label matrix in the authoritative `BARMITTELÜBERSICHT` cash as-of line (`Jan.`, `Feb.`, `März`, `Apr.`, `Mai`, `Juni`, `Juli`, `Aug.`, `Sept.`, `Okt.`, `Nov.`, `Dez.`) while preserving previously accepted aliases.

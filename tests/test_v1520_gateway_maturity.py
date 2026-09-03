@@ -42,14 +42,14 @@ def _config(app: Path) -> dict[str, object]:
 def test_current_release_versions_and_app_maturity_are_aligned() -> None:
     assert json.loads(
         (ROOT / "custom_components" / "portfolio_architect" / "manifest.json").read_text()
-    )["version"] == "1.62.3"
+    )["version"] == "1.62.4"
     assert _config(COMDIRECT)["stage"] == "stable"
     assert _config(DKB)["stage"] == "stable"
     assert _config(TR)["stage"] == "stable"
     assert _config(GENERIC)["stage"] == "stable"
     assert not (APPS / "portfolio_architect_gateway").exists()
     for app in (COMDIRECT, DKB, TR, GENERIC):
-        assert _config(app)["version"] == "1.62.3"
+        assert _config(app)["version"] == "1.62.4"
 
 
 def test_dkb_stability_is_scoped_to_csv_while_fints_probe_stays_experimental() -> None:
@@ -123,4 +123,4 @@ def test_sbom_describes_all_four_gateway_apps() -> None:
         for package in sbom["packages"]
         if package["name"] == "Portfolio Architect Gateway — Generic Import App"
     )
-    assert generic["versionInfo"] == "1.62.3"
+    assert generic["versionInfo"] == "1.62.4"

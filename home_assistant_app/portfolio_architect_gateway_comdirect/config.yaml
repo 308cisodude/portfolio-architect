@@ -1,5 +1,5 @@
 name: Portfolio Architect Gateway — Comdirect
-version: 1.62.3
+version: 1.62.4
 slug: portfolio_architect_gateway_comdirect
 description: Canonical provider-qualified Comdirect Gateway for Portfolio Architect, with secure one-time migration support for installations that still use the historical App identity.
 url: https://developers.home-assistant.io/docs/apps/
