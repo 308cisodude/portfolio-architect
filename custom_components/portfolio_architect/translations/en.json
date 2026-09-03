@@ -2844,7 +2844,7 @@
       },
       "initial_setup": {
         "title": "Complete initial Portfolio Architect setup",
-        "description": "Choose the real target plan from holdings with valid ISIN identity. These choices create the first Portfolio Architect configuration; no target or investment assumption is selected automatically.",
+        "description": "Choose the real target plan from holdings with valid ISIN identity. Every field starts without an investment choice; enter each value explicitly before Portfolio Architect creates the first configuration.",
         "data": {
           "plan_name": "Plan name",
           "plan_budget_amount": "Monthly contribution (EUR)",
@@ -2856,7 +2856,7 @@
       },
       "initial_setup_instrument": {
         "title": "Configure initial target · {instrument_name}",
-        "description": "**ISIN:** `{isin}` · **WKN:** `{wkn}`\n\nConfirm target weight and the instrument facts Portfolio Architect should use for policy evaluation. These values are stored as user-confirmed metadata; Portfolio Architect does not fetch or invent them.",
+        "description": "**ISIN:** `{isin}` · **WKN:** `{wkn}`\n\nEnter target weight and confirm every instrument fact Portfolio Architect should use for policy evaluation. No Yes/No, enumeration, numeric value or metadata fact is selected automatically.",
         "data": {
           "target_pct": "Target weight (%)",
           "buy_enabled": "Allow purchases",
@@ -2871,14 +2871,14 @@
       },
       "initial_setup_review": {
         "title": "Normalize initial target weights",
-        "description": "The entered target weights total {target_total}%. Portfolio Architect will not silently alter them. Confirm normalization to exactly 100%, or go back and edit the targets.",
+        "description": "The entered target weights total {target_total}%. Portfolio Architect will not silently alter them. Explicitly choose whether to normalize them to exactly 100%, or go back and edit the targets.",
         "data": {
           "normalise_targets": "Normalize targets to 100%"
         }
       },
       "initial_setup_policy": {
         "title": "Confirm initial investment policy",
-        "description": "Set the policy controls Portfolio Architect will evaluate. These are explicit user choices; no execution provider is created automatically. Execution venues and funding can be configured later.",
+        "description": "Set every policy control explicitly. Yes/No choices start unanswered, and no numeric threshold or execution provider is created automatically. Execution venues and funding can be configured later.",
         "data": {
           "ucits_required": "Require UCITS",
           "accumulating_preferred": "Prefer accumulating share classes",
@@ -2907,7 +2907,8 @@
       "savings_plan_route_already_exists": "This provider already has a savings-plan route for that ISIN.",
       "funding_transfer_already_exists": "This directed funding transfer already exists.",
       "invalid_metadata": "Instrument metadata is invalid.",
-      "initial_setup_invalid": "The initial configuration did not validate and nothing was activated."
+      "initial_setup_invalid": "The initial configuration did not validate and nothing was activated.",
+      "explicit_choice_required": "Make an explicit choice or enter a value; Portfolio Architect does not assume one."
     },
     "abort": {
       "plan_source_unavailable": "The local portfolio files could not be read for the plan editor.",
@@ -3019,6 +3020,12 @@
         "preferred": "Prefer when otherwise equal",
         "neutral": "No preference",
         "fallback": "Use after otherwise equal alternatives"
+      }
+    },
+    "explicit_yes_no": {
+      "options": {
+        "yes": "Yes",
+        "no": "No"
       }
     }
   },

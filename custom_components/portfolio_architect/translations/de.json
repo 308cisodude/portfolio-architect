@@ -2844,7 +2844,7 @@
       },
       "initial_setup": {
         "title": "Portfolio-Architect-Ersteinrichtung abschließen",
-        "description": "Wähle den echten Zielplan aus Beständen mit gültiger ISIN-Identität. Diese Angaben erzeugen die erste Portfolio-Architect-Konfiguration; kein Ziel und keine Anlageannahme wird automatisch ausgewählt.",
+        "description": "Wählen Sie den tatsächlichen Zielplan aus Beständen mit gültiger ISIN-Identität. Jedes Feld beginnt ohne Anlageentscheidung; geben Sie jeden Wert ausdrücklich ein, bevor Portfolio Architect die erste Konfiguration erstellt.",
         "data": {
           "plan_name": "Planname",
           "plan_budget_amount": "Monatlicher Beitrag (EUR)",
@@ -2856,7 +2856,7 @@
       },
       "initial_setup_instrument": {
         "title": "Erstes Ziel konfigurieren · {instrument_name}",
-        "description": "**ISIN:** `{isin}` · **WKN:** `{wkn}`\n\nBestätige Zielgewicht und Instrumentdaten, die Portfolio Architect für die Richtlinienprüfung verwenden soll. Diese Werte werden als vom Benutzer bestätigte Metadaten gespeichert; Portfolio Architect ruft sie nicht ab und erfindet sie nicht.",
+        "description": "**ISIN:** `{isin}` · **WKN:** `{wkn}`\n\nGeben Sie das Zielgewicht ein und bestätigen Sie jede Instrumentenangabe, die Portfolio Architect für die Richtlinienprüfung verwenden soll. Keine Ja/Nein-Auswahl, Aufzählung, Zahl oder Metadatenangabe wird automatisch ausgewählt.",
         "data": {
           "target_pct": "Zielgewicht (%)",
           "buy_enabled": "Käufe erlauben",
@@ -2871,14 +2871,14 @@
       },
       "initial_setup_review": {
         "title": "Erste Zielgewichte normalisieren",
-        "description": "Die eingegebenen Zielgewichte ergeben {target_total} %. Portfolio Architect ändert sie nicht stillschweigend. Bestätige die Normalisierung auf genau 100 % oder gehe zurück und bearbeite die Ziele.",
+        "description": "Die eingegebenen Zielgewichte ergeben {target_total} %. Portfolio Architect verändert sie nicht stillschweigend. Wählen Sie ausdrücklich, ob auf genau 100 % normalisiert werden soll, oder gehen Sie zurück und bearbeiten Sie die Ziele.",
         "data": {
           "normalise_targets": "Ziele auf 100 % normalisieren"
         }
       },
       "initial_setup_policy": {
         "title": "Erste Anlagerichtlinie bestätigen",
-        "description": "Lege die Richtlinienkontrollen fest, die Portfolio Architect prüft. Dies sind ausdrückliche Benutzerentscheidungen; es wird kein Ausführungsanbieter automatisch erzeugt. Ausführungsplätze und Finanzierung können später konfiguriert werden.",
+        "description": "Legen Sie jede Richtlinienvorgabe ausdrücklich fest. Ja/Nein-Auswahlen beginnen unbeantwortet; kein numerischer Grenzwert und kein Ausführungsanbieter wird automatisch erzeugt. Ausführungsplätze und Finanzierung können später konfiguriert werden.",
         "data": {
           "ucits_required": "UCITS verlangen",
           "accumulating_preferred": "Thesaurierende Anteilsklassen bevorzugen",
@@ -2907,7 +2907,8 @@
       "savings_plan_route_already_exists": "Für diese ISIN existiert bei diesem Anbieter bereits eine Sparplanroute.",
       "funding_transfer_already_exists": "Diese gerichtete Finanzierungsbeziehung ist bereits vorhanden.",
       "invalid_metadata": "Die Instrumentmetadaten sind ungültig.",
-      "initial_setup_invalid": "Die Erstkonfiguration wurde nicht erfolgreich validiert; es wurde nichts aktiviert."
+      "initial_setup_invalid": "Die Erstkonfiguration wurde nicht erfolgreich validiert; es wurde nichts aktiviert.",
+      "explicit_choice_required": "Treffen Sie eine ausdrückliche Auswahl oder geben Sie einen Wert ein; Portfolio Architect nimmt keinen Wert an."
     },
     "abort": {
       "plan_source_unavailable": "Die lokalen Portfoliodateien konnten für den Planeditor nicht gelesen werden.",
@@ -3019,6 +3020,12 @@
         "preferred": "Bei sonstigem Gleichstand bevorzugen",
         "neutral": "Keine Präferenz",
         "fallback": "Nach sonst gleichwertigen Alternativen verwenden"
+      }
+    },
+    "explicit_yes_no": {
+      "options": {
+        "yes": "Ja",
+        "no": "Nein"
       }
     }
   },

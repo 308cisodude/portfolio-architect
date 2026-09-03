@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.62.2
+
+- Version-align with Portfolio Architect v1.62.2. Provider acquisition/runtime behavior is unchanged; the first-run explicit-choice fix is Home Assistant integration-only.
+
 ## 1.62.1
 
 - Version-align with Portfolio Architect v1.62.1. Provider acquisition/runtime behavior is unchanged; first-run service initialization is owned by the Home Assistant integration.

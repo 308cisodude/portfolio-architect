@@ -32,9 +32,13 @@ Fixes the live-observed Configure edge case where a transient fresh primary heal
 
 Graduates Generic Import from experimental to stable and removes its historical one-logical-provider limitation before that contract becomes permanent. One App can host up to eight isolated Generic source profiles, each with immutable provider identity, editable human name, independent CSV mapping/canonical holdings, optional provider-local cash and separate evidence clocks. Existing `generic_csv` state retains its identity. Ready profiles are discovered independently through additive discovery schema 2, and health schema 10 exposes the bounded human provider name. Raw CSV remains transient and no HA API privilege is added. Native provider acquisition and the DKB authenticated-FinTS research gate are unchanged.
 
-## v1.62.1 — integration-owned first-run initialization — prepared
+## v1.62.1 — integration-owned first-run initialization — published; clean-room architecture accepted, explicit-choice UI issue found
 
 Completes v1.62 clean-room acceptance by moving Portfolio Architect service initialization into the integration itself. A virgin installation can exist safely without a source or plan; ready Gateways become candidates for that existing service rather than creating it. Config-entry schema 13 records explicit setup states, and the native setup flow generates the established YAML only from explicit user choices after full validation. No source, allocation, policy or execution venue is invented. Existing installations migrate unchanged to `configured`.
+
+## v1.62.2 — explicit first-run choices and Generic READY colour — prepared
+
+Hardens the v1.62.1 initial-plan wizard against Home Assistant frontend behavior that may render required selector minima or first options as usable values. First-run fields now start unanswered/blank and are enforced explicitly at submission time; Yes/No decisions use an unanswered-capable selector. Generic READY profile cards become blue while active CSV authority remains green. No schema, acquisition, trust, freshness, planner or execution semantics change.
 
 ## Next — future provider methods remain evidence-gated
 

@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway — Generic Import v1.62.1
+# Portfolio Architect Gateway — Generic Import v1.62.2
 
-Version 1.62.1 is a version-alignment release for this App. Its provider acquisition, private state, health schema 10, discovery transport, private-PKI/bearer boundary and no-fallback behavior are unchanged from v1.62.0; first-run Portfolio Architect initialization is integration-owned.
+Version 1.62.2 preserves the stable multi-profile Generic Import runtime and changes only source-profile readiness presentation: SETUP REQUIRED is amber and READY is blue, while active/authoritative CSV remains green. Provider identity, acquisition, private state, health schema 10, discovery transport, private-PKI/bearer boundary and no-fallback behavior are unchanged.
 
 Version 1.62.0 graduates Generic Import to **stable** and makes it a supported standalone or supplemental Portfolio Architect provider. One App can host up to eight independent source profiles for otherwise unsupported banks/brokers.
 
