@@ -41,7 +41,7 @@ def _compile_function(source: str, name: str, namespace: dict[str, object]):
 
 @pytest.mark.parametrize("provider_id", ["dkb", "trade_republic", "generic_csv"])
 def test_fresh_gateway_discovery_waits_for_integration_owned_initialization(provider_id: str) -> None:
-    """v1.62.1 supersedes discovery-owned bootstrap without losing candidates."""
+    """v1.62.2 supersedes discovery-owned bootstrap without losing candidates."""
     source = CONFIG_FLOW.read_text(encoding="utf-8")
     remembered: list[object] = []
     discovery = SimpleNamespace(provider_id=provider_id, hostname=f"{provider_id}.invalid")

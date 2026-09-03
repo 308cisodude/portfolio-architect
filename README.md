@@ -1,6 +1,6 @@
-# Portfolio Architect v1.62.1
+# Portfolio Architect v1.62.2
 
-Version 1.62.1 completes the Generic Import graduation with **integration-owned first-run initialization**. New users initialize Portfolio Architect itself before adopting a Gateway; source-less and plan-less setup states are explicit and fail closed, and the native setup flow creates real configuration only from explicit user choices after source validation. Generic Import remains the stable multi-profile provider introduced in v1.62.0.
+Version 1.62.2 hardens the v1.62.1 integration-owned first-run wizard so Home Assistant selector minima/first options cannot become implicit investment choices. Every initial plan, instrument and policy value must be explicitly submitted. Generic Import also renders READY source-profile cards blue while its active/authoritative CSV method remains green.
 
 Each new Generic profile receives an immutable generated `generic_<stable-id>` provider identity and a separately editable human name. Existing experimental `generic_csv` state retains that provider identity and legacy REST path. Holdings CSV data is parsed transiently; successful imports atomically replace only the selected profile's canonical holdings, optional provider-local EUR investment cash has its own evidence timestamp, and rejected imports retain the previous valid snapshot.
 

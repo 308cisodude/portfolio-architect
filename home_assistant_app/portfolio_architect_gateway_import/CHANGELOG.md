@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.62.2
+
+- Render Generic source-profile cards amber while setup is required and blue once READY; keep active/authoritative CSV acquisition green. Provider runtime, identity, discovery and evidence behavior are unchanged.
+- Version-align with Portfolio Architect v1.62.2.
+
 ## 1.62.1
 
 - Version-align with Portfolio Architect v1.62.1. Provider acquisition/runtime behavior is unchanged; first-run service initialization is owned by the Home Assistant integration.

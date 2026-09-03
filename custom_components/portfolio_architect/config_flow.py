@@ -138,6 +138,47 @@ from .gateway_provider_ids import GATEWAY_PROVIDER_COMDIRECT
 from .freshness import default_freshness_thresholds
 CONF_MANUAL_VENUE_FEE_BPS = "manual_venue_fee_bps"
 
+_EXPLICIT_YES = "yes"
+_EXPLICIT_NO = "no"
+_EXPLICIT_YES_NO_OPTIONS = [_EXPLICIT_YES, _EXPLICIT_NO]
+
+
+def _explicit_yes_no_selector() -> SelectSelector:
+    """Return a tri-state-safe yes/no selector with no implicit initial value."""
+    return SelectSelector(
+        SelectSelectorConfig(
+            options=_EXPLICIT_YES_NO_OPTIONS,
+            mode=SelectSelectorMode.DROPDOWN,
+            translation_key="explicit_yes_no",
+        )
+    )
+
+
+def _explicit_yes_no(value: Any) -> bool:
+    """Convert one explicitly submitted yes/no choice without bool coercion."""
+    if value == _EXPLICIT_YES:
+        return True
+    if value == _EXPLICIT_NO:
+        return False
+    raise ValueError("Explicit yes/no choice required")
+
+
+def _mark_missing_explicit_fields(
+    user_input: dict[str, Any],
+    errors: dict[str, str],
+    fields: tuple[str, ...],
+) -> None:
+    """Reject omitted/blank first-run choices instead of accepting UI defaults."""
+    for field in fields:
+        if field not in user_input or user_input[field] is None:
+            errors[field] = "explicit_choice_required"
+            continue
+        value = user_input[field]
+        if isinstance(value, str) and not value.strip():
+            errors[field] = "explicit_choice_required"
+        elif isinstance(value, (list, tuple, set)) and not value:
+            errors[field] = "explicit_choice_required"
+
 # Native broker editor fields intentionally remain local to the options flow. The
 # authoritative runtime format remains broker.yaml schema 2/3.
 CONF_BROKER_FEE_DATA_MAX_AGE_DAYS = "broker_fee_data_max_age_days"
@@ -1063,13 +1104,26 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
         errors: dict[str, str] = {}
         if user_input is not None:
             suggested.update(user_input)
+            _mark_missing_explicit_fields(
+                user_input,
+                errors,
+                (
+                    CONF_PLAN_NAME,
+                    CONF_PLAN_BUDGET_AMOUNT,
+                    "selected_instruments",
+                    "corridor_pp",
+                    "minimum_trade_eur",
+                    "rounding_step_eur",
+                ),
+            )
             selected = list(dict.fromkeys(user_input.get("selected_instruments", [])))
             known = {item.isin for item in context.candidates}
-            if not 1 <= len(selected) <= MAX_PLAN_INSTRUMENTS:
-                errors["selected_instruments"] = "invalid_instrument_count"
-            elif any(item not in known for item in selected):
-                errors["selected_instruments"] = "invalid_instrument"
-            else:
+            if "selected_instruments" not in errors:
+                if not 1 <= len(selected) <= MAX_PLAN_INSTRUMENTS:
+                    errors["selected_instruments"] = "invalid_instrument_count"
+                elif any(item not in known for item in selected):
+                    errors["selected_instruments"] = "invalid_instrument"
+            if not errors:
                 self._bootstrap_selected_isins = selected
                 self._bootstrap_plan_draft = {
                     CONF_PLAN_NAME: str(user_input[CONF_PLAN_NAME]).strip(),
@@ -1082,10 +1136,14 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
                 self._bootstrap_instrument_index = 0
                 return await self.async_step_initial_setup_instrument()
         options = [item.to_option() for item in context.candidates]
+        # These fields are intentionally Optional at the schema/UI layer. Home
+        # Assistant may synthesize selector minima/first options for Required
+        # selectors. Submission-time validation above makes every value mandatory
+        # without allowing those frontend artifacts to become financial choices.
         schema = vol.Schema(
             {
-                vol.Required(CONF_PLAN_NAME): TextSelector(TextSelectorConfig(multiline=False)),
-                vol.Required(CONF_PLAN_BUDGET_AMOUNT): NumberSelector(
+                vol.Optional(CONF_PLAN_NAME): TextSelector(TextSelectorConfig(multiline=False)),
+                vol.Optional(CONF_PLAN_BUDGET_AMOUNT): NumberSelector(
                     NumberSelectorConfig(
                         min=MIN_PLAN_BUDGET_EUR,
                         max=MAX_PLAN_BUDGET_EUR,
@@ -1094,20 +1152,20 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
                         unit_of_measurement="EUR",
                     )
                 ),
-                vol.Required("selected_instruments"): SelectSelector(
+                vol.Optional("selected_instruments"): SelectSelector(
                     SelectSelectorConfig(
                         options=options,
                         multiple=True,
                         mode=SelectSelectorMode.DROPDOWN,
                     )
                 ),
-                vol.Required("corridor_pp"): NumberSelector(
+                vol.Optional("corridor_pp"): NumberSelector(
                     NumberSelectorConfig(min=0, max=100, step=0.1, mode=NumberSelectorMode.BOX)
                 ),
-                vol.Required("minimum_trade_eur"): NumberSelector(
+                vol.Optional("minimum_trade_eur"): NumberSelector(
                     NumberSelectorConfig(min=0.01, max=1000000, step=0.01, mode=NumberSelectorMode.BOX, unit_of_measurement="EUR")
                 ),
-                vol.Required("rounding_step_eur"): NumberSelector(
+                vol.Optional("rounding_step_eur"): NumberSelector(
                     NumberSelectorConfig(min=0.01, max=1000000, step=0.01, mode=NumberSelectorMode.BOX, unit_of_measurement="EUR")
                 ),
             }
@@ -1130,31 +1188,54 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
         errors: dict[str, str] = {}
         if user_input is not None:
             suggested.update(user_input)
-            domicile = str(user_input["domicile"]).strip().upper()
-            currency = str(user_input["fund_currency"]).strip().upper()
-            source = str(user_input["metadata_source"]).strip()
-            target = Decimal(str(user_input["target_pct"]))
-            ter = Decimal(str(user_input["ter_pct"]))
-            size = Decimal(str(user_input["fund_size_eur"]))
-            if not target.is_finite() or target <= 0 or target > 100:
-                errors["target_pct"] = "invalid_target"
-            elif len(domicile) != 2 or not domicile.isalpha():
-                errors["domicile"] = "invalid_metadata"
-            elif len(currency) != 3 or not currency.isalpha():
-                errors["fund_currency"] = "invalid_metadata"
-            elif not ter.is_finite() or ter < 0 or ter > 10:
-                errors["ter_pct"] = "invalid_metadata"
-            elif not size.is_finite() or size < 0 or size > Decimal("1000000000000000"):
-                errors["fund_size_eur"] = "invalid_metadata"
-            elif not source or len(source) > 160 or any(ord(char) < 32 for char in source):
-                errors["metadata_source"] = "invalid_metadata"
-            else:
+            _mark_missing_explicit_fields(
+                user_input,
+                errors,
+                (
+                    "target_pct",
+                    "buy_enabled",
+                    "ucits",
+                    "domicile",
+                    "distribution",
+                    "fund_currency",
+                    "ter_pct",
+                    "fund_size_eur",
+                    "metadata_source",
+                ),
+            )
+            if not errors:
+                domicile = str(user_input["domicile"]).strip().upper()
+                currency = str(user_input["fund_currency"]).strip().upper()
+                source = str(user_input["metadata_source"]).strip()
+                target = Decimal(str(user_input["target_pct"]))
+                ter = Decimal(str(user_input["ter_pct"]))
+                size = Decimal(str(user_input["fund_size_eur"]))
+                if not target.is_finite() or target <= 0 or target > 100:
+                    errors["target_pct"] = "invalid_target"
+                elif len(domicile) != 2 or not domicile.isalpha():
+                    errors["domicile"] = "invalid_metadata"
+                elif len(currency) != 3 or not currency.isalpha():
+                    errors["fund_currency"] = "invalid_metadata"
+                elif not ter.is_finite() or ter < 0 or ter > 10:
+                    errors["ter_pct"] = "invalid_metadata"
+                elif not size.is_finite() or size < 0 or size > Decimal("1000000000000000"):
+                    errors["fund_size_eur"] = "invalid_metadata"
+                elif not source or len(source) > 160 or any(ord(char) < 32 for char in source):
+                    errors["metadata_source"] = "invalid_metadata"
+                else:
+                    try:
+                        buy_enabled = _explicit_yes_no(user_input["buy_enabled"])
+                        ucits = _explicit_yes_no(user_input["ucits"])
+                    except ValueError:
+                        errors["buy_enabled"] = "explicit_choice_required"
+                        errors["ucits"] = "explicit_choice_required"
+            if not errors:
                 self._bootstrap_instruments.append(
                     {
                         "isin": isin,
                         "target_pct": float(target),
-                        "buy_enabled": bool(user_input["buy_enabled"]),
-                        "ucits": bool(user_input["ucits"]),
+                        "buy_enabled": buy_enabled,
+                        "ucits": ucits,
                         "domicile": domicile,
                         "distribution": str(user_input["distribution"]),
                         "fund_currency": currency,
@@ -1172,15 +1253,15 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
                 return await self.async_step_initial_setup_policy()
         schema = vol.Schema(
             {
-                vol.Required("target_pct"): NumberSelector(NumberSelectorConfig(min=0.01, max=100, step=0.01, mode=NumberSelectorMode.BOX, unit_of_measurement="%")),
-                vol.Required("buy_enabled"): BooleanSelector(BooleanSelectorConfig()),
-                vol.Required("ucits"): BooleanSelector(BooleanSelectorConfig()),
-                vol.Required("domicile"): TextSelector(TextSelectorConfig(multiline=False)),
-                vol.Required("distribution"): SelectSelector(SelectSelectorConfig(options=["accumulating", "distributing"], mode=SelectSelectorMode.DROPDOWN)),
-                vol.Required("fund_currency"): TextSelector(TextSelectorConfig(multiline=False)),
-                vol.Required("ter_pct"): NumberSelector(NumberSelectorConfig(min=0, max=10, step=0.01, mode=NumberSelectorMode.BOX, unit_of_measurement="%")),
-                vol.Required("fund_size_eur"): NumberSelector(NumberSelectorConfig(min=0, max=1000000000000000, step=1, mode=NumberSelectorMode.BOX, unit_of_measurement="EUR")),
-                vol.Required("metadata_source"): TextSelector(TextSelectorConfig(multiline=False)),
+                vol.Optional("target_pct"): NumberSelector(NumberSelectorConfig(min=0.01, max=100, step=0.01, mode=NumberSelectorMode.BOX, unit_of_measurement="%")),
+                vol.Optional("buy_enabled"): _explicit_yes_no_selector(),
+                vol.Optional("ucits"): _explicit_yes_no_selector(),
+                vol.Optional("domicile"): TextSelector(TextSelectorConfig(multiline=False)),
+                vol.Optional("distribution"): SelectSelector(SelectSelectorConfig(options=["accumulating", "distributing"], mode=SelectSelectorMode.DROPDOWN)),
+                vol.Optional("fund_currency"): TextSelector(TextSelectorConfig(multiline=False)),
+                vol.Optional("ter_pct"): NumberSelector(NumberSelectorConfig(min=0, max=10, step=0.01, mode=NumberSelectorMode.BOX, unit_of_measurement="%")),
+                vol.Optional("fund_size_eur"): NumberSelector(NumberSelectorConfig(min=0, max=1000000000000000, step=1, mode=NumberSelectorMode.BOX, unit_of_measurement="EUR")),
+                vol.Optional("metadata_source"): TextSelector(TextSelectorConfig(multiline=False)),
             }
         )
         return self.async_show_form(
@@ -1196,15 +1277,28 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
         """Require explicit normalization when initial targets do not total 100%."""
         total = sum(Decimal(str(item["target_pct"])) for item in self._bootstrap_instruments)
         errors: dict[str, str] = {}
+        suggested: dict[str, Any] = {}
         if user_input is not None:
-            if not user_input.get("normalise_targets"):
-                errors["base"] = "targets_not_100"
+            suggested.update(user_input)
+            if "normalise_targets" not in user_input:
+                errors["normalise_targets"] = "explicit_choice_required"
             else:
-                self._bootstrap_instruments = _normalise_targets(self._bootstrap_instruments)
-                return await self.async_step_initial_setup_policy()
+                try:
+                    normalise = _explicit_yes_no(user_input["normalise_targets"])
+                except ValueError:
+                    errors["normalise_targets"] = "explicit_choice_required"
+                else:
+                    if not normalise:
+                        errors["base"] = "targets_not_100"
+                    else:
+                        self._bootstrap_instruments = _normalise_targets(self._bootstrap_instruments)
+                        return await self.async_step_initial_setup_policy()
         return self.async_show_form(
             step_id="initial_setup_review",
-            data_schema=vol.Schema({vol.Required("normalise_targets", default=False): BooleanSelector(BooleanSelectorConfig())}),
+            data_schema=self.add_suggested_values_to_schema(
+                vol.Schema({vol.Optional("normalise_targets"): _explicit_yes_no_selector()}),
+                suggested,
+            ),
             errors=errors,
             description_placeholders={"target_total": format(total.normalize(), "f")},
         )
@@ -1217,91 +1311,118 @@ class PortfolioArchitectOptionsFlow(OptionsFlowWithReload):
         errors: dict[str, str] = {}
         if user_input is not None:
             suggested.update(user_input)
-            try:
-                health, result = await self._async_bootstrap_source()
-                snapshot = result.snapshot
-                assert snapshot is not None
-                by_isin = {
-                    str(position.isin or "").strip().upper(): position
-                    for position in snapshot.positions.values()
-                    if str(position.isin or "").strip()
-                }
-                instruments: list[BootstrapInstrument] = []
-                for item in self._bootstrap_instruments:
-                    position = by_isin.get(item["isin"])
-                    if position is None:
-                        raise ValueError("Selected source holding changed during initial setup")
-                    instruments.append(
-                        BootstrapInstrument(
-                            position=position,
-                            target_pct=Decimal(str(item["target_pct"])),
-                            buy_enabled=bool(item["buy_enabled"]),
-                            ucits=bool(item["ucits"]),
-                            domicile=str(item["domicile"]),
-                            distribution=str(item["distribution"]),
-                            fund_currency=str(item["fund_currency"]),
-                            ter_pct=Decimal(str(item["ter_pct"])),
-                            fund_size_eur=Decimal(str(item["fund_size_eur"])),
-                            metadata_source=str(item["metadata_source"]),
+            _mark_missing_explicit_fields(
+                user_input,
+                errors,
+                (
+                    "ucits_required",
+                    "accumulating_preferred",
+                    "ireland_preferred",
+                    "max_ter_pct",
+                    "minimum_fund_size_eur",
+                    "savings_plan_required",
+                    "free_savings_plan_preferred",
+                ),
+            )
+            if not errors:
+                try:
+                    policy_flags = {
+                        key: _explicit_yes_no(user_input[key])
+                        for key in (
+                            "ucits_required",
+                            "accumulating_preferred",
+                            "ireland_preferred",
+                            "savings_plan_required",
+                            "free_savings_plan_preferred",
+                        )
+                    }
+                except ValueError:
+                    errors["base"] = "explicit_choice_required"
+            if not errors:
+                try:
+                    health, result = await self._async_bootstrap_source()
+                    snapshot = result.snapshot
+                    assert snapshot is not None
+                    by_isin = {
+                        str(position.isin or "").strip().upper(): position
+                        for position in snapshot.positions.values()
+                        if str(position.isin or "").strip()
+                    }
+                    instruments: list[BootstrapInstrument] = []
+                    for item in self._bootstrap_instruments:
+                        position = by_isin.get(item["isin"])
+                        if position is None:
+                            raise ValueError("Selected source holding changed during initial setup")
+                        instruments.append(
+                            BootstrapInstrument(
+                                position=position,
+                                target_pct=Decimal(str(item["target_pct"])),
+                                buy_enabled=bool(item["buy_enabled"]),
+                                ucits=bool(item["ucits"]),
+                                domicile=str(item["domicile"]),
+                                distribution=str(item["distribution"]),
+                                fund_currency=str(item["fund_currency"]),
+                                ter_pct=Decimal(str(item["ter_pct"])),
+                                fund_size_eur=Decimal(str(item["fund_size_eur"])),
+                                metadata_source=str(item["metadata_source"]),
+                            )
+                        )
+                    plan = BootstrapPlan(
+                        name=str(self._bootstrap_plan_draft[CONF_PLAN_NAME]),
+                        budget_amount_eur=Decimal(str(self._bootstrap_plan_draft[CONF_PLAN_BUDGET_AMOUNT])),
+                        corridor_pp=Decimal(str(self._bootstrap_plan_draft["corridor_pp"])),
+                        minimum_trade_eur=Decimal(str(self._bootstrap_plan_draft["minimum_trade_eur"])),
+                        rounding_step_eur=Decimal(str(self._bootstrap_plan_draft["rounding_step_eur"])),
+                        instruments=tuple(instruments),
+                        ucits_required=policy_flags["ucits_required"],
+                        accumulating_preferred=policy_flags["accumulating_preferred"],
+                        ireland_preferred=policy_flags["ireland_preferred"],
+                        max_ter_pct=Decimal(str(user_input["max_ter_pct"])),
+                        minimum_fund_size_eur=Decimal(str(user_input["minimum_fund_size_eur"])),
+                        savings_plan_required=policy_flags["savings_plan_required"],
+                        free_savings_plan_preferred=policy_flags["free_savings_plan_preferred"],
+                    )
+                    documents = build_configuration_documents(plan)
+                    configuration = resolve_configuration_directory(
+                        self.hass,
+                        self.config_entry.data.get(CONF_CONFIG_DIRECTORY, DEFAULT_CONFIG_DIRECTORY),
+                        require_exists=False,
+                    )
+                    payload = await self.hass.async_add_executor_job(
+                        partial(
+                            write_initial_configuration,
+                            configuration.config_directory,
+                            documents,
+                            positions=dict(snapshot.positions),
+                            evaluated_at=snapshot.generated_at,
+                            source_provider=health.provider_id or PROVIDER_LOCAL_REST_JSON,
+                            source_label=health.provider_name or health.provider_id or "Portfolio Gateway",
+                            source_metadata=None,
                         )
                     )
-                plan = BootstrapPlan(
-                    name=str(self._bootstrap_plan_draft[CONF_PLAN_NAME]),
-                    budget_amount_eur=Decimal(str(self._bootstrap_plan_draft[CONF_PLAN_BUDGET_AMOUNT])),
-                    corridor_pp=Decimal(str(self._bootstrap_plan_draft["corridor_pp"])),
-                    minimum_trade_eur=Decimal(str(self._bootstrap_plan_draft["minimum_trade_eur"])),
-                    rounding_step_eur=Decimal(str(self._bootstrap_plan_draft["rounding_step_eur"])),
-                    instruments=tuple(instruments),
-                    ucits_required=bool(user_input["ucits_required"]),
-                    accumulating_preferred=bool(user_input["accumulating_preferred"]),
-                    ireland_preferred=bool(user_input["ireland_preferred"]),
-                    max_ter_pct=Decimal(str(user_input["max_ter_pct"])),
-                    minimum_fund_size_eur=Decimal(str(user_input["minimum_fund_size_eur"])),
-                    savings_plan_required=bool(user_input["savings_plan_required"]),
-                    free_savings_plan_preferred=bool(user_input["free_savings_plan_preferred"]),
-                )
-                documents = build_configuration_documents(plan)
-                configuration = resolve_configuration_directory(
-                    self.hass,
-                    self.config_entry.data.get(CONF_CONFIG_DIRECTORY, DEFAULT_CONFIG_DIRECTORY),
-                    require_exists=False,
-                )
-                payload = await self.hass.async_add_executor_job(
-                    partial(
-                        write_initial_configuration,
-                        configuration.config_directory,
-                        documents,
-                        positions=dict(snapshot.positions),
-                        evaluated_at=snapshot.generated_at,
-                        source_provider=health.provider_id or PROVIDER_LOCAL_REST_JSON,
-                        source_label=health.provider_name or health.provider_id or "Portfolio Gateway",
-                        source_metadata=None,
-                    )
-                )
-                _validate_calculated_payload(payload)
-            except PortfolioRestAuthenticationError:
-                errors["base"] = "invalid_auth"
-            except (OSError, ValueError, PortfolioRestError, PortfolioSourcePathError, PortfolioArchitectDataError):
-                errors["base"] = "initial_setup_invalid"
-            else:
-                data = dict(self.config_entry.data)
-                data[CONF_SETUP_STATE] = SETUP_STATE_CONFIGURED
-                self.hass.config_entries.async_update_entry(self.config_entry, data=data)
-                # The entry was intentionally loaded without a coordinator while
-                # setup-required. Reload now that a validated source and complete
-                # configuration both exist so entities are created immediately.
-                await self.hass.config_entries.async_reload(self.config_entry.entry_id)
-                return self.async_create_entry(data=dict(self.config_entry.options))
-        bool_selector = BooleanSelector(BooleanSelectorConfig())
+                    _validate_calculated_payload(payload)
+                except PortfolioRestAuthenticationError:
+                    errors["base"] = "invalid_auth"
+                except (OSError, ValueError, PortfolioRestError, PortfolioSourcePathError, PortfolioArchitectDataError):
+                    errors["base"] = "initial_setup_invalid"
+                else:
+                    data = dict(self.config_entry.data)
+                    data[CONF_SETUP_STATE] = SETUP_STATE_CONFIGURED
+                    self.hass.config_entries.async_update_entry(self.config_entry, data=data)
+                    # The entry was intentionally loaded without a coordinator while
+                    # setup-required. Reload now that a validated source and complete
+                    # configuration both exist so entities are created immediately.
+                    await self.hass.config_entries.async_reload(self.config_entry.entry_id)
+                    return self.async_create_entry(data=dict(self.config_entry.options))
         schema = vol.Schema(
             {
-                vol.Required("ucits_required"): bool_selector,
-                vol.Required("accumulating_preferred"): bool_selector,
-                vol.Required("ireland_preferred"): bool_selector,
-                vol.Required("max_ter_pct"): NumberSelector(NumberSelectorConfig(min=0, max=10, step=0.01, mode=NumberSelectorMode.BOX, unit_of_measurement="%")),
-                vol.Required("minimum_fund_size_eur"): NumberSelector(NumberSelectorConfig(min=0, max=1000000000000000, step=1, mode=NumberSelectorMode.BOX, unit_of_measurement="EUR")),
-                vol.Required("savings_plan_required"): bool_selector,
-                vol.Required("free_savings_plan_preferred"): bool_selector,
+                vol.Optional("ucits_required"): _explicit_yes_no_selector(),
+                vol.Optional("accumulating_preferred"): _explicit_yes_no_selector(),
+                vol.Optional("ireland_preferred"): _explicit_yes_no_selector(),
+                vol.Optional("max_ter_pct"): NumberSelector(NumberSelectorConfig(min=0, max=10, step=0.01, mode=NumberSelectorMode.BOX, unit_of_measurement="%")),
+                vol.Optional("minimum_fund_size_eur"): NumberSelector(NumberSelectorConfig(min=0, max=1000000000000000, step=1, mode=NumberSelectorMode.BOX, unit_of_measurement="EUR")),
+                vol.Optional("savings_plan_required"): _explicit_yes_no_selector(),
+                vol.Optional("free_savings_plan_preferred"): _explicit_yes_no_selector(),
             }
         )
         return self.async_show_form(

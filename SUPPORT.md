@@ -54,4 +54,4 @@ Version 1.61.0 adds only explicit two-step confirmation and immutable identity c
 
 Version 1.60.0 adds read-only canonical capability evidence clocks to the existing acquisition-authority UX. Provider acquisition, fallback, freshness, wire/security schemas and the DKB authenticated-FinTS gate remain unchanged from the fully live-accepted v1.59.0 baseline.
 
-Version 1.62.1 makes first-run service lifecycle integration-owned. A newly initialized PA entry may safely exist without source or plan, and Gateway discovery becomes an adoption candidate rather than a service-creation path. Existing configured installations and Gateway acquisition behavior are unchanged.
+Version 1.62.2 preserves the integration-owned first-run lifecycle and requires every initial plan/instrument/policy value to be explicitly submitted; Home Assistant selector defaults are never treated as investment choices. Existing configured installations and provider acquisition behavior are unchanged.

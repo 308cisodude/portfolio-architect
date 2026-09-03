@@ -375,7 +375,7 @@ class GenericImportIngressHandler(ProviderShellIngressHandler):
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Portfolio Architect Gateway — Generic Import</title>
 <style>
-:root{{color-scheme:dark}}body{{font-family:system-ui,sans-serif;max-width:1040px;margin:2rem auto;padding:0 1rem;background:#111;color:#eee}}section{{border:1px solid #444;border-radius:12px;padding:1rem;margin:1rem 0}}a{{color:#77c9ff}}code{{word-break:break-all}}label{{display:block;margin:.7rem 0 .2rem}}input,select{{box-sizing:border-box;width:100%;max-width:680px;padding:.55rem;background:#1b1b1b;color:#eee;border:1px solid #555;border-radius:6px}}button,.button{{display:inline-block;margin-top:1rem;padding:.65rem 1rem;border-radius:7px;border:1px solid #6b9db7;background:#173b4d;color:#fff;font-weight:600;text-decoration:none}}button.danger,.button.danger{{border-color:#b85b5b;background:#4b1f1f}}button:disabled{{opacity:.45}}.grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:.75rem}}.profile-grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:.75rem}}.profile-card{{border:1px solid #555;border-radius:10px;padding:.9rem}}.good{{color:#7bd88f}}.warn{{color:#ffca28}}.bad{{color:#ff7b7b}}small,.muted{{color:#bbb}}.notice{{border-width:2px}}.actions{{display:flex;gap:.7rem;flex-wrap:wrap;align-items:center}}.actions form{{margin:0}}.inline-check{{display:flex;gap:.5rem;align-items:center}}.inline-check input{{width:auto}}{ACQUISITION_AUTHORITY_CSS}
+:root{{color-scheme:dark}}body{{font-family:system-ui,sans-serif;max-width:1040px;margin:2rem auto;padding:0 1rem;background:#111;color:#eee}}section{{border:1px solid #444;border-radius:12px;padding:1rem;margin:1rem 0}}a{{color:#77c9ff}}code{{word-break:break-all}}label{{display:block;margin:.7rem 0 .2rem}}input,select{{box-sizing:border-box;width:100%;max-width:680px;padding:.55rem;background:#1b1b1b;color:#eee;border:1px solid #555;border-radius:6px}}button,.button{{display:inline-block;margin-top:1rem;padding:.65rem 1rem;border-radius:7px;border:1px solid #6b9db7;background:#173b4d;color:#fff;font-weight:600;text-decoration:none}}button.danger,.button.danger{{border-color:#b85b5b;background:#4b1f1f}}button:disabled{{opacity:.45}}.grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:.75rem}}.profile-grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:.75rem}}.profile-card{{border:1px solid #555;border-radius:10px;padding:.9rem}}.profile-card.ready{{border:2px solid #3b82f6aa;background:#3b82f612}}.profile-card.setup-required{{border:2px solid #f59e0baa;background:#f59e0b12}}.ready-text{{color:#60a5fa}}.good{{color:#7bd88f}}.warn{{color:#ffca28}}.bad{{color:#ff7b7b}}small,.muted{{color:#bbb}}.notice{{border-width:2px}}.actions{{display:flex;gap:.7rem;flex-wrap:wrap;align-items:center}}.actions form{{margin:0}}.inline-check{{display:flex;gap:.5rem;align-items:center}}.inline-check input{{width:auto}}{ACQUISITION_AUTHORITY_CSS}
 </style></head><body><main>
 <h1>Portfolio Architect Gateway — Generic Import</h1>
 <p class="muted">Supported provider-neutral static acquisition for banks and brokers without a dedicated Portfolio Architect Gateway. One App may host multiple independent source profiles; each keeps its own immutable provider identity, holdings, investment cash and evidence clocks.</p>
@@ -392,7 +392,7 @@ class GenericImportIngressHandler(ProviderShellIngressHandler):
         runtime = self.import_server.profile_manager.runtime(profile.provider_id)
         snapshot = runtime.provider.snapshot if runtime is not None else None
         ready = snapshot is not None
-        status = '<span class="good">READY</span>' if ready else '<span class="warn">SETUP REQUIRED</span>'
+        status = '<span class="ready-text">READY</span>' if ready else '<span class="warn">SETUP REQUIRED</span>'
         holdings = (
             escape(snapshot.generated_at.astimezone(timezone.utc).isoformat(timespec="seconds"))
             if snapshot is not None
@@ -404,7 +404,7 @@ class GenericImportIngressHandler(ProviderShellIngressHandler):
             else "not recorded"
         )
         return (
-            f'<article class="profile-card"><h3>{escape(profile.provider_name)}</h3><p>{status}</p>'
+            f'<article class="profile-card {"ready" if ready else "setup-required"}"><h3>{escape(profile.provider_name)}</h3><p>{status}</p>'
             f'<p>Provider ID: <code>{escape(profile.provider_id)}</code></p>'
             f'<p><small>Holdings evidence: {holdings}<br>Cash evidence: {cash}</small></p>'
             f'<a class="button" href="?profile={escape(profile.provider_id)}">Manage source</a> '

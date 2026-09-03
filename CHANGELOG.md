@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.62.2
+
+- Harden **Complete initial setup** against Home Assistant frontend selector defaults: first-run target selection, numeric values, enumerations and Yes/No decisions now render without an assumed value and are required explicitly at submission time.
+- Replace first-run checkbox semantics with explicit unanswered/Yes/No selectors for instrument facts, policy controls and target normalization so unchecked/first-option UI state cannot silently become a financial choice.
+- Keep staged engine validation and atomic four-file installation unchanged; omitted values fail closed before any configuration document is written.
+- Render Generic Import source profiles amber while setup is incomplete and blue once READY, while retaining green for the active/authoritative CSV acquisition method.
+- Preserve config-entry schema 13, v1.62.1 integration-owned lifecycle/source adoption, v1.62.0 multi-profile Generic semantics, all provider acquisition/wire/security/freshness/planner contracts and the authenticated-DKB-FinTS research gate.
+
 ## 1.62.1
 
 - Make first-run lifecycle integration-owned: a new Portfolio Architect service is initialized explicitly through Home Assistant before any Gateway source is adopted. Gateway Apps remain acquisition-only and can no longer create the singleton PA entry.
