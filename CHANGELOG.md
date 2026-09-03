@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.62.4
+
+- Fix the clean-room first-run `plan_required` → `configured` transition so unload checks the actually loaded runtime instead of the newly persisted setup-state; setup-required entries with no coordinator/platforms now unload trivially and the immediate reload can create normal entities without a Home Assistant restart.
+- Keep normal configured-entry unload behavior unchanged: once a coordinator/runtime exists, the established `sensor`, `binary_sensor` and `date` platforms are still unloaded through Home Assistant before reload/removal.
+- Remove blocking SSL trust-store construction from synchronous REST/private-CA normalization used by config/discovery flows. Cheap bounded PEM decoding remains synchronous; semantic X.509/private-CA trust loading and hostname-verifying TLS context creation remain in the existing executor-backed health/snapshot request path.
+- Preserve v1.62.3 Trade Republic German cash-date compatibility, config-entry schema 13, provider acquisition/wire contracts, freshness/LKG/anti-rollback/source-set semantics, planner/funding economics, `fallback_policy: none`, removed Comdirect LEGACY state and the authenticated-DKB-FinTS research gate.
+
 ## 1.62.3
 
 - Fix the live-observed Trade Republic `KONTOAUSZUG` compatibility edge case where locale-aware German abbreviated month labels such as `Sept.` can be three or four letters and do not all use a trailing period.

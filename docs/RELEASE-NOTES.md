@@ -1,44 +1,44 @@
-# Portfolio Architect v1.62.3 release notes
+# Portfolio Architect v1.62.4 release notes
 
-v1.62.3 is a narrow Trade Republic cash-statement compatibility hotfix on top of v1.62.2. A freshly generated native Trade Republic `KONTOAUSZUG` was rejected because the provider rendered September as the locale-aware German abbreviation `Sept.` in the authoritative `BARMITTELÜBERSICHT` as-of line. Review of the complete German abbreviated month set also showed that a robust provider parser must handle three- and four-letter labels and months without a trailing period rather than special-case September.
+v1.62.4 is a narrow Home Assistant runtime hotfix on top of v1.62.3. Clean-room first-run acceptance exposed two independent integration-side lifecycle/async-hygiene defects after the v1.62 architecture itself had already validated correctly.
 
-## Trade Republic German month-label compatibility
+## Immediate first-run activation no longer fails to unload
 
-The Trade Republic Gateway now accepts a bounded explicit matrix matching the German abbreviated month labels used by locale-aware documents:
+A newly initialized Portfolio Architect entry deliberately loads in `source_required` / `plan_required` without a coordinator or forwarded `sensor`, `binary_sensor` or `date` platforms. After the initial plan wizard successfully staged, calculated and atomically installed the four validated YAML documents, v1.62.3 persisted `configured` and immediately requested a Home Assistant config-entry reload.
 
-`Jan.`, `Feb.`, `März`, `Apr.`, `Mai`, `Juni`, `Juli`, `Aug.`, `Sept.`, `Okt.`, `Nov.`, `Dez.`
+The unload handler incorrectly decided what to unload from the newly persisted setup-state. It therefore tried to unload normal PA platforms even though that loaded lifecycle had never created them, causing Home Assistant to report **Failed to unload**. A subsequent Home Assistant restart loaded the same generated configuration normally, proving that the files and configured cold-start path were valid.
 
-Previously accepted aliases (`Mär.`, `Mar.`, `Mai.`, `May.`, `Jun.`, `Jul.`, `Sep.`, `Oct.`, `Dec.`) remain valid for backward compatibility. Arbitrary other spellings are not accepted.
+v1.62.4 makes runtime presence authoritative for unload behavior. If `entry.runtime_data` is `None`, unload succeeds without forwarding platform teardown. Once a normal configured coordinator/runtime exists, the established platform-unload path remains unchanged. The validated `plan_required` → `configured` transition can therefore reload immediately and create normal entities without requiring a Home Assistant restart.
 
-The cash as-of date still comes only from the provider's `BARMITTELÜBERSICHT` / `Zum …` evidence. Creation timestamp validation, future-date rejection, Cashkonto arithmetic reconciliation, trust-account / money-market-fund reconciliation and bounded amount limits remain unchanged, and holdings/cash evidence remain independent.
+## Private-CA normalization is event-loop safe
 
-The import error contract is also more precise. A missing or unsupported cash as-of date now produces the bounded reason `Statement cash as-of date is missing or unsupported`; two or more distinct supported as-of dates still produce `Statement contains an ambiguous cash as-of date`.
+Live Home Assistant logs also showed `ssl.create_default_context(cadata=...)` / `load_verify_locations` being called synchronously from REST/private-CA normalization during config/discovery handling. Home Assistant correctly flagged this as blocking work on the event loop.
 
-Rejected imports continue to preserve the last accepted private cash snapshot. No transaction rows, account identifiers, counterparties or uploaded PDF bytes are persisted.
+v1.62.4 keeps only bounded PEM envelope/base64 decoding in synchronous normalization. Semantic X.509/private-CA trust loading remains fail-closed in `_rest_ssl_context()`, where authenticated health and snapshot requests already construct the hostname-verifying TLS context through `hass.async_add_executor_job()`.
+
+This does **not** weaken private-PKI validation. Invalid trust material still fails before a Gateway can be adopted or consumed; the expensive trust-store operation merely stays on the executor boundary where it belongs.
 
 ## Compatibility and preserved contracts
 
-The v1.62.2 explicit-choice first-run safety and Generic READY colour correction are unchanged. Config-entry schema 13 and the v1.62.1 integration-owned lifecycle remain unchanged. The v1.62.0 stable multi-profile Generic Import contract remains intact.
+The v1.62.3 complete bounded German Trade Republic cash-date month matrix is unchanged. Trade Republic parsing/reconciliation, Generic multi-profile acquisition, Comdirect acquisition, DKB CSV acquisition and the DKB research-only FinTS probe are unchanged.
 
-Comdirect and DKB acquisition behavior is unchanged. Generic Import behavior is unchanged from v1.62.2. Only the Trade Republic Gateway cash-statement parser changes at runtime; all four active Gateway App packages are version-aligned for release hygiene.
+**Comdirect LEGACY remains removed from the active repository.** REST portfolio schema 1, payload schema 8, presentation schema 2, broker schemas 1/2/3, config-entry schema 13, Gateway health schemas 1–10, Supervisor discovery schemas 1/2, `fallback_policy: none`, evidence freshness, verified private-PKI HTTPS, bearer authentication, DNS pinning, LKG/anti-rollback/source-set atomicity and planner/funding semantics remain intact. **Authenticated DKB FinTS remains disabled** and research-only. There is **no silent fallback** between acquisition methods. No trading, order, transfer, payment, transaction-history, sell or withdrawal capability is introduced.
 
-**Comdirect LEGACY remains removed from the active repository.** REST portfolio schema 1, payload schema 8, presentation schema 2, broker schemas 1/2/3, Gateway health schemas 1–10, discovery schemas 1/2, `fallback_policy: none`, evidence freshness, verified private-PKI HTTPS, bearer authentication, DNS pinning, LKG/anti-rollback/source-set atomicity and planner/funding semantics remain intact. **Authenticated DKB FinTS remains disabled** and research-only. There is **no silent fallback** between acquisition methods. No trading, order, transfer, payment, transaction-history, sell or withdrawal capability is introduced.
-
-The v1.33.0 source-freshness and plan-schedule separation remains in force. This release does not alter any configured freshness threshold. Trade Republic provider-specific PDF parsing remains in its Gateway; this release does not move PDF parsing into Portfolio Architect. The historical `v1.19.0-rc2` brokerage-probe idea is not promoted. The v1.38.1 dynamic drift presentation remains part of the established presentation schema rather than an alternate calculation path.
-
-No dashboard YAML replacement is required.
+The v1.33.0 source-freshness and plan-schedule separation remains in force. No configured freshness threshold changes. Trade Republic provider-specific PDF parsing stays in its Gateway; this release does not move PDF parsing into Portfolio Architect. No dashboard YAML replacement is required.
 
 ## Preserved historical release invariants
 
-For regression clarity, v1.62.3 explicitly preserves these established contracts:
+For regression clarity, v1.62.4 explicitly preserves these established contracts:
 
 - payload schema 8: unchanged
 - REST portfolio schema 1: unchanged
 - Gateway health schema 10 is current; schemas 1–9 remain supported
+- config-entry schema 13: unchanged
 - presentation schema 2: unchanged
 - broker schemas 1/2/3: unchanged
+- setup states `source_required`, `plan_required`, `configured`: unchanged
 - recurring schedule anchoring continues to use the latest valid Portfolio Architect evaluation and this release does not change any configured freshness threshold.
-- Trade Republic provider-specific PDF parsing stays in its Gateway; this release changes only the bounded German cash-date month-label matrix and error classification.
+- Trade Republic provider-specific PDF parsing stays in its Gateway; the complete v1.62.3 German cash-date matrix remains unchanged.
 - authenticated DKB FinTS acquisition remains disabled and research-only.
 - No trading, order, transfer, payment, or transaction-history capability is introduced.
 - Comdirect LEGACY remains removed from the active repository and the historical slug is not reused.

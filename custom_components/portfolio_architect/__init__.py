@@ -364,6 +364,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a Portfolio Architect config entry."""
-    if entry.data.get(CONF_SETUP_STATE, SETUP_STATE_CONFIGURED) != SETUP_STATE_CONFIGURED:
+    # Setup-required entries intentionally have no coordinator or forwarded
+    # platforms. During the first-run plan_required -> configured transition the
+    # config-entry data is updated immediately before Home Assistant reloads the
+    # entry, so the persisted setup-state alone cannot tell us what this *loaded*
+    # lifecycle actually created. Runtime presence is the authoritative unload
+    # boundary: no runtime means there are no PA platforms to tear down.
+    if entry.runtime_data is None:
         return True
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)

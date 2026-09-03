@@ -558,12 +558,12 @@ def normalise_rest_ca_certificate(value: Any) -> str | None:
     if "PRIVATE KEY" in cleaned or cleaned.count("-----BEGIN CERTIFICATE-----") != 1:
         raise PortfolioRestError("REST TLS CA certificate must contain exactly one certificate")
     try:
+        # Keep config-flow normalization event-loop-safe. PEM envelope/base64
+        # decoding is cheap and deterministic; semantic X.509 trust loading stays
+        # in _rest_ssl_context(), which every authenticated health/snapshot request
+        # already executes through hass.async_add_executor_job().
         ssl.PEM_cert_to_DER_cert(cleaned)
-        context = ssl.create_default_context(cadata=cleaned)
-        context.minimum_version = ssl.TLSVersion.TLSv1_2
-        context.check_hostname = True
-        context.verify_mode = ssl.CERT_REQUIRED
-    except (ValueError, ssl.SSLError) as err:
+    except ValueError as err:
         raise PortfolioRestError("REST TLS CA certificate is invalid") from err
     return cleaned
 
