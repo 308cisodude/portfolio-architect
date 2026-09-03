@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.62.3
+
+- Fix the live-observed Trade Republic `KONTOAUSZUG` compatibility edge case where locale-aware German abbreviated month labels such as `Sept.` can be three or four letters and do not all use a trailing period.
+- Accept the complete bounded German provider month-label matrix (`Jan.`, `Feb.`, `März`, `Apr.`, `Mai`, `Juni`, `Juli`, `Aug.`, `Sept.`, `Okt.`, `Nov.`, `Dez.`) while preserving all previously accepted aliases and the existing Cashkonto arithmetic, custody reconciliation, chronology and bounded amount checks.
+- Distinguish missing/unsupported cash as-of evidence from true multi-date ambiguity using separate bounded privacy-safe error reasons.
+- Preserve atomic rejected-import behavior and independent Trade Republic holdings/cash evidence clocks; no uploaded PDF bytes, transaction rows, identifiers or counterparties are persisted.
+- Preserve v1.62.2 explicit first-run choices/Generic READY colour, config-entry schema 13, all wire/security/freshness/planner contracts, `fallback_policy: none`, removed Comdirect LEGACY state and the authenticated-DKB-FinTS research gate.
+
 ## 1.62.2
 
 - Harden **Complete initial setup** against Home Assistant frontend selector defaults: first-run target selection, numeric values, enumerations and Yes/No decisions now render without an assumed value and are required explicitly at submission time.

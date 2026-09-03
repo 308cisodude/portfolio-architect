@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.62.3
+
+- Version-align with Portfolio Architect v1.62.3. Supported CSV holdings/cash acquisition is unchanged; the anonymous FinTS probe remains research-only and authenticated FinTS remains disabled.
+
 ## 1.62.2
 
 - Version-align with Portfolio Architect v1.62.2. Provider acquisition/runtime behavior is unchanged; the first-run explicit-choice fix is Home Assistant integration-only.
