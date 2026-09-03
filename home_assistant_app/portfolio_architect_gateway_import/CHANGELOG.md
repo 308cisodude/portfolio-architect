@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.62.3
+
+- Version-align with Portfolio Architect v1.62.3. Stable multi-profile Generic acquisition, READY/SETUP colour presentation, identity, discovery and evidence behavior are unchanged from v1.62.2.
+
 ## 1.62.2
 
 - Render Generic source-profile cards amber while setup is required and blue once READY; keep active/authoritative CSV acquisition green. Provider runtime, identity, discovery and evidence behavior are unchanged.

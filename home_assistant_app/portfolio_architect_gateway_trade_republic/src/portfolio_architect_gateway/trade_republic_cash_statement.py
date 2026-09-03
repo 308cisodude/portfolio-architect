@@ -38,8 +38,36 @@ _CASH_ROW_RE = re.compile(
     r"(?P<ending>-?(?:[0-9]{1,3}(?:\.[0-9]{3})+|[0-9]+),[0-9]{2})\s*€\s*$",
     re.IGNORECASE | re.MULTILINE,
 )
+_MONTHS: Final = {
+    # Canonical German abbreviated month labels used by locale-aware provider documents.
+    "jan.": 1,
+    "feb.": 2,
+    "märz": 3,
+    "apr.": 4,
+    "mai": 5,
+    "juni": 6,
+    "juli": 7,
+    "aug.": 8,
+    "sept.": 9,
+    "okt.": 10,
+    "nov.": 11,
+    "dez.": 12,
+    # Backward-compatible aliases accepted by the pre-v1.62.3 parser.
+    "mär.": 3,
+    "mar.": 3,
+    "mai.": 5,
+    "may.": 5,
+    "jun.": 6,
+    "jul.": 7,
+    "sep.": 9,
+    "oct.": 10,
+    "dec.": 12,
+}
+_MONTH_TOKEN_PATTERN: Final = "|".join(
+    re.escape(token) for token in sorted(_MONTHS, key=len, reverse=True)
+)
 _CASH_AS_OF_RE = re.compile(
-    r"BARMITTELÜBERSICHT\s+Zum\s+(\d{1,2})\s+([A-Za-zÄÖÜäöü]{3})\.\s+(\d{4})",
+    rf"BARMITTELÜBERSICHT\s+Zum\s+(\d{{1,2}})\s+({_MONTH_TOKEN_PATTERN})\s+(\d{{4}})",
     re.IGNORECASE,
 )
 _TRUST_SECTION_RE = re.compile(
@@ -55,12 +83,6 @@ _QMMF_LINE_RE = re.compile(
     r"((?:[0-9]{1,3}(?:\.[0-9]{3})+|[0-9]+),[0-9]{2})\s*€\s*$",
     re.MULTILINE,
 )
-_MONTHS: Final = {
-    "jan": 1, "feb": 2, "mär": 3, "mar": 3, "apr": 4, "mai": 5, "may": 5,
-    "jun": 6, "jul": 7, "aug": 8, "sep": 9, "oct": 10, "okt": 10, "nov": 11, "dec": 12, "dez": 12,
-}
-
-
 class CashStatementImportError(ValueError):
     """A bounded privacy-safe reason for rejecting a cash statement."""
 
@@ -196,6 +218,8 @@ def _unique_creation_timestamp(text: str) -> datetime:
 
 def _unique_cash_as_of_date(text: str) -> date:
     matches = tuple(dict.fromkeys(_CASH_AS_OF_RE.findall(text)))
+    if not matches:
+        raise CashStatementImportError("Statement cash as-of date is missing or unsupported")
     if len(matches) != 1:
         raise CashStatementImportError("Statement contains an ambiguous cash as-of date")
     day_token, month_token, year_token = matches[0]

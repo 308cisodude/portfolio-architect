@@ -109,6 +109,7 @@ _SAFE_IMPORT_ERRORS: Final = frozenset(
         "Import form contains unexpected or duplicate fields",
         "Statement contains an ambiguous Cashkonto summary",
         "Cashkonto arithmetic does not reconcile",
+        "Statement cash as-of date is missing or unsupported",
         "Statement contains an ambiguous cash as-of date",
         "Cash statement as-of date is invalid",
         "Cash statement as-of date is newer than document creation",

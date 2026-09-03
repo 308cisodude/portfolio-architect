@@ -54,4 +54,4 @@ Version 1.61.0 adds only explicit two-step confirmation and immutable identity c
 
 Version 1.60.0 adds read-only canonical capability evidence clocks to the existing acquisition-authority UX. Provider acquisition, fallback, freshness, wire/security schemas and the DKB authenticated-FinTS gate remain unchanged from the fully live-accepted v1.59.0 baseline.
 
-Version 1.62.2 preserves the integration-owned first-run lifecycle and requires every initial plan/instrument/policy value to be explicitly submitted; Home Assistant selector defaults are never treated as investment choices. Existing configured installations and provider acquisition behavior are unchanged.
+Version 1.62.3 preserves the integration-owned first-run lifecycle and explicit-choice safety while making Trade Republic cash-statement month parsing locale-complete for the bounded German abbreviated month-label matrix, retaining previously accepted aliases and adding clearer missing-versus-ambiguous bounded import errors. Existing configuration, freshness and non-Trade-Republic acquisition behavior are unchanged.

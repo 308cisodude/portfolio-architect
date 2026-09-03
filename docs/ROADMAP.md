@@ -36,7 +36,14 @@ Graduates Generic Import from experimental to stable and removes its historical 
 
 Completes v1.62 clean-room acceptance by moving Portfolio Architect service initialization into the integration itself. A virgin installation can exist safely without a source or plan; ready Gateways become candidates for that existing service rather than creating it. Config-entry schema 13 records explicit setup states, and the native setup flow generates the established YAML only from explicit user choices after full validation. No source, allocation, policy or execution venue is invented. Existing installations migrate unchanged to `configured`.
 
-## v1.62.2 — explicit first-run choices and Generic READY colour — prepared
+## v1.62.3 — Trade Republic German cash-date compatibility — prepared
+
+- Accept the complete bounded German abbreviated month-label matrix in Trade Republic `KONTOAUSZUG` cash as-of evidence, prompted by the live-observed `Sept.` form, while retaining previously accepted aliases and strict chronology/reconciliation.
+- Distinguish missing/unsupported cash as-of evidence from true multi-date ambiguity without exposing private statement content.
+- Preserve independent holdings/cash evidence clocks and atomic rejected-import behavior so the last accepted cash snapshot remains authoritative until a corrected import validates fully.
+- Keep v1.62.2 explicit first-run choices and Generic READY colour presentation unchanged; keep config-entry schema 13, health schema 10, discovery schemas 1/2, provider identities, freshness, private-PKI/LKG, no-fallback and advisory-only contracts unchanged.
+
+## v1.62.2 — explicit first-run choices and Generic READY colour — published; live acceptance pending
 
 Hardens the v1.62.1 initial-plan wizard against Home Assistant frontend behavior that may render required selector minima or first options as usable values. First-run fields now start unanswered/blank and are enforced explicitly at submission time; Yes/No decisions use an unanswered-capable selector. Generic READY profile cards become blue while active CSV authority remains green. No schema, acquisition, trust, freshness, planner or execution semantics change.
 

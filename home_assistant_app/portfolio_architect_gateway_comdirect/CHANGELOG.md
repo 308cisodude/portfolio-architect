@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.62.3
+
+- Version-align with Portfolio Architect v1.62.3. Provider acquisition/runtime behavior is unchanged; the Trade Republic cash-statement hotfix does not affect Comdirect.
+
 ## 1.62.2
 
 - Version-align with Portfolio Architect v1.62.2. Provider acquisition/runtime behavior is unchanged; the first-run explicit-choice fix is Home Assistant integration-only.

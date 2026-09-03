@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.62.3
+
+- Accept the complete bounded German abbreviated month-label matrix in the authoritative `BARMITTELÜBERSICHT` cash as-of line (`Jan.`, `Feb.`, `März`, `Apr.`, `Mai`, `Juni`, `Juli`, `Aug.`, `Sept.`, `Okt.`, `Nov.`, `Dez.`) while preserving previously accepted aliases.
+- Distinguish a missing/unsupported cash as-of date from true multi-date ambiguity with bounded privacy-safe feedback.
+- Preserve Cashkonto arithmetic/custody reconciliation, creation/as-of chronology, atomic rejected-import behavior, independent holdings/cash evidence, private-PKI transport and advisory-only boundaries.
+
 ## 1.62.2
 
 - Version-align with Portfolio Architect v1.62.2. Provider acquisition/runtime behavior is unchanged; the first-run explicit-choice fix is Home Assistant integration-only.

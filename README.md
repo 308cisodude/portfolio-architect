@@ -1,6 +1,6 @@
-# Portfolio Architect v1.62.2
+# Portfolio Architect v1.62.3
 
-Version 1.62.2 hardens the v1.62.1 integration-owned first-run wizard so Home Assistant selector minima/first options cannot become implicit investment choices. Every initial plan, instrument and policy value must be explicitly submitted. Generic Import also renders READY source-profile cards blue while its active/authoritative CSV method remains green.
+Version 1.62.3 is a narrow Trade Republic cash-statement compatibility hotfix. The authoritative `BARMITTELÜBERSICHT` as-of parser now accepts the complete bounded German abbreviated month-label matrix used by locale-aware documents—including `März`, `Mai`, `Juni`, `Juli` and the live-observed `Sept.`—while preserving legacy aliases and distinguishing missing/unsupported evidence from true ambiguity. The v1.62.2 explicit first-run choices and Generic READY-profile colour contract remain unchanged.
 
 Each new Generic profile receives an immutable generated `generic_<stable-id>` provider identity and a separately editable human name. Existing experimental `generic_csv` state retains that provider identity and legacy REST path. Holdings CSV data is parsed transiently; successful imports atomically replace only the selected profile's canonical holdings, optional provider-local EUR investment cash has its own evidence timestamp, and rejected imports retain the previous valid snapshot.
 
