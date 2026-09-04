@@ -254,6 +254,8 @@ def verify_expected_files(directory: Path, release_version: str) -> None:
         f"portfolio-architect-gateway-trade-republic-app-v{release_version}.zip",
         f"portfolio-architect-gateway-import-app-v{release_version}.zip",
         f"portfolio-architect-v{release_version}.zip",
+        f"portfolio-architect-v{release_version}-dashboard-en.yaml",
+        f"portfolio-architect-v{release_version}-dashboard-de.yaml",
         f"portfolio-architect-v{release_version}-bilingual-dashboard.yaml",
         f"portfolio-architect-v{release_version}-upgrade-guide.md",
         f"portfolio-architect-v{release_version}-release-notes.md",

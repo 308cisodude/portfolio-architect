@@ -47,7 +47,7 @@ def test_diagnostic_timestamp_no_longer_claims_to_be_next() -> None:
 
 
 def test_dashboard_uses_state_specific_tiles_with_compact_timestamp_state() -> None:
-    runtime = yaml.safe_load((ROOT / "dashboard/runtime-health.yaml").read_text())
+    runtime = yaml.safe_load((ROOT / "dashboard/generated/portfolio-architect-dashboard-en.yaml").read_text())
     conditionals = [
         card for card in _walk(runtime)
         if isinstance(card, dict) and card.get("type") == "conditional"

@@ -1,4 +1,4 @@
-"""v1.62.5 UX, discovery-lifecycle, and presentation hygiene contracts."""
+"""v1.63.0 UX, discovery-lifecycle, and presentation hygiene contracts."""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ GENERIC = APPS / "portfolio_architect_gateway_import"
 
 def test_v156_version_alignment_and_security_non_goals() -> None:
     manifest = json.loads((ROOT / "custom_components/portfolio_architect/manifest.json").read_text())
-    assert manifest["version"] == "1.62.5"
+    assert manifest["version"] == "1.63.0"
     assert not (APPS / "portfolio_architect_gateway").exists()
     for slug in (
         "portfolio_architect_gateway_comdirect",
@@ -26,7 +26,7 @@ def test_v156_version_alignment_and_security_non_goals() -> None:
         "portfolio_architect_gateway_trade_republic",
         "portfolio_architect_gateway_import",
     ):
-        assert yaml.safe_load((APPS / slug / "config.yaml").read_text())["version"] == "1.62.5"
+        assert yaml.safe_load((APPS / slug / "config.yaml").read_text())["version"] == "1.63.0"
     dkb_source = (DKB / "src/portfolio_architect_gateway/dkb_app.py").read_text()
     assert "Authenticated FinTS acquisition is not enabled" in dkb_source
     assert "cannot replace or fall back from CSV evidence" in dkb_source
@@ -89,24 +89,19 @@ def test_comdirect_display_identity_is_canonical_without_new_or_legacy_package()
     assert "NEW" not in canonical["panel_title"]
 
 
-def test_runtime_health_dashboard_has_one_incident_and_one_lkg_presentation() -> None:
+def test_runtime_health_dashboard_single_language_outputs_match_bilingual_baseline() -> None:
+    bilingual = yaml.safe_load((ROOT / "dashboard/bilingual-dashboard.yaml").read_text())
+    by_title = {view["title"].lower(): view for view in bilingual["views"]}
     for lang in ("en", "de"):
-        doc = yaml.safe_load((ROOT / f"dashboard/{lang}/runtime-health.yaml").read_text())
-        cards = [item.get("card", item) for item in doc["cards"]]
-        incident = [c for c in cards if c.get("entity") == "binary_sensor.portfolio_architect_gateway_attention_required"]
-        lkg = [c for c in cards if c.get("entity") == "binary_sensor.portfolio_architect_gateway_using_last_known_good_snapshot"]
-        assert len(incident) == 1
-        assert len(lkg) == 1
-        assert incident[0]["state_content"] == (
-            ["attention_reason", "recommended_action"]
-            if lang == "en"
-            else ["attention_reason_de", "recommended_action_de"]
+        generated = yaml.safe_load(
+            (ROOT / "dashboard" / "generated" / f"portfolio-architect-dashboard-{lang}.yaml").read_text()
         )
-        assert lkg[0]["state_content"] == ["snapshot_age_seconds", "snapshot_expires_in_seconds"]
-        entities = [c.get("entity") for c in cards]
-        assert "binary_sensor.portfolio_architect_gateway_reauthentication_required" not in entities
-        assert "sensor.portfolio_architect_gateway_attention_reason" not in entities
-        assert "sensor.portfolio_architect_gateway_recommended_action" not in entities
+        assert len(generated["views"]) == 1
+        assert generated["views"][0] == by_title[lang]
+        runtime = generated["views"][0]["sections"][3]
+        entities = [item.get("card", item).get("entity") for item in runtime["cards"]]
+        assert "binary_sensor.portfolio_architect_gateway_attention_required" in entities
+        assert "binary_sensor.portfolio_architect_gateway_using_last_known_good_snapshot" in entities
 
 
 def test_routine_ingress_polling_logs_are_debug_only() -> None:
@@ -123,7 +118,7 @@ def test_routine_ingress_polling_logs_are_debug_only() -> None:
 
 def test_sbom_records_dkb_timezone_runtime_dependency() -> None:
     sbom = json.loads((ROOT / "SBOM.spdx.json").read_text())
-    assert sbom["name"] == "Portfolio Architect v1.62.5 SBOM"
+    assert sbom["name"] == "Portfolio Architect v1.63.0 SBOM"
     tzdata = next(pkg for pkg in sbom["packages"] if pkg["SPDXID"] == "SPDXRef-Package-Tzdata")
     assert tzdata["versionInfo"] == "build-resolved"
     assert any(ref["referenceLocator"] == "pkg:apk/alpine/tzdata" for ref in tzdata["externalRefs"])

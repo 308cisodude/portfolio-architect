@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "default_locale": "en",
+  "locales": [
+    "en",
+    "de"
+  ],
+  "shared_view": "src/shared/view.yaml",
+  "sections": [
+    "src/shared/sections/01-investment-plan.yaml",
+    "src/shared/sections/02-portfolio-policy-compliance.yaml",
+    "src/shared/sections/03-target-architecture.yaml",
+    "src/shared/sections/04-runtime-health.yaml",
+    "src/shared/sections/05-total-portfolio-value.yaml",
+    "src/shared/sections/06-outside-current-plan-scope.yaml",
+    "src/shared/sections/07-current-plan-allocation.yaml",
+    "src/shared/sections/08-plan-target-allocation.yaml",
+    "src/shared/sections/09-current-portfolio-allocation.yaml"
+  ],
+  "catalog_pattern": "src/i18n/{locale}.yaml",
+  "overlay_pattern": "src/overlays/{locale}.yaml",
+  "outputs": {
+    "en": "generated/portfolio-architect-dashboard-en.yaml",
+    "de": "generated/portfolio-architect-dashboard-de.yaml",
+    "all": "generated/portfolio-architect-dashboard-en-de.yaml"
+  },
+  "semantic_reference": {
+    "en": "c4d98a97b81559ba070c8f026493ac49c5008a957dbbdc1a33d96b2a17edb0b8",
+    "de": "7a295236122bdf0e65c5c0b4a4b9332f616d4e26219da429d33d721531a721ad",
+    "all": "237e441ce181560409f4e12ebcc30060c8beaaa70e2107beb8b5e2424996807e"
+  }
+}

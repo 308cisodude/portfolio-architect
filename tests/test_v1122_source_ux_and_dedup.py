@@ -73,8 +73,8 @@ def test_provenance_uses_friendly_provider_labels() -> None:
 
 
 def test_outside_scope_holdings_use_bounded_native_dynamic_list() -> None:
-    dashboard = yaml.safe_load((ROOT / "dashboard" / "allocation-stack.yaml").read_text())
-    cards = dashboard["cards"]
+    dashboard = yaml.safe_load((ROOT / "dashboard" / "generated" / "portfolio-architect-dashboard-en.yaml").read_text())
+    cards = dashboard["views"][0]["sections"][5]["cards"]
     outside = next(
         item for item in cards
         if isinstance(item, dict)

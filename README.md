@@ -1,6 +1,6 @@
-# Portfolio Architect v1.62.5
+# Portfolio Architect v1.63.0
 
-Version 1.62.5 is a narrow coordinator-metadata hotfix. The four established Portfolio Architect configuration documents remain mandatory, while optional `exceptions.yaml` now participates in modification/fingerprint/LKG metadata only when it actually exists. A normal first-run configuration therefore becomes operational immediately without requiring a dummy exceptions file. v1.62.4 first-run reload and private-CA async-hygiene fixes, v1.62.3 Trade Republic German cash-date compatibility, and all provider/runtime contracts remain unchanged.
+Version 1.63.0 modularizes the static reference dashboard without moving presentation logic into Home Assistant runtime. Card/entity/condition/layout behavior is authored once, user-facing EN/DE text lives in locale catalogs, bounded German technical localization lives in a small overlay, and release tooling generates ordinary static Lovelace YAML. Separate English-only and German-only artifacts join the combined EN/DE compatibility dashboard. The release also corrects the zero-exception review presentation while preserving all provider, planner, freshness, schema and verified-HTTPS/private-PKI contracts from v1.62.5.
 
 Each new Generic profile receives an immutable generated `generic_<stable-id>` provider identity and a separately editable human name. Existing experimental `generic_csv` state retains that provider identity and legacy REST path. Holdings CSV data is parsed transiently; successful imports atomically replace only the selected profile's canonical holdings, optional provider-local EUR investment cash has its own evidence timestamp, and rejected imports retain the previous valid snapshot.
 

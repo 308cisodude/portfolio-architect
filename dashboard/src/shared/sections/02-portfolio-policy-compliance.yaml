@@ -1,0 +1,992 @@
+type: grid
+cards:
+- type: heading
+  heading:
+    $i18n: portfolio_policy_compliance
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: binary_sensor.portfolio_architect_mandatory_controls_compliant
+    state: 'on'
+  card:
+    type: tile
+    entity: binary_sensor.portfolio_architect_mandatory_controls_compliant
+    name:
+      $i18n: mandatory_controls_compliant
+    tap_action:
+      action: more-info
+    color: green
+    icon: mdi:shield-check-outline
+    hide_state: true
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: binary_sensor.portfolio_architect_mandatory_controls_compliant
+    state: 'off'
+  card:
+    type: tile
+    entity: binary_sensor.portfolio_architect_mandatory_controls_compliant
+    name:
+      $i18n: mandatory_controls_need_attention
+    tap_action:
+      action: more-info
+    color: red
+    icon: mdi:shield-alert-outline
+    hide_state: true
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: numeric_state
+    entity: sensor.portfolio_architect_policy_error_findings
+    above: 0
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_policy_error_findings
+    name:
+      $i18n: errors
+    tap_action:
+      action: more-info
+    color: red
+    icon: mdi:alert-octagon-outline
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: numeric_state
+    entity: sensor.portfolio_architect_policy_warning_findings
+    above: 0
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_policy_warning_findings
+    name:
+      $i18n: warnings
+    tap_action:
+      action: more-info
+    color: amber
+    icon: mdi:alert-outline
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: numeric_state
+    entity: sensor.portfolio_architect_accepted_exception_count
+    below: 1
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_accepted_exception_count
+    name:
+      $i18n: exceptions
+    tap_action:
+      action: more-info
+    color: green
+    icon: mdi:shield-check-outline
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: numeric_state
+    entity: sensor.portfolio_architect_accepted_exception_count
+    above: 0
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_accepted_exception_count
+    name:
+      $i18n: exceptions
+    tap_action:
+      action: more-info
+    color: amber
+    icon: mdi:shield-half-full
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_last_exception_decision
+    state_not: unavailable
+  card:
+    type: tile
+    entity: date.portfolio_architect_last_exception_decision
+    name:
+      $i18n: last_decision
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_last_exception_decision
+    icon: mdi:calendar-check
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: numeric_state
+    entity: sensor.portfolio_architect_accepted_exception_count
+    below: 1
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_accepted_exception_count
+    name:
+      $i18n: exception_review_not_required
+    tap_action:
+      action: more-info
+    color: green
+    icon: mdi:calendar-check-outline
+    hide_state: true
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: numeric_state
+    entity: sensor.portfolio_architect_accepted_exception_count
+    above: 0
+  - condition: state
+    entity: binary_sensor.portfolio_architect_exception_review_overdue
+    state: 'on'
+  card:
+    type: tile
+    entity: date.portfolio_architect_oldest_overdue_exception_review
+    name:
+      $i18n: overdue_review
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_oldest_overdue_exception_review
+    color: red
+    icon: mdi:calendar-alert
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: numeric_state
+    entity: sensor.portfolio_architect_accepted_exception_count
+    above: 0
+  - condition: state
+    entity: binary_sensor.portfolio_architect_exception_review_overdue
+    state: 'off'
+  card:
+    type: tile
+    entity: date.portfolio_architect_next_exception_review
+    name:
+      $i18n: exception_review
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_next_exception_review
+    color: amber
+    icon: mdi:calendar-clock
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: numeric_state
+    entity: sensor.portfolio_architect_optimisation_opportunity_count
+    above: 0
+  card:
+    type: heading
+    heading:
+      $i18n: optimisation_opportunities
+    heading_style: subtitle
+    icon: mdi:lightbulb-on-outline
+    badges:
+    - type: entity
+      entity: sensor.portfolio_architect_optimisation_opportunity_count
+      show_icon: false
+      show_state: true
+      tap_action:
+        action: more-info
+  grid_options:
+    columns: full
+    rows: auto
+- type: entity-filter
+  entities:
+  - entity: sensor.portfolio_architect_presentation_policy_001_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_002_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_003_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_004_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_005_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_006_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_007_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_008_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_009_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_010_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_011_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_012_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_013_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_014_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_015_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_016_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_017_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_018_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_019_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_020_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_021_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_022_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_023_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_024_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_025_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_026_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_027_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_028_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_029_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_030_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_031_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_032_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_033_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_034_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_035_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_036_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_037_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_038_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_039_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_040_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_041_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_042_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_043_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_044_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_045_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_046_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_047_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_048_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_049_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_050_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_051_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_052_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_053_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_054_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_055_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_056_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_057_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_058_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_059_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_060_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_061_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_062_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_063_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_064_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_065_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_066_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_067_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_068_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_069_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_070_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_071_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_072_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_073_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_074_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_075_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_076_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_077_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_078_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_079_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_080_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_081_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_082_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_083_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_084_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_085_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_086_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_087_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_088_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_089_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_090_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_091_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_092_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_093_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_094_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_095_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_096_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_097_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_098_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_099_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_100_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_101_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_102_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_103_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_104_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_105_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_106_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_107_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_108_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_109_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_110_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_111_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_112_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_113_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_114_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_115_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_116_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_117_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_118_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_119_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_120_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_121_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_122_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_123_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_124_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_125_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_126_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_127_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_128_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_129_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_130_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_131_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_132_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_133_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_134_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_135_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_136_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_137_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_138_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_139_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_140_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_141_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_142_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_143_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_144_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_145_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_146_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_147_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_148_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_149_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_150_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_151_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_152_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_153_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_154_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_155_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_156_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_157_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_158_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_159_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_160_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_161_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_162_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_163_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_164_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_165_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_166_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_167_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_168_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_169_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_170_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_171_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_172_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_173_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_174_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_175_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_176_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_177_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_178_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_179_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_180_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_181_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_182_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_183_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_184_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_185_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_186_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_187_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_188_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_189_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_190_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_191_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_192_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_193_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_194_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_195_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_196_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_197_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_198_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_199_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_200_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_201_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_202_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_203_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_204_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_205_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_206_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_207_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_208_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_209_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_210_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_211_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_212_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_213_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_214_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_215_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_216_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_217_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_218_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_219_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_220_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_221_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_222_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_223_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_224_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_225_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_226_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_227_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_228_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_229_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_230_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_231_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_232_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_233_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_234_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_235_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_236_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_237_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_238_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_239_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_240_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_241_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_242_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_243_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_244_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_245_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_246_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_247_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_248_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_249_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_250_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_251_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_252_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_253_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_254_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_255_finding
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_policy_256_finding
+    name:
+      type: entity
+  conditions:
+  - condition: state
+    state_not: unavailable
+  card:
+    type: entities
+    title:
+      $i18n: active_policy_findings
+    show_header_toggle: false
+  show_empty: false
+  grid_options:
+    columns: full
+    rows: auto

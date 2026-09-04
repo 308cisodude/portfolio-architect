@@ -1,4 +1,4 @@
-"""Regression contract for v1.62.5 integration-owned first-run initialization."""
+"""Regression contract for v1.63.0 integration-owned first-run initialization."""
 
 from __future__ import annotations
 
@@ -199,7 +199,7 @@ def test_bilingual_onboarding_copy_states_integration_ownership_and_no_invented_
 
 def test_release_version_and_changelog_target_v1621() -> None:
     const = CONST.read_text(encoding="utf-8")
-    assert 'VERSION: Final = "1.62.5"' in const
+    assert 'VERSION: Final = "1.63.0"' in const
     # Release metadata is finalized before the candidate is frozen.
 
 

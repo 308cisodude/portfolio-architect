@@ -1,68 +1,81 @@
 # Portfolio Architect dashboard
 
-`bilingual-dashboard.yaml` contains matched English and German Sections views
-labelled `EN` and `DE`.
+Portfolio Architect v1.63.0 authors dashboard behavior once and generates ordinary static Home Assistant Lovelace YAML per locale. Home Assistant receives only the generated YAML; no dashboard generator, include processor, custom parser, JavaScript, locale helper, or build-time dependency runs on the Home Assistant host.
 
-The reference dashboard uses only native Home Assistant Heading, Tile,
-Conditional, Glance, Entities, Entity-filter, and Markdown cards. Markdown is
-used only as a bounded renderer for the integration-owned execution-path text;
-it does not infer routes or funding decisions in Jinja. The dashboard avoids
-custom cards, Distribution-card composition for dynamic inventories, JavaScript,
-and nested fixed-column Grid cards. Sections rearrange across desktop, tablet,
-and smartphone widths.
+## Installable dashboards
 
-## Reference-dashboard ownership
+The repository keeps three generated reference artifacts:
 
-This YAML is a static reference configuration, not integration-owned Home Assistant
-state. Once it is copied/imported into a Home Assistant dashboard, that copy is
-user-owned configuration. HACS updates only the custom integration package; neither
-HACS nor Portfolio Architect automatically overwrites an imported dashboard.
+- `generated/portfolio-architect-dashboard-en.yaml` — English only;
+- `generated/portfolio-architect-dashboard-de.yaml` — German only;
+- `generated/portfolio-architect-dashboard-en-de.yaml` — combined EN/DE views.
 
-When a future release changes the reference layout, the corresponding upgrade guide
-will say so explicitly. Users can then review/import the newer YAML deliberately,
-without risking silent replacement of local dashboard customizations.
+`bilingual-dashboard.yaml` is retained as a byte-identical compatibility alias for the combined generated dashboard.
 
-The investment-plan section shows budget, frequency, contribution per execution,
-execution count, scheduled execution, current actionability, last evaluation, the normalized execution path, and current buy recommendations. The execution-path card simply renders the bounded bilingual instruction already exposed by `sensor.portfolio_architect_execution_path`; all provider, funding and purchase decisions remain integration-owned presentation data derived from the validated plan. Runtime
-health shows the active source provider, last evaluation, snapshot freshness-window status, next plan review, Gateway operating mode, snapshot age, next live
-refresh, refresh duration and trigger, and conditional last-known-good,
-refresh-running, operator-attention, recovery-action, last-failure, and
-refresh-overdue indicators. Schedule cards remain hidden until a recurring
-execution schedule is configured in Portfolio Architect options.
+For a single-language installation, prefer the matching EN-only or DE-only artifact. That keeps the Lovelace configuration loaded by Home Assistant to roughly one-language size. Adding another locale later therefore adds a small source catalog plus another generated single-language artifact; it does not multiply shared card logic or enlarge an existing English/German dashboard.
 
-The policy-compliance section prioritizes actionable operator context rather than
-raw evaluation counters. The aggregate Checks entity remains native Home Assistant
-state but is omitted from the primary reference layout. The existing optimisation-
-opportunity count appears only as a compact heading badge, not as a competing tile.
-The dashboard pairs the accepted-exception count with its concrete exception, then the
-last decision with the next (or overdue) **exception** review. A native conditional subtitle separates
-that governed exception lifecycle from non-critical optimisation opportunities and shows
-the existing opportunity count as a compact heading badge. The subtitle is hidden when
-there are no opportunities. Concrete opportunity tiles remain full-width below it.
+## Source architecture
 
-For German dashboards, actionable values that intentionally become unavailable
-during source degradation are rendered through bounded presentation attributes on
-the always-available actionability entity. Their more-info actions still target the
-original monetary/count entities, whose fail-closed availability semantics remain
-unchanged.
+Authoritative source lives under `dashboard/src/`:
 
-v1.36 consumes the first-class `sensor.portfolio_architect_presentation_model` through bounded diagnostic presentation-slot entities. The reference dashboard enumerates only generic bounded slot candidates and lets native Home Assistant `entity-filter` cards select the currently available target, outside-scope and active-policy inventory. Stable target/holding identity remains on the target-ID/position-ID entities and is repeated in slot attributes. No `auto-entities`, card-mod, custom JavaScript or custom-card dependency is required. User-owned dashboard copies remain opt-in and are never overwritten by HACS.
+```text
+src/
+  shared/
+    view.yaml
+    sections/
+      01-investment-plan.yaml
+      02-portfolio-policy-compliance.yaml
+      03-target-architecture.yaml
+      04-runtime-health.yaml
+      05-total-portfolio-value.yaml
+      06-outside-current-plan-scope.yaml
+      07-current-plan-allocation.yaml
+      08-plan-target-allocation.yaml
+      09-current-portfolio-allocation.yaml
+  i18n/
+    en.yaml
+    de.yaml
+  overlays/
+    en.yaml
+    de.yaml
+```
 
-v1.36.1 corrects the live-observed frontend composition edge case where filtered allocation entities did not repopulate a nested Distribution card. The same positive-valued dynamic candidates now feed native Entities cards. Dynamic candidate rows request Home Assistant's entity-only registry name so the device prefix is omitted without hard-coding instrument names.
+The shared source contains the complete card, entity, condition, color, icon, bar and layout behavior exactly once. User-facing strings are represented by bounded `$i18n` markers and resolved from locale catalogs. The current EN/DE reference has 100 matched translation keys.
 
-## Allocation overview contract
+Locale-specific technical differences that are not translations belong in a bounded overlay. English is the structural base and needs no overlay operations; German currently needs 40 JSON-Pointer operations for technical presentation attributes such as German-specific `state_content` fields. These details stay out of translator-facing catalogs.
 
-`sensor.portfolio_architect_allocation_overview` is intentionally not rendered as
-a separate reference-dashboard card. The existing native allocation, drift, and
-investment-plan sections already present the actionable information without a
-parallel summary. The aggregate sensor remains available for templates,
-automations, diagnostics, and future native dashboard work.
+Build a dashboard with:
+
+```sh
+python tools/build_dashboard.py --locale en --output dashboard/generated/portfolio-architect-dashboard-en.yaml
+python tools/build_dashboard.py --locale de --output dashboard/generated/portfolio-architect-dashboard-de.yaml
+python tools/build_dashboard.py --locale all --output dashboard/generated/portfolio-architect-dashboard-en-de.yaml
+```
+
+Release packaging reruns the generator and fails closed if committed generated outputs are stale. Regression tests also lock catalog parity, marker coverage, bounded overlays, deterministic generation, and canonical semantic hashes.
+
+To start a new locale without copying card logic:
+
+```sh
+python tools/scaffold_dashboard_locale.py es
+```
+
+The scaffold intentionally writes `__TODO__` catalog values and an empty overlay. The build refuses incomplete catalogs. A locale is added to `dashboard/manifest.json` only after translation and acceptance are complete.
+
+## Native-card contract
+
+The reference dashboard uses only native Home Assistant Heading, Tile, Conditional, Glance, Entities, Entity-filter, and Markdown cards. Markdown is used only as a bounded renderer for the integration-owned execution-path text; routing and funding decisions remain outside Lovelace. There are no custom cards, `card-mod`, custom JavaScript, or nested fixed-column Grid cards.
+
+Sections rearrange across desktop, tablet, and smartphone widths. Dynamic target, outside-scope, and policy inventories use bounded presentation-slot entities plus native `entity-filter` cards. Stable target/holding identity remains on target-ID/position-ID entities and in slot attributes.
 
 ## Policy-exception presentation
 
-The accepted Robotics exception is shown as a compact native tile backed by a
-bounded detail entity. Tapping the tile opens a normal Home Assistant more-info
-dialog with the instrument, policy rule, observed and expected values, decision
-date, and review date. The long documented rationale remains only on the original
-policy-finding entity and in diagnostics, so the dashboard stays responsive and
-avoids the former horizontally scrolling dialog.
+At zero accepted exceptions, the v1.63.0 reference dashboard renders the exception count in green and explicitly shows **Exception review not required** / **Ausnahmeprüfung nicht erforderlich**. The due and overdue exception-review tiles are gated on `accepted_exception_count > 0`, so a review date is not presented when no accepted exception exists.
+
+When accepted exceptions exist, their bounded detail presentation remains clickable through native Home Assistant more-info. Long documented rationales stay on the original policy-finding entity and in diagnostics rather than being duplicated into the primary dashboard.
+
+## Reference-dashboard ownership
+
+Generated YAML is static reference configuration, not integration-owned Home Assistant state. Once copied/imported into a Home Assistant dashboard, that copy is user-owned. HACS updates only the integration package; Portfolio Architect never silently overwrites a user's Lovelace configuration.
+
+When a release changes the reference layout, its upgrade guide identifies the change. Users can deliberately bulk-replace the copied dashboard YAML or retain their customized version.

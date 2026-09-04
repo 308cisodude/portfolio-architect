@@ -142,7 +142,7 @@ def test_native_dashboards_surface_the_actual_freshness_blocker() -> None:
         ("de", "stale_source_summary_de", "plan_actionability_detail_de"),
     ):
         runtime = yaml.safe_load(
-            (ROOT / "dashboard" / language / "runtime-health.yaml").read_text()
+            (ROOT / "dashboard" / "generated" / f"portfolio-architect-dashboard-{language}.yaml").read_text()
         )
         off_cards = [
             item["card"]
@@ -158,7 +158,7 @@ def test_native_dashboards_surface_the_actual_freshness_blocker() -> None:
         assert off_cards[0]["state_content"] == freshness_attr
 
         plan = yaml.safe_load(
-            (ROOT / "dashboard" / language / "monthly-investment-plan.yaml").read_text()
+            (ROOT / "dashboard" / "generated" / f"portfolio-architect-dashboard-{language}.yaml").read_text()
         )
         unavailable = [
             item["card"]

@@ -1,0 +1,8 @@
+title:
+  $i18n: view_label
+path: portfolio-architect
+type: sections
+max_columns: 2
+dense_section_placement: false
+header:
+  layout: responsive

@@ -1,6 +1,6 @@
-# Portfolio Architect Gateway — DKB v1.62.5
+# Portfolio Architect Gateway — DKB v1.63.0
 
-Version 1.62.5 is a version-alignment release for this App. Supported CSV holdings/cash acquisition, private state, health schema 10, discovery transport, private-PKI/bearer boundary and no-fallback behavior are unchanged from v1.62.4; authenticated FinTS remains disabled.
+Version 1.63.0 is a package-alignment release for this App. DKB CSV holdings/cash acquisition and research-only anonymous FinTS probing, private state, health schema 10, discovery transport, verified private-PKI/bearer trust and `fallback_policy: none` are unchanged; the v1.63.0 work is confined to Portfolio Architect static reference-dashboard presentation and release tooling.
 
 Version 1.62.0 aligns this stable App with the additive common Gateway contracts used by Generic Import graduation: health schema 10 adds bounded `provider_name` while schemas 1–9 remain compatible. Supported CSV holdings/cash acquisition is unchanged; the anonymous FinTS probe remains experimental/research-only and authenticated FinTS remains disabled.
 

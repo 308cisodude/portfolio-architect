@@ -15,11 +15,11 @@ def test_component_versions_are_compatible() -> None:
     engine = (COMPONENT / "engine" / "__init__.py").read_text()
     app = yaml.safe_load((APP / "config.yaml").read_text())
     gateway = (APP / "src" / "portfolio_architect_gateway" / "__init__.py").read_text()
-    assert manifest["version"] == "1.62.5"
-    assert 'VERSION: Final = "1.62.5"' in const
-    assert '__version__ = "1.62.5"' in engine
-    assert app["version"] == "1.62.5"
-    assert '__version__ = "1.62.5"' in gateway
+    assert manifest["version"] == "1.63.0"
+    assert 'VERSION: Final = "1.63.0"' in const
+    assert '__version__ = "1.63.0"' in engine
+    assert app["version"] == "1.63.0"
+    assert '__version__ = "1.63.0"' in gateway
     assert app["stage"] == "stable"
 
 
@@ -56,7 +56,7 @@ def test_integrity_entities_translations_and_dashboard_are_present() -> None:
         assert translations["entity"]["binary_sensor"][
             "gateway_snapshot_integrity_verified"
         ]["name"]
-        runtime = (ROOT / "dashboard" / language / "runtime-health.yaml").read_text()
+        runtime = (ROOT / "dashboard" / "generated" / f"portfolio-architect-dashboard-{language}.yaml").read_text()
         assert "gateway_snapshot_generated" in runtime
         assert "gateway_snapshot_integrity_verified" in runtime
         assert "gateway_operating_mode" in runtime

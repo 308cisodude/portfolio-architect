@@ -169,13 +169,8 @@ def test_superseded_exception_audit_fields_fail_closed() -> None:
 
 def test_reference_dashboard_surfaces_legacy_robotics_through_generic_outside_slots() -> None:
     distribution_files = (
-        ROOT / "dashboard" / "allocation-stack.yaml",
-        ROOT / "dashboard" / "en" / "allocation-stack.yaml",
-        ROOT / "dashboard" / "de" / "allocation-stack.yaml",
-        ROOT / "dashboard" / ".tmp_en.yaml",
-        ROOT / "dashboard" / ".tmp_de.yaml",
-        ROOT / "dashboard" / "en" / "view.yaml",
-        ROOT / "dashboard" / "de" / "view.yaml",
+        ROOT / "dashboard" / "generated" / "portfolio-architect-dashboard-en.yaml",
+        ROOT / "dashboard" / "generated" / "portfolio-architect-dashboard-de.yaml",
         ROOT / "dashboard" / "bilingual-dashboard.yaml",
     )
     robotics_id = next(
@@ -188,9 +183,7 @@ def test_reference_dashboard_surfaces_legacy_robotics_through_generic_outside_sl
         assert "sensor.portfolio_architect_holding_ie00bywz0333" not in text, path
         assert "presentation_target_01_whole_portfolio_allocation" in text, path
         assert "presentation_outside_001_whole_portfolio_allocation" in text, path
+        assert "presentation_outside_001_holding_value" in text, path
 
-    for relative in (".tmp_en.yaml", ".tmp_de.yaml", "en/view.yaml", "de/view.yaml"):
-        text = (ROOT / "dashboard" / relative).read_text(encoding="utf-8")
-        assert "presentation_outside_001_holding_value" in text
     bilingual = (ROOT / "dashboard" / "bilingual-dashboard.yaml").read_text(encoding="utf-8")
     assert "presentation_outside_512_holding_value" in bilingual

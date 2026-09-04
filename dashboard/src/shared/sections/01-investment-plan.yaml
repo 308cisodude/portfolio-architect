@@ -1,0 +1,827 @@
+type: grid
+cards:
+- type: heading
+  heading:
+    $i18n: investment_plan
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_execution_state
+    state: ready
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_execution_state
+    name:
+      $i18n: plan_ready
+    tap_action:
+      action: more-info
+    color: green
+    icon: mdi:clipboard-check-outline
+    hide_state: true
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_execution_state
+    state: waiting_for_reserve
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_execution_state
+    name:
+      $i18n: waiting_for_investment_cash
+    tap_action:
+      action: more-info
+    color: amber
+    icon: mdi:cash-clock
+    hide_state: true
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_execution_state
+    state: deferred_for_cost_efficiency
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_execution_state
+    name:
+      $i18n: waiting_for_cost_efficient_execution
+    tap_action:
+      action: more-info
+    color: amber
+    icon: mdi:timer-sand
+    hide_state: true
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_execution_state
+    state: no_eligible_purchase
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_execution_state
+    name:
+      $i18n: no_eligible_purchase
+    tap_action:
+      action: more-info
+    color: blue
+    icon: mdi:clipboard-text-outline
+    hide_state: true
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_execution_state
+    state: reserve_unavailable
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_execution_state
+    name:
+      $i18n: investment_cash_unavailable
+    tap_action:
+      action: more-info
+    color: red
+    icon: mdi:bank-off-outline
+    hide_state: true
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_execution_state
+    state: unavailable
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_execution_state
+    name:
+      $i18n: plan_unavailable
+    tap_action:
+      action: more-info
+    color: red
+    icon: mdi:clipboard-remove-outline
+    state_content: plan_actionability_detail
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_plan_change
+    state_not: baseline_established
+  - condition: state
+    entity: sensor.portfolio_architect_plan_change
+    state_not: unchanged
+  - condition: state
+    entity: sensor.portfolio_architect_plan_change
+    state_not: unavailable
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_plan_change
+    name:
+      $i18n: changes_since_previous_evaluation
+    tap_action:
+      action: more-info
+    color: blue
+    icon: mdi:delta
+  grid_options:
+    columns: full
+    rows: auto
+- type: tile
+  entity: sensor.portfolio_architect_plan_budget
+  name:
+    $i18n: plan_budget
+  tap_action:
+    action: more-info
+  grid_options:
+    columns: 6
+    rows: auto
+  icon: mdi:wallet-outline
+- type: tile
+  entity: sensor.portfolio_architect_plan_frequency
+  name:
+    $i18n: frequency
+  tap_action:
+    action: more-info
+  grid_options:
+    columns: 6
+    rows: auto
+  icon: mdi:calendar-sync-outline
+- type: tile
+  entity: sensor.portfolio_architect_monthly_contribution
+  name:
+    $i18n: per_execution
+  tap_action:
+    action: more-info
+  grid_options:
+    columns: 6
+    rows: auto
+  icon: mdi:cash-fast
+- type: tile
+  entity: sensor.portfolio_architect_recommended_total
+  name:
+    $i18n: allocated
+  tap_action:
+    action: more-info
+  grid_options:
+    columns: 6
+    rows: auto
+  color: green
+  icon: mdi:cash-check
+- type: tile
+  entity: sensor.portfolio_architect_purchase_count
+  name:
+    $i18n: purchases
+  tap_action:
+    action: more-info
+  grid_options:
+    columns: 6
+    rows: auto
+  icon: mdi:cart-outline
+- type: tile
+  entity: sensor.portfolio_architect_executions_per_period
+  name:
+    $i18n: executions
+  tap_action:
+    action: more-info
+  grid_options:
+    columns: 6
+    rows: auto
+  icon: mdi:calendar-multiselect
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_planned_execution
+    state_not: unavailable
+  card:
+    type: tile
+    entity: date.portfolio_architect_planned_execution
+    name:
+      $i18n: scheduled_execution
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_planned_execution
+    icon: mdi:calendar-arrow-right
+  grid_options:
+    columns: 6
+    rows: auto
+- type: tile
+  entity: sensor.portfolio_architect_plan_actionability
+  name:
+    $i18n: actionability
+  tap_action:
+    action: more-info
+  icon: mdi:calendar-check-outline
+  grid_options:
+    columns: 6
+    rows: auto
+- type: tile
+  entity: sensor.portfolio_architect_last_successful_refresh
+  name:
+    $i18n: last_evaluated
+  tap_action:
+    action: more-info
+  icon: mdi:clock-check-outline
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: numeric_state
+    entity: sensor.portfolio_architect_unallocated_contribution
+    above: 0.01
+  - condition: state
+    entity: sensor.portfolio_architect_investment_reserve_source
+    state: contribution
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_unallocated_contribution
+    name:
+      $i18n: unallocated
+    tap_action:
+      action: more-info
+    color: amber
+    icon: mdi:cash-clock
+  grid_options:
+    columns: 6
+    rows: auto
+- type: tile
+  entity: sensor.portfolio_architect_execution_policy
+  name:
+    $i18n: execution_policy
+  tap_action:
+    action: more-info
+  icon: mdi:tune-variant
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_investment_reserve_source
+    state: gateway_balance
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_available_investment_reserve
+    name:
+      $i18n: authorized_investment_cash
+    state_content:
+    - state
+    - cash_context
+    tap_action:
+      action: more-info
+    icon: mdi:piggy-bank-outline
+    color: blue
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: numeric_state
+    entity: sensor.portfolio_architect_additional_investment_cash_required
+    above: 0.01
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_additional_investment_cash_required
+    name:
+      $i18n: additional_investment_cash_required
+    tap_action:
+      action: more-info
+    icon: mdi:cash-plus
+    color: amber
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_investment_reserve_source
+    state: unavailable
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_investment_reserve_source
+    name:
+      $i18n: investment_reserve_unavailable
+    tap_action:
+      action: more-info
+    icon: mdi:bank-off-outline
+    color: red
+    hide_state: true
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: numeric_state
+    entity: sensor.portfolio_architect_estimated_cash_outlay
+    above: 0
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_estimated_cash_outlay
+    name:
+      $i18n: cash_required
+    tap_action:
+      action: more-info
+    icon: mdi:cash-sync
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: numeric_state
+    entity: sensor.portfolio_architect_estimated_transaction_fees
+    above: 0
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_estimated_transaction_fees
+    name:
+      $i18n: estimated_fees
+    tap_action:
+      action: more-info
+    icon: mdi:cash-minus
+    color: amber
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_investment_reserve_source
+    state: gateway_balance
+  - condition: numeric_state
+    entity: sensor.portfolio_architect_remaining_investment_reserve
+    above: 0.01
+  - condition: numeric_state
+    entity: sensor.portfolio_architect_estimated_cash_outlay
+    above: 0.01
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_remaining_investment_reserve
+    name:
+      $i18n: cash_after_recommended_purchases
+    state_content:
+    - state
+    - cash_context
+    tap_action:
+      action: more-info
+    icon: mdi:cash-clock
+    color: blue
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: numeric_state
+    entity: sensor.portfolio_architect_deferred_purchase_count
+    above: 0
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_deferred_contribution
+    name:
+      $i18n: purchase_deferred_for_cost_efficiency
+    tap_action:
+      action: more-info
+    icon: mdi:timer-sand
+    color: amber
+    hide_state: false
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_execution_path
+    state_not: unavailable
+  - condition: state
+    entity: sensor.portfolio_architect_execution_path
+    state_not: unknown
+  card:
+    type: markdown
+    title:
+      $i18n: execution_path
+    content: '{{ state_attr(''sensor.portfolio_architect_execution_path'', ''markdown'') or '''' }}'
+  grid_options:
+    columns: full
+    rows: auto
+- type: entity-filter
+  entities:
+  - entity: sensor.portfolio_architect_presentation_target_01_proposed_buy
+    name:
+      type: entity
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_01_instrument_isin
+    hold_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_01_purchase_explanation
+  - entity: sensor.portfolio_architect_presentation_target_02_proposed_buy
+    name:
+      type: entity
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_02_instrument_isin
+    hold_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_02_purchase_explanation
+  - entity: sensor.portfolio_architect_presentation_target_03_proposed_buy
+    name:
+      type: entity
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_03_instrument_isin
+    hold_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_03_purchase_explanation
+  - entity: sensor.portfolio_architect_presentation_target_04_proposed_buy
+    name:
+      type: entity
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_04_instrument_isin
+    hold_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_04_purchase_explanation
+  - entity: sensor.portfolio_architect_presentation_target_05_proposed_buy
+    name:
+      type: entity
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_05_instrument_isin
+    hold_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_05_purchase_explanation
+  - entity: sensor.portfolio_architect_presentation_target_06_proposed_buy
+    name:
+      type: entity
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_06_instrument_isin
+    hold_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_06_purchase_explanation
+  - entity: sensor.portfolio_architect_presentation_target_07_proposed_buy
+    name:
+      type: entity
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_07_instrument_isin
+    hold_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_07_purchase_explanation
+  - entity: sensor.portfolio_architect_presentation_target_08_proposed_buy
+    name:
+      type: entity
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_08_instrument_isin
+    hold_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_08_purchase_explanation
+  - entity: sensor.portfolio_architect_presentation_target_09_proposed_buy
+    name:
+      type: entity
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_09_instrument_isin
+    hold_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_09_purchase_explanation
+  - entity: sensor.portfolio_architect_presentation_target_10_proposed_buy
+    name:
+      type: entity
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_10_instrument_isin
+    hold_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_10_purchase_explanation
+  - entity: sensor.portfolio_architect_presentation_target_11_proposed_buy
+    name:
+      type: entity
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_11_instrument_isin
+    hold_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_11_purchase_explanation
+  - entity: sensor.portfolio_architect_presentation_target_12_proposed_buy
+    name:
+      type: entity
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_12_instrument_isin
+    hold_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_12_purchase_explanation
+  - entity: sensor.portfolio_architect_presentation_target_13_proposed_buy
+    name:
+      type: entity
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_13_instrument_isin
+    hold_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_13_purchase_explanation
+  - entity: sensor.portfolio_architect_presentation_target_14_proposed_buy
+    name:
+      type: entity
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_14_instrument_isin
+    hold_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_14_purchase_explanation
+  - entity: sensor.portfolio_architect_presentation_target_15_proposed_buy
+    name:
+      type: entity
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_15_instrument_isin
+    hold_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_15_purchase_explanation
+  - entity: sensor.portfolio_architect_presentation_target_16_proposed_buy
+    name:
+      type: entity
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_16_instrument_isin
+    hold_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_16_purchase_explanation
+  - entity: sensor.portfolio_architect_presentation_target_17_proposed_buy
+    name:
+      type: entity
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_17_instrument_isin
+    hold_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_17_purchase_explanation
+  - entity: sensor.portfolio_architect_presentation_target_18_proposed_buy
+    name:
+      type: entity
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_18_instrument_isin
+    hold_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_18_purchase_explanation
+  - entity: sensor.portfolio_architect_presentation_target_19_proposed_buy
+    name:
+      type: entity
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_19_instrument_isin
+    hold_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_19_purchase_explanation
+  - entity: sensor.portfolio_architect_presentation_target_20_proposed_buy
+    name:
+      type: entity
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_20_instrument_isin
+    hold_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_20_purchase_explanation
+  - entity: sensor.portfolio_architect_presentation_target_21_proposed_buy
+    name:
+      type: entity
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_21_instrument_isin
+    hold_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_21_purchase_explanation
+  - entity: sensor.portfolio_architect_presentation_target_22_proposed_buy
+    name:
+      type: entity
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_22_instrument_isin
+    hold_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_22_purchase_explanation
+  - entity: sensor.portfolio_architect_presentation_target_23_proposed_buy
+    name:
+      type: entity
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_23_instrument_isin
+    hold_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_23_purchase_explanation
+  - entity: sensor.portfolio_architect_presentation_target_24_proposed_buy
+    name:
+      type: entity
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_24_instrument_isin
+    hold_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_24_purchase_explanation
+  - entity: sensor.portfolio_architect_presentation_target_25_proposed_buy
+    name:
+      type: entity
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_25_instrument_isin
+    hold_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_25_purchase_explanation
+  - entity: sensor.portfolio_architect_presentation_target_26_proposed_buy
+    name:
+      type: entity
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_26_instrument_isin
+    hold_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_26_purchase_explanation
+  - entity: sensor.portfolio_architect_presentation_target_27_proposed_buy
+    name:
+      type: entity
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_27_instrument_isin
+    hold_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_27_purchase_explanation
+  - entity: sensor.portfolio_architect_presentation_target_28_proposed_buy
+    name:
+      type: entity
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_28_instrument_isin
+    hold_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_28_purchase_explanation
+  - entity: sensor.portfolio_architect_presentation_target_29_proposed_buy
+    name:
+      type: entity
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_29_instrument_isin
+    hold_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_29_purchase_explanation
+  - entity: sensor.portfolio_architect_presentation_target_30_proposed_buy
+    name:
+      type: entity
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_30_instrument_isin
+    hold_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_30_purchase_explanation
+  - entity: sensor.portfolio_architect_presentation_target_31_proposed_buy
+    name:
+      type: entity
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_31_instrument_isin
+    hold_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_31_purchase_explanation
+  - entity: sensor.portfolio_architect_presentation_target_32_proposed_buy
+    name:
+      type: entity
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_32_instrument_isin
+    hold_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_32_purchase_explanation
+  conditions:
+  - condition: numeric_state
+    above: 0
+  card:
+    type: entities
+    title:
+      $i18n: recommended_purchases
+    show_header_toggle: false
+  show_empty: false
+  grid_options:
+    columns: full
+    rows: auto
+- type: entity-filter
+  entities:
+  - entity: sensor.portfolio_architect_presentation_target_01_purchase_explanation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_02_purchase_explanation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_03_purchase_explanation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_04_purchase_explanation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_05_purchase_explanation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_06_purchase_explanation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_07_purchase_explanation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_08_purchase_explanation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_09_purchase_explanation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_10_purchase_explanation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_11_purchase_explanation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_12_purchase_explanation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_13_purchase_explanation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_14_purchase_explanation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_15_purchase_explanation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_16_purchase_explanation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_17_purchase_explanation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_18_purchase_explanation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_19_purchase_explanation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_20_purchase_explanation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_21_purchase_explanation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_22_purchase_explanation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_23_purchase_explanation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_24_purchase_explanation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_25_purchase_explanation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_26_purchase_explanation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_27_purchase_explanation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_28_purchase_explanation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_29_purchase_explanation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_30_purchase_explanation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_31_purchase_explanation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_32_purchase_explanation
+    name:
+      type: entity
+  conditions:
+  - condition: state
+    state: deferred
+  card:
+    type: entities
+    title:
+      $i18n: deferred_targets
+    show_header_toggle: false
+  show_empty: false
+  grid_options:
+    columns: full
+    rows: auto

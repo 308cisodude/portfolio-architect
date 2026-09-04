@@ -204,7 +204,7 @@ def test_supplied_overlap_changes_the_next_350_euro_distribution() -> None:
 
 
 def test_public_dashboard_uses_positive_colours_and_short_localised_schedule() -> None:
-    dashboard = yaml.safe_load((ROOT / "dashboard" / "runtime-health.yaml").read_text())
+    dashboard = yaml.safe_load((ROOT / "dashboard" / "generated" / "portfolio-architect-dashboard-en.yaml").read_text())
     encoded = str(dashboard)
     assert "'state': 'ok'" in encoded and "'color': 'green'" in encoded
     assert "'state': 'live'" in encoded and "'color': 'green'" in encoded

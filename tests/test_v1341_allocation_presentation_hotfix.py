@@ -86,9 +86,8 @@ def test_target_whole_allocation_entity_is_created_from_target_state_not_holding
 
 def test_reference_distribution_uses_dynamic_outside_presentation_slots() -> None:
     paths = (
-        ROOT / "dashboard" / "allocation-stack.yaml",
-        ROOT / "dashboard" / "en" / "allocation-stack.yaml",
-        ROOT / "dashboard" / "de" / "allocation-stack.yaml",
+        ROOT / "dashboard" / "generated" / "portfolio-architect-dashboard-en.yaml",
+        ROOT / "dashboard" / "generated" / "portfolio-architect-dashboard-de.yaml",
         ROOT / "dashboard" / "bilingual-dashboard.yaml",
     )
     for path in paths:

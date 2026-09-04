@@ -1,0 +1,2103 @@
+type: grid
+cards:
+- type: heading
+  heading:
+    $i18n: current_portfolio_allocation
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: binary_sensor.portfolio_architect_portfolio_allocation_on_target
+    state: 'on'
+  card:
+    type: tile
+    entity: binary_sensor.portfolio_architect_portfolio_allocation_on_target
+    name:
+      $i18n: allocation_on_target
+    tap_action:
+      action: more-info
+    color: green
+    icon: mdi:scale-balance
+    hide_state: true
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: binary_sensor.portfolio_architect_portfolio_allocation_on_target
+    state: 'off'
+  card:
+    type: tile
+    entity: binary_sensor.portfolio_architect_portfolio_allocation_on_target
+    name:
+      $i18n: allocation_needs_rebalancing
+    tap_action:
+      action: more-info
+    color: amber
+    icon: mdi:scale-unbalanced
+    hide_state: true
+  grid_options:
+    columns: full
+    rows: auto
+- type: tile
+  entity: sensor.portfolio_architect_allocation_corridor
+  name:
+    $i18n: target_corridor
+  tap_action:
+    action: more-info
+  grid_options:
+    columns: 6
+    rows: auto
+  icon: mdi:arrow-expand-horizontal
+- type: tile
+  entity: sensor.portfolio_architect_underweight_position_count
+  name:
+    $i18n: underweight
+  tap_action:
+    action: more-info
+  grid_options:
+    columns: 6
+    rows: auto
+  color: amber
+  icon: mdi:arrow-down-bold-outline
+- type: tile
+  entity: sensor.portfolio_architect_on_target_position_count
+  name:
+    $i18n: on_target
+  tap_action:
+    action: more-info
+  grid_options:
+    columns: 6
+    rows: auto
+  color: green
+  icon: mdi:check-circle-outline
+- type: tile
+  entity: sensor.portfolio_architect_overweight_position_count
+  name:
+    $i18n: overweight
+  tap_action:
+    action: more-info
+  grid_options:
+    columns: 6
+    rows: auto
+  color: red
+  icon: mdi:arrow-up-bold-outline
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_01_allocation_status
+    state: underweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_01_allocation_drift
+    name:
+      type: entity
+    color: amber
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_01_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_01_allocation_status
+    state: on_target
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_01_allocation_drift
+    name:
+      type: entity
+    color: green
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_01_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_01_allocation_status
+    state: overweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_01_allocation_drift
+    name:
+      type: entity
+    color: red
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_01_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_02_allocation_status
+    state: underweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_02_allocation_drift
+    name:
+      type: entity
+    color: amber
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_02_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_02_allocation_status
+    state: on_target
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_02_allocation_drift
+    name:
+      type: entity
+    color: green
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_02_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_02_allocation_status
+    state: overweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_02_allocation_drift
+    name:
+      type: entity
+    color: red
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_02_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_03_allocation_status
+    state: underweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_03_allocation_drift
+    name:
+      type: entity
+    color: amber
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_03_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_03_allocation_status
+    state: on_target
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_03_allocation_drift
+    name:
+      type: entity
+    color: green
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_03_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_03_allocation_status
+    state: overweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_03_allocation_drift
+    name:
+      type: entity
+    color: red
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_03_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_04_allocation_status
+    state: underweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_04_allocation_drift
+    name:
+      type: entity
+    color: amber
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_04_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_04_allocation_status
+    state: on_target
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_04_allocation_drift
+    name:
+      type: entity
+    color: green
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_04_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_04_allocation_status
+    state: overweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_04_allocation_drift
+    name:
+      type: entity
+    color: red
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_04_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_05_allocation_status
+    state: underweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_05_allocation_drift
+    name:
+      type: entity
+    color: amber
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_05_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_05_allocation_status
+    state: on_target
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_05_allocation_drift
+    name:
+      type: entity
+    color: green
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_05_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_05_allocation_status
+    state: overweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_05_allocation_drift
+    name:
+      type: entity
+    color: red
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_05_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_06_allocation_status
+    state: underweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_06_allocation_drift
+    name:
+      type: entity
+    color: amber
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_06_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_06_allocation_status
+    state: on_target
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_06_allocation_drift
+    name:
+      type: entity
+    color: green
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_06_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_06_allocation_status
+    state: overweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_06_allocation_drift
+    name:
+      type: entity
+    color: red
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_06_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_07_allocation_status
+    state: underweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_07_allocation_drift
+    name:
+      type: entity
+    color: amber
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_07_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_07_allocation_status
+    state: on_target
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_07_allocation_drift
+    name:
+      type: entity
+    color: green
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_07_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_07_allocation_status
+    state: overweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_07_allocation_drift
+    name:
+      type: entity
+    color: red
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_07_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_08_allocation_status
+    state: underweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_08_allocation_drift
+    name:
+      type: entity
+    color: amber
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_08_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_08_allocation_status
+    state: on_target
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_08_allocation_drift
+    name:
+      type: entity
+    color: green
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_08_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_08_allocation_status
+    state: overweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_08_allocation_drift
+    name:
+      type: entity
+    color: red
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_08_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_09_allocation_status
+    state: underweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_09_allocation_drift
+    name:
+      type: entity
+    color: amber
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_09_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_09_allocation_status
+    state: on_target
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_09_allocation_drift
+    name:
+      type: entity
+    color: green
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_09_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_09_allocation_status
+    state: overweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_09_allocation_drift
+    name:
+      type: entity
+    color: red
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_09_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_10_allocation_status
+    state: underweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_10_allocation_drift
+    name:
+      type: entity
+    color: amber
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_10_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_10_allocation_status
+    state: on_target
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_10_allocation_drift
+    name:
+      type: entity
+    color: green
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_10_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_10_allocation_status
+    state: overweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_10_allocation_drift
+    name:
+      type: entity
+    color: red
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_10_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_11_allocation_status
+    state: underweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_11_allocation_drift
+    name:
+      type: entity
+    color: amber
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_11_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_11_allocation_status
+    state: on_target
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_11_allocation_drift
+    name:
+      type: entity
+    color: green
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_11_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_11_allocation_status
+    state: overweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_11_allocation_drift
+    name:
+      type: entity
+    color: red
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_11_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_12_allocation_status
+    state: underweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_12_allocation_drift
+    name:
+      type: entity
+    color: amber
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_12_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_12_allocation_status
+    state: on_target
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_12_allocation_drift
+    name:
+      type: entity
+    color: green
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_12_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_12_allocation_status
+    state: overweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_12_allocation_drift
+    name:
+      type: entity
+    color: red
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_12_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_13_allocation_status
+    state: underweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_13_allocation_drift
+    name:
+      type: entity
+    color: amber
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_13_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_13_allocation_status
+    state: on_target
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_13_allocation_drift
+    name:
+      type: entity
+    color: green
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_13_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_13_allocation_status
+    state: overweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_13_allocation_drift
+    name:
+      type: entity
+    color: red
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_13_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_14_allocation_status
+    state: underweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_14_allocation_drift
+    name:
+      type: entity
+    color: amber
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_14_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_14_allocation_status
+    state: on_target
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_14_allocation_drift
+    name:
+      type: entity
+    color: green
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_14_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_14_allocation_status
+    state: overweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_14_allocation_drift
+    name:
+      type: entity
+    color: red
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_14_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_15_allocation_status
+    state: underweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_15_allocation_drift
+    name:
+      type: entity
+    color: amber
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_15_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_15_allocation_status
+    state: on_target
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_15_allocation_drift
+    name:
+      type: entity
+    color: green
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_15_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_15_allocation_status
+    state: overweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_15_allocation_drift
+    name:
+      type: entity
+    color: red
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_15_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_16_allocation_status
+    state: underweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_16_allocation_drift
+    name:
+      type: entity
+    color: amber
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_16_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_16_allocation_status
+    state: on_target
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_16_allocation_drift
+    name:
+      type: entity
+    color: green
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_16_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_16_allocation_status
+    state: overweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_16_allocation_drift
+    name:
+      type: entity
+    color: red
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_16_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_17_allocation_status
+    state: underweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_17_allocation_drift
+    name:
+      type: entity
+    color: amber
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_17_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_17_allocation_status
+    state: on_target
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_17_allocation_drift
+    name:
+      type: entity
+    color: green
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_17_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_17_allocation_status
+    state: overweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_17_allocation_drift
+    name:
+      type: entity
+    color: red
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_17_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_18_allocation_status
+    state: underweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_18_allocation_drift
+    name:
+      type: entity
+    color: amber
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_18_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_18_allocation_status
+    state: on_target
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_18_allocation_drift
+    name:
+      type: entity
+    color: green
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_18_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_18_allocation_status
+    state: overweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_18_allocation_drift
+    name:
+      type: entity
+    color: red
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_18_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_19_allocation_status
+    state: underweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_19_allocation_drift
+    name:
+      type: entity
+    color: amber
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_19_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_19_allocation_status
+    state: on_target
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_19_allocation_drift
+    name:
+      type: entity
+    color: green
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_19_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_19_allocation_status
+    state: overweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_19_allocation_drift
+    name:
+      type: entity
+    color: red
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_19_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_20_allocation_status
+    state: underweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_20_allocation_drift
+    name:
+      type: entity
+    color: amber
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_20_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_20_allocation_status
+    state: on_target
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_20_allocation_drift
+    name:
+      type: entity
+    color: green
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_20_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_20_allocation_status
+    state: overweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_20_allocation_drift
+    name:
+      type: entity
+    color: red
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_20_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_21_allocation_status
+    state: underweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_21_allocation_drift
+    name:
+      type: entity
+    color: amber
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_21_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_21_allocation_status
+    state: on_target
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_21_allocation_drift
+    name:
+      type: entity
+    color: green
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_21_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_21_allocation_status
+    state: overweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_21_allocation_drift
+    name:
+      type: entity
+    color: red
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_21_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_22_allocation_status
+    state: underweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_22_allocation_drift
+    name:
+      type: entity
+    color: amber
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_22_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_22_allocation_status
+    state: on_target
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_22_allocation_drift
+    name:
+      type: entity
+    color: green
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_22_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_22_allocation_status
+    state: overweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_22_allocation_drift
+    name:
+      type: entity
+    color: red
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_22_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_23_allocation_status
+    state: underweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_23_allocation_drift
+    name:
+      type: entity
+    color: amber
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_23_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_23_allocation_status
+    state: on_target
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_23_allocation_drift
+    name:
+      type: entity
+    color: green
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_23_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_23_allocation_status
+    state: overweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_23_allocation_drift
+    name:
+      type: entity
+    color: red
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_23_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_24_allocation_status
+    state: underweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_24_allocation_drift
+    name:
+      type: entity
+    color: amber
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_24_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_24_allocation_status
+    state: on_target
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_24_allocation_drift
+    name:
+      type: entity
+    color: green
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_24_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_24_allocation_status
+    state: overweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_24_allocation_drift
+    name:
+      type: entity
+    color: red
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_24_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_25_allocation_status
+    state: underweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_25_allocation_drift
+    name:
+      type: entity
+    color: amber
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_25_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_25_allocation_status
+    state: on_target
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_25_allocation_drift
+    name:
+      type: entity
+    color: green
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_25_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_25_allocation_status
+    state: overweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_25_allocation_drift
+    name:
+      type: entity
+    color: red
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_25_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_26_allocation_status
+    state: underweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_26_allocation_drift
+    name:
+      type: entity
+    color: amber
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_26_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_26_allocation_status
+    state: on_target
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_26_allocation_drift
+    name:
+      type: entity
+    color: green
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_26_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_26_allocation_status
+    state: overweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_26_allocation_drift
+    name:
+      type: entity
+    color: red
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_26_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_27_allocation_status
+    state: underweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_27_allocation_drift
+    name:
+      type: entity
+    color: amber
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_27_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_27_allocation_status
+    state: on_target
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_27_allocation_drift
+    name:
+      type: entity
+    color: green
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_27_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_27_allocation_status
+    state: overweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_27_allocation_drift
+    name:
+      type: entity
+    color: red
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_27_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_28_allocation_status
+    state: underweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_28_allocation_drift
+    name:
+      type: entity
+    color: amber
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_28_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_28_allocation_status
+    state: on_target
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_28_allocation_drift
+    name:
+      type: entity
+    color: green
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_28_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_28_allocation_status
+    state: overweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_28_allocation_drift
+    name:
+      type: entity
+    color: red
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_28_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_29_allocation_status
+    state: underweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_29_allocation_drift
+    name:
+      type: entity
+    color: amber
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_29_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_29_allocation_status
+    state: on_target
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_29_allocation_drift
+    name:
+      type: entity
+    color: green
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_29_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_29_allocation_status
+    state: overweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_29_allocation_drift
+    name:
+      type: entity
+    color: red
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_29_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_30_allocation_status
+    state: underweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_30_allocation_drift
+    name:
+      type: entity
+    color: amber
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_30_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_30_allocation_status
+    state: on_target
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_30_allocation_drift
+    name:
+      type: entity
+    color: green
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_30_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_30_allocation_status
+    state: overweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_30_allocation_drift
+    name:
+      type: entity
+    color: red
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_30_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_31_allocation_status
+    state: underweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_31_allocation_drift
+    name:
+      type: entity
+    color: amber
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_31_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_31_allocation_status
+    state: on_target
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_31_allocation_drift
+    name:
+      type: entity
+    color: green
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_31_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_31_allocation_status
+    state: overweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_31_allocation_drift
+    name:
+      type: entity
+    color: red
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_31_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_32_allocation_status
+    state: underweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_32_allocation_drift
+    name:
+      type: entity
+    color: amber
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_32_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_32_allocation_status
+    state: on_target
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_32_allocation_drift
+    name:
+      type: entity
+    color: green
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_32_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_presentation_target_32_allocation_status
+    state: overweight
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_presentation_target_32_allocation_drift
+    name:
+      type: entity
+    color: red
+    tap_action:
+      action: more-info
+      entity: sensor.portfolio_architect_presentation_target_32_allocation_explanation
+    features:
+    - type: bar-gauge
+      min: -100
+      max: 100
+  grid_options:
+    columns: full
+    rows: auto

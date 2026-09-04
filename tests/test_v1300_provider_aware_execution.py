@@ -275,10 +275,8 @@ def test_dashboard_purchase_aliases_preserve_execution_provider_for_native_more_
     assert '"stable_identity"' in slot
 
     for relative in (
-        "dashboard/en/monthly-investment-plan.yaml",
-        "dashboard/de/monthly-investment-plan.yaml",
-        "dashboard/en/view.yaml",
-        "dashboard/de/view.yaml",
+        "dashboard/generated/portfolio-architect-dashboard-en.yaml",
+        "dashboard/generated/portfolio-architect-dashboard-de.yaml",
         "dashboard/bilingual-dashboard.yaml",
     ):
         text = (ROOT / relative).read_text(encoding="utf-8")

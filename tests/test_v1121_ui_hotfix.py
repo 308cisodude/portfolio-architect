@@ -51,7 +51,7 @@ def test_position_source_provenance_is_a_native_translated_entity() -> None:
 
 
 def test_dashboard_exposes_overlapping_target_position_sources_dynamically() -> None:
-    dashboard = yaml.safe_load((ROOT / "dashboard/target-architecture.yaml").read_text())
+    dashboard = yaml.safe_load((ROOT / "dashboard/generated/portfolio-architect-dashboard-en.yaml").read_text())
     cards = [item for item in _walk(dashboard) if isinstance(item, dict)]
     source_filter = next(
         item for item in cards

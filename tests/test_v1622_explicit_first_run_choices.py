@@ -1,4 +1,4 @@
-"""Regression contracts for v1.62.5 explicit first-run choices and Generic READY UX."""
+"""Regression contracts for v1.63.0 explicit first-run choices and Generic READY UX."""
 
 from __future__ import annotations
 
@@ -142,4 +142,4 @@ def test_generic_ready_profile_card_is_blue_while_csv_authority_remains_green() 
 
 def test_release_version_targets_v1622() -> None:
     const = (COMPONENT / "const.py").read_text(encoding="utf-8")
-    assert 'VERSION: Final = "1.62.5"' in const
+    assert 'VERSION: Final = "1.63.0"' in const

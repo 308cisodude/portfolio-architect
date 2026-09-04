@@ -1,4 +1,4 @@
-"""Regression contracts for v1.62.5 first-run reload and CA async hygiene."""
+"""Regression contracts for v1.63.0 first-run reload and CA async hygiene."""
 
 from __future__ import annotations
 

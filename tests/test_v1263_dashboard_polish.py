@@ -155,10 +155,18 @@ def test_policy_exception_lifecycle_tiles_are_coherently_ordered() -> None:
             and any(_candidate_entity(item) == "sensor.portfolio_architect_presentation_policy_001_finding" for item in card.get("entities", []))
         )
 
+        no_review_labels = {"Exception review not required", "Ausnahmeprüfung nicht erforderlich"}
+        no_review_index = next(
+            index
+            for index, card in enumerate(cards)
+            if _inner_card(card).get("name") in no_review_labels
+        )
+
         assert exception_index < last_index
+        assert no_review_index == last_index + 1
         assert last_index < next_index
         assert last_index < overdue_index
-        assert {next_index, overdue_index} == {last_index + 1, last_index + 2}
+        assert {next_index, overdue_index} == {last_index + 2, last_index + 3}
         assert policy_index > max(next_index, overdue_index)
 
 
