@@ -1,6 +1,6 @@
-# Portfolio Architect v1.62.4
+# Portfolio Architect v1.62.5
 
-Version 1.62.4 is a narrow Home Assistant runtime hotfix. It makes the first-run `plan_required` → `configured` activation unload based on what runtime/platforms were actually loaded, so a completed validated setup starts normal entities immediately without a Home Assistant restart. It also removes synchronous SSL trust-store loading from REST/Discovery CA normalization on Home Assistant's event loop; semantic private-CA validation remains fail-closed in the existing executor-backed HTTPS request path. v1.62.3 Trade Republic German cash-date compatibility remains unchanged.
+Version 1.62.5 is a narrow coordinator-metadata hotfix. The four established Portfolio Architect configuration documents remain mandatory, while optional `exceptions.yaml` now participates in modification/fingerprint/LKG metadata only when it actually exists. A normal first-run configuration therefore becomes operational immediately without requiring a dummy exceptions file. v1.62.4 first-run reload and private-CA async-hygiene fixes, v1.62.3 Trade Republic German cash-date compatibility, and all provider/runtime contracts remain unchanged.
 
 Each new Generic profile receives an immutable generated `generic_<stable-id>` provider identity and a separately editable human name. Existing experimental `generic_csv` state retains that provider identity and legacy REST path. Holdings CSV data is parsed transiently; successful imports atomically replace only the selected profile's canonical holdings, optional provider-local EUR investment cash has its own evidence timestamp, and rejected imports retain the previous valid snapshot.
 

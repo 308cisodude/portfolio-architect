@@ -1,26 +1,25 @@
-# Portfolio Architect v1.62.4 release notes
+# Portfolio Architect v1.62.5 release notes
 
-v1.62.4 is a narrow Home Assistant runtime hotfix on top of v1.62.3. Clean-room first-run acceptance exposed two independent integration-side lifecycle/async-hygiene defects after the v1.62 architecture itself had already validated correctly.
+v1.62.5 is a narrow Home Assistant coordinator-metadata hotfix on top of v1.62.4. LG clean-room acceptance proved the v1.62.4 immediate reload and private-CA async-hygiene fixes, then exposed a separate metadata bug: the initial setup correctly created the four established mandatory YAML documents, but coordinator fingerprint/LKG metadata accidentally treated optional `exceptions.yaml` as a fifth required file.
 
-## Immediate first-run activation no longer fails to unload
+## Optional exceptions metadata is truly optional
 
-A newly initialized Portfolio Architect entry deliberately loads in `source_required` / `plan_required` without a coordinator or forwarded `sensor`, `binary_sensor` or `date` platforms. After the initial plan wizard successfully staged, calculated and atomically installed the four validated YAML documents, v1.62.3 persisted `configured` and immediately requested a Home Assistant config-entry reload.
+Portfolio Architect has four required calculation documents: `portfolio.yaml`, `policy.yaml`, `instruments.yaml` and `broker.yaml`. `exceptions.yaml` is optional and is loaded as an empty exception set when absent.
 
-The unload handler incorrectly decided what to unload from the newly persisted setup-state. It therefore tried to unload normal PA platforms even though that loaded lifecycle had never created them, causing Home Assistant to report **Failed to unload**. A subsequent Home Assistant restart loaded the same generated configuration normally, proving that the files and configured cold-start path were valid.
+Before v1.62.5, `configuration_files()` returned all four required paths plus `exceptions.yaml` unconditionally. The coordinator metadata path then rejected the directory whenever any returned path was absent, producing `Portfolio configuration files are unavailable` even though the first-run validator and calculator had already accepted the legitimate four-file configuration.
 
-v1.62.4 makes runtime presence authoritative for unload behavior. If `entry.runtime_data` is `None`, unload succeeds without forwarding platform teardown. Once a normal configured coordinator/runtime exists, the established platform-unload path remains unchanged. The validated `plan_required` → `configured` transition can therefore reload immediately and create normal entities without requiring a Home Assistant restart.
+v1.62.5 keeps required paths in the metadata set unconditionally so a missing mandatory file still fails closed. Optional configuration paths participate only while the file actually exists. Therefore:
 
-## Private-CA normalization is event-loop safe
+- four required files with no `exceptions.yaml` are valid;
+- adding a real `exceptions.yaml` changes the configuration fingerprint and modification metadata;
+- removing it returns metadata to the four-file state;
+- deleting any required file still fails closed.
 
-Live Home Assistant logs also showed `ssl.create_default_context(cadata=...)` / `load_verify_locations` being called synchronously from REST/private-CA normalization during config/discovery handling. Home Assistant correctly flagged this as blocking work on the event loop.
-
-v1.62.4 keeps only bounded PEM envelope/base64 decoding in synchronous normalization. Semantic X.509/private-CA trust loading remains fail-closed in `_rest_ssl_context()`, where authenticated health and snapshot requests already construct the hostname-verifying TLS context through `hass.async_add_executor_job()`.
-
-This does **not** weaken private-PKI validation. Invalid trust material still fails before a Gateway can be adopted or consumed; the expensive trust-store operation merely stays on the executor boundary where it belongs.
+This completes the intended first-run path without creating or requiring a dummy exceptions file.
 
 ## Compatibility and preserved contracts
 
-The v1.62.3 complete bounded German Trade Republic cash-date month matrix is unchanged. Trade Republic parsing/reconciliation, Generic multi-profile acquisition, Comdirect acquisition, DKB CSV acquisition and the DKB research-only FinTS probe are unchanged.
+The v1.62.4 first-run unload/reload and private-CA event-loop fixes are unchanged. The v1.62.3 complete bounded German Trade Republic cash-date month matrix is unchanged. Trade Republic parsing/reconciliation, Generic multi-profile acquisition, Comdirect acquisition, DKB CSV acquisition and the DKB research-only FinTS probe are unchanged.
 
 **Comdirect LEGACY remains removed from the active repository.** REST portfolio schema 1, payload schema 8, presentation schema 2, broker schemas 1/2/3, config-entry schema 13, Gateway health schemas 1–10, Supervisor discovery schemas 1/2, `fallback_policy: none`, evidence freshness, verified private-PKI HTTPS, bearer authentication, DNS pinning, LKG/anti-rollback/source-set atomicity and planner/funding semantics remain intact. **Authenticated DKB FinTS remains disabled** and research-only. There is **no silent fallback** between acquisition methods. No trading, order, transfer, payment, transaction-history, sell or withdrawal capability is introduced.
 
@@ -28,7 +27,7 @@ The v1.33.0 source-freshness and plan-schedule separation remains in force. No c
 
 ## Preserved historical release invariants
 
-For regression clarity, v1.62.4 explicitly preserves these established contracts:
+For regression clarity, v1.62.5 explicitly preserves these established contracts:
 
 - payload schema 8: unchanged
 - REST portfolio schema 1: unchanged

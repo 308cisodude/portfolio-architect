@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.62.5
+
+- Fix coordinator configuration metadata so the four established files `portfolio.yaml`, `policy.yaml`, `instruments.yaml` and `broker.yaml` remain mandatory while optional `exceptions.yaml` participates only when it actually exists.
+- Preserve fail-closed behavior for a missing required file; adding/removing a real `exceptions.yaml` still changes the deterministic configuration fingerprint used by Home Assistant last-known-good validation.
+- Complete the v1.62 clean-room first-run path without requiring a dummy exceptions document: a validated four-file setup can now proceed directly into normal coordinator evaluation after the v1.62.4 immediate-reload fix.
+- Preserve v1.62.4 first-run reload/private-CA async hygiene, v1.62.3 Trade Republic German cash-date compatibility, config-entry schema 13, provider acquisition/wire contracts, freshness/LKG/anti-rollback/source-set semantics, planner/funding economics, `fallback_policy: none`, removed Comdirect LEGACY state and the authenticated-DKB-FinTS research gate.
+
 ## 1.62.4
 
 - Fix the clean-room first-run `plan_required` → `configured` transition so unload checks the actually loaded runtime instead of the newly persisted setup-state; setup-required entries with no coordinator/platforms now unload trivially and the immediate reload can create normal entities without a Home Assistant restart.

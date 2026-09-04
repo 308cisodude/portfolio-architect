@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.62.5
+
+- Version-align this App with Portfolio Architect v1.62.5. Provider acquisition, private state, wire schemas, verified private-PKI/bearer trust and no-fallback behavior are unchanged; the runtime hotfix is Home Assistant integration-only.
+
 ## 1.62.4
 
 - Version-align with Portfolio Architect v1.62.4. Supported CSV holdings/cash acquisition is unchanged; authenticated FinTS remains disabled and the hotfix is Home Assistant integration-only.

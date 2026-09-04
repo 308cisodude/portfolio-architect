@@ -7,7 +7,7 @@ from homeassistant.const import Platform
 DOMAIN: Final = "portfolio_architect"
 INSTANCE_UNIQUE_ID: Final = "portfolio_architect"
 NAME: Final = "Portfolio Architect"
-VERSION: Final = "1.62.4"
+VERSION: Final = "1.62.5"
 
 CONF_SOURCE_TYPE: Final = "source_type"
 CONF_SETUP_STATE: Final = "setup_state"
