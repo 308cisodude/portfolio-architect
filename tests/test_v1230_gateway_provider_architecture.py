@@ -45,7 +45,7 @@ def _load_rest_client():
 
 def _health_v6_payload() -> dict:
     return {
-        "gateway_version": "1.62.4",
+        "gateway_version": "1.62.5",
         "status": "ok",
         "snapshot_available": True,
         "snapshot_generated_at": "2026-08-13T12:00:00+00:00",
@@ -117,7 +117,7 @@ def test_comdirect_app_is_provider_qualified_and_legacy_package_is_withdrawn() -
     assert config["name"] == "Portfolio Architect Gateway — Comdirect"
     assert config["slug"] == "portfolio_architect_gateway_comdirect"
     assert config["stage"] == "stable"
-    assert config["version"] == "1.62.4"
+    assert config["version"] == "1.62.5"
     assert not (ROOT / "home_assistant_app" / "portfolio_architect_gateway").exists()
 
     app = (APP / "src" / "portfolio_architect_gateway" / "app.py").read_text(
@@ -150,7 +150,7 @@ def test_provider_roadmap_keeps_tr_import_after_distinct_gateway_apps() -> None:
 
 def test_wire_versions_are_intentional() -> None:
     manifest = json.loads((COMPONENT / "manifest.json").read_text(encoding="utf-8"))
-    assert manifest["version"] == "1.62.4"
+    assert manifest["version"] == "1.62.5"
     assert "schema version 13" in (COMPONENT / "__init__.py").read_text(encoding="utf-8")
     release_notes = (ROOT / "docs" / "RELEASE-NOTES.md").read_text(encoding="utf-8")
     assert "REST portfolio schema 1" in release_notes

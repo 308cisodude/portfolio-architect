@@ -80,8 +80,20 @@ def _minimum_cash_required_for_next_purchase(
 
 
 def configuration_files(config_directory: Path) -> tuple[Path, ...]:
-    """Return the complete bounded set of files that influences a calculation."""
-    return tuple(config_directory / name for name in (*_REQUIRED_CONFIG_FILES, *_OPTIONAL_CONFIG_FILES))
+    """Return the bounded configuration files that currently influence a calculation.
+
+    Required documents are always returned so callers can fail closed when one is
+    missing. Optional documents participate only while they actually exist; absence
+    of ``exceptions.yaml`` is a valid configuration state and must not invalidate
+    configuration metadata or last-known-good fingerprints.
+    """
+    required = tuple(config_directory / name for name in _REQUIRED_CONFIG_FILES)
+    optional = tuple(
+        path
+        for name in _OPTIONAL_CONFIG_FILES
+        if (path := config_directory / name).is_file()
+    )
+    return (*required, *optional)
 
 
 def validate_configuration_source(config_directory: Path) -> None:

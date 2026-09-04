@@ -1,5 +1,5 @@
 name: Portfolio Architect Gateway — Generic Import
-version: 1.62.4
+version: 1.62.5
 slug: portfolio_architect_gateway_import
 description: Supported provider-neutral multi-profile CSV Gateway with independent
   holdings/cash evidence and verified private-PKI HTTPS.

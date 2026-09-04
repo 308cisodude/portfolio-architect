@@ -43,12 +43,18 @@ Completes v1.62 clean-room acceptance by moving Portfolio Architect service init
 - Preserve independent holdings/cash evidence clocks and atomic rejected-import behavior so the last accepted cash snapshot remains authoritative until a corrected import validates fully.
 - Keep v1.62.2 explicit first-run choices and Generic READY colour presentation unchanged; keep config-entry schema 13, health schema 10, discovery schemas 1/2, provider identities, freshness, private-PKI/LKG, no-fallback and advisory-only contracts unchanged.
 
-## v1.62.4 — first-run reload and private-CA async hygiene — prepared
+## v1.62.4 — first-run reload and private-CA async hygiene — published; live fixes accepted, coordinator metadata edge found
 
 - Make config-entry unload depend on the actually loaded runtime so a setup-required entry with no coordinator/platforms unloads trivially during the validated `plan_required` → `configured` immediate reload.
 - Keep normal configured-runtime platform unload unchanged once a coordinator exists.
 - Remove blocking SSL trust-store construction from synchronous REST/discovery CA normalization while retaining semantic private-CA/X.509 validation in the existing executor-backed HTTPS request path.
 - Preserve v1.62.3 Trade Republic month parsing, config-entry schema 13, all provider acquisition/wire/freshness/planner semantics, private-PKI verification and `fallback_policy: none`.
+
+## v1.62.5 — optional exceptions metadata hotfix — prepared
+
+- Keep `portfolio.yaml`, `policy.yaml`, `instruments.yaml` and `broker.yaml` mandatory for coordinator metadata while treating `exceptions.yaml` as optional exactly as the calculator/initial-setup path already does.
+- Include `exceptions.yaml` in modification/fingerprint/LKG metadata only while it exists, so adding/removing real exception state remains deterministic.
+- Keep missing-required-file behavior fail-closed and preserve v1.62.4 reload/private-CA async hygiene, v1.62.3 Trade Republic parsing, all provider/wire/freshness/planner contracts and `fallback_policy: none`.
 
 ## v1.62.2 — explicit first-run choices and Generic READY colour — published; live acceptance pending
 
