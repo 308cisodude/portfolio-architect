@@ -53,7 +53,7 @@ def _policy_slot_filters(path: Path) -> list[dict]:
 
 def test_localised_exception_presentation_is_bounded_native_list() -> None:
     for locale in ("en", "de"):
-        cards = _policy_slot_filters(DASHBOARD / locale / "policy-compliance.yaml")
+        cards = _policy_slot_filters(DASHBOARD / "generated" / f"portfolio-architect-dashboard-{locale}.yaml")
         assert len(cards) == 1
         card = cards[0]
         assert len(card["entities"]) == 256
@@ -66,8 +66,8 @@ def test_localised_exception_presentation_is_bounded_native_list() -> None:
 
 def test_complete_views_preserve_bounded_native_policy_presentation() -> None:
     for path in [
-        DASHBOARD / "en" / "view.yaml",
-        DASHBOARD / "de" / "view.yaml",
+        DASHBOARD / "generated" / "portfolio-architect-dashboard-en.yaml",
+        DASHBOARD / "generated" / "portfolio-architect-dashboard-de.yaml",
         DASHBOARD / "bilingual-dashboard.yaml",
     ]:
         cards = _policy_slot_filters(path)
@@ -77,7 +77,11 @@ def test_complete_views_preserve_bounded_native_policy_presentation() -> None:
 
 
 def test_stardust_does_not_add_parallel_presentation() -> None:
-    for path in DASHBOARD.rglob("*.yaml"):
+    for path in [
+        DASHBOARD / "generated" / "portfolio-architect-dashboard-en.yaml",
+        DASHBOARD / "generated" / "portfolio-architect-dashboard-de.yaml",
+        DASHBOARD / "bilingual-dashboard.yaml",
+    ]:
         source = path.read_text(encoding="utf-8").casefold()
         assert "sensor.portfolio_architect_allocation_overview" not in source, path
         if "type: markdown" in source:

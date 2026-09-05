@@ -1,0 +1,1562 @@
+type: grid
+cards:
+- type: heading
+  heading:
+    $i18n: outside_current_plan_scope
+  grid_options:
+    columns: full
+    rows: auto
+- type: entity-filter
+  entities:
+  - entity: sensor.portfolio_architect_presentation_outside_001_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_002_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_003_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_004_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_005_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_006_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_007_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_008_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_009_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_010_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_011_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_012_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_013_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_014_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_015_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_016_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_017_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_018_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_019_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_020_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_021_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_022_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_023_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_024_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_025_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_026_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_027_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_028_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_029_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_030_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_031_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_032_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_033_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_034_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_035_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_036_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_037_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_038_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_039_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_040_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_041_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_042_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_043_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_044_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_045_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_046_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_047_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_048_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_049_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_050_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_051_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_052_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_053_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_054_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_055_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_056_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_057_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_058_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_059_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_060_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_061_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_062_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_063_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_064_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_065_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_066_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_067_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_068_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_069_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_070_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_071_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_072_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_073_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_074_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_075_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_076_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_077_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_078_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_079_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_080_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_081_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_082_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_083_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_084_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_085_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_086_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_087_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_088_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_089_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_090_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_091_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_092_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_093_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_094_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_095_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_096_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_097_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_098_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_099_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_100_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_101_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_102_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_103_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_104_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_105_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_106_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_107_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_108_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_109_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_110_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_111_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_112_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_113_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_114_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_115_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_116_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_117_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_118_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_119_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_120_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_121_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_122_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_123_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_124_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_125_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_126_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_127_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_128_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_129_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_130_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_131_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_132_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_133_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_134_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_135_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_136_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_137_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_138_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_139_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_140_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_141_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_142_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_143_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_144_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_145_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_146_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_147_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_148_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_149_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_150_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_151_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_152_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_153_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_154_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_155_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_156_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_157_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_158_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_159_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_160_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_161_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_162_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_163_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_164_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_165_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_166_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_167_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_168_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_169_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_170_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_171_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_172_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_173_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_174_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_175_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_176_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_177_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_178_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_179_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_180_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_181_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_182_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_183_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_184_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_185_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_186_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_187_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_188_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_189_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_190_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_191_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_192_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_193_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_194_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_195_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_196_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_197_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_198_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_199_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_200_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_201_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_202_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_203_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_204_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_205_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_206_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_207_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_208_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_209_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_210_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_211_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_212_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_213_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_214_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_215_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_216_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_217_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_218_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_219_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_220_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_221_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_222_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_223_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_224_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_225_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_226_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_227_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_228_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_229_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_230_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_231_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_232_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_233_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_234_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_235_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_236_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_237_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_238_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_239_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_240_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_241_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_242_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_243_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_244_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_245_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_246_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_247_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_248_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_249_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_250_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_251_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_252_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_253_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_254_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_255_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_256_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_257_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_258_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_259_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_260_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_261_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_262_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_263_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_264_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_265_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_266_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_267_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_268_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_269_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_270_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_271_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_272_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_273_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_274_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_275_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_276_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_277_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_278_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_279_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_280_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_281_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_282_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_283_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_284_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_285_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_286_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_287_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_288_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_289_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_290_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_291_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_292_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_293_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_294_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_295_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_296_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_297_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_298_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_299_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_300_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_301_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_302_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_303_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_304_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_305_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_306_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_307_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_308_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_309_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_310_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_311_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_312_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_313_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_314_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_315_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_316_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_317_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_318_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_319_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_320_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_321_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_322_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_323_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_324_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_325_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_326_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_327_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_328_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_329_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_330_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_331_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_332_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_333_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_334_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_335_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_336_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_337_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_338_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_339_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_340_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_341_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_342_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_343_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_344_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_345_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_346_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_347_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_348_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_349_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_350_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_351_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_352_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_353_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_354_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_355_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_356_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_357_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_358_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_359_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_360_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_361_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_362_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_363_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_364_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_365_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_366_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_367_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_368_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_369_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_370_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_371_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_372_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_373_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_374_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_375_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_376_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_377_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_378_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_379_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_380_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_381_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_382_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_383_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_384_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_385_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_386_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_387_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_388_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_389_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_390_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_391_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_392_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_393_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_394_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_395_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_396_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_397_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_398_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_399_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_400_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_401_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_402_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_403_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_404_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_405_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_406_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_407_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_408_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_409_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_410_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_411_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_412_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_413_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_414_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_415_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_416_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_417_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_418_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_419_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_420_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_421_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_422_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_423_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_424_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_425_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_426_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_427_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_428_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_429_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_430_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_431_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_432_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_433_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_434_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_435_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_436_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_437_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_438_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_439_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_440_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_441_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_442_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_443_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_444_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_445_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_446_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_447_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_448_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_449_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_450_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_451_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_452_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_453_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_454_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_455_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_456_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_457_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_458_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_459_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_460_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_461_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_462_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_463_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_464_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_465_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_466_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_467_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_468_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_469_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_470_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_471_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_472_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_473_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_474_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_475_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_476_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_477_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_478_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_479_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_480_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_481_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_482_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_483_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_484_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_485_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_486_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_487_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_488_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_489_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_490_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_491_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_492_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_493_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_494_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_495_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_496_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_497_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_498_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_499_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_500_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_501_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_502_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_503_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_504_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_505_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_506_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_507_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_508_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_509_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_510_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_511_holding_value
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_512_holding_value
+    name:
+      type: entity
+  conditions:
+  - condition: state
+    state_not:
+    - unavailable
+    - unknown
+  card:
+    type: glance
+    title:
+      $i18n: outside_current_plan_scope
+    columns: 2
+    show_name: true
+    show_state: true
+  show_empty: false
+  grid_options:
+    columns: full
+    rows: auto

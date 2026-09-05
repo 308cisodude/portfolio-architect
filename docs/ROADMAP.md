@@ -50,6 +50,14 @@ Completes v1.62 clean-room acceptance by moving Portfolio Architect service init
 - Remove blocking SSL trust-store construction from synchronous REST/discovery CA normalization while retaining semantic private-CA/X.509 validation in the existing executor-backed HTTPS request path.
 - Preserve v1.62.3 Trade Republic month parsing, config-entry schema 13, all provider acquisition/wire/freshness/planner semantics, private-PKI verification and `fallback_policy: none`.
 
+## v1.63.0 — modular static dashboard localization — prepared
+
+- Author Lovelace card/entity/condition/layout behavior once under `dashboard/src/shared/`; keep user-facing EN/DE text in matched 100-key catalogs and locale-specific technical differences in bounded overlays.
+- Generate deterministic static EN-only, DE-only and combined EN/DE dashboards at build time. Home Assistant runs no generator, include processor, custom parser or localization code.
+- Keep `dashboard/bilingual-dashboard.yaml` as the combined compatibility surface while retiring duplicated per-locale/root authoring fragments.
+- Correct the zero-accepted-exception policy view so review is explicitly not required at zero and due/overdue review tiles require at least one accepted exception.
+- Preserve v1.62.5 runtime/provider/config/freshness/planner/security behavior unchanged.
+
 ## v1.62.5 — optional exceptions metadata hotfix — prepared
 
 - Keep `portfolio.yaml`, `policy.yaml`, `instruments.yaml` and `broker.yaml` mandatory for coordinator metadata while treating `exceptions.yaml` as optional exactly as the calculator/initial-setup path already does.

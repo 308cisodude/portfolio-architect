@@ -305,7 +305,11 @@ def test_presentation_contract_is_first_class_and_dashboard_remains_native_only(
 
     document = yaml.safe_load((CURRENT_PLAN / "portfolio.yaml").read_text(encoding="utf-8"))
     target_ids = [item["target_id"] for item in document["portfolio"]["allocation"]]
-    for path in (ROOT / "dashboard" / "bilingual-dashboard.yaml", ROOT / "dashboard" / "en" / "view.yaml", ROOT / "dashboard" / "de" / "view.yaml"):
+    for path in (
+        ROOT / "dashboard" / "bilingual-dashboard.yaml",
+        ROOT / "dashboard" / "generated" / "portfolio-architect-dashboard-en.yaml",
+        ROOT / "dashboard" / "generated" / "portfolio-architect-dashboard-de.yaml",
+    ):
         text = path.read_text(encoding="utf-8")
         lowered = text.lower()
         assert "auto-entities" not in lowered

@@ -1,0 +1,102 @@
+locale: de
+strings:
+  investment_plan: Anlageplan
+  plan_ready: Plan bereit
+  waiting_for_investment_cash: Warten auf Anlageguthaben
+  waiting_for_cost_efficient_execution: Warten auf kosteneffiziente Ausführung
+  no_eligible_purchase: Kein geeigneter Kauf
+  investment_cash_unavailable: Anlageguthaben nicht verfügbar
+  plan_unavailable: Plan nicht verfügbar
+  changes_since_previous_evaluation: Änderungen seit letzter Auswertung
+  plan_budget: Planbudget
+  frequency: Intervall
+  per_execution: Je Ausführung
+  allocated: Zugeordnet
+  purchases: Käufe
+  executions: Ausführungen
+  scheduled_execution: Geplante Ausführung
+  actionability: Umsetzbarkeit
+  last_evaluated: Zuletzt ausgewertet
+  unallocated: Nicht zugeordnet
+  execution_policy: Ausführungsstrategie
+  authorized_investment_cash: Freigegebenes Anlageguthaben
+  additional_investment_cash_required: Zusätzlich benötigtes Anlageguthaben
+  investment_reserve_unavailable: Anlagereserve nicht verfügbar
+  cash_required: Geldbedarf
+  estimated_fees: Geschätzte Gebühren
+  cash_after_recommended_purchases: Guthaben nach empfohlenen Käufen
+  purchase_deferred_for_cost_efficiency: Kauf aus Kostengründen zurückgestellt
+  execution_path: Ausführungsweg
+  recommended_purchases: Empfohlene Käufe
+  deferred_targets: Zurückgestellte Ziele
+  portfolio_policy_compliance: Portfolio-Richtlinienkonformität
+  mandatory_controls_compliant: Verbindliche Kontrollen konform
+  mandatory_controls_need_attention: Kontrollen benötigen Aufmerksamkeit
+  errors: Fehler
+  warnings: Warnungen
+  exceptions: Ausnahmen
+  last_decision: Letzte Entscheidung
+  exception_review_not_required: Ausnahmeprüfung nicht erforderlich
+  overdue_review: Überfällige Prüfung
+  exception_review: Ausnahmeprüfung
+  optimisation_opportunities: Optimierungsmöglichkeiten
+  active_policy_findings: Aktive Richtlinienfeststellungen
+  target_architecture: Zielarchitektur
+  coverage: Abdeckung
+  architecture: Architektur
+  target_positions_legend: Zielpositionen · ✓ Vorhanden · ○ Fehlend
+  multi_source_target_positions: Zielpositionen mit mehreren Quellen
+  runtime_health: Laufzeitstatus
+  source_healthy: Quelle verfügbar
+  source_unavailable: Quelle fehlt
+  snapshot_freshness: Snapshot-Aktualität
+  review_schedule_not_configured: Prüfplan nicht konfiguriert
+  plan_review_due: Planprüfung fällig
+  next_plan_review: Nächste Planprüfung
+  last_evaluation: Letzte Auswertung
+  portfolio_sources: Portfolioquellen
+  identity_conflicts: Quellenkonflikte
+  gateway_reauthentication_required: Gateway-Anmeldung erforderlich
+  gateway_status: Gateway-Status
+  last_live_refresh: Live-Aktualisierung
+  operating_mode: Betriebsmodus
+  snapshot_age: Snapshot-Alter
+  refresh_scheduled: Abruf geplant
+  refresh_due: Abruf fällig
+  refresh_overdue: Abruf überfällig
+  refresh_running: Abruf läuft
+  refresh_duration: Letzte Abrufdauer
+  refresh_trigger: Abrufauslöser
+  live_refresh_running: Live-Aktualisierung läuft
+  using_last_known_good_snapshot: Letzter gültiger Snapshot aktiv
+  gateway_attention_required: Gateway erfordert Aufmerksamkeit
+  attention_reason: Warnungsgrund
+  recommended_action: Empfohlene Maßnahme
+  last_refresh_failure: Letzter Fehler
+  live_refresh_overdue: Refresh überfällig
+  snapshot_verified: Snapshot verifiziert
+  snapshot_integrity: Snapshot-Fehler
+  integrity_unknown: Integrität unbekannt
+  snapshot_generated: Snapshot erzeugt
+  gateway_error: Gateway-Fehler
+  source_provider: Quellanbieter
+  total_portfolio_value: Gesamtportfoliowert
+  portfolio_value: Portfoliowert
+  imported_positions: Importiert
+  plan_value: Planwert
+  plan_share: Plananteil
+  outside_value: Wert außerhalb
+  outside_share: Anteil außerhalb
+  outside_positions: Positionen außerhalb
+  whole_portfolio_allocation: Allokation des Gesamtportfolios
+  outside_current_plan_scope: Außerhalb des aktuellen Plans
+  current_plan_allocation: Aktuelle Planallokation
+  plan_target_allocation: Zielallokation des Plans
+  current_portfolio_allocation: Aktuelle Portfolioallokation
+  allocation_on_target: Allokation im Ziel
+  allocation_needs_rebalancing: Allokation erfordert Ausgleich
+  target_corridor: Zielkorridor
+  underweight: Untergewichtet
+  on_target: Im Ziel
+  overweight: Übergewichtet
+  view_label: DE

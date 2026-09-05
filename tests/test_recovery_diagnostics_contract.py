@@ -71,9 +71,11 @@ def test_recovery_translations_icons_and_dashboard_are_present() -> None:
         assert translations["entity"]["sensor"]["gateway_recommended_action"]["name"]
         assert translations["entity"]["binary_sensor"]["gateway_attention_required"]["name"]
         assert translations["issues"]["gateway_repeated_refresh_failures"]["title"]
-        runtime = (ROOT / "dashboard" / language / "runtime-health.yaml").read_text()
+        runtime = (ROOT / "dashboard" / "generated" / f"portfolio-architect-dashboard-{language}.yaml").read_text()
         assert "gateway_attention_required" in runtime
         assert "attention_reason" in runtime
         assert "recommended_action" in runtime
-        assert "sensor.portfolio_architect_gateway_attention_reason" not in runtime
-        assert "sensor.portfolio_architect_gateway_recommended_action" not in runtime
+        # v1.63.0 makes the modular bilingual view the sole dashboard behavior
+        # baseline; single-language artifacts are generated from that same view.
+        assert "sensor.portfolio_architect_gateway_attention_reason" in runtime
+        assert "sensor.portfolio_architect_gateway_recommended_action" in runtime

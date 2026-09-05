@@ -1,5 +1,11 @@
-type: vertical-stack
+type: grid
 cards:
+- type: heading
+  heading:
+    $i18n: runtime_health
+  grid_options:
+    columns: full
+    rows: auto
 - type: conditional
   conditions:
   - condition: state
@@ -8,7 +14,8 @@ cards:
   card:
     type: tile
     entity: binary_sensor.portfolio_architect_source_healthy
-    name: Source healthy
+    name:
+      $i18n: source_healthy
     tap_action:
       action: more-info
     color: green
@@ -22,13 +29,11 @@ cards:
   - condition: state
     entity: binary_sensor.portfolio_architect_source_healthy
     state: 'off'
-  - condition: state
-    entity: binary_sensor.portfolio_architect_gateway_attention_required
-    state: 'off'
   card:
     type: tile
     entity: binary_sensor.portfolio_architect_source_healthy
-    name: Source unavailable
+    name:
+      $i18n: source_unavailable
     state_content: unavailable_source_summary
     tap_action:
       action: more-info
@@ -42,13 +47,11 @@ cards:
   - condition: state
     entity: binary_sensor.portfolio_architect_data_fresh
     state: 'on'
-  - condition: state
-    entity: binary_sensor.portfolio_architect_gateway_using_last_known_good_snapshot
-    state: 'off'
   card:
     type: tile
     entity: binary_sensor.portfolio_architect_data_fresh
-    name: Snapshot freshness
+    name:
+      $i18n: snapshot_freshness
     tap_action:
       action: more-info
     color: green
@@ -62,14 +65,12 @@ cards:
   - condition: state
     entity: binary_sensor.portfolio_architect_data_fresh
     state: 'off'
-  - condition: state
-    entity: binary_sensor.portfolio_architect_gateway_using_last_known_good_snapshot
-    state: 'off'
   card:
     type: tile
     entity: binary_sensor.portfolio_architect_data_fresh
     state_content: stale_source_summary
-    name: Snapshot freshness
+    name:
+      $i18n: snapshot_freshness
     tap_action:
       action: more-info
     color: amber
@@ -86,7 +87,8 @@ cards:
   card:
     type: tile
     entity: binary_sensor.portfolio_architect_review_schedule_configured
-    name: Review schedule not configured
+    name:
+      $i18n: review_schedule_not_configured
     tap_action:
       action: more-info
     icon: mdi:calendar-question-outline
@@ -103,7 +105,8 @@ cards:
   card:
     type: tile
     entity: binary_sensor.portfolio_architect_plan_review_due
-    name: Plan review due
+    name:
+      $i18n: plan_review_due
     tap_action:
       action: more-info
     icon: mdi:calendar-alert
@@ -120,7 +123,8 @@ cards:
   card:
     type: tile
     entity: date.portfolio_architect_next_plan_review
-    name: Next plan review
+    name:
+      $i18n: next_plan_review
     tap_action:
       action: more-info
       entity: sensor.portfolio_architect_next_plan_review
@@ -131,7 +135,8 @@ cards:
     rows: auto
 - type: tile
   entity: sensor.portfolio_architect_last_successful_refresh
-  name: Last evaluation
+  name:
+    $i18n: last_evaluation
   tap_action:
     action: more-info
   grid_options:
@@ -143,7 +148,8 @@ cards:
   - engine_version
 - type: tile
   entity: sensor.portfolio_architect_source_count
-  name: Portfolio sources
+  name:
+    $i18n: portfolio_sources
   tap_action:
     action: more-info
   icon: mdi:source-branch
@@ -159,7 +165,8 @@ cards:
   card:
     type: tile
     entity: sensor.portfolio_architect_source_conflict_count
-    name: Identity conflicts
+    name:
+      $i18n: identity_conflicts
     tap_action:
       action: more-info
     icon: mdi:source-branch-alert
@@ -171,14 +178,33 @@ cards:
   conditions:
   - condition: state
     entity: sensor.portfolio_architect_gateway_status
-    state: ok
+    state_not: unavailable
   - condition: state
-    entity: binary_sensor.portfolio_architect_gateway_attention_required
-    state: 'off'
+    entity: binary_sensor.portfolio_architect_gateway_reauthentication_required
+    state: 'on'
+  card:
+    type: tile
+    entity: binary_sensor.portfolio_architect_gateway_reauthentication_required
+    name:
+      $i18n: gateway_reauthentication_required
+    tap_action:
+      action: more-info
+    color: red
+    icon: mdi:account-alert-outline
+    hide_state: true
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_gateway_status
+    state: ok
   card:
     type: tile
     entity: sensor.portfolio_architect_gateway_status
-    name: Gateway status
+    name:
+      $i18n: gateway_status
     tap_action:
       action: more-info
     icon: mdi:lan-check
@@ -191,13 +217,11 @@ cards:
   - condition: state
     entity: sensor.portfolio_architect_gateway_status
     state: degraded
-  - condition: state
-    entity: binary_sensor.portfolio_architect_gateway_attention_required
-    state: 'off'
   card:
     type: tile
     entity: sensor.portfolio_architect_gateway_status
-    name: Gateway status
+    name:
+      $i18n: gateway_status
     tap_action:
       action: more-info
     icon: mdi:lan-check
@@ -216,7 +240,8 @@ cards:
   card:
     type: tile
     entity: sensor.portfolio_architect_gateway_last_refresh
-    name: Last live refresh
+    name:
+      $i18n: last_live_refresh
     tap_action:
       action: more-info
     icon: mdi:cloud-refresh-outline
@@ -231,11 +256,46 @@ cards:
   card:
     type: tile
     entity: sensor.portfolio_architect_gateway_operating_mode
-    name: Operating mode
+    name:
+      $i18n: operating_mode
     tap_action:
       action: more-info
     icon: mdi:database-sync-outline
     color: green
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_gateway_operating_mode
+    state: last_known_good
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_gateway_operating_mode
+    name:
+      $i18n: operating_mode
+    tap_action:
+      action: more-info
+    icon: mdi:database-sync-outline
+    color: amber
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_gateway_operating_mode
+    state: reauthentication_required
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_gateway_operating_mode
+    name:
+      $i18n: operating_mode
+    tap_action:
+      action: more-info
+    icon: mdi:database-sync-outline
+    color: red
   grid_options:
     columns: 6
     rows: auto
@@ -247,7 +307,8 @@ cards:
   card:
     type: tile
     entity: sensor.portfolio_architect_gateway_snapshot_age
-    name: Snapshot age
+    name:
+      $i18n: snapshot_age
     tap_action:
       action: more-info
     icon: mdi:timer-sand
@@ -265,7 +326,8 @@ cards:
   card:
     type: tile
     entity: sensor.portfolio_architect_gateway_next_refresh
-    name: Refresh scheduled
+    name:
+      $i18n: refresh_scheduled
     state_content: state
     time_format:
       type: datetime
@@ -288,7 +350,8 @@ cards:
   card:
     type: tile
     entity: sensor.portfolio_architect_gateway_next_refresh
-    name: Refresh due
+    name:
+      $i18n: refresh_due
     state_content: state
     time_format:
       type: datetime
@@ -311,7 +374,8 @@ cards:
   card:
     type: tile
     entity: sensor.portfolio_architect_gateway_next_refresh
-    name: Refresh overdue
+    name:
+      $i18n: refresh_overdue
     state_content: state
     time_format:
       type: datetime
@@ -334,7 +398,8 @@ cards:
   card:
     type: tile
     entity: sensor.portfolio_architect_gateway_refresh_schedule
-    name: Refresh running
+    name:
+      $i18n: refresh_running
     tap_action:
       action: more-info
     icon: mdi:database-refresh-outline
@@ -354,7 +419,8 @@ cards:
   card:
     type: tile
     entity: sensor.portfolio_architect_gateway_last_refresh_duration
-    name: Refresh duration
+    name:
+      $i18n: refresh_duration
     tap_action:
       action: more-info
     icon: mdi:timer-outline
@@ -372,7 +438,8 @@ cards:
   card:
     type: tile
     entity: sensor.portfolio_architect_gateway_last_refresh_trigger
-    name: Refresh trigger
+    name:
+      $i18n: refresh_trigger
     tap_action:
       action: more-info
     icon: mdi:database-refresh-outline
@@ -390,7 +457,8 @@ cards:
   card:
     type: tile
     entity: binary_sensor.portfolio_architect_gateway_refresh_in_progress
-    name: Live refresh running
+    name:
+      $i18n: live_refresh_running
     tap_action:
       action: more-info
     icon: mdi:database-refresh-outline
@@ -410,37 +478,119 @@ cards:
   card:
     type: tile
     entity: binary_sensor.portfolio_architect_gateway_using_last_known_good_snapshot
-    name: Snapshot / LKG state
+    name:
+      $i18n: using_last_known_good_snapshot
     tap_action:
       action: more-info
     icon: mdi:database-clock-outline
     color: amber
     hide_state: true
-    state_content:
-    - snapshot_age_seconds
-    - snapshot_expires_in_seconds
   grid_options:
     columns: full
     rows: auto
 - type: conditional
   conditions:
   - condition: state
+    entity: sensor.portfolio_architect_gateway_status
+    state_not: unavailable
+  - condition: state
     entity: binary_sensor.portfolio_architect_gateway_attention_required
     state: 'on'
   card:
     type: tile
     entity: binary_sensor.portfolio_architect_gateway_attention_required
-    name: Gateway incident
+    name:
+      $i18n: gateway_attention_required
     tap_action:
       action: more-info
     color: red
     icon: mdi:shield-alert-outline
     hide_state: true
-    state_content:
-    - attention_reason
-    - recommended_action
   grid_options:
     columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_gateway_status
+    state_not: unavailable
+  - condition: state
+    entity: binary_sensor.portfolio_architect_gateway_attention_required
+    state: 'on'
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_gateway_attention_reason
+    name:
+      $i18n: attention_reason
+    tap_action:
+      action: more-info
+    color: amber
+    icon: mdi:alert-decagram-outline
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_gateway_status
+    state_not: unavailable
+  - condition: state
+    entity: binary_sensor.portfolio_architect_gateway_attention_required
+    state: 'on'
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_gateway_recommended_action
+    name:
+      $i18n: recommended_action
+    tap_action:
+      action: more-info
+    color: amber
+    icon: mdi:clipboard-text-search-outline
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_gateway_status
+    state_not: unavailable
+  - condition: state
+    entity: binary_sensor.portfolio_architect_gateway_attention_required
+    state: 'on'
+  - condition: state
+    entity: sensor.portfolio_architect_gateway_last_refresh_failure
+    state_not: unavailable
+  card:
+    type: tile
+    entity: sensor.portfolio_architect_gateway_last_refresh_failure
+    name:
+      $i18n: last_refresh_failure
+    tap_action:
+      action: more-info
+    icon: mdi:clock-alert-outline
+  grid_options:
+    columns: 6
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_gateway_status
+    state_not: unavailable
+  - condition: state
+    entity: binary_sensor.portfolio_architect_gateway_refresh_overdue
+    state: 'on'
+  card:
+    type: tile
+    entity: binary_sensor.portfolio_architect_gateway_refresh_overdue
+    name:
+      $i18n: live_refresh_overdue
+    tap_action:
+      action: more-info
+    color: red
+    icon: mdi:calendar-alert
+    hide_state: true
+  grid_options:
+    columns: 6
     rows: auto
 - type: conditional
   conditions:
@@ -453,7 +603,8 @@ cards:
   card:
     type: tile
     entity: binary_sensor.portfolio_architect_gateway_snapshot_integrity_verified
-    name: Snapshot verified
+    name:
+      $i18n: snapshot_verified
     tap_action:
       action: more-info
     color: green
@@ -470,13 +621,11 @@ cards:
   - condition: state
     entity: binary_sensor.portfolio_architect_gateway_snapshot_integrity_verified
     state: 'off'
-  - condition: state
-    entity: binary_sensor.portfolio_architect_gateway_attention_required
-    state: 'off'
   card:
     type: tile
     entity: binary_sensor.portfolio_architect_gateway_snapshot_integrity_verified
-    name: Snapshot integrity
+    name:
+      $i18n: snapshot_integrity
     tap_action:
       action: more-info
     color: red
@@ -493,13 +642,11 @@ cards:
   - condition: state
     entity: binary_sensor.portfolio_architect_gateway_snapshot_integrity_verified
     state: unavailable
-  - condition: state
-    entity: binary_sensor.portfolio_architect_gateway_attention_required
-    state: 'off'
   card:
     type: tile
     entity: binary_sensor.portfolio_architect_gateway_snapshot_integrity_verified
-    name: Integrity unknown
+    name:
+      $i18n: integrity_unknown
     tap_action:
       action: more-info
     color: amber
@@ -519,7 +666,8 @@ cards:
   card:
     type: tile
     entity: sensor.portfolio_architect_gateway_snapshot_generated
-    name: Snapshot generated
+    name:
+      $i18n: snapshot_generated
     tap_action:
       action: more-info
     icon: mdi:database-clock-outline
@@ -534,13 +682,11 @@ cards:
   - condition: state
     entity: sensor.portfolio_architect_gateway_last_error
     state_not: none
-  - condition: state
-    entity: binary_sensor.portfolio_architect_gateway_attention_required
-    state: 'off'
   card:
     type: tile
     entity: sensor.portfolio_architect_gateway_last_error
-    name: Gateway error
+    name:
+      $i18n: gateway_error
     tap_action:
       action: more-info
     color: amber
@@ -550,7 +696,8 @@ cards:
     rows: auto
 - type: tile
   entity: sensor.portfolio_architect_source_provider
-  name: Source provider
+  name:
+    $i18n: source_provider
   state_content: provider_summary
   tap_action:
     action: more-info

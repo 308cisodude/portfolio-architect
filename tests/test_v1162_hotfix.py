@@ -117,4 +117,4 @@ def test_calculation_failures_are_not_mislabelled_as_supplemental_source_failure
 
 
 def test_v1162_version_metadata_is_aligned() -> None:
-    assert 'version = "1.62.5"' in (ROOT / "pyproject.toml").read_text()
+    assert 'version = "1.63.0"' in (ROOT / "pyproject.toml").read_text()

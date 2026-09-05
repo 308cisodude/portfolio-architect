@@ -81,7 +81,7 @@ def test_refresh_entities_translations_and_dashboard_are_present() -> None:
         assert sensors["gateway_last_refresh_duration"]["name"]
         assert sensors["gateway_last_refresh_trigger"]["name"]
         assert binary_sensors["gateway_refresh_in_progress"]["name"]
-        runtime = (ROOT / "dashboard" / language / "runtime-health.yaml").read_text()
+        runtime = (ROOT / "dashboard" / "generated" / f"portfolio-architect-dashboard-{language}.yaml").read_text()
         assert "gateway_refresh_schedule" in runtime
         assert "gateway_next_refresh" in runtime
         assert "style: short" in runtime

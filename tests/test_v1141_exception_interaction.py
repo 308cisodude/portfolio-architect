@@ -49,7 +49,7 @@ def _policy_slot_filters(path: Path) -> list[dict]:
 
 def test_exception_presentation_is_clickable_bounded_native_list() -> None:
     for locale in ("en", "de"):
-        cards = _policy_slot_filters(DASHBOARD / locale / "policy-compliance.yaml")
+        cards = _policy_slot_filters(DASHBOARD / "generated" / f"portfolio-architect-dashboard-{locale}.yaml")
         assert len(cards) == 1
         wrapper = cards[0]
         assert len(wrapper["entities"]) == 256
@@ -60,8 +60,8 @@ def test_exception_presentation_is_clickable_bounded_native_list() -> None:
 
 def test_complete_views_use_generic_bounded_policy_detail_aliases() -> None:
     for path in [
-        DASHBOARD / "en" / "view.yaml",
-        DASHBOARD / "de" / "view.yaml",
+        DASHBOARD / "generated" / "portfolio-architect-dashboard-en.yaml",
+        DASHBOARD / "generated" / "portfolio-architect-dashboard-de.yaml",
         DASHBOARD / "bilingual-dashboard.yaml",
     ]:
         cards = _policy_slot_filters(path)

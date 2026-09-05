@@ -9,6 +9,8 @@ import json
 import os
 import shutil
 import stat
+import subprocess
+import sys
 import tempfile
 import zipfile
 from datetime import datetime, timezone
@@ -197,10 +199,56 @@ def build(output: Path) -> list[Path]:
         full_archive = output / f"portfolio-architect-v{version}.zip"
         write_reproducible_zip(full_stage, full_archive, prefix=full_stage.name)
 
-        # Convenience files published beside the archives.
+        # Dashboard artifacts are generated at release-build time from the shared
+        # source + locale catalogs. Refuse stale committed outputs so the source
+        # architecture and published static Lovelace YAML cannot drift apart.
+        dashboard_specs = (
+            (
+                "en",
+                PROJECT_ROOT / "dashboard/generated/portfolio-architect-dashboard-en.yaml",
+                output / f"portfolio-architect-v{version}-dashboard-en.yaml",
+            ),
+            (
+                "de",
+                PROJECT_ROOT / "dashboard/generated/portfolio-architect-dashboard-de.yaml",
+                output / f"portfolio-architect-v{version}-dashboard-de.yaml",
+            ),
+            (
+                "all",
+                PROJECT_ROOT / "dashboard/generated/portfolio-architect-dashboard-en-de.yaml",
+                output / f"portfolio-architect-v{version}-bilingual-dashboard.yaml",
+            ),
+        )
+        rendered_dashboards: dict[str, Path] = {}
+        for selector, committed, destination in dashboard_specs:
+            rendered = temp / f"dashboard-{selector}.yaml"
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(PROJECT_ROOT / "tools/build_dashboard.py"),
+                    "--locale",
+                    selector,
+                    "--output",
+                    str(rendered),
+                ],
+                check=True,
+                cwd=PROJECT_ROOT,
+            )
+            if rendered.read_bytes() != committed.read_bytes():
+                raise SystemExit(
+                    f"Generated dashboard is stale for {selector}: {committed.relative_to(PROJECT_ROOT)}"
+                )
+            rendered_dashboards[selector] = rendered
+            shutil.copy2(rendered, destination)
+
+        compatibility_dashboard = PROJECT_ROOT / "dashboard/bilingual-dashboard.yaml"
+        if compatibility_dashboard.read_bytes() != rendered_dashboards["all"].read_bytes():
+            raise SystemExit(
+                "dashboard/bilingual-dashboard.yaml must match the generated EN/DE dashboard"
+            )
+
+        # Remaining convenience files published beside the archives.
         copies = {
-            PROJECT_ROOT / "dashboard/bilingual-dashboard.yaml": output
-            / f"portfolio-architect-v{version}-bilingual-dashboard.yaml",
             PROJECT_ROOT / f"docs/UPGRADE-{version}.md": output
             / f"portfolio-architect-v{version}-upgrade-guide.md",
             PROJECT_ROOT / "docs/RELEASE-NOTES.md": output

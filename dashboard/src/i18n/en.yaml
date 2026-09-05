@@ -1,0 +1,102 @@
+locale: en
+strings:
+  investment_plan: Investment plan
+  plan_ready: Plan ready
+  waiting_for_investment_cash: Waiting for investment cash
+  waiting_for_cost_efficient_execution: Waiting for cost-efficient execution
+  no_eligible_purchase: No eligible purchase
+  investment_cash_unavailable: Investment cash unavailable
+  plan_unavailable: Plan unavailable
+  changes_since_previous_evaluation: Changes since previous evaluation
+  plan_budget: Plan budget
+  frequency: Frequency
+  per_execution: Per execution
+  allocated: Allocated
+  purchases: Purchases
+  executions: Executions
+  scheduled_execution: Scheduled execution
+  actionability: Actionability
+  last_evaluated: Last evaluated
+  unallocated: Unallocated
+  execution_policy: Execution policy
+  authorized_investment_cash: Authorized investment cash
+  additional_investment_cash_required: Additional investment cash required
+  investment_reserve_unavailable: Investment reserve unavailable
+  cash_required: Cash required
+  estimated_fees: Estimated fees
+  cash_after_recommended_purchases: Cash after recommended purchases
+  purchase_deferred_for_cost_efficiency: Purchase deferred for cost efficiency
+  execution_path: Execution path
+  recommended_purchases: Recommended purchases
+  deferred_targets: Deferred targets
+  portfolio_policy_compliance: Portfolio policy compliance
+  mandatory_controls_compliant: Mandatory controls compliant
+  mandatory_controls_need_attention: Mandatory controls need attention
+  errors: Errors
+  warnings: Warnings
+  exceptions: Exceptions
+  last_decision: Last decision
+  exception_review_not_required: Exception review not required
+  overdue_review: Overdue review
+  exception_review: Exception review
+  optimisation_opportunities: Optimisation opportunities
+  active_policy_findings: Active policy findings
+  target_architecture: Target architecture
+  coverage: Coverage
+  architecture: Architecture
+  target_positions_legend: Target positions · ✓ Held · ○ Missing
+  multi_source_target_positions: Multi-source target positions
+  runtime_health: Runtime health
+  source_healthy: Source healthy
+  source_unavailable: Source unavailable
+  snapshot_freshness: Snapshot freshness
+  review_schedule_not_configured: Review schedule not configured
+  plan_review_due: Plan review due
+  next_plan_review: Next plan review
+  last_evaluation: Last evaluation
+  portfolio_sources: Portfolio sources
+  identity_conflicts: Identity conflicts
+  gateway_reauthentication_required: Gateway reauthentication required
+  gateway_status: Gateway status
+  last_live_refresh: Last live refresh
+  operating_mode: Operating mode
+  snapshot_age: Snapshot age
+  refresh_scheduled: Refresh scheduled
+  refresh_due: Refresh due
+  refresh_overdue: Refresh overdue
+  refresh_running: Refresh running
+  refresh_duration: Refresh duration
+  refresh_trigger: Refresh trigger
+  live_refresh_running: Live refresh running
+  using_last_known_good_snapshot: Using last-known-good snapshot
+  gateway_attention_required: Gateway attention required
+  attention_reason: Attention reason
+  recommended_action: Recommended action
+  last_refresh_failure: Last refresh failure
+  live_refresh_overdue: Live refresh overdue
+  snapshot_verified: Snapshot verified
+  snapshot_integrity: Snapshot integrity
+  integrity_unknown: Integrity unknown
+  snapshot_generated: Snapshot generated
+  gateway_error: Gateway error
+  source_provider: Source provider
+  total_portfolio_value: Total portfolio value
+  portfolio_value: Portfolio value
+  imported_positions: Imported positions
+  plan_value: Plan value
+  plan_share: Plan share
+  outside_value: Outside value
+  outside_share: Outside share
+  outside_positions: Outside positions
+  whole_portfolio_allocation: Whole-portfolio allocation
+  outside_current_plan_scope: Outside current plan scope
+  current_plan_allocation: Current plan allocation
+  plan_target_allocation: Plan target allocation
+  current_portfolio_allocation: Current portfolio allocation
+  allocation_on_target: Allocation on target
+  allocation_needs_rebalancing: Allocation needs rebalancing
+  target_corridor: Target corridor
+  underweight: Underweight
+  on_target: On target
+  overweight: Overweight
+  view_label: EN

@@ -1,4 +1,4 @@
-"""Regression contract for v1.62.5 primary Gateway identity context."""
+"""Regression contract for v1.63.0 primary Gateway identity context."""
 
 from __future__ import annotations
 

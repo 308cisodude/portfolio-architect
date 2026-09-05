@@ -89,7 +89,7 @@ def test_maintenance_loop_contains_unexpected_iteration_failure(
 
 
 def test_german_dynamic_allocation_charts_use_generic_presentation_slots() -> None:
-    standalone = (ROOT / "dashboard" / ".tmp_de.yaml").read_text(encoding="utf-8")
+    standalone = (ROOT / "dashboard" / "generated" / "portfolio-architect-dashboard-de.yaml").read_text(encoding="utf-8")
     bilingual = (ROOT / "dashboard" / "bilingual-dashboard.yaml").read_text(encoding="utf-8")
 
     for source in (standalone, bilingual):

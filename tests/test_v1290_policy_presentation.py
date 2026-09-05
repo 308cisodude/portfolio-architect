@@ -39,14 +39,19 @@ def _policy_section_cards(view: dict) -> list[dict]:
     raise AssertionError("policy section not found")
 
 
+def _generated_view(locale: str) -> dict:
+    path = DASHBOARD / "generated" / f"portfolio-architect-dashboard-{locale}.yaml"
+    doc = yaml.safe_load(path.read_text(encoding="utf-8"))
+    assert len(doc["views"]) == 1
+    return doc["views"][0]
+
+
 def _standalone_cards(locale: str) -> list[dict]:
-    doc = yaml.safe_load((DASHBOARD / locale / "policy-compliance.yaml").read_text(encoding="utf-8"))
-    return doc["cards"]
+    return _policy_section_cards(_generated_view(locale))
 
 
 def _view_cards(locale: str) -> list[dict]:
-    doc = yaml.safe_load((DASHBOARD / locale / "view.yaml").read_text(encoding="utf-8"))
-    return _policy_section_cards(doc)
+    return _policy_section_cards(_generated_view(locale))
 
 
 def _bilingual_cards(title: str) -> list[dict]:
@@ -120,8 +125,8 @@ def test_policy_opportunity_hierarchy_is_native_localised_and_consistent() -> No
 
 def test_policy_polish_uses_no_custom_or_markdown_card_surface() -> None:
     for path in (
-        DASHBOARD / "en" / "policy-compliance.yaml",
-        DASHBOARD / "de" / "policy-compliance.yaml",
+        DASHBOARD / "generated" / "portfolio-architect-dashboard-en.yaml",
+        DASHBOARD / "generated" / "portfolio-architect-dashboard-de.yaml",
         DASHBOARD / "bilingual-dashboard.yaml",
     ):
         source = path.read_text(encoding="utf-8").casefold()

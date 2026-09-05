@@ -116,8 +116,8 @@ def test_dkb_probe_fingerprints_exact_raw_http_body_before_decode(
 
 
 def test_dynamic_dashboard_does_not_hardcode_robotics_share_class_labels() -> None:
-    en = (ROOT / "dashboard" / "en" / "view.yaml").read_text(encoding="utf-8")
-    de = (ROOT / "dashboard" / "de" / "view.yaml").read_text(encoding="utf-8")
+    en = (ROOT / "dashboard" / "generated" / "portfolio-architect-dashboard-en.yaml").read_text(encoding="utf-8")
+    de = (ROOT / "dashboard" / "generated" / "portfolio-architect-dashboard-de.yaml").read_text(encoding="utf-8")
     bilingual = (ROOT / "dashboard" / "bilingual-dashboard.yaml").read_text(encoding="utf-8")
 
     for source in (en, de, bilingual):

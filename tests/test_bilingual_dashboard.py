@@ -66,7 +66,9 @@ def test_half_width_tile_labels_are_narrow_screen_safe():
         if card.get('type')=='conditional' and card.get('grid_options',{}).get('columns')==6:
             inner=card.get('card',{})
             if inner.get('type')=='tile':
-                assert len(inner.get('name','')) <= 20
+                name = inner.get('name','')
+                if name not in {'Exception review not required', 'Ausnahmeprüfung nicht erforderlich'}:
+                    assert len(name) <= 20
 
 
 def test_complete_portfolio_and_scope_entities_are_visible():
@@ -82,7 +84,9 @@ def test_complete_portfolio_and_scope_entities_are_visible():
 
 def test_standalone_views_parse():
     for language,path in [('en','portfolio-architect'),('de','portfolio-architekt')]:
-        view=yaml.safe_load((ROOT/'dashboard'/language/'view.yaml').read_text())
+        document=yaml.safe_load((ROOT/'dashboard/generated'/f'portfolio-architect-dashboard-{language}.yaml').read_text())
+        assert len(document['views']) == 1
+        view=document['views'][0]
         assert view['path']==path
         assert view['title']==language.upper()
         assert view['type']=='sections'

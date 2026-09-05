@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.63.0
+
+- Version-align this App with Portfolio Architect v1.63.0. DKB CSV holdings/cash acquisition and research-only anonymous FinTS probing, private state, health schema 10, discovery transport, verified private-PKI/bearer trust and `fallback_policy: none` are unchanged; v1.63.0 changes only the static reference-dashboard source/build architecture and presentation.
+
 ## 1.62.5
 
 - Version-align this App with Portfolio Architect v1.62.5. Provider acquisition, private state, wire schemas, verified private-PKI/bearer trust and no-fallback behavior are unchanged; the runtime hotfix is Home Assistant integration-only.

@@ -1,0 +1,130 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 0a1835a49d687919d6b2b5ece5deb32cbe6b2069..84b2a2fd8ff4054ce310e9f04d197db67d025c37 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -7,6 +7,7 @@
+ - Keep `dashboard/bilingual-dashboard.yaml` as a byte-identical compatibility alias for the generated combined dashboard while retiring the former duplicated `dashboard/en`, `dashboard/de`, root fragment and temporary authoring files.
+ - Correct the zero-accepted-exception policy presentation: zero exceptions render green and explicitly state that exception review is not required; due/overdue exception-review tiles are shown only while at least one accepted exception actually exists.
+ - Make release builds regenerate EN, DE and combined dashboards and fail closed if committed generated YAML is stale; regression coverage locks catalog completeness, deterministic generation, bounded overlays and semantic equality to the accepted v1.62.5 dashboard behavior.
++- Name repository-only dashboard build metadata `dashboard/dashboard-build.json` rather than the Home Assistant-reserved `manifest.json`, preventing hassfest from misclassifying dashboard authoring metadata as an integration manifest.
+ - Preserve config-entry schema 13, REST portfolio schema 1, Gateway health schema 10, discovery schemas 1/2, provider acquisition/authority, freshness/LKG/anti-rollback/source-set semantics, planner/funding economics, `fallback_policy: none`, verified private-PKI/bearer trust, removed Comdirect LEGACY state and the authenticated-DKB-FinTS research gate.
+ 
+ ## 1.62.5
+diff --git a/dashboard/README.md b/dashboard/README.md
+index b02a7bf591f7e334333086929bcd917e4b6028e9..0b00593c359e03f0b187e7ff935662e8c49acbd3 100644
+--- a/dashboard/README.md
++++ b/dashboard/README.md
+@@ -60,7 +60,7 @@ To start a new locale without copying card logic:
+ python tools/scaffold_dashboard_locale.py es
+ ```
+ 
+-The scaffold intentionally writes `__TODO__` catalog values and an empty overlay. The build refuses incomplete catalogs. A locale is added to `dashboard/manifest.json` only after translation and acceptance are complete.
++The scaffold intentionally writes `__TODO__` catalog values and an empty overlay. The build refuses incomplete catalogs. A locale is added to `dashboard/dashboard-build.json` only after translation and acceptance are complete.
+ 
+ ## Native-card contract
+ 
+diff --git a/dashboard/manifest.json b/dashboard/dashboard-build.json
+similarity index 100%
+rename from dashboard/manifest.json
+rename to dashboard/dashboard-build.json
+diff --git a/docs/RELEASE-NOTES.md b/docs/RELEASE-NOTES.md
+index 5d6b26e5afa0867a9d7a936e9f5552b8c294496d..2f97e4dd314e646d755a199c6f144a2610d1b648 100644
+--- a/docs/RELEASE-NOTES.md
++++ b/docs/RELEASE-NOTES.md
+@@ -14,6 +14,8 @@ The old duplicated `dashboard/en/`, `dashboard/de/`, root section fragments, and
+ 
+ Release packaging regenerates all dashboard outputs and refuses stale committed generated files. Regression coverage locks locale-key parity, complete `$i18n` resolution, overlay bounds, deterministic byte output, canonical semantic hashes, and the compatibility alias.
+ 
++Repository-only dashboard build metadata is stored as `dashboard/dashboard-build.json`, deliberately avoiding Home Assistant's reserved `manifest.json` filename so hassfest cannot mistake dashboard authoring metadata for an integration manifest. The only repository file named `manifest.json` is the actual Portfolio Architect integration manifest.
++
+ ## Single-language release artifacts
+ 
+ In addition to the existing combined EN/DE dashboard, releases now publish dedicated English-only and German-only YAML. A user who wants one language can therefore import only one view instead of loading both. Future language additions can reuse the shared card structure without multiplying source logic or bloating existing single-language installations.
+diff --git a/docs/UPGRADE-1.63.0.md b/docs/UPGRADE-1.63.0.md
+index 39433df5eb529d8a9be350b5fe53b9bdbf4570c5..6bcf5d6fdde390d1dcd4cacc6a90c6fe322649a1 100644
+--- a/docs/UPGRADE-1.63.0.md
++++ b/docs/UPGRADE-1.63.0.md
+@@ -24,7 +24,7 @@ The v1.63.0 dashboard changes are presentation-only: zero accepted exceptions no
+ 
+ ## No source-tree generator on Home Assistant
+ 
+-Do not copy `dashboard/src/`, `dashboard/manifest.json`, or the build tools into Home Assistant as a dashboard dependency. They are repository/release authoring inputs only. Install the generated static YAML artifact.
++Do not copy `dashboard/src/`, `dashboard/dashboard-build.json`, or the build tools into Home Assistant as a dashboard dependency. They are repository/release authoring inputs only. Install the generated static YAML artifact.
+ 
+ ## Rollback
+ 
+diff --git a/docs/VALIDATION.md b/docs/VALIDATION.md
+index c8a9a1afc6d6cfe61173c52b326780de94e09519..4c2a9c29764fbe323c15220dae23786d551c3f81 100644
+--- a/docs/VALIDATION.md
++++ b/docs/VALIDATION.md
+@@ -7,6 +7,7 @@ Required gates include:
+ - all integration/Gateway/App package versions aligned to v1.63.0;
+ - the existing v1.62.5 optional-`exceptions.yaml` coordinator regression remains green;
+ - exactly nine shared dashboard sections are authored once under `dashboard/src/shared/`;
++- dashboard authoring metadata uses non-reserved `dashboard/dashboard-build.json`, and the only repository `manifest.json` is `custom_components/portfolio_architect/manifest.json`, preventing hassfest integration-manifest misclassification;
+ - EN and DE catalogs contain the same 100 keys, every `$i18n` marker resolves, and no `__TODO__` value is accepted;
+ - English technical overlay is empty and German technical localization remains bounded to the reviewed overlay set;
+ - EN, DE, and combined dashboard generation is deterministic and semantically locked to the accepted v1.62.5 reference behavior including the zero-exception review correction;
+diff --git a/tests/test_v1630_modular_dashboard_architecture.py b/tests/test_v1630_modular_dashboard_architecture.py
+index 1d49a77a9a20064ec77c7ec8d01fa003ccdb62bf..ce8bc9d823264b53585c7eba362a595c4092f39e 100644
+--- a/tests/test_v1630_modular_dashboard_architecture.py
++++ b/tests/test_v1630_modular_dashboard_architecture.py
+@@ -13,7 +13,8 @@ import yaml
+ 
+ ROOT = Path(__file__).resolve().parents[1]
+ DASHBOARD = ROOT / "dashboard"
+-MANIFEST = json.loads((DASHBOARD / "manifest.json").read_text(encoding="utf-8"))
++DASHBOARD_BUILD = DASHBOARD / "dashboard-build.json"
++MANIFEST = json.loads(DASHBOARD_BUILD.read_text(encoding="utf-8"))
+ 
+ 
+ def _load(path: Path) -> Any:
+@@ -170,6 +171,13 @@ def test_zero_exception_review_state_is_explicit_and_review_cards_are_bounded()
+ 
+ 
+ def test_legacy_duplicated_dashboard_authoring_surfaces_are_retired() -> None:
++    # Keep repository dashboard metadata away from Home Assistant's reserved
++    # manifest.json filename so hassfest cannot mistake it for an integration.
++    assert DASHBOARD_BUILD.is_file()
++    assert not (DASHBOARD / "manifest.json").exists()
++    manifests = sorted(path.relative_to(ROOT).as_posix() for path in ROOT.rglob("manifest.json"))
++    assert manifests == ["custom_components/portfolio_architect/manifest.json"]
++
+     assert not (DASHBOARD / "en").exists()
+     assert not (DASHBOARD / "de").exists()
+     for name in (
+diff --git a/tools/build_dashboard.py b/tools/build_dashboard.py
+index 4fafb0275397ba00cc335cafc3c0de1ac8b15c74..c9b35491d20fa012857d7c552cf27a2d2e22cd1d 100755
+--- a/tools/build_dashboard.py
++++ b/tools/build_dashboard.py
+@@ -13,7 +13,7 @@ import yaml
+ 
+ PROJECT_ROOT = Path(__file__).resolve().parents[1]
+ DASHBOARD_ROOT = PROJECT_ROOT / "dashboard"
+-MANIFEST_PATH = DASHBOARD_ROOT / "manifest.json"
++MANIFEST_PATH = DASHBOARD_ROOT / "dashboard-build.json"
+ 
+ 
+ def load_yaml(path: Path) -> Any:
+diff --git a/tools/scaffold_dashboard_locale.py b/tools/scaffold_dashboard_locale.py
+index df04364253136f25ca9b21fd3f32911c51b7a8a8..7208f9eb392dfe6d9a2a1d7bfa28ff8a10f33d46 100755
+--- a/tools/scaffold_dashboard_locale.py
++++ b/tools/scaffold_dashboard_locale.py
+@@ -11,7 +11,7 @@ import yaml
+ 
+ PROJECT_ROOT = Path(__file__).resolve().parents[1]
+ DASHBOARD_ROOT = PROJECT_ROOT / "dashboard"
+-MANIFEST_PATH = DASHBOARD_ROOT / "manifest.json"
++MANIFEST_PATH = DASHBOARD_ROOT / "dashboard-build.json"
+ 
+ 
+ def main() -> None:
+@@ -54,7 +54,7 @@ def main() -> None:
+     )
+     print(f"Created {catalog_path.relative_to(PROJECT_ROOT)}")
+     print(f"Created {overlay_path.relative_to(PROJECT_ROOT)}")
+-    print("Add the locale to dashboard/manifest.json only after translation is complete.")
++    print("Add the locale to dashboard/dashboard-build.json only after translation is complete.")
+ 
+ 
+ if __name__ == "__main__":

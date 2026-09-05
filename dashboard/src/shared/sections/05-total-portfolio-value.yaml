@@ -1,0 +1,1724 @@
+type: grid
+cards:
+- type: heading
+  heading:
+    $i18n: total_portfolio_value
+  grid_options:
+    columns: full
+    rows: auto
+- type: tile
+  entity: sensor.portfolio_architect_portfolio_value
+  name:
+    $i18n: portfolio_value
+  tap_action:
+    action: more-info
+  grid_options:
+    columns: 6
+    rows: auto
+  icon: mdi:briefcase-outline
+- type: tile
+  entity: sensor.portfolio_architect_whole_position_count
+  name:
+    $i18n: imported_positions
+  tap_action:
+    action: more-info
+  grid_options:
+    columns: 6
+    rows: auto
+  icon: mdi:counter
+- type: tile
+  entity: sensor.portfolio_architect_current_plan_value
+  name:
+    $i18n: plan_value
+  tap_action:
+    action: more-info
+  grid_options:
+    columns: 6
+    rows: auto
+  icon: mdi:bullseye-arrow
+- type: tile
+  entity: sensor.portfolio_architect_current_plan_share
+  name:
+    $i18n: plan_share
+  tap_action:
+    action: more-info
+  grid_options:
+    columns: 6
+    rows: auto
+  icon: mdi:chart-donut
+- type: tile
+  entity: sensor.portfolio_architect_outside_scope_value
+  name:
+    $i18n: outside_value
+  tap_action:
+    action: more-info
+  grid_options:
+    columns: 6
+    rows: auto
+  icon: mdi:vector-difference
+- type: tile
+  entity: sensor.portfolio_architect_outside_scope_share
+  name:
+    $i18n: outside_share
+  tap_action:
+    action: more-info
+  grid_options:
+    columns: 6
+    rows: auto
+  icon: mdi:chart-donut-variant
+- type: tile
+  entity: sensor.portfolio_architect_outside_scope_position_count
+  name:
+    $i18n: outside_positions
+  tap_action:
+    action: more-info
+  grid_options:
+    columns: 6
+    rows: auto
+  icon: mdi:counter
+- type: entity-filter
+  entities:
+  - entity: sensor.portfolio_architect_presentation_target_01_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_02_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_03_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_04_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_05_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_06_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_07_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_08_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_09_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_10_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_11_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_12_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_13_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_14_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_15_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_16_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_17_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_18_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_19_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_20_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_21_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_22_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_23_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_24_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_25_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_26_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_27_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_28_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_29_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_30_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_31_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_target_32_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_001_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_002_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_003_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_004_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_005_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_006_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_007_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_008_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_009_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_010_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_011_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_012_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_013_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_014_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_015_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_016_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_017_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_018_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_019_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_020_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_021_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_022_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_023_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_024_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_025_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_026_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_027_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_028_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_029_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_030_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_031_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_032_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_033_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_034_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_035_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_036_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_037_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_038_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_039_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_040_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_041_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_042_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_043_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_044_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_045_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_046_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_047_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_048_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_049_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_050_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_051_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_052_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_053_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_054_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_055_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_056_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_057_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_058_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_059_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_060_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_061_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_062_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_063_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_064_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_065_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_066_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_067_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_068_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_069_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_070_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_071_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_072_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_073_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_074_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_075_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_076_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_077_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_078_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_079_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_080_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_081_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_082_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_083_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_084_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_085_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_086_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_087_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_088_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_089_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_090_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_091_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_092_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_093_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_094_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_095_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_096_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_097_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_098_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_099_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_100_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_101_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_102_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_103_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_104_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_105_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_106_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_107_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_108_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_109_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_110_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_111_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_112_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_113_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_114_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_115_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_116_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_117_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_118_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_119_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_120_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_121_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_122_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_123_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_124_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_125_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_126_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_127_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_128_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_129_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_130_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_131_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_132_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_133_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_134_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_135_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_136_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_137_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_138_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_139_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_140_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_141_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_142_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_143_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_144_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_145_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_146_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_147_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_148_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_149_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_150_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_151_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_152_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_153_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_154_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_155_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_156_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_157_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_158_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_159_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_160_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_161_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_162_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_163_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_164_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_165_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_166_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_167_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_168_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_169_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_170_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_171_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_172_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_173_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_174_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_175_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_176_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_177_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_178_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_179_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_180_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_181_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_182_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_183_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_184_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_185_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_186_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_187_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_188_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_189_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_190_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_191_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_192_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_193_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_194_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_195_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_196_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_197_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_198_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_199_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_200_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_201_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_202_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_203_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_204_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_205_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_206_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_207_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_208_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_209_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_210_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_211_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_212_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_213_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_214_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_215_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_216_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_217_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_218_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_219_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_220_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_221_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_222_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_223_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_224_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_225_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_226_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_227_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_228_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_229_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_230_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_231_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_232_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_233_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_234_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_235_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_236_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_237_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_238_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_239_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_240_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_241_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_242_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_243_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_244_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_245_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_246_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_247_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_248_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_249_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_250_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_251_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_252_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_253_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_254_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_255_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_256_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_257_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_258_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_259_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_260_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_261_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_262_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_263_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_264_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_265_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_266_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_267_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_268_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_269_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_270_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_271_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_272_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_273_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_274_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_275_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_276_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_277_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_278_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_279_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_280_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_281_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_282_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_283_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_284_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_285_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_286_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_287_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_288_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_289_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_290_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_291_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_292_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_293_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_294_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_295_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_296_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_297_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_298_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_299_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_300_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_301_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_302_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_303_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_304_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_305_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_306_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_307_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_308_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_309_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_310_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_311_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_312_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_313_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_314_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_315_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_316_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_317_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_318_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_319_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_320_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_321_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_322_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_323_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_324_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_325_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_326_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_327_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_328_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_329_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_330_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_331_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_332_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_333_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_334_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_335_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_336_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_337_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_338_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_339_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_340_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_341_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_342_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_343_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_344_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_345_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_346_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_347_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_348_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_349_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_350_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_351_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_352_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_353_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_354_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_355_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_356_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_357_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_358_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_359_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_360_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_361_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_362_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_363_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_364_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_365_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_366_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_367_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_368_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_369_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_370_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_371_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_372_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_373_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_374_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_375_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_376_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_377_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_378_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_379_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_380_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_381_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_382_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_383_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_384_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_385_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_386_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_387_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_388_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_389_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_390_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_391_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_392_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_393_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_394_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_395_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_396_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_397_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_398_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_399_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_400_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_401_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_402_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_403_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_404_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_405_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_406_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_407_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_408_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_409_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_410_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_411_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_412_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_413_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_414_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_415_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_416_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_417_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_418_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_419_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_420_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_421_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_422_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_423_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_424_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_425_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_426_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_427_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_428_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_429_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_430_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_431_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_432_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_433_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_434_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_435_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_436_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_437_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_438_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_439_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_440_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_441_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_442_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_443_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_444_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_445_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_446_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_447_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_448_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_449_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_450_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_451_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_452_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_453_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_454_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_455_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_456_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_457_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_458_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_459_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_460_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_461_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_462_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_463_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_464_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_465_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_466_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_467_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_468_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_469_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_470_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_471_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_472_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_473_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_474_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_475_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_476_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_477_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_478_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_479_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_480_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_481_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_482_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_483_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_484_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_485_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_486_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_487_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_488_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_489_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_490_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_491_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_492_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_493_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_494_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_495_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_496_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_497_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_498_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_499_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_500_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_501_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_502_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_503_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_504_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_505_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_506_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_507_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_508_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_509_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_510_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_511_whole_portfolio_allocation
+    name:
+      type: entity
+  - entity: sensor.portfolio_architect_presentation_outside_512_whole_portfolio_allocation
+    name:
+      type: entity
+  conditions:
+  - condition: numeric_state
+    above: 0
+  card:
+    type: entities
+    show_header_toggle: false
+    title:
+      $i18n: whole_portfolio_allocation
+  show_empty: false
+  grid_options:
+    columns: full
+    rows: auto
