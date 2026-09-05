@@ -24,7 +24,7 @@ The v1.63.0 dashboard changes are presentation-only: zero accepted exceptions no
 
 ## No source-tree generator on Home Assistant
 
-Do not copy `dashboard/src/`, `dashboard/manifest.json`, or the build tools into Home Assistant as a dashboard dependency. They are repository/release authoring inputs only. Install the generated static YAML artifact.
+Do not copy `dashboard/src/`, `dashboard/dashboard-build.json`, or the build tools into Home Assistant as a dashboard dependency. They are repository/release authoring inputs only. Install the generated static YAML artifact.
 
 ## Rollback
 

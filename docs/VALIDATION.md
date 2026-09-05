@@ -7,6 +7,7 @@ Required gates include:
 - all integration/Gateway/App package versions aligned to v1.63.0;
 - the existing v1.62.5 optional-`exceptions.yaml` coordinator regression remains green;
 - exactly nine shared dashboard sections are authored once under `dashboard/src/shared/`;
+- dashboard authoring metadata uses non-reserved `dashboard/dashboard-build.json`, and the only repository `manifest.json` is `custom_components/portfolio_architect/manifest.json`, preventing hassfest integration-manifest misclassification;
 - EN and DE catalogs contain the same 100 keys, every `$i18n` marker resolves, and no `__TODO__` value is accepted;
 - English technical overlay is empty and German technical localization remains bounded to the reviewed overlay set;
 - EN, DE, and combined dashboard generation is deterministic and semantically locked to the accepted v1.62.5 reference behavior including the zero-exception review correction;

@@ -13,7 +13,7 @@ import yaml
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DASHBOARD_ROOT = PROJECT_ROOT / "dashboard"
-MANIFEST_PATH = DASHBOARD_ROOT / "manifest.json"
+MANIFEST_PATH = DASHBOARD_ROOT / "dashboard-build.json"
 
 
 def load_yaml(path: Path) -> Any:

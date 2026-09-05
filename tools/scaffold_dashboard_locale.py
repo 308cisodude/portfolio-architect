@@ -11,7 +11,7 @@ import yaml
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DASHBOARD_ROOT = PROJECT_ROOT / "dashboard"
-MANIFEST_PATH = DASHBOARD_ROOT / "manifest.json"
+MANIFEST_PATH = DASHBOARD_ROOT / "dashboard-build.json"
 
 
 def main() -> None:
@@ -54,7 +54,7 @@ def main() -> None:
     )
     print(f"Created {catalog_path.relative_to(PROJECT_ROOT)}")
     print(f"Created {overlay_path.relative_to(PROJECT_ROOT)}")
-    print("Add the locale to dashboard/manifest.json only after translation is complete.")
+    print("Add the locale to dashboard/dashboard-build.json only after translation is complete.")
 
 
 if __name__ == "__main__":

@@ -60,7 +60,7 @@ To start a new locale without copying card logic:
 python tools/scaffold_dashboard_locale.py es
 ```
 
-The scaffold intentionally writes `__TODO__` catalog values and an empty overlay. The build refuses incomplete catalogs. A locale is added to `dashboard/manifest.json` only after translation and acceptance are complete.
+The scaffold intentionally writes `__TODO__` catalog values and an empty overlay. The build refuses incomplete catalogs. A locale is added to `dashboard/dashboard-build.json` only after translation and acceptance are complete.
 
 ## Native-card contract
 

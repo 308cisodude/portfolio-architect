@@ -14,6 +14,8 @@ The old duplicated `dashboard/en/`, `dashboard/de/`, root section fragments, and
 
 Release packaging regenerates all dashboard outputs and refuses stale committed generated files. Regression coverage locks locale-key parity, complete `$i18n` resolution, overlay bounds, deterministic byte output, canonical semantic hashes, and the compatibility alias.
 
+Repository-only dashboard build metadata is stored as `dashboard/dashboard-build.json`, deliberately avoiding Home Assistant's reserved `manifest.json` filename so hassfest cannot mistake dashboard authoring metadata for an integration manifest. The only repository file named `manifest.json` is the actual Portfolio Architect integration manifest.
+
 ## Single-language release artifacts
 
 In addition to the existing combined EN/DE dashboard, releases now publish dedicated English-only and German-only YAML. A user who wants one language can therefore import only one view instead of loading both. Future language additions can reuse the shared card structure without multiplying source logic or bloating existing single-language installations.

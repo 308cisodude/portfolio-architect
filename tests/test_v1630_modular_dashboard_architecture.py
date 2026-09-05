@@ -13,7 +13,8 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 DASHBOARD = ROOT / "dashboard"
-MANIFEST = json.loads((DASHBOARD / "manifest.json").read_text(encoding="utf-8"))
+DASHBOARD_BUILD = DASHBOARD / "dashboard-build.json"
+MANIFEST = json.loads(DASHBOARD_BUILD.read_text(encoding="utf-8"))
 
 
 def _load(path: Path) -> Any:
@@ -170,6 +171,13 @@ def test_zero_exception_review_state_is_explicit_and_review_cards_are_bounded() 
 
 
 def test_legacy_duplicated_dashboard_authoring_surfaces_are_retired() -> None:
+    # Keep repository dashboard metadata away from Home Assistant's reserved
+    # manifest.json filename so hassfest cannot mistake it for an integration.
+    assert DASHBOARD_BUILD.is_file()
+    assert not (DASHBOARD / "manifest.json").exists()
+    manifests = sorted(path.relative_to(ROOT).as_posix() for path in ROOT.rglob("manifest.json"))
+    assert manifests == ["custom_components/portfolio_architect/manifest.json"]
+
     assert not (DASHBOARD / "en").exists()
     assert not (DASHBOARD / "de").exists()
     for name in (

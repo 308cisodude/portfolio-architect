@@ -7,6 +7,7 @@
 - Keep `dashboard/bilingual-dashboard.yaml` as a byte-identical compatibility alias for the generated combined dashboard while retiring the former duplicated `dashboard/en`, `dashboard/de`, root fragment and temporary authoring files.
 - Correct the zero-accepted-exception policy presentation: zero exceptions render green and explicitly state that exception review is not required; due/overdue exception-review tiles are shown only while at least one accepted exception actually exists.
 - Make release builds regenerate EN, DE and combined dashboards and fail closed if committed generated YAML is stale; regression coverage locks catalog completeness, deterministic generation, bounded overlays and semantic equality to the accepted v1.62.5 dashboard behavior.
+- Name repository-only dashboard build metadata `dashboard/dashboard-build.json` rather than the Home Assistant-reserved `manifest.json`, preventing hassfest from misclassifying dashboard authoring metadata as an integration manifest.
 - Preserve config-entry schema 13, REST portfolio schema 1, Gateway health schema 10, discovery schemas 1/2, provider acquisition/authority, freshness/LKG/anti-rollback/source-set semantics, planner/funding economics, `fallback_policy: none`, verified private-PKI/bearer trust, removed Comdirect LEGACY state and the authenticated-DKB-FinTS research gate.
 
 ## 1.62.5
