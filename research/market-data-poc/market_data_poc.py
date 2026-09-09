@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import math
 import os
 import statistics
 import sys
@@ -29,11 +28,15 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
 
-VERSION = "0.1.0"
+VERSION = "0.1.2"
 USER_AGENT = f"PortfolioArchitect-MarketData-PoC/{VERSION}"
 OPENFIGI_MAPPING_URL = "https://api.openfigi.com/v3/mapping"
 ALPHAVANTAGE_URL = "https://www.alphavantage.co/query"
 DEFAULT_TIMEOUT_SECONDS = 20
+DEFAULT_AV_MIN_INTERVAL_SECONDS = 12.5
+DEFAULT_AV_DAILY_LIMIT = 25
+AV_USAGE_STATE_SCHEMA = 2
+AV_USAGE_WINDOW_SECONDS = 24 * 60 * 60
 
 
 class PocError(RuntimeError):
@@ -62,6 +65,133 @@ class DailyBar:
     low: float
     close: float
     volume: float | None
+
+
+class AlphaVantageGuard:
+    """Conservative local pacing and rolling-24h budget guard.
+
+    The state contains no API key and is persisted beneath the ignored output
+    directory so separate CLI invocations still respect the configured minimum
+    interval and local request budget. A rolling 24-hour window is used instead
+    of assuming an undocumented provider quota-reset timezone. The counter is
+    intentionally local: it cannot account for requests made by other clients
+    using the same key.
+    """
+
+    def __init__(
+        self,
+        state_path: Path,
+        *,
+        min_interval_seconds: float = DEFAULT_AV_MIN_INTERVAL_SECONDS,
+        daily_limit: int = DEFAULT_AV_DAILY_LIMIT,
+        initial_used_last_24h: int = 0,
+        clock: Any = time.time,
+        sleeper: Any = time.sleep,
+    ) -> None:
+        if min_interval_seconds < 0:
+            raise PocError("Alpha Vantage minimum interval must be >= 0")
+        if daily_limit < 0:
+            raise PocError("Alpha Vantage 24-hour limit must be >= 0")
+        if initial_used_last_24h < 0:
+            raise PocError("Alpha Vantage initial used-last-24h count must be >= 0")
+        self.state_path = state_path
+        self.min_interval_seconds = float(min_interval_seconds)
+        self.daily_limit = int(daily_limit)
+        self._clock = clock
+        self._sleeper = sleeper
+        self._state_existed = self.state_path.exists()
+        self._state = self._load_state()
+        if not self._state_existed and initial_used_last_24h:
+            now = float(self._clock())
+            # Exact prior timestamps are unknown. Seeding at "now" is deliberately
+            # conservative: all seeded calls remain in the local rolling window for
+            # the full next 24 hours rather than expiring too early.
+            self._state["request_epochs"] = [now] * int(initial_used_last_24h)
+            self._save_state()
+
+    def _fresh_state(self) -> dict[str, Any]:
+        return {
+            "schema": AV_USAGE_STATE_SCHEMA,
+            "request_epochs": [],
+            "last_request_epoch": None,
+        }
+
+    def _load_state(self) -> dict[str, Any]:
+        if not self.state_path.exists():
+            return self._fresh_state()
+        try:
+            raw = json.loads(self.state_path.read_text(encoding="utf-8"))
+            if not isinstance(raw, dict) or raw.get("schema") != AV_USAGE_STATE_SCHEMA:
+                raise ValueError("unexpected schema")
+            epochs = raw.get("request_epochs")
+            last = raw.get("last_request_epoch")
+            if not isinstance(epochs, list) or any(
+                not isinstance(value, (int, float)) for value in epochs
+            ):
+                raise ValueError("invalid request timestamps")
+            if last is not None and not isinstance(last, (int, float)):
+                raise ValueError("invalid last request timestamp")
+            state = {
+                "schema": AV_USAGE_STATE_SCHEMA,
+                "request_epochs": [float(value) for value in epochs],
+                "last_request_epoch": float(last) if last is not None else None,
+            }
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
+            raise PocError(
+                "invalid local Alpha Vantage usage state; refusing to guess quota state"
+            ) from exc
+        self._prune(state, float(self._clock()))
+        return state
+
+    @staticmethod
+    def _prune(state: dict[str, Any], now: float) -> None:
+        cutoff = now - AV_USAGE_WINDOW_SECONDS
+        state["request_epochs"] = [
+            float(value)
+            for value in state.get("request_epochs", [])
+            if float(value) > cutoff
+        ]
+
+    def _save_state(self) -> None:
+        _json_dump(self.state_path, self._state)
+
+    def before_request(self) -> None:
+        now = float(self._clock())
+        self._prune(self._state, now)
+
+        last = self._state.get("last_request_epoch")
+        if isinstance(last, (int, float)):
+            wait = self.min_interval_seconds - (now - float(last))
+            if wait > 0:
+                self._sleeper(wait)
+                now = float(self._clock())
+                self._prune(self._state, now)
+
+        epochs = list(self._state.get("request_epochs", []))
+        count = len(epochs)
+        if self.daily_limit and count >= self.daily_limit:
+            raise ProviderError(
+                f"local Alpha Vantage rolling-24h call budget exhausted ({count}/{self.daily_limit})"
+            )
+
+        # Count conservatively immediately before attempting the network request.
+        # A transport failure may still have reached the provider.
+        epochs.append(now)
+        self._state["request_epochs"] = epochs
+        self._state["last_request_epoch"] = now
+        self._save_state()
+
+    def usage(self) -> dict[str, Any]:
+        now = float(self._clock())
+        self._prune(self._state, now)
+        count = len(self._state.get("request_epochs", []))
+        return {
+            "window_hours": 24,
+            "request_count": count,
+            "daily_limit": self.daily_limit,
+            "remaining": None if self.daily_limit == 0 else max(self.daily_limit - count, 0),
+            "min_interval_seconds": self.min_interval_seconds,
+        }
 
 
 def _json_dump(path: Path, value: Any) -> None:
@@ -124,14 +254,27 @@ def _request_json(
         raise ProviderError("provider returned invalid JSON") from exc
 
 
-def openfigi_map(targets: list[Target], api_key: str | None) -> dict[str, list[dict[str, Any]]]:
+def openfigi_map(
+    targets: list[Target],
+    api_key: str | None,
+    *,
+    mic_code: str | None = None,
+    currency: str | None = None,
+) -> dict[str, list[dict[str, Any]]]:
     # OpenFIGI v3 mapping allows fewer jobs per request without an API key.
     batch_size = 100 if api_key else 5
     headers = {"X-OPENFIGI-APIKEY": api_key} if api_key else {}
     result: dict[str, list[dict[str, Any]]] = {}
     for offset in range(0, len(targets), batch_size):
         batch = targets[offset : offset + batch_size]
-        jobs = [{"idType": "ID_ISIN", "idValue": target.isin} for target in batch]
+        jobs = []
+        for target in batch:
+            job: dict[str, Any] = {"idType": "ID_ISIN", "idValue": target.isin}
+            if mic_code:
+                job["micCode"] = mic_code
+            if currency:
+                job["currency"] = currency
+            jobs.append(job)
         payload = _request_json(
             OPENFIGI_MAPPING_URL,
             method="POST",
@@ -152,8 +295,10 @@ def openfigi_map(targets: list[Target], api_key: str | None) -> dict[str, list[d
     return result
 
 
-def _av_get(params: dict[str, str], api_key: str) -> dict[str, Any]:
+def _av_get(params: dict[str, str], api_key: str, guard: AlphaVantageGuard) -> dict[str, Any]:
     # The key is included only in the request URI. Error messages never echo the URI.
+    # Pacing/budget accounting happens immediately before each provider request.
+    guard.before_request()
     query = dict(params)
     query["apikey"] = api_key
     url = ALPHAVANTAGE_URL + "?" + urllib.parse.urlencode(query)
@@ -169,8 +314,8 @@ def _av_get(params: dict[str, str], api_key: str) -> dict[str, Any]:
     return payload
 
 
-def av_symbol_search(keywords: str, api_key: str) -> list[dict[str, Any]]:
-    payload = _av_get({"function": "SYMBOL_SEARCH", "keywords": keywords}, api_key)
+def av_symbol_search(keywords: str, api_key: str, guard: AlphaVantageGuard) -> list[dict[str, Any]]:
+    payload = _av_get({"function": "SYMBOL_SEARCH", "keywords": keywords}, api_key, guard)
     matches = payload.get("bestMatches", [])
     if not isinstance(matches, list):
         raise ProviderError("Alpha Vantage symbol search returned invalid bestMatches")
@@ -237,45 +382,19 @@ def score_av_candidate(target: Target, candidate: dict[str, Any], openfigi_ticke
     return score, reasons
 
 
-def _unique_search_terms(target: Target, figi_rows: list[dict[str, Any]]) -> list[str]:
-    # ISIN is attempted first. If Alpha Vantage indexes it, this is the strongest bridge.
-    terms = [target.isin]
-    tickers: list[str] = []
-    for row in figi_rows:
-        ticker = str(row.get("ticker", "")).strip()
-        if ticker and ticker not in tickers:
-            tickers.append(ticker)
-    # Keep the complete first-run experiment within the documented 25-call/day
-    # Alpha Vantage free allowance: at most two search calls per target, then
-    # seven daily-series calls = at most 21 calls for seven targets.
-    terms.extend(tickers[:1])
-    return terms
-
-
-def resolve_one(target: Target, figi_rows: list[dict[str, Any]], av_key: str, pause_seconds: float) -> dict[str, Any]:
-    openfigi_tickers = {str(x.get("ticker", "")).strip() for x in figi_rows if x.get("ticker")}
-    searches: list[dict[str, Any]] = []
-    merged: dict[str, dict[str, Any]] = {}
-
-    for idx, term in enumerate(_unique_search_terms(target, figi_rows)):
-        if idx:
-            time.sleep(pause_seconds)
-        matches = av_symbol_search(term, av_key)
-        searches.append({"keywords": term, "match_count": len(matches)})
-        for match in matches:
-            symbol = _av_field(match, "1. symbol")
-            if symbol:
-                merged.setdefault(symbol, match)
-
+def _candidate_dump(
+    target: Target,
+    candidates: Iterable[dict[str, Any]],
+    openfigi_tickers: set[str],
+) -> list[dict[str, Any]]:
     ranked = []
-    for candidate in merged.values():
+    for candidate in candidates:
         score, reasons = score_av_candidate(target, candidate, openfigi_tickers)
         ranked.append((score, candidate, reasons))
     ranked.sort(key=lambda x: (-x[0], _av_field(x[1], "1. symbol")))
-
-    candidate_dump = []
+    out = []
     for score, candidate, reasons in ranked[:10]:
-        candidate_dump.append(
+        out.append(
             {
                 "symbol": _av_field(candidate, "1. symbol"),
                 "name": _av_field(candidate, "2. name"),
@@ -285,13 +404,35 @@ def resolve_one(target: Target, figi_rows: list[dict[str, Any]], av_key: str, pa
                 "match_score": _av_field(candidate, "9. matchScore"),
                 "score": round(score, 3),
                 "reasons": reasons,
+                "name_similarity": round(
+                    _name_similarity(target.name, _av_field(candidate, "2. name")), 3
+                ),
             }
         )
+    return out
 
+
+def resolve_one(
+    target: Target,
+    figi_rows: list[dict[str, Any]],
+    av_key: str,
+    guard: AlphaVantageGuard,
+) -> dict[str, Any]:
+    # v0.1.2 deliberately asks OpenFIGI for the ISIN filtered to XETR/EUR.
+    # The returned venue ticker is then the only ticker searched at Alpha
+    # Vantage. This separates venue identity (OpenFIGI) from price-history
+    # discovery (Alpha Vantage) and avoids guessing from the first unfiltered
+    # OpenFIGI ticker.
+    openfigi_tickers = {
+        str(x.get("ticker", "")).strip().upper()
+        for x in figi_rows
+        if str(x.get("ticker", "")).strip()
+    }
     result: dict[str, Any] = {
         "isin": target.isin,
         "name": target.name,
         "openfigi": {
+            "requested_filters": {"micCode": "XETR", "currency": "EUR"},
             "candidate_count": len(figi_rows),
             "tickers": sorted(openfigi_tickers),
             "figis": sorted({str(x.get("figi")) for x in figi_rows if x.get("figi")}),
@@ -313,51 +454,84 @@ def resolve_one(target: Target, figi_rows: list[dict[str, Any]], av_key: str, pa
                 for row in figi_rows[:25]
             ],
         },
-        "alpha_vantage_searches": searches,
-        "candidates": candidate_dump,
+        "alpha_vantage_searches": [],
+        "candidates": [],
         "status": "unresolved",
         "selected": None,
     }
-    if not ranked:
-        result["status"] = "unsupported_symbol"
+
+    if not openfigi_tickers:
+        result["status"] = "unsupported_xetra_listing"
+        result["detail"] = "OpenFIGI returned no XETR/EUR listing for the ISIN"
+        return result
+    if len(openfigi_tickers) != 1:
+        result["status"] = "ambiguous_openfigi_listing"
+        result["detail"] = "OpenFIGI returned more than one XETR/EUR ticker for the ISIN"
         return result
 
-    top_score, top, _ = ranked[0]
-    runner_score = ranked[1][0] if len(ranked) > 1 else -math.inf
+    ticker = next(iter(openfigi_tickers))
+    matches = av_symbol_search(ticker, av_key, guard)
+    result["alpha_vantage_searches"].append(
+        {"keywords": ticker, "match_count": len(matches)}
+    )
+    result["candidates"] = _candidate_dump(target, matches, openfigi_tickers)
+
+    expected_symbol = f"{ticker}.DEX"
+    exact = [
+        candidate
+        for candidate in matches
+        if _av_field(candidate, "1. symbol").upper() == expected_symbol.upper()
+    ]
+    if not exact:
+        result["status"] = "unsupported_symbol"
+        result["detail"] = f"Alpha Vantage returned no exact {expected_symbol} candidate"
+        return result
+    if len(exact) != 1:
+        result["status"] = "ambiguous_listing"
+        result["detail"] = f"Alpha Vantage returned multiple exact {expected_symbol} candidates"
+        return result
+
+    top = exact[0]
     top_symbol = _av_field(top, "1. symbol")
     top_currency = _av_field(top, "8. currency").upper()
     top_region = _av_field(top, "4. region").lower()
     top_type = _av_field(top, "3. type").lower()
-
-    # Strict automatic acceptance for the PoC. Anything else is left for explicit review.
     strict_identity = (
-        top_symbol.upper().endswith(".DEX")
+        top_symbol.upper() == expected_symbol.upper()
         and top_currency == "EUR"
-        and "germany" in top_region
+        and ("xetra" in top_region or "germany" in top_region)
         and ("etf" in top_type or "exchange traded" in top_type)
     )
-    clear_margin = top_score - runner_score >= 15.0
-    if strict_identity and clear_margin:
+    result["resolution_reason"] = {
+        "openfigi_mic": "XETR",
+        "openfigi_currency": "EUR",
+        "openfigi_ticker": ticker,
+        "expected_alpha_vantage_symbol": expected_symbol,
+        "strict_identity": strict_identity,
+        "name_similarity": round(
+            _name_similarity(target.name, _av_field(top, "2. name")), 3
+        ),
+    }
+    if strict_identity:
+        selected = _candidate_dump(target, [top], openfigi_tickers)[0]
         result["status"] = "resolved"
-        result["selected"] = candidate_dump[0]
+        result["selected"] = selected
     else:
         result["status"] = "ambiguous_listing"
-        result["resolution_reason"] = {
-            "strict_identity": strict_identity,
-            "score_margin": None if runner_score == -math.inf else round(top_score - runner_score, 3),
-            "required_margin": 15.0,
-        }
     return result
 
-
-def resolve_all(targets: list[Target], output_dir: Path, av_key: str, figi_key: str | None, pause_seconds: float) -> dict[str, Any]:
-    figi = openfigi_map(targets, figi_key)
+def resolve_all(
+    targets: list[Target],
+    output_dir: Path,
+    av_key: str,
+    figi_key: str | None,
+    guard: AlphaVantageGuard,
+) -> dict[str, Any]:
+    figi = openfigi_map(targets, figi_key, mic_code="XETR", currency="EUR")
     results = []
-    for idx, target in enumerate(targets):
-        if idx:
-            time.sleep(pause_seconds)
+    for target in targets:
         try:
-            results.append(resolve_one(target, figi.get(target.isin, []), av_key, pause_seconds))
+            results.append(resolve_one(target, figi.get(target.isin, []), av_key, guard))
         except ProviderError as exc:
             results.append(
                 {
@@ -372,17 +546,23 @@ def resolve_all(targets: list[Target], output_dir: Path, av_key: str, figi_key: 
         "schema": 1,
         "prototype_version": VERSION,
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "providers": {"identity": "openfigi", "market_data": "alpha_vantage"},
+        "providers": {
+            "identity": "openfigi",
+            "market_data": "alpha_vantage",
+            "openfigi_authenticated": bool(figi_key),
+        },
+        "alpha_vantage_policy": guard.usage(),
         "targets": results,
     }
     _json_dump(output_dir / "mapping.json", doc)
     return doc
 
 
-def av_daily(symbol: str, api_key: str) -> list[DailyBar]:
+def av_daily(symbol: str, api_key: str, guard: AlphaVantageGuard) -> list[DailyBar]:
     payload = _av_get(
         {"function": "TIME_SERIES_DAILY", "symbol": symbol, "outputsize": "compact"},
         api_key,
+        guard,
     )
     series = payload.get("Time Series (Daily)")
     if not isinstance(series, dict) or not series:
@@ -437,13 +617,18 @@ def compute_metrics(bars: list[DailyBar], today: date | None = None) -> dict[str
     }
 
 
-def fetch_all(mapping_path: Path, output_dir: Path, av_key: str, pause_seconds: float) -> dict[str, Any]:
+def fetch_all(
+    mapping_path: Path,
+    output_dir: Path,
+    av_key: str,
+    guard: AlphaVantageGuard,
+) -> dict[str, Any]:
     mapping = json.loads(mapping_path.read_text(encoding="utf-8"))
     targets = mapping.get("targets")
     if not isinstance(targets, list):
         raise PocError("mapping.json has invalid targets")
     results = []
-    for idx, item in enumerate(targets):
+    for item in targets:
         if not isinstance(item, dict):
             continue
         selected = item.get("selected")
@@ -458,10 +643,8 @@ def fetch_all(mapping_path: Path, output_dir: Path, av_key: str, pause_seconds: 
             result["status"] = "invalid_mapping"
             results.append(result)
             continue
-        if idx:
-            time.sleep(pause_seconds)
         try:
-            bars = av_daily(symbol, av_key)
+            bars = av_daily(symbol, av_key, guard)
             metrics = compute_metrics(bars)
             result.update(
                 {
@@ -491,6 +674,7 @@ def fetch_all(mapping_path: Path, output_dir: Path, av_key: str, pause_seconds: 
         "prototype_version": VERSION,
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "cross_section": cross_section,
+        "alpha_vantage_policy": guard.usage(),
         "targets": results,
     }
     _json_dump(output_dir / "market_context.json", doc)
@@ -547,8 +731,29 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--pause-seconds",
         type=float,
-        default=0.9,
-        help="pause between Alpha Vantage requests; increase if your account requires it",
+        default=DEFAULT_AV_MIN_INTERVAL_SECONDS,
+        help=(
+            "minimum seconds between Alpha Vantage request starts; default 12.5 "
+            "for conservative free-key pacing"
+        ),
+    )
+    parser.add_argument(
+        "--av-used-last-24h",
+        type=int,
+        default=0,
+        help=(
+            "conservatively seed prior Alpha Vantage calls into the rolling 24-hour window "
+            "only when no usage-state file exists"
+        ),
+    )
+    parser.add_argument(
+        "--av-daily-limit",
+        type=int,
+        default=DEFAULT_AV_DAILY_LIMIT,
+        help=(
+            "local Alpha Vantage call ceiling per rolling 24 hours; default 25. "
+            "Use 0 only after Alpha Vantage confirms an unlimited project entitlement."
+        ),
     )
     return parser
 
@@ -559,21 +764,39 @@ def main(argv: list[str] | None = None) -> int:
         av_key = require_av_key()
         figi_key = os.environ.get("OPENFIGI_API_KEY", "").strip() or None
         args.output_dir.mkdir(parents=True, exist_ok=True)
+        guard = AlphaVantageGuard(
+            args.output_dir / ".alpha_vantage_usage.json",
+            min_interval_seconds=args.pause_seconds,
+            daily_limit=args.av_daily_limit,
+            initial_used_last_24h=args.av_used_last_24h,
+        )
         if args.command in {"resolve", "all"}:
             targets = load_targets(args.targets)
-            mapping = resolve_all(targets, args.output_dir, av_key, figi_key, args.pause_seconds)
+            mapping = resolve_all(targets, args.output_dir, av_key, figi_key, guard)
             counts: dict[str, int] = {}
             for item in mapping["targets"]:
                 counts[item["status"]] = counts.get(item["status"], 0) + 1
             print("resolution:", ", ".join(f"{k}={v}" for k, v in sorted(counts.items())))
         if args.command in {"fetch", "all"}:
             mapping_path = args.mapping or (args.output_dir / "mapping.json")
-            context = fetch_all(mapping_path, args.output_dir, av_key, args.pause_seconds)
+            context = fetch_all(mapping_path, args.output_dir, av_key, guard)
             counts = {}
             for item in context["targets"]:
                 counts[item["status"]] = counts.get(item["status"], 0) + 1
             print("market data:", ", ".join(f"{k}={v}" for k, v in sorted(counts.items())))
             print(f"report: {args.output_dir / 'report.txt'}")
+        usage = guard.usage()
+        if usage["daily_limit"] == 0:
+            print(
+                "alpha_vantage local usage:",
+                f"{usage['request_count']} call(s) in rolling 24h; local ceiling disabled",
+            )
+        else:
+            print(
+                "alpha_vantage local usage:",
+                f"{usage['request_count']}/{usage['daily_limit']} call(s) in rolling 24h; "
+                f"remaining={usage['remaining']}",
+            )
         return 0
     except PocError as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
