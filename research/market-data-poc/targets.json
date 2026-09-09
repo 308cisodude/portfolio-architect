@@ -1,0 +1,30 @@
+[
+  {
+    "isin": "IE00BJ0KDQ92",
+    "name": "Xtrackers MSCI World UCITS ETF 1C"
+  },
+  {
+    "isin": "IE00BTJRMP35",
+    "name": "Xtrackers MSCI Emerging Markets UCITS ETF 1C"
+  },
+  {
+    "isin": "IE000F354Q61",
+    "name": "Xtrackers MSCI World Small Cap UCITS ETF 1C"
+  },
+  {
+    "isin": "IE00BYZK4776",
+    "name": "iShares Healthcare Innovation UCITS ETF USD Acc"
+  },
+  {
+    "isin": "IE00BGV5VN51",
+    "name": "Xtrackers Artificial Intelligence & Big Data UCITS ETF 1C"
+  },
+  {
+    "isin": "IE00BLPK3577",
+    "name": "WisdomTree Cybersecurity UCITS ETF USD Acc"
+  },
+  {
+    "isin": "IE00BYZK4552",
+    "name": "iShares Automation & Robotics UCITS ETF USD Acc"
+  }
+]
