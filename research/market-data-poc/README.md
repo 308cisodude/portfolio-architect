@@ -1,8 +1,8 @@
-# Portfolio Architect Tactical Tilt PoC 0.3.0
+# Portfolio Architect Tactical Tilt PoC 0.3.1
 
 A deliberately standalone research prototype for the proposed optional **Tactical Tilt (TT)** recommendation-enhancement layer.
 
-Version 0.3.0 keeps the v0.2.x tactical scoring and calibration model intact and adds the first **cadence-aware persistence / strategic-review governance** PoC. The new persistence path is intentionally separate from scoring so that we can test memory, recovery, cadence, and human-review semantics before any production Portfolio Architect integration.
+Version 0.3.1 keeps the v0.2.x tactical scoring/calibration model and the v0.3.0 cadence-aware persistence thresholds intact, then hardens the **state contract** around PA planning cycles. The release makes replay idempotent, keeps execution evidence audit-only, forbids tactical debt, preserves cadence history without reinterpreting it, and starts replacement instruments with clean active stress state.
 
 ## Product boundary
 
@@ -21,21 +21,23 @@ Persistent weakness is a different problem from a temporary dent. v0.3.0 therefo
 
 The human PA user remains authoritative over any strategic target change.
 
-## What v0.3.0 changes
+## What v0.3.1 changes
 
 - preserves the v0.2.0 rebound-aware signal, candidate gate, rebound suppression, and additive scoring formula;
 - preserves the v0.2.2 tactical-bonus-ceiling calibration semantics and provisional 150% research reference;
-- bumps the research prototype version to 0.3.0 without changing scoring arithmetic;
-- adds `tactical_persistence_poc.py` for replaying planning-cycle histories;
-- adds `examples/persistence_scenarios.json` with weekly, monthly, quarterly, yearly, and recovery scenarios;
-- adds cadence-aware research thresholds so there is **no universal N-cycle rule**;
-- requires both cycle-count persistence **and** elapsed wall-clock persistence for strategic-review escalation;
-- adds transparent market-history support to qualify a stressed cycle;
-- explicitly separates **qualified weakness** from whether TT actually selected that target for a purchase;
-- treats recovery as an episode boundary so separate market dents do not accumulate forever;
-- suppresses tactical bonus for a target once `strategic_review_due` is reached;
-- keeps strategic review advisory and records `automatic_target_replacement=false` and `automatic_sell=false`;
-- expands offline regression coverage for cadence, recovery, evidence qualification, and human-authority boundaries.
+- preserves the v0.3.0 cadence thresholds and stress-qualification arithmetic unchanged;
+- bumps the research prototype version to 0.3.1 without changing tactical scoring or persistence thresholds;
+- adds an explicit cycle identity: `plan_id`, `cycle_effective_date`, `plan_frequency`, `target_id`, and `isin`;
+- adds an idempotent persisted event-log state contract: exact replay cannot increment persistence twice;
+- allows later execution evidence to enrich an existing cycle as **audit-only** data without creating another governance observation;
+- makes `selected_by_tt` and `execution_outcome` non-governing evidence;
+- explicitly forbids tactical debt: an ignored or partially followed recommendation creates no future obligation;
+- states that each new recommendation starts from current authoritative portfolio holdings, not from prior recommendation compliance;
+- splits persistence into a new governance segment when plan cadence changes, retaining old evidence without reinterpreting old cycles under the new cadence;
+- splits persistence into a new clean asset segment when the configured target instrument is deliberately replaced;
+- adds deterministic save/reload/replay verification for restart safety;
+- adds `examples/persistence_contract_events.json` and a `state-replay` harness for the new state semantics;
+- keeps strategic review advisory and human-owned; no automatic target replacement or sale is introduced.
 
 The Market Data PoC 0.1.2 acquisition files remain unchanged.
 
@@ -271,6 +273,77 @@ automatic sell = false
 
 A future PA implementation should persist equivalent provider-neutral state per strategic target, not per broker position.
 
+# Part C — idempotent persistence state contract
+
+v0.3.1 adds a second persistence harness around the v0.3.0 cadence model. The purpose is not to change when a target becomes stressed; it is to make sure repeated HA updates, restarts, later execution evidence, cadence changes, and target replacement cannot corrupt that state.
+
+## Cycle identity
+
+Every governance observation is identified by:
+
+```text
+plan_id
+cycle_effective_date
+plan_frequency
+target_id
+isin
+```
+
+For one configured `plan_id` / `target_id` role, only one governance observation may occupy a PA cycle date. Replaying the exact observation is a no-op. A conflicting second governance payload for the same cycle is rejected rather than counted twice.
+
+## Execution independence and no tactical debt
+
+Execution evidence is intentionally **audit-only**. v0.3.1 can record whether the previous TT-influenced recommendation was followed, but that field does not affect stress qualification, cycle counts, strategic-review escalation, or future tactical score.
+
+The contract is explicit:
+
+```text
+previous recommendation followed?     audit only
+previous recommendation ignored?      audit only
+previous recommendation partly done?  audit only
+unexecuted tactical amount owed?       never
+next-cycle scoring input               current authoritative portfolio state
+```
+
+A later transaction-reconciliation feature may explain what happened, but TT correctness does not depend on execution evidence.
+
+## Cadence changes
+
+Changing plan frequency does not reinterpret old observations. Instead, the active governance history is segmented:
+
+```text
+old monthly segment -> retained historical evidence
+frequency changes
+new weekly/quarterly/yearly segment -> starts clean under its own cadence policy
+```
+
+This is deliberately conservative PoC behavior. A later production design may choose to surface prior-segment evidence during strategic review, but old monthly cycles must never become weekly cycles merely because configuration changed.
+
+## Target replacement
+
+A deliberate instrument change inside the same strategic target role ends the old asset segment. The old ISIN's evidence remains auditable, but the replacement ISIN starts with a clean active persistence episode. Price weakness from the retired instrument cannot be inherited as tactical stress by the replacement.
+
+## Restart/replay safety
+
+The research state is a canonical event log. Save/reload must reconstruct the same derived governance state, and replaying the same event batch must leave the persisted state byte-for-byte unchanged.
+
+Run the contract harness:
+
+```powershell
+python .\tactical_persistence_poc.py state-replay `
+  --events .\examples\persistence_contract_events.json
+```
+
+Outputs:
+
+```text
+output\tactical_tilt\persistence_state.json
+output\tactical_tilt\persistence_contract.json
+output\tactical_tilt\persistence_contract_report.txt
+```
+
+The supplied fixture demonstrates exact duplicate replay, later audit enrichment, recommendation non-compliance without tactical debt, cadence segmentation, target replacement, and deterministic restart/replay.
+
 # Fresh market data
 
 Generate or refresh market context as before:
@@ -279,7 +352,7 @@ Generate or refresh market context as before:
 python .\market_data_poc.py fetch
 ```
 
-Then run `score` or `calibrate`. Persistence replay is offline in v0.3.0 and uses explicit planning-cycle fixtures so governance behavior remains deterministic and auditable.
+Then run `score` or `calibrate`. Both persistence harnesses are offline in v0.3.1 and use explicit cycle fixtures so governance behavior remains deterministic and auditable.
 
 # Offline validation
 
@@ -288,26 +361,27 @@ python -m unittest discover -s tests -v
 python -m py_compile .\market_data_poc.py .\tactical_tilt_poc.py .\tactical_persistence_poc.py
 ```
 
-The v0.3.0 bundle should report **54 tests passed**:
+The v0.3.1 bundle should report **64 tests passed**:
 
 - 14 existing Market Data tests;
 - 25 existing Tactical Tilt scoring/calibration tests;
-- 15 new cadence/persistence/governance tests.
+- 15 v0.3.0 cadence/persistence/governance tests;
+- 10 new v0.3.1 state-contract/idempotency tests.
 
-# Success criterion for v0.3.0
+# Success criterion for v0.3.1
 
 The persistence PoC succeeds if it demonstrates all of the following without changing the established tactical scorer:
 
-- state advances on independent PA planning cycles rather than daily refreshes;
-- stressed-cycle qualification contains explicit market-history evidence;
-- weekly/monthly/quarterly/yearly plans have materially different persistence semantics;
-- cycle count and wall-clock duration must both be satisfied for strategic review;
-- TT selection itself is not required for a target to accumulate stress evidence;
-- recovery closes an episode instead of creating a lifetime weakness counter;
-- strategic-review escalation neutralizes TT for the affected target;
-- strategic-review escalation never automatically replaces, sells, or removes the target;
-- human target authority remains explicit and auditable.
+- all v0.3.0 cadence and recovery semantics remain unchanged;
+- exact replay of one PA cycle cannot increment persistence twice;
+- later execution evidence can enrich audit state without changing governance state;
+- following or ignoring a recommendation produces no tactical debt and does not alter target stress history;
+- each future score remains based on current authoritative holdings;
+- a cadence change retains old evidence but starts a new cadence-governed segment;
+- a deliberate target replacement retains old evidence but starts the replacement instrument clean;
+- persisted state reload/replay deterministically reconstructs the same governance result;
+- strategic-review escalation remains advisory and human target authority remains explicit.
 
 # Next research milestone
 
-Do **not** integrate v0.3.0 directly into production PA yet. The next research step should use this replay harness to challenge the frequency thresholds and stress-qualification constants with additional synthetic histories and, over time, real PA-cycle observations. Only after those governance semantics are convincing should TT persistence be designed into PA's durable state/configuration and presentation contracts.
+Do **not** integrate v0.3.1 directly into production PA yet. The next substantial milestone is **v0.4.0 historical cadence replay**: feed real historical daily market series into synthetic weekly/monthly/quarterly/yearly PA cycle dates and measure how often ordinary corrections become tactical opportunities, watches, or strategic-review prompts. The goal is to calibrate the current research thresholds against real market history before designing durable production state, configuration, or UI contracts.

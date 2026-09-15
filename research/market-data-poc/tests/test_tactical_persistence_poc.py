@@ -9,6 +9,7 @@ import tactical_persistence_poc as tp
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "examples" / "persistence_scenarios.json"
+CONTRACT_FIXTURE = ROOT / "examples" / "persistence_contract_events.json"
 
 
 def loaded():
@@ -157,7 +158,7 @@ class GovernanceBoundaryTests(unittest.TestCase):
     def test_fixture_replay_writes_report_and_preserves_human_authority(self):
         with tempfile.TemporaryDirectory() as tmp:
             document = tp.replay(FIXTURE, Path(tmp))
-            self.assertEqual(document["prototype_version"], "0.3.0")
+            self.assertEqual(document["prototype_version"], "0.3.1")
             self.assertFalse(
                 document["governance_boundary"]["daily_market_refreshes_increment_state"]
             )
@@ -169,6 +170,170 @@ class GovernanceBoundaryTests(unittest.TestCase):
             report = (Path(tmp) / "persistence_report.txt").read_text(encoding="utf-8")
             self.assertIn("CADENCE POLICY", report)
             self.assertIn("strategic_review_due", report)
+
+
+def state_event(
+    day,
+    *,
+    plan_id="plan",
+    frequency="monthly",
+    target_id="target",
+    isin="IE00BJ0KDQ92",
+    name="World",
+    signal=0.5,
+    r5=-0.02,
+    r20=-0.05,
+    dd=-0.06,
+    recovered=False,
+    selected=None,
+    outcome=None,
+    note=None,
+):
+    return tp.StateCycleEvent(
+        plan_id=plan_id,
+        cycle_effective_date=date.fromisoformat(day),
+        plan_frequency=frequency,
+        target_id=target_id,
+        isin=isin,
+        name=name,
+        tactical_signal=signal,
+        return_5d=r5,
+        return_20d=r20,
+        drawdown_from_20d_high=dd,
+        recovered_since_previous_cycle=recovered,
+        selected_by_tt=selected,
+        execution_outcome=outcome,
+        note=note,
+    )
+
+
+class StatefulContractTests(unittest.TestCase):
+    def test_cycle_identity_is_explicit_and_stable(self):
+        event = state_event("2026-09-15", frequency="weekly")
+        self.assertEqual(
+            event.cycle_identity,
+            {
+                "plan_id": "plan",
+                "cycle_effective_date": "2026-09-15",
+                "plan_frequency": "weekly",
+                "target_id": "target",
+                "isin": "IE00BJ0KDQ92",
+            },
+        )
+
+    def test_exact_cycle_replay_is_noop(self):
+        state = tp.empty_persistence_state()
+        event = state_event("2026-09-15")
+        self.assertEqual(tp.apply_state_event(state, event), "applied")
+        before = json.dumps(state, sort_keys=True)
+        self.assertEqual(tp.apply_state_event(state, event), "duplicate_noop")
+        self.assertEqual(json.dumps(state, sort_keys=True), before)
+        self.assertEqual(len(state["events"]), 1)
+
+    def test_execution_evidence_can_enrich_without_advancing_cycle(self):
+        state = tp.empty_persistence_state()
+        original = state_event("2026-09-15", selected=True, outcome=None)
+        enriched = state_event("2026-09-15", selected=True, outcome="not_followed")
+        self.assertEqual(tp.apply_state_event(state, original), "applied")
+        self.assertEqual(tp.apply_state_event(state, enriched), "audit_enriched")
+        self.assertEqual(len(state["events"]), 1)
+        self.assertEqual(state["events"][0]["execution_outcome"], "not_followed")
+
+    def test_conflicting_same_cycle_governance_evidence_is_rejected(self):
+        state = tp.empty_persistence_state()
+        tp.apply_state_event(state, state_event("2026-09-15", signal=0.5))
+        with self.assertRaisesRegex(tp.PersistenceError, "conflicting governance evidence"):
+            tp.apply_state_event(state, state_event("2026-09-15", signal=0.7))
+
+    def test_execution_followed_does_not_change_governance_result(self):
+        states = []
+        for followed in ("followed", "not_followed", "partial"):
+            state = tp.empty_persistence_state()
+            for day in ("2026-07-15", "2026-08-15", "2026-09-15"):
+                tp.apply_state_event(
+                    state, state_event(day, outcome=followed, selected=True)
+                )
+            states.append(tp.evaluate_persistence_state(state))
+        baseline = states[0]["roles"][0]
+        for document in states[1:]:
+            role = document["roles"][0]
+            self.assertEqual(baseline["final_state"], role["final_state"])
+            self.assertEqual(
+                baseline["segments"][0]["active_episode"],
+                role["segments"][0]["active_episode"],
+            )
+
+    def test_contract_forbids_tactical_debt(self):
+        state = tp.empty_persistence_state()
+        tp.apply_state_event(state, state_event("2026-09-15", outcome="not_followed"))
+        document = tp.evaluate_persistence_state(state)
+        contract = document["contract"]
+        self.assertFalse(contract["unexecuted_recommendation_creates_tactical_debt"])
+        self.assertTrue(contract["next_cycle_scoring_uses_current_authoritative_holdings"])
+        self.assertNotIn("tactical_debt", state)
+
+    def test_cadence_change_keeps_old_segment_without_reinterpreting_it(self):
+        state = tp.empty_persistence_state()
+        tp.apply_state_event(state, state_event("2026-06-15", frequency="monthly"))
+        tp.apply_state_event(state, state_event("2026-07-15", frequency="monthly"))
+        tp.apply_state_event(state, state_event("2026-09-15", frequency="weekly"))
+        role = tp.evaluate_persistence_state(state)["roles"][0]
+        self.assertEqual(role["segment_count"], 2)
+        self.assertEqual(role["segments"][0]["terminated_by"], "plan_frequency_changed")
+        self.assertEqual(role["segments"][0]["final_state"], "tactical_watch")
+        self.assertEqual(role["final_state"], "tactical_opportunity")
+
+    def test_target_replacement_starts_clean_asset_segment(self):
+        state = tp.empty_persistence_state()
+        tp.apply_state_event(state, state_event("2026-07-15", isin="IE00BYZK4552"))
+        tp.apply_state_event(state, state_event("2026-08-15", isin="IE00BYZK4552"))
+        tp.apply_state_event(state, state_event("2026-09-15", isin="IE00BYZK4776"))
+        role = tp.evaluate_persistence_state(state)["roles"][0]
+        self.assertEqual(role["segment_count"], 2)
+        self.assertEqual(role["segments"][0]["terminated_by"], "target_replaced")
+        self.assertEqual(role["active_target"]["isin"], "IE00BYZK4776")
+        self.assertEqual(role["final_state"], "tactical_opportunity")
+        self.assertEqual(
+            role["segments"][1]["active_episode"]["stressed_planning_cycles"], 1
+        )
+
+    def test_state_save_reload_and_batch_replay_are_deterministic(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            state_path = Path(tmp) / "state.json"
+            output = Path(tmp) / "out"
+            first, counts1 = tp.state_replay(CONTRACT_FIXTURE, state_path, output)
+            state_bytes = state_path.read_bytes()
+            second, counts2 = tp.state_replay(CONTRACT_FIXTURE, state_path, output)
+            self.assertEqual(state_path.read_bytes(), state_bytes)
+            self.assertEqual(first, second)
+            self.assertEqual(counts1["applied"], 9)
+            self.assertEqual(counts1["audit_enriched"], 1)
+            self.assertEqual(counts1["duplicate_noop"], 1)
+            self.assertEqual(counts2["applied"], 0)
+            self.assertEqual(counts2["audit_enriched"], 0)
+            self.assertEqual(counts2["duplicate_noop"], 11)
+
+    def test_contract_fixture_exercises_review_cadence_and_replacement(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            state_path = Path(tmp) / "state.json"
+            document, _ = tp.state_replay(CONTRACT_FIXTURE, state_path, Path(tmp))
+            roles = {(r["plan_id"], r["target_id"]): r for r in document["roles"]}
+            self.assertEqual(
+                roles[("plan_monthly_demo", "target_cybersecurity")]["final_state"],
+                "strategic_review_due",
+            )
+            self.assertEqual(
+                roles[("plan_cadence_change", "target_world")]["segment_count"], 2
+            )
+            self.assertEqual(
+                roles[("plan_target_replacement", "target_thematic_role")]["segment_count"],
+                2,
+            )
+            report = (Path(tmp) / "persistence_contract_report.txt").read_text(
+                encoding="utf-8"
+            )
+            self.assertIn("no tactical debt", report)
+            self.assertIn("target_replaced", report)
 
 
 if __name__ == "__main__":

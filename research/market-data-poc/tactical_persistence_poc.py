@@ -2,15 +2,19 @@
 """Portfolio Architect Tactical Tilt persistence PoC.
 
 Standalone, advisory-only research tool for cadence-aware Tactical Tilt memory.
-It replays *planning-cycle* observations. Daily market-data refreshes are not
-accepted as governance events and therefore cannot increment persistence.
+It replays *planning-cycle* observations and can also maintain an idempotent
+research event log. Daily market-data refreshes are not accepted as governance
+events and therefore cannot increment persistence.
 
 Persistent weakness may suppress Tactical Tilt for a target and request a
-human strategic review. It never replaces a target, sells, buys, or mutates PA.
+human strategic review. Execution evidence is audit-only; recommendations create
+no tactical debt. The PoC never replaces a target, sells, buys, or mutates PA.
 """
 from __future__ import annotations
 
 import argparse
+import copy
+import hashlib
 import json
 import math
 import sys
@@ -19,7 +23,7 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
 
-VERSION = "0.3.0"
+VERSION = "0.3.1"
 EPS = 1e-9
 
 # Research qualification constants. A planning-cycle observation only advances
@@ -477,6 +481,481 @@ def replay(scenarios_path: Path, output_dir: Path) -> dict[str, Any]:
     return document
 
 
+
+@dataclass(frozen=True)
+class StateCycleEvent:
+    """One idempotent PA-cycle governance event for one configured target role."""
+
+    plan_id: str
+    cycle_effective_date: date
+    plan_frequency: str
+    target_id: str
+    isin: str
+    name: str
+    tactical_signal: float
+    return_5d: float
+    return_20d: float
+    drawdown_from_20d_high: float
+    recovered_since_previous_cycle: bool
+    selected_by_tt: bool | None
+    execution_outcome: str | None
+    note: str | None
+
+    @property
+    def cycle_identity(self) -> dict[str, str]:
+        return {
+            "plan_id": self.plan_id,
+            "cycle_effective_date": self.cycle_effective_date.isoformat(),
+            "plan_frequency": self.plan_frequency,
+            "target_id": self.target_id,
+            "isin": self.isin,
+        }
+
+    @property
+    def cycle_slot(self) -> tuple[str, str, str]:
+        # A configured target role can produce only one governance observation
+        # for one effective PA cycle. Frequency/ISIN changes in the same slot
+        # are therefore conflicts, not a second independent observation.
+        return (
+            self.plan_id,
+            self.cycle_effective_date.isoformat(),
+            self.target_id,
+        )
+
+    def to_cycle_observation(self) -> CycleObservation:
+        return CycleObservation(
+            cycle_date=self.cycle_effective_date,
+            tactical_signal=self.tactical_signal,
+            return_5d=self.return_5d,
+            return_20d=self.return_20d,
+            drawdown_from_20d_high=self.drawdown_from_20d_high,
+            recovered_since_previous_cycle=self.recovered_since_previous_cycle,
+            selected_by_tt=self.selected_by_tt,
+            note=self.note,
+        )
+
+
+def _canonical_json(value: Any) -> str:
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+
+
+def _event_governance_payload(event: StateCycleEvent) -> dict[str, Any]:
+    """Fields that are allowed to advance or change governance state."""
+    return {
+        "cycle_identity": event.cycle_identity,
+        "tactical_signal": event.tactical_signal,
+        "return_5d": event.return_5d,
+        "return_20d": event.return_20d,
+        "drawdown_from_20d_high": event.drawdown_from_20d_high,
+        "recovered_since_previous_cycle": event.recovered_since_previous_cycle,
+    }
+
+
+def _event_audit_payload(event: StateCycleEvent) -> dict[str, Any]:
+    """Audit-only fields; none of these may influence governance state."""
+    return {
+        "selected_by_tt": event.selected_by_tt,
+        "execution_outcome": event.execution_outcome,
+        "note": event.note,
+    }
+
+
+def _event_to_record(event: StateCycleEvent) -> dict[str, Any]:
+    return {
+        **event.cycle_identity,
+        "name": event.name,
+        "tactical_signal": event.tactical_signal,
+        "return_5d": event.return_5d,
+        "return_20d": event.return_20d,
+        "drawdown_from_20d_high": event.drawdown_from_20d_high,
+        "recovered_since_previous_cycle": event.recovered_since_previous_cycle,
+        **_event_audit_payload(event),
+    }
+
+
+def _event_from_record(record: dict[str, Any], field: str = "event") -> StateCycleEvent:
+    if not isinstance(record, dict):
+        raise PersistenceError(f"{field} must be an object")
+    plan_id = str(record.get("plan_id", "")).strip()
+    target_id = str(record.get("target_id", "")).strip()
+    frequency = str(record.get("plan_frequency", "")).strip().lower()
+    isin = str(record.get("isin", "")).strip().upper()
+    name = str(record.get("name", "")).strip()
+    if not plan_id:
+        raise PersistenceError(f"{field}.plan_id is empty")
+    if not target_id:
+        raise PersistenceError(f"{field}.target_id is empty")
+    if frequency not in CADENCE_POLICY:
+        raise PersistenceError(
+            f"{field}.plan_frequency must be one of " + ", ".join(CADENCE_POLICY)
+        )
+    if len(isin) != 12 or not isin.isalnum():
+        raise PersistenceError(f"{field}.isin is invalid")
+    if not name:
+        raise PersistenceError(f"{field}.name is empty")
+    cycle_date = _parse_date(record.get("cycle_effective_date"), f"{field}.cycle_effective_date")
+    signal = _finite_number(record.get("tactical_signal"), f"{field}.tactical_signal")
+    if signal < 0 or signal > 1:
+        raise PersistenceError(f"{field}.tactical_signal must be between 0 and 1")
+    r5 = _finite_number(record.get("return_5d"), f"{field}.return_5d")
+    r20 = _finite_number(record.get("return_20d"), f"{field}.return_20d")
+    drawdown = _finite_number(
+        record.get("drawdown_from_20d_high"), f"{field}.drawdown_from_20d_high"
+    )
+    recovered = record.get("recovered_since_previous_cycle", False)
+    if not isinstance(recovered, bool):
+        raise PersistenceError(f"{field}.recovered_since_previous_cycle must be boolean")
+    selected = record.get("selected_by_tt")
+    if selected is not None and not isinstance(selected, bool):
+        raise PersistenceError(f"{field}.selected_by_tt must be boolean or null")
+    outcome = record.get("execution_outcome")
+    if outcome is not None:
+        outcome = str(outcome).strip().lower()
+        if outcome not in {"followed", "partial", "not_followed"}:
+            raise PersistenceError(
+                f"{field}.execution_outcome must be followed, partial, not_followed, or null"
+            )
+    note_raw = record.get("note")
+    note = None if note_raw is None else str(note_raw).strip() or None
+    return StateCycleEvent(
+        plan_id=plan_id,
+        cycle_effective_date=cycle_date,
+        plan_frequency=frequency,
+        target_id=target_id,
+        isin=isin,
+        name=name,
+        tactical_signal=signal,
+        return_5d=r5,
+        return_20d=r20,
+        drawdown_from_20d_high=drawdown,
+        recovered_since_previous_cycle=recovered,
+        selected_by_tt=selected,
+        execution_outcome=outcome,
+        note=note,
+    )
+
+
+def load_state_events(path: Path) -> list[StateCycleEvent]:
+    raw = _load_json(path)
+    if not isinstance(raw, dict) or raw.get("schema") != 1:
+        raise PersistenceError("persistence event set must be schema 1")
+    items = raw.get("events")
+    if not isinstance(items, list) or not items:
+        raise PersistenceError("events must be a non-empty array")
+    return [_event_from_record(item, f"events[{idx}]") for idx, item in enumerate(items)]
+
+
+def empty_persistence_state() -> dict[str, Any]:
+    # Deliberately an event log. Replaying the same canonical log must reconstruct
+    # the same governance state after a restart. There is no tactical-debt field.
+    return {"schema": 1, "prototype_version": VERSION, "events": []}
+
+
+def load_persistence_state(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return empty_persistence_state()
+    raw = _load_json(path)
+    if not isinstance(raw, dict) or raw.get("schema") != 1:
+        raise PersistenceError("persistence state must be schema 1")
+    items = raw.get("events")
+    if not isinstance(items, list):
+        raise PersistenceError("persistence state events must be an array")
+    # Validate and normalize every persisted event while preserving log order.
+    normalized = [_event_to_record(_event_from_record(item, f"state.events[{idx}]")) for idx, item in enumerate(items)]
+    return {"schema": 1, "prototype_version": VERSION, "events": normalized}
+
+
+def save_persistence_state(path: Path, state: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    tmp.replace(path)
+
+
+def _governance_record_payload(record: dict[str, Any]) -> dict[str, Any]:
+    return _event_governance_payload(_event_from_record(record, "state event"))
+
+
+def _merge_audit_value(existing: Any, incoming: Any, field: str) -> tuple[Any, bool]:
+    if incoming is None or incoming == existing:
+        return existing, False
+    if existing is None:
+        return incoming, True
+    raise PersistenceError(f"conflicting audit evidence for {field}")
+
+
+def apply_state_event(state: dict[str, Any], event: StateCycleEvent) -> str:
+    """Apply one cycle event idempotently.
+
+    Returns ``applied``, ``audit_enriched``, or ``duplicate_noop``. Exact replay
+    never advances persistence twice. Audit-only execution evidence can be added
+    later without creating another governance observation.
+    """
+    if state.get("schema") != 1 or not isinstance(state.get("events"), list):
+        raise PersistenceError("invalid persistence state")
+    records: list[dict[str, Any]] = state["events"]
+    slot = event.cycle_slot
+    for record in records:
+        existing = _event_from_record(record, "state event")
+        if existing.cycle_slot != slot:
+            continue
+        if _governance_record_payload(record) != _event_governance_payload(event):
+            raise PersistenceError(
+                "conflicting governance evidence for existing PA cycle slot; "
+                "a cycle may advance persistence only once"
+            )
+        changed = False
+        for field, incoming in _event_audit_payload(event).items():
+            merged, field_changed = _merge_audit_value(record.get(field), incoming, field)
+            if field_changed:
+                record[field] = merged
+                changed = True
+        if not record.get("name") and event.name:
+            record["name"] = event.name
+            changed = True
+        return "audit_enriched" if changed else "duplicate_noop"
+
+    # Within one configured target role, later independent cycles must be strictly
+    # chronological. Cadence or instrument replacement is permitted only on a new
+    # cycle and is handled as a segment boundary during evaluation.
+    prior_dates = [
+        _parse_date(r["cycle_effective_date"], "state cycle_effective_date")
+        for r in records
+        if r.get("plan_id") == event.plan_id and r.get("target_id") == event.target_id
+    ]
+    if prior_dates and event.cycle_effective_date <= max(prior_dates):
+        raise PersistenceError(
+            "new persistence event must be later than the existing cycle for this plan/target role"
+        )
+    records.append(_event_to_record(event))
+    return "applied"
+
+
+def _state_digest(state: dict[str, Any]) -> str:
+    return hashlib.sha256(_canonical_json(state).encode("utf-8")).hexdigest()
+
+
+def _evaluate_segment(
+    plan_id: str,
+    target_id: str,
+    events: list[StateCycleEvent],
+    *,
+    terminated_by: str | None,
+) -> dict[str, Any]:
+    first = events[0]
+    history = TargetHistory(
+        scenario_id=f"{plan_id}:{target_id}:{first.isin}:{first.plan_frequency}",
+        description="stateful persistence segment",
+        plan_frequency=first.plan_frequency,
+        isin=first.isin,
+        name=first.name,
+        observations=tuple(event.to_cycle_observation() for event in events),
+    )
+    result = evaluate_history(history)
+    result["plan_id"] = plan_id
+    result["target_id"] = target_id
+    result["started"] = events[0].cycle_effective_date.isoformat()
+    result["last_cycle"] = events[-1].cycle_effective_date.isoformat()
+    result["terminated_by"] = terminated_by
+    result["execution_audit"] = {
+        "followed": sum(e.execution_outcome == "followed" for e in events),
+        "partial": sum(e.execution_outcome == "partial" for e in events),
+        "not_followed": sum(e.execution_outcome == "not_followed" for e in events),
+        "unknown": sum(e.execution_outcome is None for e in events),
+        "governance_effect": "none",
+    }
+    return result
+
+
+def evaluate_persistence_state(state: dict[str, Any]) -> dict[str, Any]:
+    records = state.get("events")
+    if state.get("schema") != 1 or not isinstance(records, list):
+        raise PersistenceError("invalid persistence state")
+    events = [_event_from_record(record, f"state.events[{idx}]") for idx, record in enumerate(records)]
+
+    role_order: list[tuple[str, str]] = []
+    by_role: dict[tuple[str, str], list[StateCycleEvent]] = {}
+    for event in events:
+        key = (event.plan_id, event.target_id)
+        if key not in by_role:
+            by_role[key] = []
+            role_order.append(key)
+        by_role[key].append(event)
+
+    roles: list[dict[str, Any]] = []
+    for plan_id, target_id in role_order:
+        role_events = by_role[(plan_id, target_id)]
+        segments: list[list[StateCycleEvent]] = []
+        current: list[StateCycleEvent] = []
+        for event in role_events:
+            if current and (
+                event.isin != current[-1].isin
+                or event.plan_frequency != current[-1].plan_frequency
+            ):
+                segments.append(current)
+                current = []
+            current.append(event)
+        if current:
+            segments.append(current)
+
+        evaluated_segments: list[dict[str, Any]] = []
+        for idx, segment in enumerate(segments):
+            terminated_by: str | None = None
+            if idx + 1 < len(segments):
+                next_segment = segments[idx + 1]
+                if next_segment[0].isin != segment[-1].isin:
+                    terminated_by = "target_replaced"
+                else:
+                    terminated_by = "plan_frequency_changed"
+            evaluated_segments.append(
+                _evaluate_segment(
+                    plan_id,
+                    target_id,
+                    segment,
+                    terminated_by=terminated_by,
+                )
+            )
+
+        active_segment = evaluated_segments[-1]
+        roles.append(
+            {
+                "plan_id": plan_id,
+                "target_id": target_id,
+                "active_target": active_segment["target"],
+                "current_plan_frequency": active_segment["plan_frequency"],
+                "final_state": active_segment["final_state"],
+                "final_reason": active_segment["final_reason"],
+                "tactical_bonus_allowed": active_segment["tactical_bonus_allowed"],
+                "human_strategic_review_required": active_segment[
+                    "human_strategic_review_required"
+                ],
+                "segment_count": len(evaluated_segments),
+                "segments": evaluated_segments,
+            }
+        )
+
+    return {
+        "prototype_version": VERSION,
+        "state_schema": 1,
+        "state_sha256": _state_digest(state),
+        "event_count": len(events),
+        "contract": {
+            "cycle_identity_fields": [
+                "plan_id",
+                "cycle_effective_date",
+                "plan_frequency",
+                "target_id",
+                "isin",
+            ],
+            "cycle_replay_is_idempotent": True,
+            "execution_evidence_affects_governance": False,
+            "unexecuted_recommendation_creates_tactical_debt": False,
+            "next_cycle_scoring_uses_current_authoritative_holdings": True,
+            "persistence_tracks_qualified_weakness_not_recommendation_compliance": True,
+            "cadence_change_reinterprets_old_cycles": False,
+            "cadence_change_starts_new_governance_segment": True,
+            "target_replacement_inherits_old_asset_stress": False,
+            "restart_replay_must_be_deterministic": True,
+        },
+        "roles": roles,
+    }
+
+
+def render_state_report(document: dict[str, Any], action_counts: dict[str, int]) -> str:
+    lines: list[str] = []
+    lines.append("Portfolio Architect Tactical Tilt persistence contract PoC")
+    lines.append(f"prototype_version: {document['prototype_version']}")
+    lines.append(f"state_sha256: {document['state_sha256']}")
+    lines.append(f"event_count: {document['event_count']}")
+    lines.append("")
+    lines.append("APPLY RESULT")
+    for action in ("applied", "audit_enriched", "duplicate_noop"):
+        lines.append(f"  {action}: {action_counts.get(action, 0)}")
+    lines.append("")
+    lines.append("CONTRACT")
+    c = document["contract"]
+    lines.append(
+        "  cycle identity: " + ", ".join(c["cycle_identity_fields"])
+    )
+    lines.append("  exact cycle replay: idempotent")
+    lines.append("  execution evidence: audit-only; governance effect = none")
+    lines.append("  unexecuted recommendation: no tactical debt")
+    lines.append("  next cycle: current authoritative holdings are the scoring input")
+    lines.append("  cadence change: historical segment retained; new cadence starts clean")
+    lines.append("  target replacement: old instrument evidence retained; replacement starts clean")
+    lines.append("  restart/replay: deterministic event-log reconstruction required")
+    lines.append("")
+    lines.append("ROLE STATES")
+    for role in document["roles"]:
+        active = role["active_target"]
+        lines.append(f"  {role['plan_id']} / {role['target_id']}")
+        lines.append(
+            f"    active: {active['isin']}  frequency={role['current_plan_frequency']}"
+        )
+        lines.append(
+            f"    state: {role['final_state']}  tactical_bonus_allowed={role['tactical_bonus_allowed']}"
+        )
+        lines.append(f"    segments: {role['segment_count']}")
+        for idx, segment in enumerate(role["segments"], start=1):
+            lines.append(
+                f"      {idx}. {segment['target']['isin']} [{segment['plan_frequency']}] "
+                f"{segment['started']}..{segment['last_cycle']} -> {segment['final_state']}"
+            )
+            if segment["terminated_by"]:
+                lines.append(f"         terminated_by: {segment['terminated_by']}")
+            audit = segment["execution_audit"]
+            lines.append(
+                "         execution audit: "
+                f"followed={audit['followed']} partial={audit['partial']} not_followed={audit['not_followed']} "
+                f"unknown={audit['unknown']} governance_effect={audit['governance_effect']}"
+            )
+        lines.append("")
+    lines.append("INTERPRETATION")
+    lines.append("  Recommendations create no obligation and no tactical debt.")
+    lines.append("  Not following TT does not erase or increase target stress history.")
+    lines.append("  A new PA cycle always recomputes from current authoritative portfolio state.")
+    lines.append("  Historical weakness evidence remains auditable across cadence changes and target replacement.")
+    return "\n".join(lines) + "\n"
+
+
+def state_replay(
+    events_path: Path,
+    state_path: Path,
+    output_dir: Path,
+) -> tuple[dict[str, Any], dict[str, int]]:
+    state = load_persistence_state(state_path)
+    events = load_state_events(events_path)
+    action_counts = {"applied": 0, "audit_enriched": 0, "duplicate_noop": 0}
+    for event in events:
+        action = apply_state_event(state, event)
+        action_counts[action] += 1
+    save_persistence_state(state_path, state)
+
+    # Restart/reload proof: the persisted event log must derive the same state.
+    reloaded = load_persistence_state(state_path)
+    document = evaluate_persistence_state(reloaded)
+    if document != evaluate_persistence_state(state):
+        raise PersistenceError("restart/replay changed derived governance state")
+
+    # Idempotency proof: replaying the exact batch again must not change the
+    # persisted governance log. Audit enrichments have already been absorbed.
+    replay_copy = copy.deepcopy(reloaded)
+    before = _canonical_json(replay_copy)
+    for event in events:
+        apply_state_event(replay_copy, event)
+    if _canonical_json(replay_copy) != before:
+        raise PersistenceError("replaying the same PA cycles changed persistence state")
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    json_path = output_dir / "persistence_contract.json"
+    report_path = output_dir / "persistence_contract_report.txt"
+    json_path.write_text(
+        json.dumps(document, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    report_path.write_text(render_state_report(document, action_counts), encoding="utf-8")
+    return document, action_counts
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -490,6 +969,28 @@ def build_parser() -> argparse.ArgumentParser:
         help="schema-1 scenario set",
     )
     replay_parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=Path("output/tactical_tilt"),
+        help="output directory",
+    )
+    state_parser = sub.add_parser(
+        "state-replay",
+        help="apply idempotent PA-cycle events to a persisted research event log",
+    )
+    state_parser.add_argument(
+        "--events",
+        type=Path,
+        default=Path("examples/persistence_contract_events.json"),
+        help="schema-1 cycle-event set",
+    )
+    state_parser.add_argument(
+        "--state",
+        type=Path,
+        default=Path("output/tactical_tilt/persistence_state.json"),
+        help="persisted research state file",
+    )
+    state_parser.add_argument(
         "--output-dir",
         type=Path,
         default=Path("output/tactical_tilt"),
@@ -517,9 +1018,25 @@ def main(argv: list[str] | None = None) -> int:
                 )
             print(f"report: {args.output_dir / 'persistence_report.txt'}")
             return 0
+        if args.command == "state-replay":
+            document, counts = state_replay(args.events, args.state, args.output_dir)
+            print(
+                "events: "
+                f"applied={counts['applied']} audit_enriched={counts['audit_enriched']} "
+                f"duplicate_noop={counts['duplicate_noop']} total_state={document['event_count']}"
+            )
+            for role in document["roles"]:
+                print(
+                    f"{role['plan_id']}/{role['target_id']}: {role['final_state']} "
+                    f"segments={role['segment_count']} "
+                    f"active={role['active_target']['isin']}"
+                )
+            print(f"state: {args.state}")
+            print(f"report: {args.output_dir / 'persistence_contract_report.txt'}")
+            return 0
         raise PersistenceError(f"unsupported command: {args.command}")
     except PersistenceError as exc:
-        print(f"error: {exc}", file=sys.stderr)
+        print(f"ERROR: {exc}", file=sys.stderr)
         return 2
 
 
