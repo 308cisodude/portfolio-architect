@@ -220,6 +220,13 @@ class CalibrationTests(unittest.TestCase):
         }
         return candidates, market
 
+    def test_tactical_bonus_ceiling_cli_keeps_legacy_alias(self):
+        parser = tt.build_parser()
+        modern = parser.parse_args(["score", "--tactical-bonus-ceiling-pct", "150"])
+        legacy = parser.parse_args(["score", "--tilt-budget-pct", "150"])
+        self.assertEqual(modern.tilt_budget_pct, 150.0)
+        self.assertEqual(legacy.tilt_budget_pct, 150.0)
+
     def test_csv_float_parser_deduplicates_preserving_order(self):
         parsed = tt._parse_csv_floats("0,25,25,100", field="test")
         self.assertEqual(parsed, (0.0, 25.0, 100.0))
@@ -242,14 +249,14 @@ class CalibrationTests(unittest.TestCase):
         result = tt.challenger_break_even(self.rows(), contribution_eur=350.0)[0]
         self.assertAlmostEqual(result["strategic_gap_eur"], 10.0)
         self.assertAlmostEqual(result["signal_advantage"], 0.5)
-        self.assertAlmostEqual(result["score_parity_budget_eur"], 20.0)
-        self.assertAlmostEqual(result["score_parity_pct_of_contribution"], 20.0 / 350.0 * 100.0)
+        self.assertAlmostEqual(result["score_parity_bonus_ceiling_eur"], 20.0)
+        self.assertAlmostEqual(result["score_parity_bonus_ceiling_pct_of_contribution"], 20.0 / 350.0 * 100.0)
 
     def test_break_even_is_absent_without_positive_signal_advantage(self):
         rows = self.rows(world_signal=0.6, challenger_signal=0.5)
         result = tt.challenger_break_even(rows, contribution_eur=350.0)[0]
-        self.assertFalse(result["can_outscore_with_positive_bound"])
-        self.assertIsNone(result["score_parity_budget_eur"])
+        self.assertFalse(result["can_outscore_with_positive_bonus_ceiling"])
+        self.assertIsNone(result["score_parity_bonus_ceiling_eur"])
 
     def test_decision_surface_reports_expected_parity_percentages(self):
         surface = tt.decision_surface(
@@ -258,8 +265,26 @@ class CalibrationTests(unittest.TestCase):
             signal_advantages=(0.5, 1.0),
         )
         cells = surface["rows"][0]["cells"]
-        self.assertAlmostEqual(cells[0]["required_bound_pct_of_contribution"], 200.0)
-        self.assertAlmostEqual(cells[1]["required_bound_pct_of_contribution"], 100.0)
+        self.assertAlmostEqual(cells[0]["required_bonus_ceiling_pct_of_contribution"], 200.0)
+        self.assertAlmostEqual(cells[1]["required_bonus_ceiling_pct_of_contribution"], 100.0)
+
+    def test_default_sweep_covers_fine_100_to_200_percent_region(self):
+        self.assertEqual(
+            tt.DEFAULT_CALIBRATION_SWEEP_PCTS,
+            (0.0, 25.0, 50.0, 75.0, 100.0, 125.0, 150.0, 175.0, 200.0),
+        )
+        self.assertEqual(tt.REFERENCE_TACTICAL_BONUS_CEILING_PCT, 150.0)
+
+    def test_effective_gap_capacity_is_ceiling_times_signal_edge(self):
+        capacity = tt.effective_gap_capacity(
+            contribution_eur=350.0,
+            bonus_ceiling_pcts=(150.0,),
+            signal_advantages=(0.1, 0.5, 1.0),
+        )
+        row = capacity["rows"][0]
+        self.assertAlmostEqual(row["tactical_bonus_ceiling_eur"], 525.0)
+        gaps = [cell["effective_strategic_gap_eur"] for cell in row["cells"]]
+        self.assertEqual(gaps, [52.5, 262.5, 525.0])
 
     def test_neutral_context_keeps_every_sweep_level_on_baseline(self):
         candidates, market = self.candidates_and_market()
@@ -298,6 +323,10 @@ class CalibrationTests(unittest.TestCase):
                 surface_signal_advantages=(0.5, 1.0),
             )
             self.assertEqual(doc["reference_model"], "bounded_rebound_aware")
+            self.assertEqual(
+                doc["reference_tactical_bonus_ceiling"]["pct_of_contribution"], 150.0
+            )
+            self.assertIn("effective_gap_capacity", doc)
             self.assertTrue((output / "calibration.json").is_file())
             self.assertTrue((output / "calibration_report.txt").is_file())
             self.assertEqual(doc["sweep"][0]["selected_isin"], WORLD)

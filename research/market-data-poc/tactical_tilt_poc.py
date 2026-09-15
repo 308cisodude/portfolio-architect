@@ -18,11 +18,12 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
 
-VERSION = "0.2.1"
+VERSION = "0.2.2"
 DEFAULT_TILT_BUDGET_PCT = 10.0
 DEFAULT_TIE_BAND_PCT = 10.0
 DEFAULT_MAX_MARKET_AGE_DAYS = 4
-DEFAULT_CALIBRATION_SWEEP_PCTS = (0.0, 25.0, 50.0, 75.0, 100.0, 150.0, 200.0)
+DEFAULT_CALIBRATION_SWEEP_PCTS = (0.0, 25.0, 50.0, 75.0, 100.0, 125.0, 150.0, 175.0, 200.0)
+REFERENCE_TACTICAL_BONUS_CEILING_PCT = 150.0
 DEFAULT_SURFACE_GAP_PCTS = (2.5, 5.0, 10.0, 25.0, 50.0, 100.0, 200.0)
 DEFAULT_SURFACE_SIGNAL_ADVANTAGES = (0.10, 0.25, 0.50, 0.75, 1.00)
 EPS = 1e-9
@@ -428,7 +429,7 @@ def calibration_sweep(
     contribution_eur: float,
     sweep_pcts: tuple[float, ...],
 ) -> list[dict[str, Any]]:
-    """Evaluate the rebound-aware additive model across sacrifice bounds."""
+    """Evaluate the rebound-aware additive model across tactical bonus ceilings."""
     results: list[dict[str, Any]] = []
     for pct in sweep_pcts:
         rows, policy = calculate_models(
@@ -445,8 +446,8 @@ def calibration_sweep(
         baseline_row = next(row for row in rows if row["isin"] == baseline["selected_isin"])
         results.append(
             {
-                "max_strategic_sacrifice_pct_of_contribution": pct,
-                "max_strategic_sacrifice_eur": policy["tilt_budget_eur"],
+                "tactical_bonus_ceiling_pct_of_contribution": pct,
+                "tactical_bonus_ceiling_eur": policy["tilt_budget_eur"],
                 "selected_isin": model["selected_isin"],
                 "selected_name": model["selected_name"],
                 "changed_from_baseline": model["changed_from_baseline"],
@@ -480,17 +481,17 @@ def challenger_break_even(
             continue
         gap = max(best_deficit - float(row["strategic_deficit_eur"]), 0.0)
         signal_advantage = float(row["rebound_aware"]) - baseline_signal
-        parity_budget_eur: float | None = None
+        parity_bonus_ceiling_eur: float | None = None
         parity_pct: float | None = None
         parity_multiple: float | None = None
         if gap <= EPS:
-            parity_budget_eur = 0.0
+            parity_bonus_ceiling_eur = 0.0
             parity_pct = 0.0
             parity_multiple = 0.0
         elif signal_advantage > EPS:
-            parity_budget_eur = gap / signal_advantage
-            parity_pct = parity_budget_eur / contribution_eur * 100.0
-            parity_multiple = parity_budget_eur / contribution_eur
+            parity_bonus_ceiling_eur = gap / signal_advantage
+            parity_pct = parity_bonus_ceiling_eur / contribution_eur * 100.0
+            parity_multiple = parity_bonus_ceiling_eur / contribution_eur
         result.append(
             {
                 "isin": row["isin"],
@@ -499,10 +500,10 @@ def challenger_break_even(
                 "baseline_signal": baseline_signal,
                 "challenger_signal": float(row["rebound_aware"]),
                 "signal_advantage": signal_advantage,
-                "score_parity_budget_eur": parity_budget_eur,
-                "score_parity_pct_of_contribution": parity_pct,
-                "score_parity_contribution_multiple": parity_multiple,
-                "can_outscore_with_positive_bound": parity_budget_eur is not None,
+                "score_parity_bonus_ceiling_eur": parity_bonus_ceiling_eur,
+                "score_parity_bonus_ceiling_pct_of_contribution": parity_pct,
+                "score_parity_bonus_ceiling_contribution_multiple": parity_multiple,
+                "can_outscore_with_positive_bonus_ceiling": parity_bonus_ceiling_eur is not None,
             }
         )
     return result
@@ -524,13 +525,13 @@ def decision_surface(
         gap_eur = contribution_eur * gap_pct / 100.0
         cells = []
         for advantage in signal_advantages:
-            required_budget_eur = gap_eur / advantage
+            required_bonus_ceiling_eur = gap_eur / advantage
             cells.append(
                 {
                     "signal_advantage": advantage,
-                    "required_bound_eur": required_budget_eur,
-                    "required_bound_pct_of_contribution": (
-                        required_budget_eur / contribution_eur * 100.0
+                    "required_bonus_ceiling_eur": required_bonus_ceiling_eur,
+                    "required_bonus_ceiling_pct_of_contribution": (
+                        required_bonus_ceiling_eur / contribution_eur * 100.0
                     ),
                 }
             )
@@ -545,9 +546,55 @@ def decision_surface(
         "signal_advantages": list(signal_advantages),
         "rows": rows,
         "interpretation": (
-            "Each cell is the maximum-strategic-sacrifice bound required merely to "
-            "reach score parity. A clean win may require a slightly larger bound when "
-            "the parity score ties."
+            "Each cell is the tactical bonus ceiling required merely to reach score "
+            "parity. A clean win may require a slightly larger ceiling when the parity "
+            "score ties."
+        ),
+    }
+
+
+def effective_gap_capacity(
+    *,
+    contribution_eur: float,
+    bonus_ceiling_pcts: tuple[float, ...],
+    signal_advantages: tuple[float, ...],
+) -> dict[str, Any]:
+    """Show the strategic gap an additive bonus ceiling can overcome at each signal edge."""
+    if contribution_eur <= 0:
+        raise TiltError("contribution_eur must be > 0")
+    if any(value < 0 for value in bonus_ceiling_pcts):
+        raise TiltError("bonus ceiling percentages must be >= 0")
+    if any(value < 0 or value > 1 for value in signal_advantages):
+        raise TiltError("effective-gap signal advantages must be between 0 and 1")
+    rows: list[dict[str, Any]] = []
+    for pct in bonus_ceiling_pcts:
+        ceiling_eur = contribution_eur * pct / 100.0
+        cells = []
+        for advantage in signal_advantages:
+            gap_eur = ceiling_eur * advantage
+            cells.append(
+                {
+                    "signal_advantage": advantage,
+                    "effective_strategic_gap_eur": gap_eur,
+                    "effective_strategic_gap_pct_of_contribution": (
+                        gap_eur / contribution_eur * 100.0
+                    ),
+                }
+            )
+        rows.append(
+            {
+                "tactical_bonus_ceiling_pct_of_contribution": pct,
+                "tactical_bonus_ceiling_eur": ceiling_eur,
+                "cells": cells,
+            }
+        )
+    return {
+        "signal_advantages": list(signal_advantages),
+        "rows": rows,
+        "interpretation": (
+            "The effective strategic gap that can be overcome is tactical bonus ceiling "
+            "multiplied by the challenger's positive rebound-aware signal advantage over "
+            "the baseline."
         ),
     }
 
@@ -597,6 +644,11 @@ def calibrate(
         strategic_gap_pcts=surface_gap_pcts,
         signal_advantages=surface_signal_advantages,
     )
+    effective_capacity = effective_gap_capacity(
+        contribution_eur=contribution,
+        bonus_ceiling_pcts=sweep_pcts,
+        signal_advantages=surface_signal_advantages,
+    )
     doc = {
         "schema": 1,
         "prototype_version": VERSION,
@@ -604,6 +656,11 @@ def calibrate(
         "evaluation_date": evaluation_date.isoformat(),
         "scope": "research_only_tactical_tilt_calibration",
         "reference_model": "bounded_rebound_aware",
+        "reference_tactical_bonus_ceiling": {
+            "pct_of_contribution": REFERENCE_TACTICAL_BONUS_CEILING_PCT,
+            "eur": contribution * REFERENCE_TACTICAL_BONUS_CEILING_PCT / 100.0,
+            "status": "provisional_research_reference_not_production_policy",
+        },
         "allocation": {
             "source_label": allocation_raw.get("source_label"),
             "contribution_eur": contribution,
@@ -622,9 +679,11 @@ def calibrate(
         "candidate_scores": rows,
         "sweep": sweep,
         "challenger_break_even": break_even,
+        "effective_gap_capacity": effective_capacity,
         "decision_surface": surface,
         "limitations": [
             "Calibration does not change the v0.2.0 tactical signal or additive score formula.",
+            "The tactical bonus ceiling is an EUR-equivalent score addition at signal=1.0; it is not a direct maximum strategic sacrifice.",
             "Score-parity analysis is not a forecast of future returns and does not imply that a price decline will recover.",
             "This PoC ranks allocation candidates only; full PA provider, cash, funding, fee, policy and execution routing remain outside scope.",
             "Market-context failure or staleness is neutral and never reduces core PA actionability.",
@@ -727,7 +786,7 @@ def write_report(doc: dict[str, Any], path: Path) -> None:
         f"  failure_semantics: {gate['failure_semantics']}",
         "",
         "BOUNDS",
-        f"  tactical_budget: {policy['tilt_budget_pct_of_contribution']:.2f}% of contribution = EUR {policy['tilt_budget_eur']:.2f}",
+        f"  tactical_bonus_ceiling: {policy['tilt_budget_pct_of_contribution']:.2f}% of contribution = EUR {policy['tilt_budget_eur']:.2f}",
         f"  tie_break_band: {policy['tie_band_pct_of_contribution']:.2f}% of contribution = EUR {policy['tie_band_eur']:.2f}",
         "",
         "CANDIDATES",
@@ -797,7 +856,8 @@ def write_calibration_report(doc: dict[str, Any], path: Path) -> None:
         f"reference_model: {doc['reference_model']}",
         "",
         "SCOPE",
-        "  Research-only calibration of maximum strategic sacrifice.",
+        "  Research-only calibration of the tactical bonus ceiling.",
+        "  The ceiling is an EUR-equivalent score bonus at signal=1.0, not a direct maximum strategic sacrifice.",
         "  The v0.2.0 rebound-aware signal and additive score formula are unchanged.",
         "",
         "ALLOCATION",
@@ -813,14 +873,18 @@ def write_calibration_report(doc: dict[str, Any], path: Path) -> None:
         f"  common_as_of: {gate['common_as_of']}",
         f"  failure_semantics: {gate['failure_semantics']}",
         "",
-        "MAXIMUM STRATEGIC SACRIFICE SWEEP",
-        "  Bound          Selected       Actual sacrifice   Signal edge   Changed",
+        "PROVISIONAL RESEARCH REFERENCE",
+        f"  tactical_bonus_ceiling: {doc['reference_tactical_bonus_ceiling']['pct_of_contribution']:.1f}% of contribution = EUR {doc['reference_tactical_bonus_ceiling']['eur']:.2f}",
+        f"  status: {doc['reference_tactical_bonus_ceiling']['status']}",
+        "",
+        "TACTICAL BONUS CEILING SWEEP",
+        "  Ceiling        Selected       Actual sacrifice   Signal edge   Changed",
     ]
     for row in doc["sweep"]:
         lines.append(
             "  "
-            f"{row['max_strategic_sacrifice_pct_of_contribution']:>6.1f}% "
-            f"EUR {row['max_strategic_sacrifice_eur']:>7.2f}  "
+            f"{row['tactical_bonus_ceiling_pct_of_contribution']:>6.1f}% "
+            f"EUR {row['tactical_bonus_ceiling_eur']:>7.2f}  "
             f"{row['selected_isin']}  "
             f"EUR {row['actual_strategic_sacrifice_eur']:>7.2f}  "
             f"{row['signal_advantage_vs_baseline']:+.3f}      "
@@ -836,23 +900,46 @@ def write_calibration_report(doc: dict[str, Any], path: Path) -> None:
             f"    strategic_gap_eur: {row['strategic_gap_eur']:.2f}  "
             f"signal_advantage: {row['signal_advantage']:+.3f}"
         )
-        if row["score_parity_budget_eur"] is None:
+        if row["score_parity_bonus_ceiling_eur"] is None:
             lines.append(
-                "    score_parity: none at any positive bound; tactical signal does not exceed baseline"
+                "    score_parity: none at any positive bonus ceiling; tactical signal does not exceed baseline"
             )
         else:
             lines.append(
-                f"    score_parity: EUR {row['score_parity_budget_eur']:.2f} = "
-                f"{row['score_parity_pct_of_contribution']:.1f}% of contribution = "
-                f"{row['score_parity_contribution_multiple']:.2f}x one contribution"
+                f"    score_parity: EUR {row['score_parity_bonus_ceiling_eur']:.2f} = "
+                f"{row['score_parity_bonus_ceiling_pct_of_contribution']:.1f}% of contribution = "
+                f"{row['score_parity_bonus_ceiling_contribution_multiple']:.2f}x one contribution"
             )
+
+    capacity = doc["effective_gap_capacity"]
+    lines.extend(
+        [
+            "",
+            "EFFECTIVE STRATEGIC GAP CAPACITY",
+            "  Each cell is the strategic gap the ceiling can overcome at the given signal edge.",
+        ]
+    )
+    capacity_header = "  ceiling" + "".join(
+        f"      +{adv:.2f}" for adv in capacity["signal_advantages"]
+    )
+    lines.append(capacity_header)
+    for row in capacity["rows"]:
+        rendered = "".join(
+            f"  EUR {cell['effective_strategic_gap_eur']:>7.2f}"
+            for cell in row["cells"]
+        )
+        lines.append(
+            f"  {row['tactical_bonus_ceiling_pct_of_contribution']:>6.1f}% "
+            f"(EUR {row['tactical_bonus_ceiling_eur']:>7.2f})"
+            + rendered
+        )
 
     surface = doc["decision_surface"]
     lines.extend(
         [
             "",
             "GENERIC DECISION SURFACE",
-            "  Each cell is the sacrifice bound required to reach additive-score parity.",
+            "  Each cell is the tactical bonus ceiling required to reach additive-score parity.",
             "  Rows are strategic gaps; columns are rebound-aware signal advantages.",
         ]
     )
@@ -862,7 +949,7 @@ def write_calibration_report(doc: dict[str, Any], path: Path) -> None:
     lines.append(header)
     for row in surface["rows"]:
         rendered = "".join(
-            f"  {cell['required_bound_pct_of_contribution']:>8.1f}%"
+            f"  {cell['required_bonus_ceiling_pct_of_contribution']:>8.1f}%"
             for cell in row["cells"]
         )
         lines.append(
@@ -875,8 +962,8 @@ def write_calibration_report(doc: dict[str, Any], path: Path) -> None:
         [
             "",
             "INTERPRETATION",
-            "  A larger maximum strategic sacrifice makes TT relevant across wider allocation gaps,",
-            "  but the challenger still needs a positive tactical-signal advantage to benefit.",
+            "  A larger tactical bonus ceiling makes TT relevant across wider allocation gaps,",
+            "  but the effective strategic gap it can overcome is ceiling × positive signal edge.",
             "  Reaching score parity is not the same as proving superior future returns.",
             "  Overweight/ineligible targets remain outside the candidate set before calibration.",
             "  A market-data failure makes Tactical Tilt neutral; core PA remains unaffected.",
@@ -895,14 +982,21 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--output-dir", type=Path, default=Path("output") / "tactical_tilt")
     parser.add_argument("--evaluation-date", type=date.fromisoformat, default=None)
-    parser.add_argument("--tilt-budget-pct", type=float, default=DEFAULT_TILT_BUDGET_PCT)
+    parser.add_argument(
+        "--tactical-bonus-ceiling-pct",
+        "--tilt-budget-pct",
+        dest="tilt_budget_pct",
+        type=float,
+        default=DEFAULT_TILT_BUDGET_PCT,
+        help="score-command tactical bonus ceiling as percent of one contribution; --tilt-budget-pct is a compatibility alias",
+    )
     parser.add_argument("--tie-band-pct", type=float, default=DEFAULT_TIE_BAND_PCT)
     parser.add_argument("--max-market-age-days", type=int, default=DEFAULT_MAX_MARKET_AGE_DAYS)
     parser.add_argument(
         "--sweep-pct",
         type=lambda value: _parse_csv_floats(value, field="sweep-pct"),
         default=DEFAULT_CALIBRATION_SWEEP_PCTS,
-        help="calibration bounds as comma-separated percentages of one contribution",
+        help="tactical bonus ceilings as comma-separated percentages of one contribution",
     )
     parser.add_argument(
         "--surface-gap-pct",
@@ -967,8 +1061,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"baseline: {doc['baseline']['selected_isin']}")
         for row in doc["sweep"]:
             print(
-                f"sacrifice_bound={row['max_strategic_sacrifice_pct_of_contribution']:.1f}% "
-                f"(EUR {row['max_strategic_sacrifice_eur']:.2f}): "
+                f"bonus_ceiling={row['tactical_bonus_ceiling_pct_of_contribution']:.1f}% "
+                f"(EUR {row['tactical_bonus_ceiling_eur']:.2f}): "
                 f"{row['selected_isin']} actual_sacrifice=EUR "
                 f"{row['actual_strategic_sacrifice_eur']:.2f} "
                 f"changed={row['changed_from_baseline']}"
