@@ -23,7 +23,7 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
 
-VERSION = "0.4.1"
+VERSION = "0.4.2"
 EPS = 1e-9
 
 # Research qualification constants. A planning-cycle observation only advances
@@ -241,16 +241,24 @@ def load_scenarios(path: Path) -> list[TargetHistory]:
     return result
 
 
-def _episode_summary(observations: list[CycleObservation]) -> dict[str, Any]:
+def _episode_summary(
+    observations: list[CycleObservation],
+    *,
+    observed_through: date | None = None,
+) -> dict[str, Any]:
     if not observations:
         raise PersistenceError("cannot summarize empty episode")
     start = observations[0].cycle_date
-    end = observations[-1].cycle_date
+    last_stressed = observations[-1].cycle_date
+    through = observed_through or last_stressed
+    if through < last_stressed:
+        raise PersistenceError("episode observed_through cannot precede last stressed cycle")
     selected_count = sum(obs.selected_by_tt is True for obs in observations)
     return {
         "started": start.isoformat(),
-        "last_observed": end.isoformat(),
-        "elapsed_days": (end - start).days,
+        "last_stressed": last_stressed.isoformat(),
+        "last_observed": through.isoformat(),
+        "elapsed_days": (through - start).days,
         "stressed_planning_cycles": len(observations),
         "selected_by_tt_cycles": selected_count,
         "peak_tactical_signal": max(obs.tactical_signal for obs in observations),
@@ -263,12 +271,15 @@ def _episode_summary(observations: list[CycleObservation]) -> dict[str, Any]:
 
 
 def _governance_state(
-    frequency: str, active_episode: list[CycleObservation]
+    frequency: str,
+    active_episode: list[CycleObservation],
+    *,
+    observed_through: date | None = None,
 ) -> tuple[str, str]:
     if not active_episode:
         return "normal", "no_active_qualified_weakness_episode"
     policy = CADENCE_POLICY[frequency]
-    summary = _episode_summary(active_episode)
+    summary = _episode_summary(active_episode, observed_through=observed_through)
     cycles = int(summary["stressed_planning_cycles"])
     elapsed = int(summary["elapsed_days"])
 
@@ -286,36 +297,64 @@ def _governance_state(
 
 
 def evaluate_history(history: TargetHistory) -> dict[str, Any]:
-    """Replay one target's independent PA planning-cycle observations."""
+    """Replay one target's independent PA planning-cycle observations.
+
+    v0.4.2 hardens episode continuity: once qualified weakness starts an
+    episode, a merely non-qualified PA cycle does not by itself prove recovery.
+    The episode stays unresolved until explicit recovery evidence is supplied
+    (``recovered_since_previous_cycle``), while only qualified PA cycles
+    increment the stressed-cycle count.
+    """
     active_episode: list[CycleObservation] = []
+    active_observed_through: date | None = None
     closed_episodes: list[dict[str, Any]] = []
     observation_rows: list[dict[str, Any]] = []
 
     def close_active(reason: str, closed_on: date) -> None:
-        nonlocal active_episode
+        nonlocal active_episode, active_observed_through
         if not active_episode:
             return
-        summary = _episode_summary(active_episode)
+        summary = _episode_summary(
+            active_episode, observed_through=active_observed_through
+        )
         summary["closed_reason"] = reason
         summary["closed_on"] = closed_on.isoformat()
         closed_episodes.append(summary)
         active_episode = []
+        active_observed_through = None
 
     for obs in history.observations:
-        # A recovery between cycles splits episodes even if the asset has become
-        # weak again by the next PA cycle. This prevents one long-lived counter
-        # from spanning distinct market events.
+        # Confirmed recovery between cycles is the only market-state event that
+        # closes an active weakness episode. It splits episodes even if weakness
+        # has returned by the next PA cycle.
         if obs.recovered_since_previous_cycle:
             close_active("recovered_between_planning_cycles", obs.cycle_date)
 
         qualified = obs.stress_qualified
         if qualified:
             active_episode.append(obs)
+            active_observed_through = obs.cycle_date
+            episode_continuity = "stressed"
+        elif active_episode:
+            # A non-qualified cycle without confirmed recovery is not proof that
+            # the market event ended. Keep the episode unresolved, advance only
+            # its wall-clock observation horizon, and do not increment stressed
+            # cycle count.
+            active_observed_through = obs.cycle_date
+            episode_continuity = "unresolved_nonstress"
         else:
-            close_active("weakness_not_qualified_at_planning_cycle", obs.cycle_date)
+            episode_continuity = "normal"
 
-        state, reason = _governance_state(history.plan_frequency, active_episode)
-        active_summary = _episode_summary(active_episode) if active_episode else None
+        state, reason = _governance_state(
+            history.plan_frequency,
+            active_episode,
+            observed_through=active_observed_through,
+        )
+        active_summary = (
+            _episode_summary(active_episode, observed_through=active_observed_through)
+            if active_episode
+            else None
+        )
         observation_rows.append(
             {
                 "cycle_date": obs.cycle_date.isoformat(),
@@ -326,6 +365,7 @@ def evaluate_history(history: TargetHistory) -> dict[str, Any]:
                 "market_history_support": obs.market_history_support,
                 "stress_qualified": qualified,
                 "recovered_since_previous_cycle": obs.recovered_since_previous_cycle,
+                "episode_continuity": episode_continuity,
                 "selected_by_tt": obs.selected_by_tt,
                 "state_after_cycle": state,
                 "state_reason": reason,
@@ -339,8 +379,16 @@ def evaluate_history(history: TargetHistory) -> dict[str, Any]:
             }
         )
 
-    state, reason = _governance_state(history.plan_frequency, active_episode)
-    active_summary = _episode_summary(active_episode) if active_episode else None
+    state, reason = _governance_state(
+        history.plan_frequency,
+        active_episode,
+        observed_through=active_observed_through,
+    )
+    active_summary = (
+        _episode_summary(active_episode, observed_through=active_observed_through)
+        if active_episode
+        else None
+    )
     review_due = state == "strategic_review_due"
     return {
         "scenario_id": history.scenario_id,
@@ -353,6 +401,10 @@ def evaluate_history(history: TargetHistory) -> dict[str, Any]:
                 "return_20d_lte": MIN_RETURN_20D,
                 "or_drawdown_from_20d_high_lte": MIN_DRAWDOWN_20D,
             },
+        },
+        "recovery_policy": {
+            "nonqualified_cycle_alone_closes_episode": False,
+            "confirmed_recovery_required": True,
         },
         "cadence_policy": CADENCE_POLICY[history.plan_frequency],
         "final_state": state,
@@ -403,6 +455,7 @@ def render_report(document: dict[str, Any]) -> str:
     lines.append("SCOPE")
     lines.append("  Governance state advances only on independent PA planning cycles.")
     lines.append("  Daily market refreshes may update evidence but do not increment persistence.")
+    lines.append("  A non-qualified PA cycle alone does not close an unresolved weakness episode.")
     lines.append("  Strategic review is advisory; target replacement remains a human decision.")
     lines.append("")
     lines.append("STRESS QUALIFICATION (research constants)")
@@ -444,7 +497,9 @@ def render_report(document: dict[str, Any]) -> str:
                 "    active_episode: "
                 f"{active['stressed_planning_cycles']} stressed cycles / "
                 f"{active['elapsed_days']} days / "
-                f"signal latest={active['latest_tactical_signal']:.3f} "
+                f"last_stressed={active['last_stressed']} / "
+                f"observed_through={active['last_observed']} / "
+                f"signal latest_stressed={active['latest_tactical_signal']:.3f} "
                 f"peak={active['peak_tactical_signal']:.3f}"
             )
             lines.append(
@@ -462,7 +517,8 @@ def render_report(document: dict[str, Any]) -> str:
         lines.append("")
     lines.append("INTERPRETATION")
     lines.append("  Counts are cadence-aware and wall-clock-aware; there is no universal N-cycle rule.")
-    lines.append("  Recovery closes an episode so separate dips do not accumulate as one event.")
+    lines.append("  Confirmed recovery closes an episode so separate dips do not accumulate as one event.")
+    lines.append("  Non-qualified cycles without confirmed recovery extend elapsed persistence but not stressed-cycle count.")
     lines.append("  Once strategic review is due, TT becomes neutral for that target.")
     lines.append("  PA may present evidence and request review, but must not replace or sell a target automatically.")
     return "\n".join(lines) + "\n"

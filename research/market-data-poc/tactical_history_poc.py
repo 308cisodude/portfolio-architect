@@ -29,7 +29,7 @@ import market_data_poc as md
 import tactical_persistence_poc as tp
 import tactical_tilt_poc as tt
 
-VERSION = "0.4.1"
+VERSION = "0.4.2"
 HISTORY_SCHEMA = 1
 DEFAULT_RECOVERY_CONFIRM_SESSIONS = 5
 DEFAULT_FREQUENCIES = ("weekly", "monthly", "quarterly", "yearly")
@@ -373,10 +373,10 @@ def _recovery_confirmation(
 ) -> dict[str, Any] | None:
     """Return the first bounded non-stress run that confirms recovery.
 
-    This is observability only: v0.4.1 keeps the v0.4.0 recovery semantics
-    unchanged, but preserves the actual market-session evidence so a human can
-    inspect why two planning-cycle observations were split into separate
-    weakness episodes.
+    v0.4.2 makes this confirmation authoritative for episode closure. A merely
+    non-qualified PA cycle no longer closes an active weakness episode by
+    itself; the bounded daily-session run supplies the explicit recovery
+    evidence that separates one market event from the next.
     """
     if previous_idx is None or confirm_sessions <= 0 or current_idx <= previous_idx + 1:
         return None
@@ -524,11 +524,11 @@ def _episode_forensics(
     *,
     recovery_confirm_sessions: int,
 ) -> list[dict[str, Any]]:
-    """Build dated, human-inspectable episode evidence without changing governance."""
+    """Build dated episode evidence aligned with confirmed-recovery continuity."""
     raw_by_cycle = {str(row["cycle_date"]): row for row in raw_rows}
     observations = evaluation.get("observations") or []
     episodes: list[dict[str, Any]] = []
-    active: list[tuple[dict[str, Any], dict[str, Any]]] = []
+    active_rows: list[tuple[dict[str, Any], dict[str, Any]]] = []
 
     def close_active(
         *,
@@ -537,13 +537,23 @@ def _episode_forensics(
         observed_on_cycle: str | None = None,
         recovery_confirmation: dict[str, Any] | None = None,
     ) -> None:
-        nonlocal active
-        if not active:
+        nonlocal active_rows
+        if not active_rows:
             return
-        eval_rows = [pair[0] for pair in active]
-        market_rows = [pair[1] for pair in active]
-        started = date.fromisoformat(str(eval_rows[0]["cycle_date"]))
-        last = date.fromisoformat(str(eval_rows[-1]["cycle_date"]))
+        eval_rows = [pair[0] for pair in active_rows]
+        market_rows = [pair[1] for pair in active_rows]
+        stressed = [
+            (erow, mrow)
+            for erow, mrow in active_rows
+            if bool(erow.get("stress_qualified"))
+        ]
+        if not stressed:
+            raise HistoryError("active forensic episode has no stressed planning cycle")
+        stressed_eval = [pair[0] for pair in stressed]
+        stressed_market = [pair[1] for pair in stressed]
+        started = date.fromisoformat(str(stressed_eval[0]["cycle_date"]))
+        last_stressed = date.fromisoformat(str(stressed_eval[-1]["cycle_date"]))
+        last_observed = date.fromisoformat(str(eval_rows[-1]["cycle_date"]))
         highest = max(
             (str(row["state_after_cycle"]) for row in eval_rows),
             key=lambda state: _STATE_RANK.get(state, -1),
@@ -557,26 +567,42 @@ def _episode_forensics(
                 "required_nonstress_sessions": recovery_confirm_sessions,
                 "recovery_confirmation": recovery_confirmation,
             }
+        unresolved_nonstress = sum(
+            not bool(row.get("stress_qualified")) for row in eval_rows
+        )
         episodes.append({
             "episode_number": len(episodes) + 1,
             "status": status,
+            "continuity_state": (
+                "closed_recovered"
+                if status == "closed"
+                else (
+                    "active_stressed"
+                    if bool(eval_rows[-1].get("stress_qualified"))
+                    else "active_unresolved"
+                )
+            ),
             "started_cycle": started.isoformat(),
-            "last_stressed_cycle": last.isoformat(),
-            "elapsed_days": (last - started).days,
-            "stressed_planning_cycles": len(eval_rows),
-            "first_market_as_of": str(market_rows[0]["market_as_of"]),
-            "last_market_as_of": str(market_rows[-1]["market_as_of"]),
-            "peak_tactical_signal": max(float(row["tactical_signal"]) for row in eval_rows),
-            "latest_tactical_signal": float(eval_rows[-1]["tactical_signal"]),
-            "worst_return_5d": min(float(row["return_5d"]) for row in eval_rows),
-            "worst_return_20d": min(float(row["return_20d"]) for row in eval_rows),
+            "last_stressed_cycle": last_stressed.isoformat(),
+            "last_observed_cycle": last_observed.isoformat(),
+            "elapsed_days": (last_observed - started).days,
+            "stressed_planning_cycles": len(stressed_eval),
+            "unresolved_nonstress_planning_cycles": unresolved_nonstress,
+            "first_market_as_of": str(stressed_market[0]["market_as_of"]),
+            "last_stressed_market_as_of": str(stressed_market[-1]["market_as_of"]),
+            "last_observed_market_as_of": str(market_rows[-1]["market_as_of"]),
+            "peak_tactical_signal": max(float(row["tactical_signal"]) for row in stressed_eval),
+            "latest_stressed_tactical_signal": float(stressed_eval[-1]["tactical_signal"]),
+            "latest_observed_tactical_signal": float(eval_rows[-1]["tactical_signal"]),
+            "worst_return_5d": min(float(row["return_5d"]) for row in stressed_eval),
+            "worst_return_20d": min(float(row["return_20d"]) for row in stressed_eval),
             "worst_drawdown_from_20d_high": min(
-                float(row["drawdown_from_20d_high"]) for row in eval_rows
+                float(row["drawdown_from_20d_high"]) for row in stressed_eval
             ),
             "highest_state": highest,
             "closure": closure,
         })
-        active = []
+        active_rows = []
 
     for eval_row in observations:
         cycle = str(eval_row["cycle_date"])
@@ -584,7 +610,10 @@ def _episode_forensics(
         if raw is None:
             raise HistoryError(f"missing raw cycle evidence for {cycle}")
 
-        if bool(eval_row.get("recovered_since_previous_cycle")) and active:
+        # Confirmed recovery closes the previous episode before the current PA
+        # cycle is evaluated. If weakness has returned, the current cycle starts
+        # a new episode rather than extending the recovered one.
+        if bool(eval_row.get("recovered_since_previous_cycle")) and active_rows:
             close_active(
                 status="closed",
                 reason="recovered_between_planning_cycles",
@@ -593,14 +622,12 @@ def _episode_forensics(
             )
 
         if bool(eval_row.get("stress_qualified")):
-            active.append((eval_row, raw))
-        elif active:
-            close_active(
-                status="closed",
-                reason="weakness_not_qualified_at_planning_cycle",
-                observed_on_cycle=cycle,
-                recovery_confirmation=None,
-            )
+            active_rows.append((eval_row, raw))
+        elif active_rows:
+            # No confirmed recovery: retain the episode as unresolved. This PA
+            # cycle extends elapsed persistence but does not increment stressed
+            # cycle count.
+            active_rows.append((eval_row, raw))
 
     close_active(status="active")
     return episodes
@@ -674,6 +701,8 @@ def replay_history(
         "recovery_policy": {
             "confirmed_nonstress_sessions_between_cycles": recovery_confirm_sessions,
             "daily_sessions_advance_governance": False,
+            "nonqualified_planning_cycle_alone_closes_episode": False,
+            "confirmed_recovery_required_for_market_episode_closure": True,
         },
         "qualification_policy": {
             "minimum_rebound_aware_signal": tp.MIN_STRESS_SIGNAL,
@@ -713,6 +742,7 @@ def render_report(document: dict[str, Any]) -> str:
         "",
         "RECOVERY POLICY",
         f"  confirmation: {document['recovery_policy']['confirmed_nonstress_sessions_between_cycles']} consecutive non-stress trading sessions between cycles",
+        "  a non-qualified PA cycle without confirmed recovery leaves the episode unresolved",
         "",
         "RESULTS",
     ]
@@ -773,18 +803,23 @@ def render_forensics_report(document: dict[str, Any]) -> str:
             for episode in episodes:
                 lines.append(
                     f"      episode {episode['episode_number']} [{episode['status']}] "
-                    f"{episode['started_cycle']}..{episode['last_stressed_cycle']}"
+                    f"{episode['started_cycle']}..{episode['last_stressed_cycle']} "
+                    f"observed_through={episode['last_observed_cycle']} "
+                    f"continuity={episode['continuity_state']}"
                 )
                 lines.append(
                     f"        stressed_cycles={episode['stressed_planning_cycles']}  "
+                    f"unresolved_nonstress_cycles={episode['unresolved_nonstress_planning_cycles']}  "
                     f"elapsed_days={episode['elapsed_days']}  highest_state={episode['highest_state']}"
                 )
                 lines.append(
-                    f"        market_as_of={episode['first_market_as_of']}..{episode['last_market_as_of']}"
+                    f"        stressed_market_as_of={episode['first_market_as_of']}..{episode['last_stressed_market_as_of']}  "
+                    f"last_observed_market_as_of={episode['last_observed_market_as_of']}"
                 )
                 lines.append(
                     f"        peak_signal={episode['peak_tactical_signal']:.3f}  "
-                    f"latest_signal={episode['latest_tactical_signal']:.3f}"
+                    f"latest_stressed_signal={episode['latest_stressed_tactical_signal']:.3f}  "
+                    f"latest_observed_signal={episode['latest_observed_tactical_signal']:.3f}"
                 )
                 lines.append(
                     f"        worst_5d={_pct(episode['worst_return_5d'])}  "
@@ -793,7 +828,7 @@ def render_forensics_report(document: dict[str, Any]) -> str:
                 )
                 closure = episode.get("closure")
                 if closure is None:
-                    lines.append("        closure=active_unresolved")
+                    lines.append(f"        closure={episode['continuity_state']}")
                 else:
                     lines.append(
                         f"        closure={closure['reason']}  "
@@ -807,12 +842,13 @@ def render_forensics_report(document: dict[str, Any]) -> str:
                             f"(required={confirmation['required_nonstress_sessions']})"
                         )
                     else:
-                        lines.append("        recovery=not_confirmed_by_between-cycle session rule")
+                        lines.append("        recovery=missing_confirmation_error")
         lines.append("")
     lines.extend([
         "INTERPRETATION",
         "  Episode boundaries are evidence for threshold calibration, not labels of asset quality.",
         "  A closed episode followed by a later episode is intentionally not treated as one permanent counter.",
+        "  A merely non-qualified PA cycle does not close an unresolved episode without confirmed recovery.",
         "  Compare the dated evidence with the market chart before changing qualification, recovery, or cadence thresholds.",
     ])
     return "\n".join(lines) + "\n"

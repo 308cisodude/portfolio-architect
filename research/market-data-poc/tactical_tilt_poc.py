@@ -18,7 +18,7 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
 
-VERSION = "0.4.1"
+VERSION = "0.4.2"
 DEFAULT_TILT_BUDGET_PCT = 10.0
 DEFAULT_TIE_BAND_PCT = 10.0
 DEFAULT_MAX_MARKET_AGE_DAYS = 4

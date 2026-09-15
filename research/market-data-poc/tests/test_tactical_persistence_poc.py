@@ -114,6 +114,35 @@ class EpisodeTests(unittest.TestCase):
         self.assertEqual(result["active_episode"]["stressed_planning_cycles"], 2)
         self.assertEqual(result["final_state"], "tactical_watch")
 
+
+    def test_nonqualified_cycle_without_confirmed_recovery_keeps_episode_unresolved(self):
+        observations = [
+            obs("2026-07-15", signal=0.55, r20=-0.06, dd=-0.07),
+            obs("2026-08-15", signal=0.58, r20=-0.07, dd=-0.08),
+            obs("2026-09-15", signal=0.10, r20=0.01, dd=-0.01, recovered=False),
+        ]
+        result = tp.evaluate_history(history("monthly", observations))
+        self.assertEqual(result["closed_episode_count"], 0)
+        self.assertEqual(result["active_episode"]["stressed_planning_cycles"], 2)
+        self.assertEqual(result["active_episode"]["elapsed_days"], 62)
+        self.assertEqual(result["active_episode"]["last_stressed"], "2026-08-15")
+        self.assertEqual(result["active_episode"]["last_observed"], "2026-09-15")
+        self.assertEqual(result["observations"][-1]["episode_continuity"], "unresolved_nonstress")
+        self.assertEqual(result["final_state"], "tactical_watch")
+
+    def test_stress_after_unconfirmed_nonstress_continues_same_episode(self):
+        observations = [
+            obs("2026-07-15", signal=0.55, r20=-0.06, dd=-0.07),
+            obs("2026-08-15", signal=0.10, r20=0.01, dd=-0.01, recovered=False),
+            obs("2026-09-15", signal=0.60, r20=-0.08, dd=-0.09, recovered=False),
+        ]
+        result = tp.evaluate_history(history("monthly", observations))
+        self.assertEqual(result["closed_episode_count"], 0)
+        self.assertEqual(result["active_episode"]["stressed_planning_cycles"], 2)
+        self.assertEqual(result["active_episode"]["started"], "2026-07-15")
+        self.assertEqual(result["active_episode"]["last_stressed"], "2026-09-15")
+        self.assertEqual(result["final_state"], "tactical_watch")
+
     def test_tt_selection_count_does_not_control_persistence(self):
         observations = [
             obs("2026-07-15", selected=False),
@@ -158,7 +187,7 @@ class GovernanceBoundaryTests(unittest.TestCase):
     def test_fixture_replay_writes_report_and_preserves_human_authority(self):
         with tempfile.TemporaryDirectory() as tmp:
             document = tp.replay(FIXTURE, Path(tmp))
-            self.assertEqual(document["prototype_version"], "0.4.1")
+            self.assertEqual(document["prototype_version"], "0.4.2")
             self.assertFalse(
                 document["governance_boundary"]["daily_market_refreshes_increment_state"]
             )

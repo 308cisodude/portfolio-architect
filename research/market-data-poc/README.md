@@ -1,8 +1,8 @@
-# Portfolio Architect Tactical Tilt PoC 0.4.1
+# Portfolio Architect Tactical Tilt PoC 0.4.2
 
 A deliberately standalone research prototype for the proposed optional **Tactical Tilt (TT)** recommendation-enhancement layer.
 
-Version 0.4.1 keeps the established tactical scorer, calibration model, cadence-aware persistence thresholds, v0.3.1 state contract, and v0.4.0 historical replay semantics intact, then adds **episode-level historical forensics**. Real daily market history can now show not only aggregate stressed-cycle counts but the dated weakness episodes behind them: start/last stressed cycle, market-session range, peak signal, worst 5d/20d return, maximum drawdown, highest governance state, closure reason, and the exact non-stress session run that confirmed recovery. The purpose is threshold calibration against inspectable market evidence, not historical performance prediction.
+Version 0.4.2 keeps the established tactical scorer, calibration model, stress qualification, cadence thresholds, idempotent state contract, and provider-neutral historical acquisition unchanged, then hardens **weakness-episode continuity**. An active episode now closes only on confirmed recovery evidence (or an explicit lifecycle boundary such as cadence change or target replacement). A merely non-qualified PA cycle leaves the episode unresolved: it extends elapsed persistence but does not increment the stressed-cycle count. This prevents one choppy unresolved decline from being fragmented into artificial episodes.
 
 ## Product boundary
 
@@ -21,26 +21,24 @@ Persistent weakness is a different problem from a temporary dent. v0.3.0 therefo
 
 The human PA user remains authoritative over any strategic target change.
 
-## What v0.4.1 changes
+## What v0.4.2 changes
 
 - preserves the v0.2.x rebound-aware tactical scoring and v0.2.2 tactical-bonus-ceiling semantics unchanged;
 - preserves the v0.3.0 stress qualification and cadence thresholds unchanged;
 - preserves the v0.3.1 idempotency, execution-independence, no-tactical-debt, cadence-segmentation, target-replacement, and restart/replay contracts unchanged;
-- adds `tactical_history_poc.py`;
-- adds provider-neutral canonical daily OHLCV history schema 1;
-- adds `history-fetch`, using the already-resolved Alpha Vantage symbol identities and the same rolling-24h provider guard as Market Data PoC 0.1.2;
-- adds `history-import-csv`, so historical replay is not coupled to Alpha Vantage acquisition;
-- adds `history-replay` across weekly, monthly, quarterly, and yearly synthetic PA cycle schedules;
-- maps a cycle to the last completed trading session on or before the cycle date, never to future data;
-- reuses the exact existing `tactical_signals()` implementation and v0.3.x stress qualification;
-- derives between-cycle recovery only after a configurable number of consecutive non-stress trading sessions (default 5);
-- reports insufficient historical coverage instead of extrapolating or guessing;
-- preserves the exact market sessions that satisfy the between-cycle recovery rule;
-- adds `episode_forensics` to each usable cadence result in `historical_replay.json`;
-- adds `episode_forensics_report.txt`, with dated closed/active episodes, peak/latest signal, worst 5d/20d return, maximum drawdown, highest governance state, closure reason, and recovery-confirmation dates;
-- keeps historical execution out of scope: daily prices are evidence, planning cycles advance governance, and human target authority remains unchanged.
+- preserves the v0.4.0 provider-neutral historical acquisition/replay path and v0.4.1 episode forensics;
+- changes episode closure so a non-qualified PA cycle **without confirmed recovery no longer closes the episode**;
+- keeps such an episode active as `active_unresolved`;
+- increments `stressed_planning_cycles` only on qualified PA cycles;
+- advances unresolved episode wall-clock persistence through later PA cycles, so cadence policy still sees how long the unresolved market event has lasted;
+- closes a market-stress episode only after the configured recovery run is confirmed (default: 5 consecutive non-stress completed sessions);
+- continues to segment state explicitly on plan-frequency changes and target replacement;
+- extends episode forensics with last stressed cycle, last observed cycle, unresolved non-stress cycle count, and active continuity state;
+- adds regressions for stress → non-stress-without-recovery → stress continuity and for unresolved non-stress cycles not incrementing the stressed-cycle counter.
 
-The Market Data PoC acquisition path remains version 0.1.2. `TIME_SERIES_DAILY outputsize=compact` can provide a recent real-history calibration window. Alpha Vantage currently documents `outputsize=full` for this endpoint as a premium entitlement, so v0.4.1 retains the provider-neutral CSV import path for longer histories.
+No Alpha Vantage re-fetch is required to compare v0.4.1 and v0.4.2. Re-run the existing `historical_market_data.json` through `history-replay`.
+
+The Market Data PoC acquisition path remains version 0.1.2. Historical acquisition credentials, symbols, and provider limits are unchanged.
 
 # Part A — stateless Tactical Tilt scoring
 
@@ -218,9 +216,9 @@ strategic_review_due
 
 ## Recovery and episode boundaries
 
-A non-qualified planning cycle closes the active episode. An explicit `recovered_since_previous_cycle=true` also closes the old episode **before** evaluating the new cycle.
+An active weakness episode closes only when recovery is confirmed (`recovered_since_previous_cycle=true`) or when an explicit lifecycle boundary segments the state. A merely non-qualified planning cycle does **not** prove recovery. If no recovery is confirmed, the episode remains unresolved, its wall-clock age continues through that PA cycle, and its stressed-cycle count does not increment.
 
-That distinction matters: an asset may recover between monthly cycles and then fall again before the next planning date. v0.3.0 treats that as a **new tactical episode**, not as another tick on an old permanent counter.
+That distinction matters for choppy declines: stress → one borderline/non-qualified PA cycle → stress is still one unresolved market episode unless the configured daily-session recovery rule was satisfied in between. Conversely, an asset may genuinely recover between monthly cycles and then fall again before the next planning date; confirmed recovery closes the old episode **before** evaluating the new cycle, so later weakness starts a new tactical episode rather than extending an old permanent counter.
 
 Closed episodes remain available as evidence, but they do not keep advancing the current strategic-review state.
 
@@ -257,9 +255,10 @@ The report and JSON preserve evidence such as:
 
 ```text
 plan_frequency
-active episode start / last observed
+active episode start / last stressed / last observed
 stressed planning-cycle count
-elapsed episode days
+unresolved non-stress planning-cycle count
+elapsed unresolved episode days
 latest and peak tactical signal
 worst 20-session return
 worst drawdown
@@ -404,9 +403,9 @@ output\tactical_tilt\history\episode_forensics_report.txt
 
 The compact replay report retains the aggregate view: planning-cycle count, qualified stressed-cycle count, tactical-watch cycles, dates on which `strategic_review_due` was first entered, maximum stressed-cycle episode length, and final state.
 
-The new forensics report expands every detected episode into dated evidence. It distinguishes closed and still-active episodes, records the first/last market session represented at stressed PA cycles, peak/latest tactical signal, worst 5-day and 20-day return, maximum drawdown, and highest governance state. For episodes closed by between-cycle recovery it also records the exact completed market sessions that satisfied the configured recovery run. A review entry or episode is **calibration evidence only**; it is not evidence by itself that the target should have been replaced.
+The forensics report expands every detected episode into dated evidence. It distinguishes `active_stressed`, `active_unresolved`, and `closed_recovered` continuity, records first/last stressed market evidence, the last observed PA cycle, unresolved non-stress cycle count, peak/latest signals, worst 5-day and 20-day return, maximum drawdown, and highest governance state. For episodes closed by recovery it records the exact completed market sessions that satisfied the configured recovery run. A review entry or episode is **calibration evidence only**; it is not evidence by itself that the target should have been replaced.
 
-The default between-cycle recovery rule remains 5 consecutive completed sessions that no longer meet qualified-stress conditions. v0.4.1 changes observability, not this rule. It remains a research constant to evaluate against real episodes, not production policy.
+The default recovery rule remains 5 consecutive completed sessions that no longer meet qualified-stress conditions. v0.4.2 makes that confirmation authoritative for market-episode closure: a non-qualified PA cycle without that evidence leaves the episode unresolved. The five-session value remains a research constant to evaluate against real episodes, not production policy.
 
 # Fresh market data
 
@@ -416,7 +415,7 @@ Generate or refresh market context as before:
 python .\market_data_poc.py fetch
 ```
 
-Then run `score` or `calibrate`. The v0.3.x persistence fixtures remain deterministic and offline; v0.4.1 retains the separate historical replay path and adds episode forensics.
+Then run `score` or `calibrate`. The persistence fixtures remain deterministic and offline; v0.4.2 reuses the same historical data and hardens episode continuity without another provider call.
 
 # Offline validation
 
@@ -425,28 +424,29 @@ python -m unittest discover -s tests -v
 python -m py_compile .\market_data_poc.py .\tactical_tilt_poc.py .\tactical_persistence_poc.py .\tactical_history_poc.py
 ```
 
-The v0.4.1 bundle should report **82 tests passed**:
+The v0.4.2 bundle should report **85 tests passed**:
 
 - 14 Market Data tests;
 - 25 Tactical Tilt scoring/calibration tests;
-- 25 cadence/persistence/state-contract tests;
-- 18 historical acquisition/import/schedule/replay/forensics tests.
+- 27 cadence/persistence/state-contract tests;
+- 19 historical acquisition/import/schedule/replay/forensics tests.
 
-# Success criterion for v0.4.1
+# Success criterion for v0.4.2
 
-v0.4.1 succeeds if it demonstrates that:
+v0.4.2 succeeds if it demonstrates that:
 
 - historical replay uses only market sessions available on or before each synthetic PA cycle;
 - historical tactical signals are calculated by the same scorer used by the live PoC;
 - daily history never increments governance state directly;
-- between-cycle recovery is explicit, bounded, and auditable;
+- a non-qualified PA cycle without confirmed recovery cannot fragment an active weakness episode;
+- unresolved non-stress PA cycles extend wall-clock persistence but do not increment stressed-cycle count;
+- confirmed recovery is explicit, bounded, auditable, and is the market-state event that closes an episode;
 - recovery forensics preserve the actual non-stress market-session run that caused episode separation;
-- every detected episode can be inspected by date, signal severity, 5d/20d weakness, drawdown, highest governance state, and closure reason without changing the underlying state machine;
+- cadence changes and target replacement remain explicit segment boundaries independent of market recovery;
 - weekly/monthly/quarterly/yearly schedules reuse the same cadence policy without changing thresholds;
 - insufficient history fails closed per cadence;
-- Alpha Vantage acquisition remains optional and provider-neutral CSV import can supply the same canonical input;
 - strategic-review entries remain evidence for human review, never automatic target replacement or selling.
 
 # Next research milestone
 
-Do **not** integrate v0.4.1 directly into production PA and do not change the current qualification, recovery, or cadence thresholds merely because the recent compact replay produced no strategic-review entries. Use `episode_forensics_report.txt` to inspect whether the detected real episodes correspond to plausible market dents and recoveries. If they do, the next substantial milestone is a **multi-year provider-neutral history replay** so weekly, monthly, quarterly, and yearly governance can be calibrated against several market regimes, including at least one prolonged stress period. Only after that evidence should thresholds change or historical allocation-state reconstruction begin.
+Do **not** integrate v0.4.2 directly into production PA and do not change qualification, recovery, or cadence thresholds yet. First replay the exact existing 100-session `historical_market_data.json` with zero additional provider calls and compare v0.4.2 episode continuity with the v0.4.1 forensics. If previously fragmented episodes collapse into coherent unresolved episodes as intended, the next substantial milestone is a **multi-year provider-neutral history replay** across several market regimes, including at least one prolonged stress period. Only after that evidence should thresholds change or historical allocation-state reconstruction begin.
