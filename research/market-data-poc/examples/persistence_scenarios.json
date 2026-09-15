@@ -1,0 +1,122 @@
+{
+  "schema": 1,
+  "scenarios": [
+    {
+      "id": "weekly_three_stressed_cycles",
+      "description": "Three weekly stressed cycles are too little elapsed evidence for strategic review.",
+      "plan_frequency": "weekly",
+      "target": {
+        "isin": "IE00BJ0KDQ92",
+        "name": "Xtrackers MSCI World UCITS ETF 1C"
+      },
+      "observations": [
+        {"cycle_date": "2026-09-01", "tactical_signal": 0.52, "return_5d": -0.025, "return_20d": -0.061, "drawdown_from_20d_high": -0.072, "selected_by_tt": true},
+        {"cycle_date": "2026-09-08", "tactical_signal": 0.56, "return_5d": -0.018, "return_20d": -0.067, "drawdown_from_20d_high": -0.078, "selected_by_tt": true},
+        {"cycle_date": "2026-09-15", "tactical_signal": 0.61, "return_5d": -0.031, "return_20d": -0.074, "drawdown_from_20d_high": -0.084, "selected_by_tt": true}
+      ]
+    },
+    {
+      "id": "weekly_nine_stressed_cycles",
+      "description": "Nine unresolved weekly cycles over eight weeks cross the research review threshold.",
+      "plan_frequency": "weekly",
+      "target": {
+        "isin": "IE00BTJRMP35",
+        "name": "Xtrackers MSCI Emerging Markets UCITS ETF 1C"
+      },
+      "observations": [
+        {"cycle_date": "2026-07-21", "tactical_signal": 0.42, "return_5d": -0.018, "return_20d": -0.041, "drawdown_from_20d_high": -0.055},
+        {"cycle_date": "2026-07-28", "tactical_signal": 0.45, "return_5d": -0.020, "return_20d": -0.044, "drawdown_from_20d_high": -0.058},
+        {"cycle_date": "2026-08-04", "tactical_signal": 0.49, "return_5d": -0.022, "return_20d": -0.048, "drawdown_from_20d_high": -0.061},
+        {"cycle_date": "2026-08-11", "tactical_signal": 0.51, "return_5d": -0.021, "return_20d": -0.052, "drawdown_from_20d_high": -0.065},
+        {"cycle_date": "2026-08-18", "tactical_signal": 0.54, "return_5d": -0.024, "return_20d": -0.056, "drawdown_from_20d_high": -0.069},
+        {"cycle_date": "2026-08-25", "tactical_signal": 0.57, "return_5d": -0.027, "return_20d": -0.060, "drawdown_from_20d_high": -0.073},
+        {"cycle_date": "2026-09-01", "tactical_signal": 0.59, "return_5d": -0.026, "return_20d": -0.063, "drawdown_from_20d_high": -0.076},
+        {"cycle_date": "2026-09-08", "tactical_signal": 0.62, "return_5d": -0.030, "return_20d": -0.069, "drawdown_from_20d_high": -0.081},
+        {"cycle_date": "2026-09-15", "tactical_signal": 0.64, "return_5d": -0.028, "return_20d": -0.072, "drawdown_from_20d_high": -0.086}
+      ]
+    },
+    {
+      "id": "monthly_two_stressed_cycles",
+      "description": "Two monthly observations are a watch condition, not yet strategic review.",
+      "plan_frequency": "monthly",
+      "target": {
+        "isin": "IE000F354Q61",
+        "name": "Xtrackers MSCI World Small Cap UCITS ETF 1C"
+      },
+      "observations": [
+        {"cycle_date": "2026-08-15", "tactical_signal": 0.48, "return_5d": -0.019, "return_20d": -0.051, "drawdown_from_20d_high": -0.063},
+        {"cycle_date": "2026-09-15", "tactical_signal": 0.55, "return_5d": -0.023, "return_20d": -0.059, "drawdown_from_20d_high": -0.071}
+      ]
+    },
+    {
+      "id": "monthly_three_stressed_cycles",
+      "description": "Three unresolved monthly cycles over two months cross the research review threshold.",
+      "plan_frequency": "monthly",
+      "target": {
+        "isin": "IE00BYZK4776",
+        "name": "iShares Healthcare Innovation UCITS ETF USD Acc"
+      },
+      "observations": [
+        {"cycle_date": "2026-07-15", "tactical_signal": 0.43, "return_5d": -0.016, "return_20d": -0.042, "drawdown_from_20d_high": -0.057},
+        {"cycle_date": "2026-08-15", "tactical_signal": 0.52, "return_5d": -0.021, "return_20d": -0.056, "drawdown_from_20d_high": -0.068},
+        {"cycle_date": "2026-09-15", "tactical_signal": 0.60, "return_5d": -0.026, "return_20d": -0.071, "drawdown_from_20d_high": -0.082}
+      ]
+    },
+    {
+      "id": "quarterly_two_stressed_cycles",
+      "description": "Two unresolved quarterly observations already represent roughly one quarter of persistence.",
+      "plan_frequency": "quarterly",
+      "target": {
+        "isin": "IE00BGV5VN51",
+        "name": "Xtrackers Artificial Intelligence & Big Data UCITS ETF 1C"
+      },
+      "observations": [
+        {"cycle_date": "2026-06-15", "tactical_signal": 0.46, "return_5d": -0.018, "return_20d": -0.047, "drawdown_from_20d_high": -0.061},
+        {"cycle_date": "2026-09-15", "tactical_signal": 0.58, "return_5d": -0.024, "return_20d": -0.064, "drawdown_from_20d_high": -0.079}
+      ]
+    },
+    {
+      "id": "yearly_two_stressed_cycles",
+      "description": "A second unresolved yearly observation is already strong persistence evidence.",
+      "plan_frequency": "yearly",
+      "target": {
+        "isin": "IE00BLPK3577",
+        "name": "WisdomTree Cybersecurity UCITS ETF USD Acc"
+      },
+      "observations": [
+        {"cycle_date": "2025-09-15", "tactical_signal": 0.41, "return_5d": -0.017, "return_20d": -0.039, "drawdown_from_20d_high": -0.054},
+        {"cycle_date": "2026-09-15", "tactical_signal": 0.57, "return_5d": -0.025, "return_20d": -0.066, "drawdown_from_20d_high": -0.081}
+      ]
+    },
+    {
+      "id": "monthly_recovery_closes_episode",
+      "description": "A recovered monthly cycle closes the old episode; later weakness starts from cycle one again.",
+      "plan_frequency": "monthly",
+      "target": {
+        "isin": "IE00BYZK4552",
+        "name": "iShares Automation & Robotics UCITS ETF USD Acc"
+      },
+      "observations": [
+        {"cycle_date": "2026-06-15", "tactical_signal": 0.49, "return_5d": -0.021, "return_20d": -0.052, "drawdown_from_20d_high": -0.066},
+        {"cycle_date": "2026-07-15", "tactical_signal": 0.53, "return_5d": -0.024, "return_20d": -0.058, "drawdown_from_20d_high": -0.071},
+        {"cycle_date": "2026-08-15", "tactical_signal": 0.08, "return_5d": 0.062, "return_20d": 0.018, "drawdown_from_20d_high": -0.008, "recovered_since_previous_cycle": true},
+        {"cycle_date": "2026-09-15", "tactical_signal": 0.44, "return_5d": -0.019, "return_20d": -0.043, "drawdown_from_20d_high": -0.056}
+      ]
+    },
+    {
+      "id": "monthly_between_cycle_recovery_splits_episode",
+      "description": "Even if weakness is back at the next cycle, an observed recovery between cycles splits the episode.",
+      "plan_frequency": "monthly",
+      "target": {
+        "isin": "IE00BJ0KDQ92",
+        "name": "Xtrackers MSCI World UCITS ETF 1C"
+      },
+      "observations": [
+        {"cycle_date": "2026-06-15", "tactical_signal": 0.47, "return_5d": -0.019, "return_20d": -0.049, "drawdown_from_20d_high": -0.061},
+        {"cycle_date": "2026-07-15", "tactical_signal": 0.51, "return_5d": -0.022, "return_20d": -0.054, "drawdown_from_20d_high": -0.067},
+        {"cycle_date": "2026-08-15", "tactical_signal": 0.46, "return_5d": -0.018, "return_20d": -0.045, "drawdown_from_20d_high": -0.059, "recovered_since_previous_cycle": true},
+        {"cycle_date": "2026-09-15", "tactical_signal": 0.50, "return_5d": -0.021, "return_20d": -0.052, "drawdown_from_20d_high": -0.064}
+      ]
+    }
+  ]
+}

@@ -1,37 +1,45 @@
-# Portfolio Architect Tactical Tilt PoC 0.2.2
+# Portfolio Architect Tactical Tilt PoC 0.3.0
 
 A deliberately standalone research prototype for the proposed optional **Tactical Tilt (TT)** recommendation-enhancement layer.
 
-Version 0.2.2 is a narrow terminology and calibration cleanup on top of v0.2.1. It does **not** change the v0.2.0 tactical signal, candidate gate, rebound suppression, or additive scoring formula. Its purpose is to make the calibration semantics precise before the next milestone adds cycle-aware persistence.
+Version 0.3.0 keeps the v0.2.x tactical scoring and calibration model intact and adds the first **cadence-aware persistence / strategic-review governance** PoC. The new persistence path is intentionally separate from scoring so that we can test memory, recovery, cadence, and human-review semantics before any production Portfolio Architect integration.
 
 ## Product boundary
 
 Tactical Tilt is optional by design. Portfolio Architect must remain fully useful without an Alpha Vantage key or any market-data service. Missing, stale, incomplete, mixed-timestamp, or failed market context makes TT **neutral** and must never make core PA unhealthy or non-actionable.
 
-TT is also secondary by design. Strategic allocation, PA policy, provider/cash/funding constraints, execution economics, and advisory-only semantics remain authoritative. This PoC does **not** reproduce the full PA planner; it studies only whether market context can safely reorder already-valid allocation candidates.
+TT is secondary by design. Strategic allocation, PA policy, provider/cash/funding constraints, execution economics, and advisory-only semantics remain authoritative. An overweight or otherwise ineligible target remains outside tactical purchase ranking even if its recent drawdown is extreme.
 
-A price decline is not assumed to predict a recovery. The calibration output measures model behavior, not expected returns.
+Persistent weakness is a different problem from a temporary dent. v0.3.0 therefore adds a governance boundary:
 
-## What v0.2.2 changes
+- temporary qualified weakness may remain a tactical opportunity;
+- repeated unresolved weakness across independent PA planning cycles may become a tactical watch;
+- cadence-adjusted persistence may trigger **strategic review due**;
+- once strategic review is due, TT becomes neutral for that target;
+- PA may present evidence and request human review;
+- PA must **never** automatically replace a target, sell it, or infer strategic thesis failure from price action alone.
 
-- keeps the v0.2.0 `score` formula and all tactical-signal semantics unchanged;
-- keeps **`bounded_rebound_aware`** as the calibration reference model without declaring it production policy;
-- replaces misleading **maximum strategic sacrifice** terminology with **tactical bonus ceiling**;
-- makes explicit that the effective strategic gap TT can overcome is:
+The human PA user remains authoritative over any strategic target change.
 
-```text
-strategic gap capacity = tactical bonus ceiling × positive tactical-signal advantage
-```
+## What v0.3.0 changes
 
-- adds a finer default calibration sweep across **0%, 25%, 50%, 75%, 100%, 125%, 150%, 175%, 200% of one contribution**;
-- marks **150% of one contribution** as a **provisional research reference only**, not a production constant;
-- adds an **effective strategic gap capacity** table so the real effect of each ceiling is visible at representative signal advantages;
-- renames break-even and decision-surface JSON fields to use bonus-ceiling terminology;
-- adds `--tactical-bonus-ceiling-pct` to the `score` command while retaining `--tilt-budget-pct` as a compatibility alias;
-- preserves the fail-neutral market-context gate and the underweight/eligibility boundary;
-- expands offline regression coverage for the refined sweep, effective-gap arithmetic, and CLI alias.
+- preserves the v0.2.0 rebound-aware signal, candidate gate, rebound suppression, and additive scoring formula;
+- preserves the v0.2.2 tactical-bonus-ceiling calibration semantics and provisional 150% research reference;
+- bumps the research prototype version to 0.3.0 without changing scoring arithmetic;
+- adds `tactical_persistence_poc.py` for replaying planning-cycle histories;
+- adds `examples/persistence_scenarios.json` with weekly, monthly, quarterly, yearly, and recovery scenarios;
+- adds cadence-aware research thresholds so there is **no universal N-cycle rule**;
+- requires both cycle-count persistence **and** elapsed wall-clock persistence for strategic-review escalation;
+- adds transparent market-history support to qualify a stressed cycle;
+- explicitly separates **qualified weakness** from whether TT actually selected that target for a purchase;
+- treats recovery as an episode boundary so separate market dents do not accumulate forever;
+- suppresses tactical bonus for a target once `strategic_review_due` is reached;
+- keeps strategic review advisory and records `automatic_target_replacement=false` and `automatic_sell=false`;
+- expands offline regression coverage for cadence, recovery, evidence qualification, and human-authority boundaries.
 
 The Market Data PoC 0.1.2 acquisition files remain unchanged.
+
+# Part A — stateless Tactical Tilt scoring
 
 ## Allocation input contract
 
@@ -42,9 +50,9 @@ The Market Data PoC 0.1.2 acquisition files remain unchanged.
 - `buy_enabled`;
 - `planner_eligible` — a research boundary standing in for “PA has already decided this target is otherwise valid to buy”.
 
-The PoC calculates strategic deficit against the **post-contribution current-plan portfolio value**. Only buy-enabled, planner-eligible, post-contribution-underweight targets become candidates. An overweight target remains ineligible even if its market drawdown is extreme.
+The PoC calculates strategic deficit against the **post-contribution current-plan portfolio value**. Only buy-enabled, planner-eligible, post-contribution-underweight targets become candidates.
 
-The included allocation example is synthetic and deliberately keeps several target deficits close. It is useful for model comparison; it must not be interpreted as a production portfolio state.
+The local `allocation_state.json` remains git-ignored.
 
 ## Market-context coherence gate
 
@@ -57,9 +65,7 @@ TT activates only when every strategically eligible candidate has:
 - age no greater than the configured calendar-age ceiling, default 4 days;
 - the **same `as_of` date** across all candidates.
 
-If any eligible candidate fails the gate, Tactical Tilt becomes neutral globally. This avoids biasing the ranking merely because one candidate lacks market data.
-
-The 4-calendar-day rule remains a PoC simplification, not a final exchange-calendar policy.
+Any eligible-candidate failure makes Tactical Tilt neutral globally. The 4-calendar-day rule remains a PoC simplification, not a final exchange-calendar policy.
 
 ## Tactical signal — unchanged from v0.2.0
 
@@ -72,43 +78,27 @@ All signals are normalized to 0…1 and remain transparent research constants:
 - rebound penalty: starts above +2% over 5 sessions and reaches full suppression at +8%;
 - rebound-aware score: multi-window score × (1 - rebound penalty).
 
-These constants are hypotheses to compare, **not** a proposed production formula.
+These constants are hypotheses to compare, **not** production policy.
 
-## Reference additive model
-
-The calibration harness focuses on the v0.2.0 **bounded_rebound_aware** model:
+## Reference additive model — unchanged from v0.2.2
 
 ```text
 score = strategic_deficit_eur + tactical_bonus_ceiling_eur × rebound_aware_signal
 ```
 
-The tactical bonus ceiling is an **EUR-equivalent score addition when the signal is 1.0**. It is **not** a direct statement that PA may sacrifice that many euros of strategic allocation advantage.
+The tactical bonus ceiling is an EUR-equivalent score addition at signal 1.0. It is not itself a direct maximum strategic sacrifice.
 
-For a challenger versus the baseline:
+For a challenger versus the allocation-only leader:
 
 ```text
 effective strategic gap capacity
-    = tactical_bonus_ceiling_eur
-    × max(challenger_signal - baseline_signal, 0)
+    = tactical bonus ceiling
+    × max(challenger signal - baseline signal, 0)
 ```
 
-Example with a €350 contribution and the provisional 150% research reference:
+The provisional research reference remains **150% of one contribution**, not production policy.
 
-```text
-tactical bonus ceiling = €525
-
-signal edge +0.10 -> effective gap capacity €52.50
-signal edge +0.25 -> effective gap capacity €131.25
-signal edge +0.50 -> effective gap capacity €262.50
-signal edge +0.75 -> effective gap capacity €393.75
-signal edge +1.00 -> effective gap capacity €525.00
-```
-
-This distinction is the central terminology correction in v0.2.2.
-
-## Run the supplied scoring fixture
-
-No API keys are needed:
+## Run scoring
 
 ```powershell
 python .\tactical_tilt_poc.py score `
@@ -117,7 +107,7 @@ python .\tactical_tilt_poc.py score `
   --evaluation-date 2026-09-15
 ```
 
-The score command retains the historical conservative 10% default for regression continuity. To test another ceiling explicitly:
+To test another ceiling explicitly:
 
 ```powershell
 python .\tactical_tilt_poc.py score `
@@ -136,24 +126,19 @@ output\tactical_tilt\tactical_tilt.json
 output\tactical_tilt\tactical_tilt_report.txt
 ```
 
-## Run the calibration harness
-
-Against the supplied synthetic fixture:
-
-```powershell
-python .\tactical_tilt_poc.py calibrate `
-  --allocation .\examples\allocation_state.example.json `
-  --market-context .\examples\market_context_2026-09-14.json `
-  --evaluation-date 2026-09-15
-```
-
-Against an explicit observed PA allocation snapshot and the current Market Data PoC output:
+## Run calibration
 
 ```powershell
 python .\tactical_tilt_poc.py calibrate `
   --allocation .\allocation_state.json `
   --market-context .\output\market_context.json `
   --evaluation-date 2026-09-15
+```
+
+Default tactical-bonus-ceiling sweep:
+
+```text
+0,25,50,75,100,125,150,175,200 % of contribution
 ```
 
 Calibration outputs:
@@ -163,37 +148,130 @@ output\tactical_tilt\calibration.json
 output\tactical_tilt\calibration_report.txt
 ```
 
-The report contains four main analysis sections:
+# Part B — cadence-aware persistence
 
-1. **Tactical bonus ceiling sweep** — which target wins at each tested ceiling, the actual strategic sacrifice, signal edge, and whether the recommendation changes from allocation-only.
-2. **Live challenger break-even** — the bonus ceiling required for each challenger merely to reach additive-score parity with the strategic leader.
-3. **Effective strategic gap capacity** — for each tested ceiling, how much strategic gap could be overcome at representative signal advantages.
-4. **Generic decision surface** — the inverse view: what bonus ceiling is required to overcome controlled strategic gaps at representative signal advantages.
+## Why persistence is cycle-based
 
-Score parity is only a model threshold. It does **not** establish that the challenger will produce a higher future return.
+Market data may refresh every day, but repeated daily observations from one decline are not independent strategic evidence. v0.3.0 therefore advances governance state **only once per PA planning cycle**.
 
-## Calibration defaults
+The persistence PoC intentionally does not accept a stream of daily market observations as governance events. A cycle record can contain the latest market evidence, but only the cycle itself increments the episode.
+
+This means:
 
 ```text
-bonus-ceiling sweep:    0,25,50,75,100,125,150,175,200 % of contribution
-research reference:     150 % of contribution
-strategic-gap surface:  2.5,5,10,25,50,100,200 % of contribution
-signal advantages:      0.10,0.25,0.50,0.75,1.00
-max market age:         4 calendar days
+3 weekly stressed cycles  !=  3 monthly stressed cycles
+3 monthly stressed cycles !=  3 yearly stressed cycles
 ```
 
-Override the sweep when useful:
+Cycle count and elapsed wall-clock persistence are evaluated together.
+
+## Stress qualification — research constants
+
+A cycle advances an active weakness episode only when both conditions hold:
+
+```text
+rebound-aware tactical signal >= 0.35
+AND
+(20-session return <= -3% OR drawdown from 20-session high <= -5%)
+```
+
+This deliberately requires a material TT signal plus supporting medium-horizon market evidence. These thresholds are research hypotheses only. They are **not** the final production definition of strategic stress.
+
+Whether TT actually selected the asset for the contribution is recorded only as evidence. Selection does **not** control persistence: a target can remain strategically concerning even when another asset won the purchase decision.
+
+## Cadence-aware research thresholds
+
+v0.3.0 uses this first replay policy:
+
+| Frequency | Tactical watch | Strategic review due |
+| --- | ---: | ---: |
+| Weekly | 4 stressed cycles **and** 21 elapsed days | 9 stressed cycles **and** 56 elapsed days |
+| Monthly | 2 stressed cycles **and** 28 elapsed days | 3 stressed cycles **and** 56 elapsed days |
+| Quarterly | 2 stressed cycles | 2 stressed cycles **and** 75 elapsed days |
+| Yearly | 2 stressed cycles | 2 stressed cycles **and** 330 elapsed days |
+
+The day floors deliberately tolerate calendar variation while preserving the intended order of magnitude. These are **PoC calibration constants**, not frozen product policy.
+
+The important invariant is architectural: a fixed count such as “3 Tactical Tilt wins” must never be applied identically across all plan frequencies.
+
+## Governance states
+
+```text
+normal
+  no active qualified weakness episode
+
+tactical_opportunity
+  qualified weakness exists but persistence is below the cadence watch threshold
+
+tactical_watch
+  cadence-adjusted persistence deserves attention but has not crossed review threshold
+
+strategic_review_due
+  persistence crossed both cadence-cycle and elapsed-time thresholds
+  -> TT tactical bonus multiplier becomes 0 for that target
+  -> human strategic review required
+  -> no automatic replacement, sale, or purchase action
+```
+
+## Recovery and episode boundaries
+
+A non-qualified planning cycle closes the active episode. An explicit `recovered_since_previous_cycle=true` also closes the old episode **before** evaluating the new cycle.
+
+That distinction matters: an asset may recover between monthly cycles and then fall again before the next planning date. v0.3.0 treats that as a **new tactical episode**, not as another tick on an old permanent counter.
+
+Closed episodes remain available as evidence, but they do not keep advancing the current strategic-review state.
+
+## Run the persistence replay
+
+No API keys are needed:
 
 ```powershell
-python .\tactical_tilt_poc.py calibrate `
-  --sweep-pct 0,50,100,125,150,175,200,250 `
-  --surface-gap-pct 5,10,25,50,100,200 `
-  --surface-signal-advantages 0.10,0.25,0.50,0.75,1.00
+python .\tactical_persistence_poc.py replay `
+  --scenarios .\examples\persistence_scenarios.json
 ```
 
-These remain research knobs, not intended end-user production configuration.
+Outputs:
 
-## Fresh market data
+```text
+output\tactical_tilt\persistence.json
+output\tactical_tilt\persistence_report.txt
+```
+
+The supplied fixture demonstrates:
+
+- three weekly stressed cycles remain below strategic review;
+- nine unresolved weekly cycles over eight weeks reach strategic review;
+- two monthly stressed cycles become a watch;
+- three monthly stressed cycles over roughly two months reach strategic review;
+- a second unresolved quarterly observation can reach strategic review;
+- a second unresolved yearly observation can reach strategic review;
+- a recovered episode is closed and later weakness starts again from cycle one;
+- recovery between cycles splits episodes even if weakness has returned by the next PA cycle.
+
+## Persistence record shape
+
+The report and JSON preserve evidence such as:
+
+```text
+plan_frequency
+active episode start / last observed
+stressed planning-cycle count
+elapsed episode days
+latest and peak tactical signal
+worst 20-session return
+worst drawdown
+closed episode count
+TT-selected cycle count (evidence only)
+final governance state
+tactical bonus allowed / multiplier
+human strategic review required
+automatic target replacement = false
+automatic sell = false
+```
+
+A future PA implementation should persist equivalent provider-neutral state per strategic target, not per broker position.
+
+# Fresh market data
 
 Generate or refresh market context as before:
 
@@ -201,30 +279,35 @@ Generate or refresh market context as before:
 python .\market_data_poc.py fetch
 ```
 
-Then run either `score` or `calibrate`. Until a deliberate PA export path exists, populate `allocation_state.json` only from explicit observed PA state. Do not guess holdings or allocations. The file remains git-ignored.
+Then run `score` or `calibrate`. Persistence replay is offline in v0.3.0 and uses explicit planning-cycle fixtures so governance behavior remains deterministic and auditable.
 
-## Offline validation
+# Offline validation
 
 ```powershell
 python -m unittest discover -s tests -v
-python -m py_compile .\market_data_poc.py .\tactical_tilt_poc.py
+python -m py_compile .\market_data_poc.py .\tactical_tilt_poc.py .\tactical_persistence_poc.py
 ```
 
-The v0.2.2 bundle should report **39 tests passed**: 14 existing market-data tests plus 25 Tactical Tilt/scoring/calibration tests.
+The v0.3.0 bundle should report **54 tests passed**:
 
-## Success criterion for v0.2.2
+- 14 existing Market Data tests;
+- 25 existing Tactical Tilt scoring/calibration tests;
+- 15 new cadence/persistence/governance tests.
 
-The cleanup succeeds if calibration can be interpreted without conflating a score ceiling with an actual strategic sacrifice while preserving these boundaries:
+# Success criterion for v0.3.0
 
-- allocation-only remains the baseline;
-- TT considers only otherwise eligible, underweight targets;
-- market-data failure becomes neutral rather than blocking PA;
-- the rebound-aware additive formula is unchanged;
-- strong rebounds remove stale dip advantages quickly;
-- actual strategic sacrifice and bonus ceiling are reported separately;
-- effective-gap capacity is explicit rather than hidden inside a coefficient;
-- no calibration result is presented as a forecast or proof of future outperformance.
+The persistence PoC succeeds if it demonstrates all of the following without changing the established tactical scorer:
 
-## Next research milestone
+- state advances on independent PA planning cycles rather than daily refreshes;
+- stressed-cycle qualification contains explicit market-history evidence;
+- weekly/monthly/quarterly/yearly plans have materially different persistence semantics;
+- cycle count and wall-clock duration must both be satisfied for strategic review;
+- TT selection itself is not required for a target to accumulate stress evidence;
+- recovery closes an episode instead of creating a lifetime weakness counter;
+- strategic-review escalation neutralizes TT for the affected target;
+- strategic-review escalation never automatically replaces, sells, or removes the target;
+- human target authority remains explicit and auditable.
 
-v0.3.0 should move from stateless scoring to **cadence-aware persistence**. Daily market data may update evidence, but strategic-review state should advance only across independent PA planning cycles. Weekly, monthly, quarterly and yearly plans must not share a fixed “N stressed cycles” threshold; cycle count, elapsed wall-clock persistence, recovery behavior and supporting market-history evidence must be considered together. Persistent weakness may trigger a human strategic-review prompt, never automatic target replacement.
+# Next research milestone
+
+Do **not** integrate v0.3.0 directly into production PA yet. The next research step should use this replay harness to challenge the frequency thresholds and stress-qualification constants with additional synthetic histories and, over time, real PA-cycle observations. Only after those governance semantics are convincing should TT persistence be designed into PA's durable state/configuration and presentation contracts.
