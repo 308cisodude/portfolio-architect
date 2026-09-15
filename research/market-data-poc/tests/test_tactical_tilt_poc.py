@@ -192,5 +192,117 @@ class EndToEndFixtureTests(unittest.TestCase):
         self.assertLessEqual(models["bounded_rebound_aware"]["strategic_sacrifice_eur"], doc["policy"]["tilt_budget_eur"])
 
 
+class CalibrationTests(unittest.TestCase):
+    def rows(self, *, world_deficit=100.0, challenger_deficit=90.0, world_signal=0.1, challenger_signal=0.6):
+        return [
+            {
+                "isin": WORLD,
+                "name": "World",
+                "strategic_deficit_eur": world_deficit,
+                "rebound_aware": world_signal,
+            },
+            {
+                "isin": ROBOTICS,
+                "name": "Robotics",
+                "strategic_deficit_eur": challenger_deficit,
+                "rebound_aware": challenger_signal,
+            },
+        ]
+
+    def candidates_and_market(self):
+        candidates = [
+            tt.Candidate(tt.AllocationTarget(WORLD, "World", 50, 500, True, True), 50, 600, 100),
+            tt.Candidate(tt.AllocationTarget(ROBOTICS, "Robotics", 50, 510, True, True), 50, 600, 90),
+        ]
+        market = {
+            WORLD: {"signals": {"drawdown_only": 0.1, "multi_window": 0.1, "rebound_aware": 0.1}},
+            ROBOTICS: {"signals": {"drawdown_only": 0.6, "multi_window": 0.6, "rebound_aware": 0.6}},
+        }
+        return candidates, market
+
+    def test_csv_float_parser_deduplicates_preserving_order(self):
+        parsed = tt._parse_csv_floats("0,25,25,100", field="test")
+        self.assertEqual(parsed, (0.0, 25.0, 100.0))
+
+    def test_calibration_sweep_changes_only_after_sufficient_bound(self):
+        candidates, market = self.candidates_and_market()
+        sweep = tt.calibration_sweep(
+            candidates,
+            market,
+            tactical_active=True,
+            contribution_eur=350.0,
+            sweep_pcts=(0.0, 5.0, 10.0),
+        )
+        self.assertEqual(sweep[0]["selected_isin"], WORLD)
+        self.assertEqual(sweep[1]["selected_isin"], WORLD)
+        self.assertEqual(sweep[2]["selected_isin"], ROBOTICS)
+        self.assertAlmostEqual(sweep[2]["actual_strategic_sacrifice_eur"], 10.0)
+
+    def test_break_even_matches_additive_score_math(self):
+        result = tt.challenger_break_even(self.rows(), contribution_eur=350.0)[0]
+        self.assertAlmostEqual(result["strategic_gap_eur"], 10.0)
+        self.assertAlmostEqual(result["signal_advantage"], 0.5)
+        self.assertAlmostEqual(result["score_parity_budget_eur"], 20.0)
+        self.assertAlmostEqual(result["score_parity_pct_of_contribution"], 20.0 / 350.0 * 100.0)
+
+    def test_break_even_is_absent_without_positive_signal_advantage(self):
+        rows = self.rows(world_signal=0.6, challenger_signal=0.5)
+        result = tt.challenger_break_even(rows, contribution_eur=350.0)[0]
+        self.assertFalse(result["can_outscore_with_positive_bound"])
+        self.assertIsNone(result["score_parity_budget_eur"])
+
+    def test_decision_surface_reports_expected_parity_percentages(self):
+        surface = tt.decision_surface(
+            contribution_eur=350.0,
+            strategic_gap_pcts=(100.0,),
+            signal_advantages=(0.5, 1.0),
+        )
+        cells = surface["rows"][0]["cells"]
+        self.assertAlmostEqual(cells[0]["required_bound_pct_of_contribution"], 200.0)
+        self.assertAlmostEqual(cells[1]["required_bound_pct_of_contribution"], 100.0)
+
+    def test_neutral_context_keeps_every_sweep_level_on_baseline(self):
+        candidates, market = self.candidates_and_market()
+        sweep = tt.calibration_sweep(
+            candidates,
+            market,
+            tactical_active=False,
+            contribution_eur=350.0,
+            sweep_pcts=(0.0, 100.0, 200.0),
+        )
+        self.assertTrue(all(row["selected_isin"] == WORLD for row in sweep))
+
+    def test_overweight_target_is_excluded_before_tactical_scoring(self):
+        targets = [
+            tt.AllocationTarget(WORLD, "World", 60, 400, True, True),
+            tt.AllocationTarget(ROBOTICS, "Robotics", 20, 100, True, True),
+            tt.AllocationTarget(CYBER, "Cyber", 20, 500, True, True),
+        ]
+        _, _, candidates, inventory = tt.build_candidates(100.0, targets)
+        self.assertNotIn(CYBER, {candidate.target.isin for candidate in candidates})
+        cyber = next(row for row in inventory if row["isin"] == CYBER)
+        self.assertEqual(cyber["candidate_reason"], "not_underweight_after_contribution")
+
+    def test_end_to_end_calibration_fixture_writes_report(self):
+        root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp)
+            doc = tt.calibrate(
+                root / "examples" / "allocation_state.example.json",
+                root / "examples" / "market_context_2026-09-14.json",
+                output,
+                evaluation_date=date(2026, 9, 15),
+                max_market_age_days=4,
+                sweep_pcts=(0.0, 25.0, 50.0, 100.0),
+                surface_gap_pcts=(10.0, 100.0),
+                surface_signal_advantages=(0.5, 1.0),
+            )
+            self.assertEqual(doc["reference_model"], "bounded_rebound_aware")
+            self.assertTrue((output / "calibration.json").is_file())
+            self.assertTrue((output / "calibration_report.txt").is_file())
+            self.assertEqual(doc["sweep"][0]["selected_isin"], WORLD)
+            self.assertTrue(any(row["changed_from_baseline"] for row in doc["sweep"][1:]))
+
+
 if __name__ == "__main__":
     unittest.main()

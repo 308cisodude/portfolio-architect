@@ -18,10 +18,13 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
 
-VERSION = "0.2.0"
+VERSION = "0.2.1"
 DEFAULT_TILT_BUDGET_PCT = 10.0
 DEFAULT_TIE_BAND_PCT = 10.0
 DEFAULT_MAX_MARKET_AGE_DAYS = 4
+DEFAULT_CALIBRATION_SWEEP_PCTS = (0.0, 25.0, 50.0, 75.0, 100.0, 150.0, 200.0)
+DEFAULT_SURFACE_GAP_PCTS = (2.5, 5.0, 10.0, 25.0, 50.0, 100.0, 200.0)
+DEFAULT_SURFACE_SIGNAL_ADVANTAGES = (0.10, 0.25, 0.50, 0.75, 1.00)
 EPS = 1e-9
 
 
@@ -393,6 +396,245 @@ def calculate_models(
     }
 
 
+def _parse_csv_floats(value: str, *, field: str) -> tuple[float, ...]:
+    """Parse a non-empty comma-separated list of finite non-negative floats."""
+    parsed: list[float] = []
+    seen: set[float] = set()
+    for raw in value.split(","):
+        text = raw.strip()
+        if not text:
+            raise argparse.ArgumentTypeError(f"{field} contains an empty value")
+        try:
+            number = float(text)
+        except ValueError as exc:
+            raise argparse.ArgumentTypeError(f"{field} must contain numbers") from exc
+        if not math.isfinite(number) or number < 0:
+            raise argparse.ArgumentTypeError(
+                f"{field} values must be finite and >= 0"
+            )
+        if number not in seen:
+            seen.add(number)
+            parsed.append(number)
+    if not parsed:
+        raise argparse.ArgumentTypeError(f"{field} must not be empty")
+    return tuple(parsed)
+
+
+def calibration_sweep(
+    candidates: list[Candidate],
+    market: dict[str, dict[str, Any]],
+    *,
+    tactical_active: bool,
+    contribution_eur: float,
+    sweep_pcts: tuple[float, ...],
+) -> list[dict[str, Any]]:
+    """Evaluate the rebound-aware additive model across sacrifice bounds."""
+    results: list[dict[str, Any]] = []
+    for pct in sweep_pcts:
+        rows, policy = calculate_models(
+            candidates,
+            market,
+            tactical_active=tactical_active,
+            contribution_eur=contribution_eur,
+            tilt_budget_pct=pct,
+            tie_band_pct=0.0,
+        )
+        model = policy["models"]["bounded_rebound_aware"]
+        baseline = policy["models"]["baseline"]
+        selected = next(row for row in rows if row["isin"] == model["selected_isin"])
+        baseline_row = next(row for row in rows if row["isin"] == baseline["selected_isin"])
+        results.append(
+            {
+                "max_strategic_sacrifice_pct_of_contribution": pct,
+                "max_strategic_sacrifice_eur": policy["tilt_budget_eur"],
+                "selected_isin": model["selected_isin"],
+                "selected_name": model["selected_name"],
+                "changed_from_baseline": model["changed_from_baseline"],
+                "actual_strategic_sacrifice_eur": model["strategic_sacrifice_eur"],
+                "actual_strategic_sacrifice_pct_of_contribution": (
+                    model["strategic_sacrifice_eur"] / contribution_eur * 100.0
+                ),
+                "selected_rebound_aware_signal": float(selected["rebound_aware"]),
+                "baseline_rebound_aware_signal": float(baseline_row["rebound_aware"]),
+                "signal_advantage_vs_baseline": (
+                    float(selected["rebound_aware"])
+                    - float(baseline_row["rebound_aware"])
+                ),
+            }
+        )
+    return results
+
+
+def challenger_break_even(
+    rows: list[dict[str, Any]], *, contribution_eur: float
+) -> list[dict[str, Any]]:
+    """Return additive rebound-aware score parity requirements vs the baseline."""
+    if contribution_eur <= 0:
+        raise TiltError("contribution_eur must be > 0")
+    baseline = _winner(rows, "strategic_deficit_eur")
+    best_deficit = float(baseline["strategic_deficit_eur"])
+    baseline_signal = float(baseline["rebound_aware"])
+    result: list[dict[str, Any]] = []
+    for row in sorted(rows, key=lambda item: -float(item["strategic_deficit_eur"])):
+        if row["isin"] == baseline["isin"]:
+            continue
+        gap = max(best_deficit - float(row["strategic_deficit_eur"]), 0.0)
+        signal_advantage = float(row["rebound_aware"]) - baseline_signal
+        parity_budget_eur: float | None = None
+        parity_pct: float | None = None
+        parity_multiple: float | None = None
+        if gap <= EPS:
+            parity_budget_eur = 0.0
+            parity_pct = 0.0
+            parity_multiple = 0.0
+        elif signal_advantage > EPS:
+            parity_budget_eur = gap / signal_advantage
+            parity_pct = parity_budget_eur / contribution_eur * 100.0
+            parity_multiple = parity_budget_eur / contribution_eur
+        result.append(
+            {
+                "isin": row["isin"],
+                "name": row["name"],
+                "strategic_gap_eur": gap,
+                "baseline_signal": baseline_signal,
+                "challenger_signal": float(row["rebound_aware"]),
+                "signal_advantage": signal_advantage,
+                "score_parity_budget_eur": parity_budget_eur,
+                "score_parity_pct_of_contribution": parity_pct,
+                "score_parity_contribution_multiple": parity_multiple,
+                "can_outscore_with_positive_bound": parity_budget_eur is not None,
+            }
+        )
+    return result
+
+
+def decision_surface(
+    *,
+    contribution_eur: float,
+    strategic_gap_pcts: tuple[float, ...],
+    signal_advantages: tuple[float, ...],
+) -> dict[str, Any]:
+    """Return score-parity bounds across controlled strategic gaps and signal edges."""
+    if contribution_eur <= 0:
+        raise TiltError("contribution_eur must be > 0")
+    if any(value <= 0 for value in signal_advantages):
+        raise TiltError("decision-surface signal advantages must be > 0")
+    rows: list[dict[str, Any]] = []
+    for gap_pct in strategic_gap_pcts:
+        gap_eur = contribution_eur * gap_pct / 100.0
+        cells = []
+        for advantage in signal_advantages:
+            required_budget_eur = gap_eur / advantage
+            cells.append(
+                {
+                    "signal_advantage": advantage,
+                    "required_bound_eur": required_budget_eur,
+                    "required_bound_pct_of_contribution": (
+                        required_budget_eur / contribution_eur * 100.0
+                    ),
+                }
+            )
+        rows.append(
+            {
+                "strategic_gap_pct_of_contribution": gap_pct,
+                "strategic_gap_eur": gap_eur,
+                "cells": cells,
+            }
+        )
+    return {
+        "signal_advantages": list(signal_advantages),
+        "rows": rows,
+        "interpretation": (
+            "Each cell is the maximum-strategic-sacrifice bound required merely to "
+            "reach score parity. A clean win may require a slightly larger bound when "
+            "the parity score ties."
+        ),
+    }
+
+
+def calibrate(
+    allocation_path: Path,
+    market_context_path: Path,
+    output_dir: Path,
+    *,
+    evaluation_date: date,
+    max_market_age_days: int,
+    sweep_pcts: tuple[float, ...],
+    surface_gap_pcts: tuple[float, ...],
+    surface_signal_advantages: tuple[float, ...],
+) -> dict[str, Any]:
+    """Calibrate the rebound-aware additive model without changing scoring semantics."""
+    contribution, targets, allocation_raw = load_allocation(allocation_path)
+    current_total, post_total, candidates, inventory = build_candidates(contribution, targets)
+    context = _load_market_context(market_context_path)
+    active, context_reason, common_as_of, normalized_market = evaluate_market_context(
+        context,
+        candidates,
+        evaluation_date=evaluation_date,
+        max_age_days=max_market_age_days,
+    )
+    rows, policy = calculate_models(
+        candidates,
+        normalized_market,
+        tactical_active=active,
+        contribution_eur=contribution,
+        tilt_budget_pct=0.0,
+        tie_band_pct=0.0,
+    )
+    for row in rows:
+        row["market_context"] = normalized_market.get(row["isin"])
+
+    sweep = calibration_sweep(
+        candidates,
+        normalized_market,
+        tactical_active=active,
+        contribution_eur=contribution,
+        sweep_pcts=sweep_pcts,
+    )
+    break_even = challenger_break_even(rows, contribution_eur=contribution)
+    surface = decision_surface(
+        contribution_eur=contribution,
+        strategic_gap_pcts=surface_gap_pcts,
+        signal_advantages=surface_signal_advantages,
+    )
+    doc = {
+        "schema": 1,
+        "prototype_version": VERSION,
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "evaluation_date": evaluation_date.isoformat(),
+        "scope": "research_only_tactical_tilt_calibration",
+        "reference_model": "bounded_rebound_aware",
+        "allocation": {
+            "source_label": allocation_raw.get("source_label"),
+            "contribution_eur": contribution,
+            "current_portfolio_value_eur": current_total,
+            "post_contribution_portfolio_value_eur": post_total,
+            "inventory": inventory,
+        },
+        "market_context_gate": {
+            "active": active,
+            "reason": context_reason,
+            "common_as_of": common_as_of,
+            "max_calendar_age_days": max_market_age_days,
+            "failure_semantics": "neutral_fallback_to_allocation_only",
+        },
+        "baseline": policy["models"]["baseline"],
+        "candidate_scores": rows,
+        "sweep": sweep,
+        "challenger_break_even": break_even,
+        "decision_surface": surface,
+        "limitations": [
+            "Calibration does not change the v0.2.0 tactical signal or additive score formula.",
+            "Score-parity analysis is not a forecast of future returns and does not imply that a price decline will recover.",
+            "This PoC ranks allocation candidates only; full PA provider, cash, funding, fee, policy and execution routing remain outside scope.",
+            "Market-context failure or staleness is neutral and never reduces core PA actionability.",
+        ],
+    }
+    _json_dump(output_dir / "calibration.json", doc)
+    write_calibration_report(doc, output_dir / "calibration_report.txt")
+    return doc
+
+
 def evaluate(
     allocation_path: Path,
     market_context_path: Path,
@@ -543,9 +785,110 @@ def write_report(doc: dict[str, Any], path: Path) -> None:
     path.write_text("\n".join(lines), encoding="utf-8")
 
 
+def write_calibration_report(doc: dict[str, Any], path: Path) -> None:
+    allocation = doc["allocation"]
+    gate = doc["market_context_gate"]
+    baseline = doc["baseline"]
+    lines = [
+        "Portfolio Architect Tactical Tilt calibration",
+        f"prototype_version: {doc['prototype_version']}",
+        f"generated_at: {doc['generated_at']}",
+        f"evaluation_date: {doc['evaluation_date']}",
+        f"reference_model: {doc['reference_model']}",
+        "",
+        "SCOPE",
+        "  Research-only calibration of maximum strategic sacrifice.",
+        "  The v0.2.0 rebound-aware signal and additive score formula are unchanged.",
+        "",
+        "ALLOCATION",
+        f"  contribution_eur: {allocation['contribution_eur']:.2f}",
+        f"  current_portfolio_value_eur: {allocation['current_portfolio_value_eur']:.2f}",
+        f"  post_contribution_portfolio_value_eur: {allocation['post_contribution_portfolio_value_eur']:.2f}",
+        f"  baseline: {baseline['selected_isin']}  {baseline['selected_name']}",
+        f"  baseline_strategic_deficit_eur: {baseline['strategic_deficit_eur']:.2f}",
+        "",
+        "MARKET CONTEXT",
+        f"  tactical_active: {gate['active']}",
+        f"  reason: {gate['reason']}",
+        f"  common_as_of: {gate['common_as_of']}",
+        f"  failure_semantics: {gate['failure_semantics']}",
+        "",
+        "MAXIMUM STRATEGIC SACRIFICE SWEEP",
+        "  Bound          Selected       Actual sacrifice   Signal edge   Changed",
+    ]
+    for row in doc["sweep"]:
+        lines.append(
+            "  "
+            f"{row['max_strategic_sacrifice_pct_of_contribution']:>6.1f}% "
+            f"EUR {row['max_strategic_sacrifice_eur']:>7.2f}  "
+            f"{row['selected_isin']}  "
+            f"EUR {row['actual_strategic_sacrifice_eur']:>7.2f}  "
+            f"{row['signal_advantage_vs_baseline']:+.3f}      "
+            f"{row['changed_from_baseline']}"
+        )
+
+    lines.extend(["", "LIVE CHALLENGER BREAK-EVEN"])
+    if not doc["challenger_break_even"]:
+        lines.append("  No challenger candidates.")
+    for row in doc["challenger_break_even"]:
+        lines.append(f"  {row['isin']}  {row['name']}")
+        lines.append(
+            f"    strategic_gap_eur: {row['strategic_gap_eur']:.2f}  "
+            f"signal_advantage: {row['signal_advantage']:+.3f}"
+        )
+        if row["score_parity_budget_eur"] is None:
+            lines.append(
+                "    score_parity: none at any positive bound; tactical signal does not exceed baseline"
+            )
+        else:
+            lines.append(
+                f"    score_parity: EUR {row['score_parity_budget_eur']:.2f} = "
+                f"{row['score_parity_pct_of_contribution']:.1f}% of contribution = "
+                f"{row['score_parity_contribution_multiple']:.2f}x one contribution"
+            )
+
+    surface = doc["decision_surface"]
+    lines.extend(
+        [
+            "",
+            "GENERIC DECISION SURFACE",
+            "  Each cell is the sacrifice bound required to reach additive-score parity.",
+            "  Rows are strategic gaps; columns are rebound-aware signal advantages.",
+        ]
+    )
+    header = "  gap" + "".join(
+        f"      +{adv:.2f}" for adv in surface["signal_advantages"]
+    )
+    lines.append(header)
+    for row in surface["rows"]:
+        rendered = "".join(
+            f"  {cell['required_bound_pct_of_contribution']:>8.1f}%"
+            for cell in row["cells"]
+        )
+        lines.append(
+            f"  EUR {row['strategic_gap_eur']:>7.2f} "
+            f"({row['strategic_gap_pct_of_contribution']:>5.1f}%)"
+            + rendered
+        )
+
+    lines.extend(
+        [
+            "",
+            "INTERPRETATION",
+            "  A larger maximum strategic sacrifice makes TT relevant across wider allocation gaps,",
+            "  but the challenger still needs a positive tactical-signal advantage to benefit.",
+            "  Reaching score parity is not the same as proving superior future returns.",
+            "  Overweight/ineligible targets remain outside the candidate set before calibration.",
+            "  A market-data failure makes Tactical Tilt neutral; core PA remains unaffected.",
+            "",
+        ]
+    )
+    path.write_text("\n".join(lines), encoding="utf-8")
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=("score",))
+    parser.add_argument("command", choices=("score", "calibrate"))
     parser.add_argument("--allocation", type=Path, default=Path("allocation_state.json"))
     parser.add_argument(
         "--market-context", type=Path, default=Path("output") / "market_context.json"
@@ -555,6 +898,24 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--tilt-budget-pct", type=float, default=DEFAULT_TILT_BUDGET_PCT)
     parser.add_argument("--tie-band-pct", type=float, default=DEFAULT_TIE_BAND_PCT)
     parser.add_argument("--max-market-age-days", type=int, default=DEFAULT_MAX_MARKET_AGE_DAYS)
+    parser.add_argument(
+        "--sweep-pct",
+        type=lambda value: _parse_csv_floats(value, field="sweep-pct"),
+        default=DEFAULT_CALIBRATION_SWEEP_PCTS,
+        help="calibration bounds as comma-separated percentages of one contribution",
+    )
+    parser.add_argument(
+        "--surface-gap-pct",
+        type=lambda value: _parse_csv_floats(value, field="surface-gap-pct"),
+        default=DEFAULT_SURFACE_GAP_PCTS,
+        help="decision-surface strategic gaps as percentages of one contribution",
+    )
+    parser.add_argument(
+        "--surface-signal-advantages",
+        type=lambda value: _parse_csv_floats(value, field="surface-signal-advantages"),
+        default=DEFAULT_SURFACE_SIGNAL_ADVANTAGES,
+        help="decision-surface rebound-aware signal advantages",
+    )
     return parser
 
 
@@ -562,14 +923,40 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
         evaluation_date = args.evaluation_date or datetime.now(timezone.utc).date()
-        doc = evaluate(
+        if args.command == "score":
+            doc = evaluate(
+                args.allocation,
+                args.market_context,
+                args.output_dir,
+                evaluation_date=evaluation_date,
+                tilt_budget_pct=args.tilt_budget_pct,
+                tie_band_pct=args.tie_band_pct,
+                max_market_age_days=args.max_market_age_days,
+            )
+            gate = doc["market_context_gate"]
+            print(
+                "tactical context:",
+                "active" if gate["active"] else "neutral",
+                f"({gate['reason']})",
+            )
+            for key, result in doc["policy"]["models"].items():
+                print(
+                    f"{key}: {result['selected_isin']} "
+                    f"sacrifice=EUR {result['strategic_sacrifice_eur']:.2f} "
+                    f"changed={result['changed_from_baseline']}"
+                )
+            print(f"report: {args.output_dir / 'tactical_tilt_report.txt'}")
+            return 0
+
+        doc = calibrate(
             args.allocation,
             args.market_context,
             args.output_dir,
             evaluation_date=evaluation_date,
-            tilt_budget_pct=args.tilt_budget_pct,
-            tie_band_pct=args.tie_band_pct,
             max_market_age_days=args.max_market_age_days,
+            sweep_pcts=args.sweep_pct,
+            surface_gap_pcts=args.surface_gap_pct,
+            surface_signal_advantages=args.surface_signal_advantages,
         )
         gate = doc["market_context_gate"]
         print(
@@ -577,13 +964,16 @@ def main(argv: list[str] | None = None) -> int:
             "active" if gate["active"] else "neutral",
             f"({gate['reason']})",
         )
-        for key, result in doc["policy"]["models"].items():
+        print(f"baseline: {doc['baseline']['selected_isin']}")
+        for row in doc["sweep"]:
             print(
-                f"{key}: {result['selected_isin']} "
-                f"sacrifice=EUR {result['strategic_sacrifice_eur']:.2f} "
-                f"changed={result['changed_from_baseline']}"
+                f"sacrifice_bound={row['max_strategic_sacrifice_pct_of_contribution']:.1f}% "
+                f"(EUR {row['max_strategic_sacrifice_eur']:.2f}): "
+                f"{row['selected_isin']} actual_sacrifice=EUR "
+                f"{row['actual_strategic_sacrifice_eur']:.2f} "
+                f"changed={row['changed_from_baseline']}"
             )
-        print(f"report: {args.output_dir / 'tactical_tilt_report.txt'}")
+        print(f"report: {args.output_dir / 'calibration_report.txt'}")
         return 0
     except TiltError as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
