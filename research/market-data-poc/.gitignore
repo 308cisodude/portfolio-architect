@@ -3,3 +3,5 @@ output/
 *.key
 __pycache__/
 *.pyc
+
+allocation_state.json

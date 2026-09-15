@@ -1,0 +1,63 @@
+{
+  "schema": 1,
+  "source_label": "synthetic research fixture; not the user's live portfolio",
+  "contribution_eur": 350.0,
+  "targets": [
+    {
+      "isin": "IE00BJ0KDQ92",
+      "name": "Xtrackers MSCI World UCITS ETF 1C",
+      "target_pct": 45.0,
+      "current_value_eur": 13307.5,
+      "buy_enabled": true,
+      "planner_eligible": true
+    },
+    {
+      "isin": "IE00BTJRMP35",
+      "name": "Xtrackers MSCI Emerging Markets UCITS ETF 1C",
+      "target_pct": 15.0,
+      "current_value_eur": 4452.5,
+      "buy_enabled": true,
+      "planner_eligible": true
+    },
+    {
+      "isin": "IE000F354Q61",
+      "name": "Xtrackers MSCI World Small Cap UCITS ETF 1C",
+      "target_pct": 15.0,
+      "current_value_eur": 4242.5,
+      "buy_enabled": true,
+      "planner_eligible": true
+    },
+    {
+      "isin": "IE00BYZK4776",
+      "name": "iShares Healthcare Innovation UCITS ETF USD Acc",
+      "target_pct": 8.0,
+      "current_value_eur": 2928.0,
+      "buy_enabled": true,
+      "planner_eligible": true
+    },
+    {
+      "isin": "IE00BGV5VN51",
+      "name": "Xtrackers Artificial Intelligence & Big Data UCITS ETF 1C",
+      "target_pct": 7.0,
+      "current_value_eur": 2699.5,
+      "buy_enabled": true,
+      "planner_eligible": true
+    },
+    {
+      "isin": "IE00BLPK3577",
+      "name": "WisdomTree Cybersecurity UCITS ETF USD Acc",
+      "target_pct": 5.0,
+      "current_value_eur": 1192.5,
+      "buy_enabled": true,
+      "planner_eligible": true
+    },
+    {
+      "isin": "IE00BYZK4552",
+      "name": "iShares Automation & Robotics UCITS ETF USD Acc",
+      "target_pct": 5.0,
+      "current_value_eur": 1177.5,
+      "buy_enabled": true,
+      "planner_eligible": true
+    }
+  ]
+}

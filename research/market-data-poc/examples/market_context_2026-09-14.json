@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "prototype_version": "0.1.2",
+  "generated_at": "2026-09-15T13:49:31.037868+00:00",
+  "targets": [
+    {"isin":"IE00BJ0KDQ92","name":"Xtrackers MSCI World UCITS ETF 1C","status":"ok","source":"alpha_vantage","symbol":"XDWD.DEX","currency":"EUR","region":"XETRA","metrics":{"quote_type":"daily_close","as_of":"2026-09-14","age_calendar_days":1,"latest_close":138.37,"return_5d":-0.0071,"return_20d":-0.0172,"high_close_20d":140.32,"drawdown_from_20d_high":-0.0139,"history_points":100}},
+    {"isin":"IE00BTJRMP35","name":"Xtrackers MSCI Emerging Markets UCITS ETF 1C","status":"ok","source":"alpha_vantage","symbol":"XMME.DEX","currency":"EUR","region":"XETRA","metrics":{"quote_type":"daily_close","as_of":"2026-09-14","age_calendar_days":1,"latest_close":79.918,"return_5d":-0.0298,"return_20d":-0.0201,"high_close_20d":82.59,"drawdown_from_20d_high":-0.0324,"history_points":100}},
+    {"isin":"IE000F354Q61","name":"Xtrackers MSCI World Small Cap UCITS ETF 1C","status":"ok","source":"alpha_vantage","symbol":"XSWC.DEX","currency":"EUR","region":"XETRA","metrics":{"quote_type":"daily_close","as_of":"2026-09-14","age_calendar_days":1,"latest_close":28.055,"return_5d":-0.0204,"return_20d":-0.0427,"high_close_20d":28.935,"drawdown_from_20d_high":-0.0304,"history_points":100}},
+    {"isin":"IE00BYZK4776","name":"iShares Healthcare Innovation UCITS ETF USD Acc","status":"ok","source":"alpha_vantage","symbol":"2B78.DEX","currency":"EUR","region":"XETRA","metrics":{"quote_type":"daily_close","as_of":"2026-09-14","age_calendar_days":1,"latest_close":8.999,"return_5d":-0.0122,"return_20d":0.0168,"high_close_20d":9.371,"drawdown_from_20d_high":-0.0397,"history_points":100}},
+    {"isin":"IE00BGV5VN51","name":"Xtrackers Artificial Intelligence & Big Data UCITS ETF 1C","status":"ok","source":"alpha_vantage","symbol":"XAIX.DEX","currency":"EUR","region":"XETRA","metrics":{"quote_type":"daily_close","as_of":"2026-09-14","age_calendar_days":1,"latest_close":209.05,"return_5d":0.0036,"return_20d":-0.0012,"high_close_20d":209.05,"drawdown_from_20d_high":0.0,"history_points":100}},
+    {"isin":"IE00BLPK3577","name":"WisdomTree Cybersecurity UCITS ETF USD Acc","status":"ok","source":"alpha_vantage","symbol":"W1TB.DEX","currency":"EUR","region":"XETRA","metrics":{"quote_type":"daily_close","as_of":"2026-09-14","age_calendar_days":1,"latest_close":36.505,"return_5d":0.0818,"return_20d":0.0377,"high_close_20d":36.505,"drawdown_from_20d_high":0.0,"history_points":100}},
+    {"isin":"IE00BYZK4552","name":"iShares Automation & Robotics UCITS ETF USD Acc","status":"ok","source":"alpha_vantage","symbol":"2B76.DEX","currency":"EUR","region":"XETRA","metrics":{"quote_type":"daily_close","as_of":"2026-09-14","age_calendar_days":1,"latest_close":17.842,"return_5d":-0.0301,"return_20d":-0.0729,"high_close_20d":18.814,"drawdown_from_20d_high":-0.0517,"history_points":100}}
+  ]
+}
