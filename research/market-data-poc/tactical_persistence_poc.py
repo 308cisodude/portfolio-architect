@@ -23,7 +23,7 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
 
-VERSION = "0.4.0"
+VERSION = "0.4.1"
 EPS = 1e-9
 
 # Research qualification constants. A planning-cycle observation only advances

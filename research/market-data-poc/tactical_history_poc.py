@@ -29,7 +29,7 @@ import market_data_poc as md
 import tactical_persistence_poc as tp
 import tactical_tilt_poc as tt
 
-VERSION = "0.4.0"
+VERSION = "0.4.1"
 HISTORY_SCHEMA = 1
 DEFAULT_RECOVERY_CONFIRM_SESSIONS = 5
 DEFAULT_FREQUENCIES = ("weekly", "monthly", "quarterly", "yearly")
@@ -365,26 +365,51 @@ def _last_session_index(bars: tuple[HistoricalBar, ...], on_or_before: date) -> 
     return found
 
 
-def _confirmed_recovery(
+def _recovery_confirmation(
     daily: list[dict[str, Any] | None],
     previous_idx: int | None,
     current_idx: int,
     confirm_sessions: int,
-) -> bool:
+) -> dict[str, Any] | None:
+    """Return the first bounded non-stress run that confirms recovery.
+
+    This is observability only: v0.4.1 keeps the v0.4.0 recovery semantics
+    unchanged, but preserves the actual market-session evidence so a human can
+    inspect why two planning-cycle observations were split into separate
+    weakness episodes.
+    """
     if previous_idx is None or confirm_sessions <= 0 or current_idx <= previous_idx + 1:
-        return False
+        return None
     run = 0
+    run_started: str | None = None
     for idx in range(previous_idx + 1, current_idx):
         metrics = daily[idx]
         if metrics is None:
             continue
         if _stress_qualified(metrics):
             run = 0
-        else:
-            run += 1
-            if run >= confirm_sessions:
-                return True
-    return False
+            run_started = None
+            continue
+        if run == 0:
+            run_started = str(metrics.get("as_of", f"session_index:{idx}"))
+        run += 1
+        if run >= confirm_sessions:
+            return {
+                "required_nonstress_sessions": confirm_sessions,
+                "run_started_on": run_started,
+                "confirmed_on": str(metrics.get("as_of", f"session_index:{idx}")),
+                "observed_nonstress_sessions": run,
+            }
+    return None
+
+
+def _confirmed_recovery(
+    daily: list[dict[str, Any] | None],
+    previous_idx: int | None,
+    current_idx: int,
+    confirm_sessions: int,
+) -> bool:
+    return _recovery_confirmation(daily, previous_idx, current_idx, confirm_sessions) is not None
 
 
 def build_cycle_history(
@@ -410,7 +435,10 @@ def build_cycle_history(
             continue
         metrics = daily[idx]
         assert metrics is not None
-        recovered = _confirmed_recovery(daily, previous_idx, idx, recovery_confirm_sessions)
+        recovery_confirmation = _recovery_confirmation(
+            daily, previous_idx, idx, recovery_confirm_sessions
+        )
+        recovered = recovery_confirmation is not None
         signal = float(metrics["signals"]["rebound_aware"])
         observation = tp.CycleObservation(
             cycle_date=cycle_day,
@@ -433,6 +461,7 @@ def build_cycle_history(
             "rebound_aware_signal": signal,
             "stress_qualified": observation.stress_qualified,
             "recovered_since_previous_cycle": recovered,
+            "recovery_confirmation": recovery_confirmation,
         })
         previous_idx = idx
 
@@ -481,6 +510,102 @@ def _episode_metrics(result: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+_STATE_RANK = {
+    "normal": 0,
+    "tactical_opportunity": 1,
+    "tactical_watch": 2,
+    "strategic_review_due": 3,
+}
+
+
+def _episode_forensics(
+    evaluation: dict[str, Any],
+    raw_rows: list[dict[str, Any]],
+    *,
+    recovery_confirm_sessions: int,
+) -> list[dict[str, Any]]:
+    """Build dated, human-inspectable episode evidence without changing governance."""
+    raw_by_cycle = {str(row["cycle_date"]): row for row in raw_rows}
+    observations = evaluation.get("observations") or []
+    episodes: list[dict[str, Any]] = []
+    active: list[tuple[dict[str, Any], dict[str, Any]]] = []
+
+    def close_active(
+        *,
+        status: str,
+        reason: str | None = None,
+        observed_on_cycle: str | None = None,
+        recovery_confirmation: dict[str, Any] | None = None,
+    ) -> None:
+        nonlocal active
+        if not active:
+            return
+        eval_rows = [pair[0] for pair in active]
+        market_rows = [pair[1] for pair in active]
+        started = date.fromisoformat(str(eval_rows[0]["cycle_date"]))
+        last = date.fromisoformat(str(eval_rows[-1]["cycle_date"]))
+        highest = max(
+            (str(row["state_after_cycle"]) for row in eval_rows),
+            key=lambda state: _STATE_RANK.get(state, -1),
+        )
+        closure: dict[str, Any] | None = None
+        if status == "closed":
+            closure = {
+                "reason": reason,
+                "observed_on_cycle": observed_on_cycle,
+                "recovery_confirmed": recovery_confirmation is not None,
+                "required_nonstress_sessions": recovery_confirm_sessions,
+                "recovery_confirmation": recovery_confirmation,
+            }
+        episodes.append({
+            "episode_number": len(episodes) + 1,
+            "status": status,
+            "started_cycle": started.isoformat(),
+            "last_stressed_cycle": last.isoformat(),
+            "elapsed_days": (last - started).days,
+            "stressed_planning_cycles": len(eval_rows),
+            "first_market_as_of": str(market_rows[0]["market_as_of"]),
+            "last_market_as_of": str(market_rows[-1]["market_as_of"]),
+            "peak_tactical_signal": max(float(row["tactical_signal"]) for row in eval_rows),
+            "latest_tactical_signal": float(eval_rows[-1]["tactical_signal"]),
+            "worst_return_5d": min(float(row["return_5d"]) for row in eval_rows),
+            "worst_return_20d": min(float(row["return_20d"]) for row in eval_rows),
+            "worst_drawdown_from_20d_high": min(
+                float(row["drawdown_from_20d_high"]) for row in eval_rows
+            ),
+            "highest_state": highest,
+            "closure": closure,
+        })
+        active = []
+
+    for eval_row in observations:
+        cycle = str(eval_row["cycle_date"])
+        raw = raw_by_cycle.get(cycle)
+        if raw is None:
+            raise HistoryError(f"missing raw cycle evidence for {cycle}")
+
+        if bool(eval_row.get("recovered_since_previous_cycle")) and active:
+            close_active(
+                status="closed",
+                reason="recovered_between_planning_cycles",
+                observed_on_cycle=cycle,
+                recovery_confirmation=raw.get("recovery_confirmation"),
+            )
+
+        if bool(eval_row.get("stress_qualified")):
+            active.append((eval_row, raw))
+        elif active:
+            close_active(
+                status="closed",
+                reason="weakness_not_qualified_at_planning_cycle",
+                observed_on_cycle=cycle,
+                recovery_confirmation=None,
+            )
+
+    close_active(status="active")
+    return episodes
+
+
 def replay_history(
     history_path: Path,
     output_dir: Path,
@@ -521,6 +646,11 @@ def replay_history(
                 "summary": _episode_metrics(evaluation),
                 "cycle_observations": raw_rows,
                 "persistence": evaluation,
+                "episode_forensics": _episode_forensics(
+                    evaluation,
+                    raw_rows,
+                    recovery_confirm_sessions=recovery_confirm_sessions,
+                ),
             })
         results.append({
             "isin": target.isin,
@@ -556,6 +686,9 @@ def replay_history(
     output_dir.mkdir(parents=True, exist_ok=True)
     _json_dump(output_dir / "historical_replay.json", document)
     (output_dir / "historical_replay_report.txt").write_text(render_report(document), encoding="utf-8")
+    (output_dir / "episode_forensics_report.txt").write_text(
+        render_forensics_report(document), encoding="utf-8"
+    )
     return document
 
 
@@ -604,8 +737,83 @@ def render_report(document: dict[str, Any]) -> str:
     lines.extend([
         "INTERPRETATION",
         "  Review entries are calibration evidence, not a conclusion that an asset was defective.",
-        "  Inspect the dated episodes before changing stress or cadence thresholds.",
+        "  Inspect episode_forensics_report.txt before changing stress or cadence thresholds.",
         "  Compact Alpha Vantage history may be too short for quarterly/yearly calibration; those cadences are reported as insufficient rather than guessed.",
+    ])
+    return "\n".join(lines) + "\n"
+
+
+def render_forensics_report(document: dict[str, Any]) -> str:
+    lines = [
+        "Portfolio Architect Tactical Tilt historical episode forensics",
+        f"prototype_version: {document['prototype_version']}",
+        f"generated_at: {document['generated_at']}",
+        f"history_source: {document['history_source']}",
+        f"replay_window: {document['replay_window']['start']}..{document['replay_window']['end']}",
+        "",
+        "BOUNDARIES",
+        "  Episodes describe qualified market weakness observed at synthetic PA cycles.",
+        "  Daily sessions may confirm recovery but never advance governance by themselves.",
+        "  Strategic-review evidence remains advisory; target replacement remains human-owned.",
+        "",
+        "EPISODES",
+    ]
+    for target in document["targets"]:
+        lines.append(f"  {target['isin']}  {target['name']}  ({target['symbol']})")
+        for cadence in target["cadences"]:
+            frequency = cadence["frequency"]
+            if cadence["status"] != "ok":
+                lines.append(f"    {frequency}: insufficient ({cadence.get('detail')})")
+                continue
+            episodes = cadence.get("episode_forensics") or []
+            lines.append(f"    {frequency}: episodes={len(episodes)}")
+            if not episodes:
+                lines.append("      none")
+                continue
+            for episode in episodes:
+                lines.append(
+                    f"      episode {episode['episode_number']} [{episode['status']}] "
+                    f"{episode['started_cycle']}..{episode['last_stressed_cycle']}"
+                )
+                lines.append(
+                    f"        stressed_cycles={episode['stressed_planning_cycles']}  "
+                    f"elapsed_days={episode['elapsed_days']}  highest_state={episode['highest_state']}"
+                )
+                lines.append(
+                    f"        market_as_of={episode['first_market_as_of']}..{episode['last_market_as_of']}"
+                )
+                lines.append(
+                    f"        peak_signal={episode['peak_tactical_signal']:.3f}  "
+                    f"latest_signal={episode['latest_tactical_signal']:.3f}"
+                )
+                lines.append(
+                    f"        worst_5d={_pct(episode['worst_return_5d'])}  "
+                    f"worst_20d={_pct(episode['worst_return_20d'])}  "
+                    f"max_drawdown={_pct(episode['worst_drawdown_from_20d_high'])}"
+                )
+                closure = episode.get("closure")
+                if closure is None:
+                    lines.append("        closure=active_unresolved")
+                else:
+                    lines.append(
+                        f"        closure={closure['reason']}  "
+                        f"observed_on_cycle={closure['observed_on_cycle']}"
+                    )
+                    confirmation = closure.get("recovery_confirmation")
+                    if confirmation:
+                        lines.append(
+                            f"        recovery={confirmation['observed_nonstress_sessions']} consecutive "
+                            f"non-stress sessions {confirmation['run_started_on']}..{confirmation['confirmed_on']} "
+                            f"(required={confirmation['required_nonstress_sessions']})"
+                        )
+                    else:
+                        lines.append("        recovery=not_confirmed_by_between-cycle session rule")
+        lines.append("")
+    lines.extend([
+        "INTERPRETATION",
+        "  Episode boundaries are evidence for threshold calibration, not labels of asset quality.",
+        "  A closed episode followed by a later episode is intentionally not treated as one permanent counter.",
+        "  Compare the dated evidence with the market chart before changing qualification, recovery, or cadence thresholds.",
     ])
     return "\n".join(lines) + "\n"
 
@@ -692,6 +900,7 @@ def main(argv: list[str] | None = None) -> int:
             insufficient = sum(1 for target in document["targets"] for row in target["cadences"] if row["status"] != "ok")
             print(f"historical replay: ok={ok} insufficient={insufficient}")
             print(f"report: {args.output_dir / 'historical_replay_report.txt'}")
+            print(f"forensics: {args.output_dir / 'episode_forensics_report.txt'}")
             return 0
         raise HistoryError("unknown command")
     except (HistoryError, md.PocError, md.ProviderError, tp.PersistenceError, tt.TiltError) as exc:

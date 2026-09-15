@@ -1,8 +1,8 @@
-# Portfolio Architect Tactical Tilt PoC 0.4.0
+# Portfolio Architect Tactical Tilt PoC 0.4.1
 
 A deliberately standalone research prototype for the proposed optional **Tactical Tilt (TT)** recommendation-enhancement layer.
 
-Version 0.4.0 keeps the established tactical scorer, calibration model, cadence-aware persistence thresholds, and v0.3.1 state contract intact, then adds **historical cadence replay**. Real daily market history can now be converted into synthetic PA planning cycles and replayed through the same rebound-aware signal and persistence governance used by the earlier fixtures. The purpose is threshold calibration against actual market behavior, not historical performance prediction.
+Version 0.4.1 keeps the established tactical scorer, calibration model, cadence-aware persistence thresholds, v0.3.1 state contract, and v0.4.0 historical replay semantics intact, then adds **episode-level historical forensics**. Real daily market history can now show not only aggregate stressed-cycle counts but the dated weakness episodes behind them: start/last stressed cycle, market-session range, peak signal, worst 5d/20d return, maximum drawdown, highest governance state, closure reason, and the exact non-stress session run that confirmed recovery. The purpose is threshold calibration against inspectable market evidence, not historical performance prediction.
 
 ## Product boundary
 
@@ -21,7 +21,7 @@ Persistent weakness is a different problem from a temporary dent. v0.3.0 therefo
 
 The human PA user remains authoritative over any strategic target change.
 
-## What v0.4.0 changes
+## What v0.4.1 changes
 
 - preserves the v0.2.x rebound-aware tactical scoring and v0.2.2 tactical-bonus-ceiling semantics unchanged;
 - preserves the v0.3.0 stress qualification and cadence thresholds unchanged;
@@ -35,9 +35,12 @@ The human PA user remains authoritative over any strategic target change.
 - reuses the exact existing `tactical_signals()` implementation and v0.3.x stress qualification;
 - derives between-cycle recovery only after a configurable number of consecutive non-stress trading sessions (default 5);
 - reports insufficient historical coverage instead of extrapolating or guessing;
+- preserves the exact market sessions that satisfy the between-cycle recovery rule;
+- adds `episode_forensics` to each usable cadence result in `historical_replay.json`;
+- adds `episode_forensics_report.txt`, with dated closed/active episodes, peak/latest signal, worst 5d/20d return, maximum drawdown, highest governance state, closure reason, and recovery-confirmation dates;
 - keeps historical execution out of scope: daily prices are evidence, planning cycles advance governance, and human target authority remains unchanged.
 
-The Market Data PoC acquisition path remains version 0.1.2. `TIME_SERIES_DAILY outputsize=compact` can provide a recent real-history calibration window. Alpha Vantage currently documents `outputsize=full` for this endpoint as a premium entitlement, so v0.4.0 also provides the provider-neutral CSV import path for longer histories.
+The Market Data PoC acquisition path remains version 0.1.2. `TIME_SERIES_DAILY outputsize=compact` can provide a recent real-history calibration window. Alpha Vantage currently documents `outputsize=full` for this endpoint as a premium entitlement, so v0.4.1 retains the provider-neutral CSV import path for longer histories.
 
 # Part A — stateless Tactical Tilt scoring
 
@@ -396,11 +399,14 @@ Outputs:
 ```text
 output\tactical_tilt\history\historical_replay.json
 output\tactical_tilt\history\historical_replay_report.txt
+output\tactical_tilt\history\episode_forensics_report.txt
 ```
 
-For every target and cadence the report includes planning-cycle count, qualified stressed-cycle count, tactical-watch cycles, dates on which `strategic_review_due` was first entered, maximum stressed-cycle episode length, and final state. A review entry is **calibration evidence only**; it is not evidence by itself that the target should have been replaced.
+The compact replay report retains the aggregate view: planning-cycle count, qualified stressed-cycle count, tactical-watch cycles, dates on which `strategic_review_due` was first entered, maximum stressed-cycle episode length, and final state.
 
-The default between-cycle recovery rule requires 5 consecutive completed sessions that no longer meet qualified-stress conditions. This is another research constant to evaluate against real episodes, not production policy.
+The new forensics report expands every detected episode into dated evidence. It distinguishes closed and still-active episodes, records the first/last market session represented at stressed PA cycles, peak/latest tactical signal, worst 5-day and 20-day return, maximum drawdown, and highest governance state. For episodes closed by between-cycle recovery it also records the exact completed market sessions that satisfied the configured recovery run. A review entry or episode is **calibration evidence only**; it is not evidence by itself that the target should have been replaced.
+
+The default between-cycle recovery rule remains 5 consecutive completed sessions that no longer meet qualified-stress conditions. v0.4.1 changes observability, not this rule. It remains a research constant to evaluate against real episodes, not production policy.
 
 # Fresh market data
 
@@ -410,7 +416,7 @@ Generate or refresh market context as before:
 python .\market_data_poc.py fetch
 ```
 
-Then run `score` or `calibrate`. The v0.3.x persistence fixtures remain deterministic and offline; v0.4.0 adds the separate historical replay path described above.
+Then run `score` or `calibrate`. The v0.3.x persistence fixtures remain deterministic and offline; v0.4.1 retains the separate historical replay path and adds episode forensics.
 
 # Offline validation
 
@@ -419,21 +425,23 @@ python -m unittest discover -s tests -v
 python -m py_compile .\market_data_poc.py .\tactical_tilt_poc.py .\tactical_persistence_poc.py .\tactical_history_poc.py
 ```
 
-The v0.4.0 bundle should report **76 tests passed**:
+The v0.4.1 bundle should report **82 tests passed**:
 
 - 14 Market Data tests;
 - 25 Tactical Tilt scoring/calibration tests;
 - 25 cadence/persistence/state-contract tests;
-- 12 historical acquisition/import/schedule/replay tests.
+- 18 historical acquisition/import/schedule/replay/forensics tests.
 
-# Success criterion for v0.4.0
+# Success criterion for v0.4.1
 
-v0.4.0 succeeds if it demonstrates that:
+v0.4.1 succeeds if it demonstrates that:
 
 - historical replay uses only market sessions available on or before each synthetic PA cycle;
 - historical tactical signals are calculated by the same scorer used by the live PoC;
 - daily history never increments governance state directly;
 - between-cycle recovery is explicit, bounded, and auditable;
+- recovery forensics preserve the actual non-stress market-session run that caused episode separation;
+- every detected episode can be inspected by date, signal severity, 5d/20d weakness, drawdown, highest governance state, and closure reason without changing the underlying state machine;
 - weekly/monthly/quarterly/yearly schedules reuse the same cadence policy without changing thresholds;
 - insufficient history fails closed per cadence;
 - Alpha Vantage acquisition remains optional and provider-neutral CSV import can supply the same canonical input;
@@ -441,4 +449,4 @@ v0.4.0 succeeds if it demonstrates that:
 
 # Next research milestone
 
-Do **not** integrate v0.4.0 directly into production PA. First run the historical replay against real target history and inspect the dated review episodes. The next version should be driven by those observations: either threshold/recovery calibration if ordinary corrections produce poor governance behavior, or a broader multi-year replay/import step if the recent compact history is insufficient to judge quarterly/yearly behavior. Only after real-history calibration should TT move toward historical allocation-state reconstruction or production integration.
+Do **not** integrate v0.4.1 directly into production PA and do not change the current qualification, recovery, or cadence thresholds merely because the recent compact replay produced no strategic-review entries. Use `episode_forensics_report.txt` to inspect whether the detected real episodes correspond to plausible market dents and recoveries. If they do, the next substantial milestone is a **multi-year provider-neutral history replay** so weekly, monthly, quarterly, and yearly governance can be calibrated against several market regimes, including at least one prolonged stress period. Only after that evidence should thresholds change or historical allocation-state reconstruction begin.

@@ -29,7 +29,7 @@ def target_with_closes(closes, start=date(2024,1,2)):
 def write_history(path: Path, closes, start=date(2024,1,2)):
     days=weekdays(start,len(closes))
     doc={
-        'schema':1,'prototype_version':'0.4.0','source':'test','requested_outputsize':'synthetic',
+        'schema':1,'prototype_version':'0.4.1','source':'test','requested_outputsize':'synthetic',
         'targets':[{
             'isin':'IE00BJ0KDQ92','name':'World','symbol':'XDWD.DEX','currency':'EUR','region':'XETRA','status':'ok',
             'bars':[{'date':d.isoformat(),'open':c,'high':c,'low':c,'close':c,'volume':1000} for d,c in zip(days,closes)]
@@ -110,7 +110,90 @@ class ReplayTests(unittest.TestCase):
             report=(out/'historical_replay_report.txt').read_text(encoding='utf-8')
             self.assertIn('review_entry_dates:',report)
             self.assertIn('target replacement remains human-owned',report)
-            self.assertEqual(doc['prototype_version'],'0.4.0')
+            self.assertEqual(doc['prototype_version'],'0.4.1')
+
+
+class ForensicsTests(unittest.TestCase):
+    def test_recovery_confirmation_preserves_market_session_dates(self):
+        weak={'as_of':'2026-01-02','return_20d':-0.08,'drawdown_from_20d_high':-0.08,'signals':{'rebound_aware':0.7}}
+        calm=[]
+        for idx, day in enumerate(weekdays(date(2026,1,5),8)):
+            calm.append({'as_of':day.isoformat(),'return_20d':0.0,'drawdown_from_20d_high':0.0,'signals':{'rebound_aware':0.0}})
+        daily=[weak] + calm + [weak]
+        confirmation=th._recovery_confirmation(daily,0,len(daily)-1,5)
+        self.assertIsNotNone(confirmation)
+        self.assertEqual(confirmation['run_started_on'],calm[0]['as_of'])
+        self.assertEqual(confirmation['confirmed_on'],calm[4]['as_of'])
+        self.assertEqual(confirmation['observed_nonstress_sessions'],5)
+
+    def test_episode_forensics_splits_recovered_episode(self):
+        evaluation={'observations':[
+            {'cycle_date':'2026-01-15','tactical_signal':0.6,'return_5d':-0.02,'return_20d':-0.05,'drawdown_from_20d_high':-0.06,'stress_qualified':True,'recovered_since_previous_cycle':False,'state_after_cycle':'tactical_opportunity'},
+            {'cycle_date':'2026-02-15','tactical_signal':0.7,'return_5d':-0.03,'return_20d':-0.06,'drawdown_from_20d_high':-0.07,'stress_qualified':True,'recovered_since_previous_cycle':False,'state_after_cycle':'tactical_watch'},
+            {'cycle_date':'2026-03-15','tactical_signal':0.5,'return_5d':-0.01,'return_20d':-0.04,'drawdown_from_20d_high':-0.05,'stress_qualified':True,'recovered_since_previous_cycle':True,'state_after_cycle':'tactical_opportunity'},
+        ]}
+        raw=[
+            {'cycle_date':'2026-01-15','market_as_of':'2026-01-15','recovery_confirmation':None},
+            {'cycle_date':'2026-02-15','market_as_of':'2026-02-13','recovery_confirmation':None},
+            {'cycle_date':'2026-03-15','market_as_of':'2026-03-13','recovery_confirmation':{'required_nonstress_sessions':5,'run_started_on':'2026-02-20','confirmed_on':'2026-02-26','observed_nonstress_sessions':5}},
+        ]
+        episodes=th._episode_forensics(evaluation,raw,recovery_confirm_sessions=5)
+        self.assertEqual(len(episodes),2)
+        self.assertEqual(episodes[0]['highest_state'],'tactical_watch')
+        self.assertEqual(episodes[0]['closure']['reason'],'recovered_between_planning_cycles')
+        self.assertEqual(episodes[0]['closure']['recovery_confirmation']['confirmed_on'],'2026-02-26')
+        self.assertEqual(episodes[1]['status'],'active')
+        self.assertEqual(episodes[1]['stressed_planning_cycles'],1)
+
+    def test_nonqualified_cycle_closes_without_between_cycle_recovery(self):
+        evaluation={'observations':[
+            {'cycle_date':'2026-01-15','tactical_signal':0.6,'return_5d':-0.02,'return_20d':-0.05,'drawdown_from_20d_high':-0.06,'stress_qualified':True,'recovered_since_previous_cycle':False,'state_after_cycle':'tactical_opportunity'},
+            {'cycle_date':'2026-02-15','tactical_signal':0.1,'return_5d':0.01,'return_20d':0.01,'drawdown_from_20d_high':-0.01,'stress_qualified':False,'recovered_since_previous_cycle':False,'state_after_cycle':'normal'},
+        ]}
+        raw=[
+            {'cycle_date':'2026-01-15','market_as_of':'2026-01-15','recovery_confirmation':None},
+            {'cycle_date':'2026-02-15','market_as_of':'2026-02-13','recovery_confirmation':None},
+        ]
+        episode=th._episode_forensics(evaluation,raw,recovery_confirm_sessions=5)[0]
+        self.assertEqual(episode['closure']['reason'],'weakness_not_qualified_at_planning_cycle')
+        self.assertFalse(episode['closure']['recovery_confirmed'])
+
+    def test_long_decline_forensics_reaches_review_and_remains_active(self):
+        closes=[100.0*(0.997**i) for i in range(220)]
+        target=target_with_closes(closes)
+        history, raw, err=th.build_cycle_history(target,frequency='monthly',anchor=date(2024,2,15),start=date(2024,2,15),end=date(2024,8,15),recovery_confirm_sessions=5)
+        self.assertIsNone(err)
+        evaluation=tp.evaluate_history(history)
+        episodes=th._episode_forensics(evaluation,raw,recovery_confirm_sessions=5)
+        self.assertEqual(len(episodes),1)
+        self.assertEqual(episodes[0]['status'],'active')
+        self.assertEqual(episodes[0]['highest_state'],'strategic_review_due')
+        self.assertGreaterEqual(episodes[0]['stressed_planning_cycles'],3)
+
+    def test_replay_writes_episode_forensics_report(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path=Path(tmp)/'history.json'
+            write_history(path,[100.0*(0.997**i) for i in range(260)])
+            out=Path(tmp)/'out'
+            th.replay_history(path,out,anchor=date(2024,2,15),start=date(2024,2,15),end=date(2024,10,15),frequencies=('monthly',),recovery_confirm_sessions=5)
+            report_path=out/'episode_forensics_report.txt'
+            self.assertTrue(report_path.exists())
+            report=report_path.read_text(encoding='utf-8')
+            self.assertIn('historical episode forensics',report)
+            self.assertIn('highest_state=strategic_review_due',report)
+            self.assertIn('max_drawdown=',report)
+            self.assertIn('target replacement remains human-owned',report)
+
+    def test_replay_json_carries_episode_forensics(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path=Path(tmp)/'history.json'
+            write_history(path,[100.0*(0.997**i) for i in range(220)])
+            out=Path(tmp)/'out'
+            doc=th.replay_history(path,out,anchor=date(2024,2,15),start=date(2024,2,15),end=date(2024,8,15),frequencies=('monthly',),recovery_confirm_sessions=5)
+            cadence=doc['targets'][0]['cadences'][0]
+            self.assertIn('episode_forensics',cadence)
+            self.assertGreaterEqual(len(cadence['episode_forensics']),1)
+            self.assertIn('worst_return_20d',cadence['episode_forensics'][0])
 
 
 class FetchTests(unittest.TestCase):
