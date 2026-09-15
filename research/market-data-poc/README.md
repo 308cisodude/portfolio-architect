@@ -1,8 +1,8 @@
-# Portfolio Architect Tactical Tilt PoC 0.3.1
+# Portfolio Architect Tactical Tilt PoC 0.4.0
 
 A deliberately standalone research prototype for the proposed optional **Tactical Tilt (TT)** recommendation-enhancement layer.
 
-Version 0.3.1 keeps the v0.2.x tactical scoring/calibration model and the v0.3.0 cadence-aware persistence thresholds intact, then hardens the **state contract** around PA planning cycles. The release makes replay idempotent, keeps execution evidence audit-only, forbids tactical debt, preserves cadence history without reinterpreting it, and starts replacement instruments with clean active stress state.
+Version 0.4.0 keeps the established tactical scorer, calibration model, cadence-aware persistence thresholds, and v0.3.1 state contract intact, then adds **historical cadence replay**. Real daily market history can now be converted into synthetic PA planning cycles and replayed through the same rebound-aware signal and persistence governance used by the earlier fixtures. The purpose is threshold calibration against actual market behavior, not historical performance prediction.
 
 ## Product boundary
 
@@ -21,25 +21,23 @@ Persistent weakness is a different problem from a temporary dent. v0.3.0 therefo
 
 The human PA user remains authoritative over any strategic target change.
 
-## What v0.3.1 changes
+## What v0.4.0 changes
 
-- preserves the v0.2.0 rebound-aware signal, candidate gate, rebound suppression, and additive scoring formula;
-- preserves the v0.2.2 tactical-bonus-ceiling calibration semantics and provisional 150% research reference;
-- preserves the v0.3.0 cadence thresholds and stress-qualification arithmetic unchanged;
-- bumps the research prototype version to 0.3.1 without changing tactical scoring or persistence thresholds;
-- adds an explicit cycle identity: `plan_id`, `cycle_effective_date`, `plan_frequency`, `target_id`, and `isin`;
-- adds an idempotent persisted event-log state contract: exact replay cannot increment persistence twice;
-- allows later execution evidence to enrich an existing cycle as **audit-only** data without creating another governance observation;
-- makes `selected_by_tt` and `execution_outcome` non-governing evidence;
-- explicitly forbids tactical debt: an ignored or partially followed recommendation creates no future obligation;
-- states that each new recommendation starts from current authoritative portfolio holdings, not from prior recommendation compliance;
-- splits persistence into a new governance segment when plan cadence changes, retaining old evidence without reinterpreting old cycles under the new cadence;
-- splits persistence into a new clean asset segment when the configured target instrument is deliberately replaced;
-- adds deterministic save/reload/replay verification for restart safety;
-- adds `examples/persistence_contract_events.json` and a `state-replay` harness for the new state semantics;
-- keeps strategic review advisory and human-owned; no automatic target replacement or sale is introduced.
+- preserves the v0.2.x rebound-aware tactical scoring and v0.2.2 tactical-bonus-ceiling semantics unchanged;
+- preserves the v0.3.0 stress qualification and cadence thresholds unchanged;
+- preserves the v0.3.1 idempotency, execution-independence, no-tactical-debt, cadence-segmentation, target-replacement, and restart/replay contracts unchanged;
+- adds `tactical_history_poc.py`;
+- adds provider-neutral canonical daily OHLCV history schema 1;
+- adds `history-fetch`, using the already-resolved Alpha Vantage symbol identities and the same rolling-24h provider guard as Market Data PoC 0.1.2;
+- adds `history-import-csv`, so historical replay is not coupled to Alpha Vantage acquisition;
+- adds `history-replay` across weekly, monthly, quarterly, and yearly synthetic PA cycle schedules;
+- maps a cycle to the last completed trading session on or before the cycle date, never to future data;
+- reuses the exact existing `tactical_signals()` implementation and v0.3.x stress qualification;
+- derives between-cycle recovery only after a configurable number of consecutive non-stress trading sessions (default 5);
+- reports insufficient historical coverage instead of extrapolating or guessing;
+- keeps historical execution out of scope: daily prices are evidence, planning cycles advance governance, and human target authority remains unchanged.
 
-The Market Data PoC 0.1.2 acquisition files remain unchanged.
+The Market Data PoC acquisition path remains version 0.1.2. `TIME_SERIES_DAILY outputsize=compact` can provide a recent real-history calibration window. Alpha Vantage currently documents `outputsize=full` for this endpoint as a premium entitlement, so v0.4.0 also provides the provider-neutral CSV import path for longer histories.
 
 # Part A — stateless Tactical Tilt scoring
 
@@ -344,6 +342,66 @@ output\tactical_tilt\persistence_contract_report.txt
 
 The supplied fixture demonstrates exact duplicate replay, later audit enrichment, recommendation non-compliance without tactical debt, cadence segmentation, target replacement, and deterministic restart/replay.
 
+# Part D — historical cadence replay
+
+Historical replay intentionally separates **market evidence** from **governance events**. Daily bars may update the evidence attached to a synthetic cycle and may confirm a recovery between cycles, but only scheduled PA cycles are passed into the persistence state machine.
+
+## Acquire recent real history with the existing Alpha Vantage identity cache
+
+`history-fetch` reuses `output/mapping.json` and the same ignored `output/.alpha_vantage_usage.json` rolling-24h guard used by the Market Data PoC. It does not write the API key.
+
+```powershell
+python .\tactical_history_poc.py history-fetch `
+  --mapping .\output\mapping.json `
+  --output .\output\history\historical_market_data.json `
+  --outputsize compact
+```
+
+This requires seven provider calls for the current seven-target research set. `compact` returns the latest 100 daily sessions and is enough for a useful recent weekly/monthly calibration window, and often two quarterly observations, but it is normally too short for meaningful yearly persistence calibration. The replay reports insufficient coverage rather than inventing older evidence.
+
+If the Alpha Vantage key has full-history entitlement, use `--outputsize full`.
+
+## Provider-neutral history import
+
+For longer research history from another lawful source, import one consolidated CSV with these columns:
+
+```text
+isin,name,symbol,currency,region,date,open,high,low,close,volume
+```
+
+`volume` may be empty; the other columns are required. One row represents one completed trading session.
+
+```powershell
+python .\tactical_history_poc.py history-import-csv `
+  --csv .\my_historical_prices.csv `
+  --output .\output\history\historical_market_data.json
+```
+
+The importer rejects duplicate session dates, changing identity metadata, invalid prices, and targets with fewer than 21 sessions.
+
+## Replay the history
+
+For the first recent-history experiment on 2026-09-15, a useful common anchor/window is:
+
+```powershell
+python .\tactical_history_poc.py history-replay `
+  --history .\output\history\historical_market_data.json `
+  --anchor 2026-06-15 `
+  --start 2026-06-15 `
+  --end 2026-09-15
+```
+
+Outputs:
+
+```text
+output\tactical_tilt\history\historical_replay.json
+output\tactical_tilt\history\historical_replay_report.txt
+```
+
+For every target and cadence the report includes planning-cycle count, qualified stressed-cycle count, tactical-watch cycles, dates on which `strategic_review_due` was first entered, maximum stressed-cycle episode length, and final state. A review entry is **calibration evidence only**; it is not evidence by itself that the target should have been replaced.
+
+The default between-cycle recovery rule requires 5 consecutive completed sessions that no longer meet qualified-stress conditions. This is another research constant to evaluate against real episodes, not production policy.
+
 # Fresh market data
 
 Generate or refresh market context as before:
@@ -352,36 +410,35 @@ Generate or refresh market context as before:
 python .\market_data_poc.py fetch
 ```
 
-Then run `score` or `calibrate`. Both persistence harnesses are offline in v0.3.1 and use explicit cycle fixtures so governance behavior remains deterministic and auditable.
+Then run `score` or `calibrate`. The v0.3.x persistence fixtures remain deterministic and offline; v0.4.0 adds the separate historical replay path described above.
 
 # Offline validation
 
 ```powershell
 python -m unittest discover -s tests -v
-python -m py_compile .\market_data_poc.py .\tactical_tilt_poc.py .\tactical_persistence_poc.py
+python -m py_compile .\market_data_poc.py .\tactical_tilt_poc.py .\tactical_persistence_poc.py .\tactical_history_poc.py
 ```
 
-The v0.3.1 bundle should report **64 tests passed**:
+The v0.4.0 bundle should report **76 tests passed**:
 
-- 14 existing Market Data tests;
-- 25 existing Tactical Tilt scoring/calibration tests;
-- 15 v0.3.0 cadence/persistence/governance tests;
-- 10 new v0.3.1 state-contract/idempotency tests.
+- 14 Market Data tests;
+- 25 Tactical Tilt scoring/calibration tests;
+- 25 cadence/persistence/state-contract tests;
+- 12 historical acquisition/import/schedule/replay tests.
 
-# Success criterion for v0.3.1
+# Success criterion for v0.4.0
 
-The persistence PoC succeeds if it demonstrates all of the following without changing the established tactical scorer:
+v0.4.0 succeeds if it demonstrates that:
 
-- all v0.3.0 cadence and recovery semantics remain unchanged;
-- exact replay of one PA cycle cannot increment persistence twice;
-- later execution evidence can enrich audit state without changing governance state;
-- following or ignoring a recommendation produces no tactical debt and does not alter target stress history;
-- each future score remains based on current authoritative holdings;
-- a cadence change retains old evidence but starts a new cadence-governed segment;
-- a deliberate target replacement retains old evidence but starts the replacement instrument clean;
-- persisted state reload/replay deterministically reconstructs the same governance result;
-- strategic-review escalation remains advisory and human target authority remains explicit.
+- historical replay uses only market sessions available on or before each synthetic PA cycle;
+- historical tactical signals are calculated by the same scorer used by the live PoC;
+- daily history never increments governance state directly;
+- between-cycle recovery is explicit, bounded, and auditable;
+- weekly/monthly/quarterly/yearly schedules reuse the same cadence policy without changing thresholds;
+- insufficient history fails closed per cadence;
+- Alpha Vantage acquisition remains optional and provider-neutral CSV import can supply the same canonical input;
+- strategic-review entries remain evidence for human review, never automatic target replacement or selling.
 
 # Next research milestone
 
-Do **not** integrate v0.3.1 directly into production PA yet. The next substantial milestone is **v0.4.0 historical cadence replay**: feed real historical daily market series into synthetic weekly/monthly/quarterly/yearly PA cycle dates and measure how often ordinary corrections become tactical opportunities, watches, or strategic-review prompts. The goal is to calibrate the current research thresholds against real market history before designing durable production state, configuration, or UI contracts.
+Do **not** integrate v0.4.0 directly into production PA. First run the historical replay against real target history and inspect the dated review episodes. The next version should be driven by those observations: either threshold/recovery calibration if ordinary corrections produce poor governance behavior, or a broader multi-year replay/import step if the recent compact history is insufficient to judge quarterly/yearly behavior. Only after real-history calibration should TT move toward historical allocation-state reconstruction or production integration.

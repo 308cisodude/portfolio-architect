@@ -158,7 +158,7 @@ class GovernanceBoundaryTests(unittest.TestCase):
     def test_fixture_replay_writes_report_and_preserves_human_authority(self):
         with tempfile.TemporaryDirectory() as tmp:
             document = tp.replay(FIXTURE, Path(tmp))
-            self.assertEqual(document["prototype_version"], "0.3.1")
+            self.assertEqual(document["prototype_version"], "0.4.0")
             self.assertFalse(
                 document["governance_boundary"]["daily_market_refreshes_increment_state"]
             )
