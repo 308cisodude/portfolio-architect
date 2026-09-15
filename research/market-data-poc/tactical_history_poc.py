@@ -9,7 +9,8 @@ quarterly, and yearly plan frequencies.
 
 Daily price observations never advance governance state directly. They are used
 only to derive the market evidence attached to synthetic PA planning cycles and
-to determine whether a recovery was confirmed between two cycles.
+to determine whether a recovery was confirmed by a continuous completed-session
+run across PA-cycle boundaries.
 """
 from __future__ import annotations
 
@@ -29,7 +30,7 @@ import market_data_poc as md
 import tactical_persistence_poc as tp
 import tactical_tilt_poc as tt
 
-VERSION = "0.4.2"
+VERSION = "0.4.3"
 HISTORY_SCHEMA = 1
 DEFAULT_RECOVERY_CONFIRM_SESSIONS = 5
 DEFAULT_FREQUENCIES = ("weekly", "monthly", "quarterly", "yearly")
@@ -371,18 +372,24 @@ def _recovery_confirmation(
     current_idx: int,
     confirm_sessions: int,
 ) -> dict[str, Any] | None:
-    """Return the first bounded non-stress run that confirms recovery.
+    """Return the first newly confirmed continuous non-stress recovery run.
 
-    v0.4.2 makes this confirmation authoritative for episode closure. A merely
-    non-qualified PA cycle no longer closes an active weakness episode by
-    itself; the bounded daily-session run supplies the explicit recovery
-    evidence that separates one market event from the next.
+    Recovery evidence is market-session based, not cadence-window based. The
+    scan therefore preserves a partial non-stress streak that began on or before
+    the previous PA cycle and allows the market session used by the current PA
+    cycle to complete the configured run. Only a threshold crossing *after* the
+    previous cycle counts as a new recovery confirmation.
+
+    This makes the same five completed market sessions mean the same thing for
+    weekly, monthly, quarterly, and yearly PA schedules. Daily sessions still
+    never advance governance state; they only prove that recovery occurred.
     """
-    if previous_idx is None or confirm_sessions <= 0 or current_idx <= previous_idx + 1:
+    if previous_idx is None or confirm_sessions <= 0 or current_idx <= previous_idx:
         return None
+
     run = 0
     run_started: str | None = None
-    for idx in range(previous_idx + 1, current_idx):
+    for idx in range(0, current_idx + 1):
         metrics = daily[idx]
         if metrics is None:
             continue
@@ -393,12 +400,16 @@ def _recovery_confirmation(
         if run == 0:
             run_started = str(metrics.get("as_of", f"session_index:{idx}"))
         run += 1
-        if run >= confirm_sessions:
+        # Report only the first threshold crossing for a continuous calm run,
+        # and only if that crossing happened after the previous PA cycle. A run
+        # already confirmed before or on the previous cycle is not rediscovered.
+        if run == confirm_sessions and idx > previous_idx:
             return {
                 "required_nonstress_sessions": confirm_sessions,
                 "run_started_on": run_started,
                 "confirmed_on": str(metrics.get("as_of", f"session_index:{idx}")),
                 "observed_nonstress_sessions": run,
+                "confirmation_includes_current_cycle_session": idx == current_idx,
             }
     return None
 
@@ -699,7 +710,10 @@ def replay_history(
         "replay_window": {"anchor": anchor.isoformat(), "start": start.isoformat(), "end": end.isoformat()},
         "frequencies": list(frequencies),
         "recovery_policy": {
-            "confirmed_nonstress_sessions_between_cycles": recovery_confirm_sessions,
+            "confirmed_nonstress_sessions": recovery_confirm_sessions,
+            "confirmation_scope": "continuous_completed_sessions_across_pa_cycle_boundaries",
+            "current_cycle_market_session_can_complete_recovery": True,
+            "partial_recovery_streak_carries_across_cycle_boundary": True,
             "daily_sessions_advance_governance": False,
             "nonqualified_planning_cycle_alone_closes_episode": False,
             "confirmed_recovery_required_for_market_episode_closure": True,
@@ -741,7 +755,9 @@ def render_report(document: dict[str, Any]) -> str:
         "  Strategic-review prompts remain advisory; target replacement remains human-owned.",
         "",
         "RECOVERY POLICY",
-        f"  confirmation: {document['recovery_policy']['confirmed_nonstress_sessions_between_cycles']} consecutive non-stress trading sessions between cycles",
+        f"  confirmation: {document['recovery_policy']['confirmed_nonstress_sessions']} consecutive non-stress completed market sessions",
+        "  recovery streaks carry across PA-cycle boundaries; the current cycle session may complete the run",
+        "  daily sessions prove recovery but never advance governance state",
         "  a non-qualified PA cycle without confirmed recovery leaves the episode unresolved",
         "",
         "RESULTS",
@@ -849,6 +865,7 @@ def render_forensics_report(document: dict[str, Any]) -> str:
         "  Episode boundaries are evidence for threshold calibration, not labels of asset quality.",
         "  A closed episode followed by a later episode is intentionally not treated as one permanent counter.",
         "  A merely non-qualified PA cycle does not close an unresolved episode without confirmed recovery.",
+        "  Recovery confirmation is market-session based and cadence-independent across PA-cycle boundaries.",
         "  Compare the dated evidence with the market chart before changing qualification, recovery, or cadence thresholds.",
     ])
     return "\n".join(lines) + "\n"

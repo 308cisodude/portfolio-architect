@@ -23,7 +23,7 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
 
-VERSION = "0.4.2"
+VERSION = "0.4.3"
 EPS = 1e-9
 
 # Research qualification constants. A planning-cycle observation only advances
@@ -299,7 +299,7 @@ def _governance_state(
 def evaluate_history(history: TargetHistory) -> dict[str, Any]:
     """Replay one target's independent PA planning-cycle observations.
 
-    v0.4.2 hardens episode continuity: once qualified weakness starts an
+    v0.4.3 preserves the v0.4.2 episode-continuity contract: once qualified weakness starts an
     episode, a merely non-qualified PA cycle does not by itself prove recovery.
     The episode stays unresolved until explicit recovery evidence is supplied
     (``recovered_since_previous_cycle``), while only qualified PA cycles
@@ -324,7 +324,7 @@ def evaluate_history(history: TargetHistory) -> dict[str, Any]:
         active_observed_through = None
 
     for obs in history.observations:
-        # Confirmed recovery between cycles is the only market-state event that
+        # Confirmed recovery supplied by the historical evidence layer is the only market-state event that
         # closes an active weakness episode. It splits episodes even if weakness
         # has returned by the next PA cycle.
         if obs.recovered_since_previous_cycle:

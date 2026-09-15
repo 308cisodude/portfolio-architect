@@ -29,7 +29,7 @@ def target_with_closes(closes, start=date(2024,1,2)):
 def write_history(path: Path, closes, start=date(2024,1,2)):
     days=weekdays(start,len(closes))
     doc={
-        'schema':1,'prototype_version':'0.4.2','source':'test','requested_outputsize':'synthetic',
+        'schema':1,'prototype_version':'0.4.3','source':'test','requested_outputsize':'synthetic',
         'targets':[{
             'isin':'IE00BJ0KDQ92','name':'World','symbol':'XDWD.DEX','currency':'EUR','region':'XETRA','status':'ok',
             'bars':[{'date':d.isoformat(),'open':c,'high':c,'low':c,'close':c,'volume':1000} for d,c in zip(days,closes)]
@@ -68,6 +68,59 @@ class MetricsTests(unittest.TestCase):
         metrics=th._session_metrics(target.bars,20)
         expected=tt.tactical_signals(metrics)['rebound_aware']
         self.assertAlmostEqual(metrics['signals']['rebound_aware'],expected)
+
+    def test_weekly_recovery_can_complete_on_current_cycle_session(self):
+        weak={'as_of':'2026-08-03','return_20d':-0.08,'drawdown_from_20d_high':-0.08,'signals':{'rebound_aware':0.7}}
+        calm=[
+            {'as_of':day,'return_20d':0.0,'drawdown_from_20d_high':0.0,'signals':{'rebound_aware':0.0}}
+            for day in ('2026-08-04','2026-08-05','2026-08-06','2026-08-07','2026-08-10')
+        ]
+        daily=[weak] + calm
+        confirmation=th._recovery_confirmation(daily,0,5,5)
+        self.assertIsNotNone(confirmation)
+        self.assertEqual(confirmation['run_started_on'],'2026-08-04')
+        self.assertEqual(confirmation['confirmed_on'],'2026-08-10')
+        self.assertTrue(confirmation['confirmation_includes_current_cycle_session'])
+
+    def test_partial_recovery_streak_carries_across_previous_cycle_boundary(self):
+        weak={'as_of':'2026-08-03','return_20d':-0.08,'drawdown_from_20d_high':-0.08,'signals':{'rebound_aware':0.7}}
+        calm=[
+            {'as_of':day,'return_20d':0.0,'drawdown_from_20d_high':0.0,'signals':{'rebound_aware':0.0}}
+            for day in ('2026-08-04','2026-08-05','2026-08-06','2026-08-07','2026-08-10')
+        ]
+        daily=[weak] + calm
+        # Simulate a PA cycle after the fourth calm session. The fifth session
+        # arrives after that cycle and must complete the existing streak rather
+        # than starting a new one from zero.
+        confirmation=th._recovery_confirmation(daily,4,5,5)
+        self.assertIsNotNone(confirmation)
+        self.assertEqual(confirmation['run_started_on'],'2026-08-04')
+        self.assertEqual(confirmation['confirmed_on'],'2026-08-10')
+
+    def test_recovery_confirmation_survives_restress_before_current_cycle(self):
+        weak=lambda day: {'as_of':day,'return_20d':-0.08,'drawdown_from_20d_high':-0.08,'signals':{'rebound_aware':0.7}}
+        calm=lambda day: {'as_of':day,'return_20d':0.0,'drawdown_from_20d_high':0.0,'signals':{'rebound_aware':0.0}}
+        daily=[
+            weak('2026-08-03'),
+            calm('2026-08-04'), calm('2026-08-05'), calm('2026-08-06'),
+            calm('2026-08-07'), calm('2026-08-10'),
+            weak('2026-08-11'),
+        ]
+        confirmation=th._recovery_confirmation(daily,0,6,5)
+        self.assertIsNotNone(confirmation)
+        self.assertEqual(confirmation['confirmed_on'],'2026-08-10')
+        self.assertFalse(confirmation['confirmation_includes_current_cycle_session'])
+
+    def test_already_confirmed_calm_run_is_not_rediscovered(self):
+        weak={'as_of':'2026-08-03','return_20d':-0.08,'drawdown_from_20d_high':-0.08,'signals':{'rebound_aware':0.7}}
+        calm=[
+            {'as_of':day,'return_20d':0.0,'drawdown_from_20d_high':0.0,'signals':{'rebound_aware':0.0}}
+            for day in ('2026-08-04','2026-08-05','2026-08-06','2026-08-07','2026-08-10','2026-08-11')
+        ]
+        daily=[weak] + calm
+        # Recovery already crossed its five-session threshold on 2026-08-10.
+        # A later PA cycle must not rediscover the same uninterrupted calm run.
+        self.assertIsNone(th._recovery_confirmation(daily,5,6,5))
 
     def test_recovery_requires_configured_consecutive_nonstress_sessions(self):
         weak={'return_20d':-0.08,'drawdown_from_20d_high':-0.08,'signals':{'rebound_aware':0.7}}
@@ -110,7 +163,7 @@ class ReplayTests(unittest.TestCase):
             report=(out/'historical_replay_report.txt').read_text(encoding='utf-8')
             self.assertIn('review_entry_dates:',report)
             self.assertIn('target replacement remains human-owned',report)
-            self.assertEqual(doc['prototype_version'],'0.4.2')
+            self.assertEqual(doc['prototype_version'],'0.4.3')
 
 
 class ForensicsTests(unittest.TestCase):
