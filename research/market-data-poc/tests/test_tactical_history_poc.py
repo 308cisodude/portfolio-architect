@@ -29,7 +29,7 @@ def target_with_closes(closes, start=date(2024,1,2)):
 def write_history(path: Path, closes, start=date(2024,1,2)):
     days=weekdays(start,len(closes))
     doc={
-        'schema':1,'prototype_version':'0.4.3','source':'test','requested_outputsize':'synthetic',
+        'schema':1,'prototype_version':'0.4.4','source':'test','requested_outputsize':'synthetic',
         'targets':[{
             'isin':'IE00BJ0KDQ92','name':'World','symbol':'XDWD.DEX','currency':'EUR','region':'XETRA','status':'ok',
             'bars':[{'date':d.isoformat(),'open':c,'high':c,'low':c,'close':c,'volume':1000} for d,c in zip(days,closes)]
@@ -163,7 +163,7 @@ class ReplayTests(unittest.TestCase):
             report=(out/'historical_replay_report.txt').read_text(encoding='utf-8')
             self.assertIn('review_entry_dates:',report)
             self.assertIn('target replacement remains human-owned',report)
-            self.assertEqual(doc['prototype_version'],'0.4.3')
+            self.assertEqual(doc['prototype_version'],'0.4.4')
 
 
 class ForensicsTests(unittest.TestCase):
@@ -308,7 +308,95 @@ class FetchTests(unittest.TestCase):
             self.assertNotIn('SUPERSECRET',out.read_text(encoding='utf-8'))
 
 
+
+    def test_adjusted_bar_scales_ohlc_to_adjusted_close_basis(self):
+        values={
+            '1. open':'90', '2. high':'110', '3. low':'80', '4. close':'100',
+            '5. adjusted close':'50', '6. volume':'1234',
+            '7. dividend amount':'0.5', '8. split coefficient':'1.0',
+        }
+        bar=th._bar_from_av_adjusted('2026-01-02',values,'XDWD.DEX')
+        self.assertAlmostEqual(bar['open'],45.0)
+        self.assertAlmostEqual(bar['high'],55.0)
+        self.assertAlmostEqual(bar['low'],40.0)
+        self.assertAlmostEqual(bar['close'],50.0)
+        self.assertEqual(bar['volume'],1234.0)
+
+    def test_adjusted_history_fetch_uses_adjusted_endpoint_and_records_basis(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            mapping={'targets':[{'isin':'IE00BJ0KDQ92','name':'World','status':'resolved','selected':{'symbol':'XDWD.DEX','currency':'EUR','region':'XETRA'}}]}
+            mp=root/'mapping.json'; mp.write_text(json.dumps(mapping),encoding='utf-8')
+            out=root/'history.json'
+            payload={'Time Series (Daily)':{}}
+            for i, day in enumerate(weekdays(date(2026,1,1),25)):
+                raw=100+i
+                payload['Time Series (Daily)'][day.isoformat()]={
+                    '1. open':str(raw-1), '2. high':str(raw+1), '3. low':str(raw-2), '4. close':str(raw),
+                    '5. adjusted close':str(raw*0.5), '6. volume':'1000',
+                    '7. dividend amount':'0.0', '8. split coefficient':'1.0',
+                }
+            guard=mock.Mock(); guard.usage.return_value={'request_count':1,'daily_limit':25,'remaining':24}
+            with mock.patch('tactical_history_poc.md._av_get',return_value=payload) as get:
+                doc=th.fetch_history(mp,out,'secret',guard,outputsize='full',price_basis='adjusted')
+            params=get.call_args.args[0]
+            self.assertEqual(params['function'],'TIME_SERIES_DAILY_ADJUSTED')
+            self.assertEqual(params['outputsize'],'full')
+            self.assertEqual(doc['price_basis'],'adjusted')
+            self.assertEqual(doc['quote_type'],'daily_adjusted_ohlcv_derived')
+            self.assertEqual(doc['alpha_vantage_function'],'TIME_SERIES_DAILY_ADJUSTED')
+            self.assertEqual(doc['adjustment_method'],'scale_raw_ohlc_by_adjusted_close_over_raw_close')
+            self.assertAlmostEqual(doc['targets'][0]['bars'][0]['close'],50.0)
+
+    def test_raw_history_fetch_remains_default_and_uses_legacy_endpoint(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            mapping={'targets':[{'isin':'IE00BJ0KDQ92','name':'World','status':'resolved','selected':{'symbol':'XDWD.DEX','currency':'EUR','region':'XETRA'}}]}
+            mp=root/'mapping.json'; mp.write_text(json.dumps(mapping),encoding='utf-8')
+            out=root/'history.json'
+            payload={'Time Series (Daily)':{}}
+            for day in weekdays(date(2026,1,1),21):
+                payload['Time Series (Daily)'][day.isoformat()]={'1. open':'1','2. high':'1','3. low':'1','4. close':'1','5. volume':'1'}
+            guard=mock.Mock(); guard.usage.return_value={'request_count':1,'daily_limit':25,'remaining':24}
+            with mock.patch('tactical_history_poc.md._av_get',return_value=payload) as get:
+                doc=th.fetch_history(mp,out,'secret',guard,outputsize='compact')
+            self.assertEqual(get.call_args.args[0]['function'],'TIME_SERIES_DAILY')
+            self.assertEqual(doc['price_basis'],'raw')
+            self.assertEqual(doc['quote_type'],'daily_raw_ohlcv')
+
+    def test_adjusted_history_rejects_nonpositive_adjusted_close_without_writing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            mapping={'targets':[{'isin':'IE00BJ0KDQ92','name':'World','status':'resolved','selected':{'symbol':'XDWD.DEX','currency':'EUR','region':'XETRA'}}]}
+            mp=root/'mapping.json'; mp.write_text(json.dumps(mapping),encoding='utf-8')
+            out=root/'history.json'
+            payload={'Time Series (Daily)':{}}
+            for day in weekdays(date(2026,1,1),21):
+                payload['Time Series (Daily)'][day.isoformat()]={
+                    '1. open':'1','2. high':'1','3. low':'1','4. close':'1','5. adjusted close':'0','6. volume':'1'
+                }
+            guard=mock.Mock(); guard.usage.return_value={'request_count':1,'daily_limit':25,'remaining':24}
+            with mock.patch('tactical_history_poc.md._av_get',return_value=payload):
+                with self.assertRaisesRegex(th.HistoryError,'invalid Alpha Vantage adjusted bar'):
+                    th.fetch_history(mp,out,'secret',guard,outputsize='compact',price_basis='adjusted')
+            self.assertFalse(out.exists())
+
+
 class CsvImportTests(unittest.TestCase):
+    def test_load_history_rejects_inconsistent_adjusted_metadata(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path=Path(tmp)/'history.json'
+            days=weekdays(date(2026,1,1),21)
+            doc={
+                'schema':1,'prototype_version':'0.4.4','source':'test',
+                'price_basis':'adjusted','quote_type':'daily_raw_ohlcv',
+                'targets':[{'isin':'IE00BJ0KDQ92','name':'World','symbol':'XDWD.DEX','currency':'EUR','region':'XETRA','status':'ok',
+                    'bars':[{'date':d.isoformat(),'open':100,'high':100,'low':100,'close':100,'volume':1000} for d in days]}]
+            }
+            path.write_text(json.dumps(doc),encoding='utf-8')
+            with self.assertRaisesRegex(th.HistoryError,'adjusted history cannot declare daily_raw_ohlcv'):
+                th.load_history(path)
+
     def test_provider_neutral_csv_import_round_trips(self):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp)
@@ -324,6 +412,26 @@ class CsvImportTests(unittest.TestCase):
             _, targets=th.load_history(out)
             self.assertEqual(len(targets),1)
             self.assertEqual(len(targets[0].bars),25)
+
+    def test_adjusted_csv_import_declares_basis_and_replay_preserves_metadata(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            csv_path=root/'history.csv'
+            lines=['isin,name,symbol,currency,region,date,open,high,low,close,volume']
+            for idx, day in enumerate(weekdays(date(2026,1,1),40)):
+                value=100+idx
+                lines.append(f'IE00BJ0KDQ92,World,XDWD.DEX,EUR,XETRA,{day.isoformat()},{value},{value},{value},{value},1000')
+            csv_path.write_text('\n'.join(lines)+'\n',encoding='utf-8')
+            out=root/'history.json'
+            doc=th.import_history_csv(csv_path,out,price_basis='adjusted')
+            self.assertEqual(doc['price_basis'],'adjusted')
+            self.assertEqual(doc['quote_type'],'daily_adjusted_ohlcv_imported')
+            replay=th.replay_history(
+                out,root/'replay',anchor=date(2026,2,1),start=date(2026,2,1),end=date(2026,2,28),
+                frequencies=('weekly',),recovery_confirm_sessions=5
+            )
+            self.assertEqual(replay['history_price_basis'],'adjusted')
+            self.assertEqual(replay['history_adjustment_method'],'imported_pre_adjusted_ohlc')
 
     def test_csv_import_rejects_duplicate_session(self):
         with tempfile.TemporaryDirectory() as tmp:

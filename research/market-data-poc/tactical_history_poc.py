@@ -30,10 +30,12 @@ import market_data_poc as md
 import tactical_persistence_poc as tp
 import tactical_tilt_poc as tt
 
-VERSION = "0.4.3"
+VERSION = "0.4.4"
 HISTORY_SCHEMA = 1
 DEFAULT_RECOVERY_CONFIRM_SESSIONS = 5
 DEFAULT_FREQUENCIES = ("weekly", "monthly", "quarterly", "yearly")
+PRICE_BASIS_RAW = "raw"
+PRICE_BASIS_ADJUSTED = "adjusted"
 
 
 class HistoryError(RuntimeError):
@@ -84,7 +86,7 @@ def _parse_iso_day(value: Any, field: str) -> date:
         raise HistoryError(f"{field} must be YYYY-MM-DD") from exc
 
 
-def _bar_from_av(day_text: str, values: Any, symbol: str) -> dict[str, Any]:
+def _bar_from_av_raw(day_text: str, values: Any, symbol: str) -> dict[str, Any]:
     if not isinstance(values, dict):
         raise HistoryError(f"invalid Alpha Vantage bar for {symbol} on {day_text}")
     try:
@@ -99,6 +101,48 @@ def _bar_from_av(day_text: str, values: Any, symbol: str) -> dict[str, Any]:
         }
     except (KeyError, TypeError, ValueError) as exc:
         raise HistoryError(f"invalid Alpha Vantage bar for {symbol} on {day_text}") from exc
+
+
+def _bar_from_av_adjusted(day_text: str, values: Any, symbol: str) -> dict[str, Any]:
+    """Derive internally consistent adjusted OHLC from AV adjusted close.
+
+    Alpha Vantage supplies raw OHLC plus adjusted close. To keep returns and
+    drawdowns continuous across splits/distributions, scale every OHLC field by
+    adjusted_close/raw_close for that session. Volume is retained exactly as provider-supplied because Tactical Tilt does not
+    currently consume it.
+    """
+    if not isinstance(values, dict):
+        raise HistoryError(f"invalid Alpha Vantage adjusted bar for {symbol} on {day_text}")
+    try:
+        raw_open = float(values["1. open"])
+        raw_high = float(values["2. high"])
+        raw_low = float(values["3. low"])
+        raw_close = float(values["4. close"])
+        adjusted_close = float(values["5. adjusted close"])
+        volume_text = str(values.get("6. volume", "")).strip()
+        if not all(math.isfinite(v) and v > 0 for v in (raw_open, raw_high, raw_low, raw_close, adjusted_close)):
+            raise ValueError("non-positive/non-finite price")
+        factor = adjusted_close / raw_close
+        if not math.isfinite(factor) or factor <= 0:
+            raise ValueError("invalid adjustment factor")
+        return {
+            "date": date.fromisoformat(day_text).isoformat(),
+            "open": raw_open * factor,
+            "high": raw_high * factor,
+            "low": raw_low * factor,
+            "close": adjusted_close,
+            "volume": float(volume_text) if volume_text else None,
+        }
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HistoryError(f"invalid Alpha Vantage adjusted bar for {symbol} on {day_text}") from exc
+
+
+def _bar_from_av(day_text: str, values: Any, symbol: str, price_basis: str) -> dict[str, Any]:
+    if price_basis == PRICE_BASIS_RAW:
+        return _bar_from_av_raw(day_text, values, symbol)
+    if price_basis == PRICE_BASIS_ADJUSTED:
+        return _bar_from_av_adjusted(day_text, values, symbol)
+    raise HistoryError("price_basis must be raw or adjusted")
 
 
 def _load_mapping(path: Path) -> list[dict[str, Any]]:
@@ -140,15 +184,19 @@ def fetch_history(
     guard: md.AlphaVantageGuard,
     *,
     outputsize: str,
+    price_basis: str = PRICE_BASIS_RAW,
 ) -> dict[str, Any]:
     if outputsize not in {"compact", "full"}:
         raise HistoryError("outputsize must be compact or full")
+    if price_basis not in {PRICE_BASIS_RAW, PRICE_BASIS_ADJUSTED}:
+        raise HistoryError("price_basis must be raw or adjusted")
     targets = _load_mapping(mapping_path)
     fetched: list[dict[str, Any]] = []
+    function = "TIME_SERIES_DAILY_ADJUSTED" if price_basis == PRICE_BASIS_ADJUSTED else "TIME_SERIES_DAILY"
     for target in targets:
         payload = md._av_get(  # research PoC deliberately reuses the proven provider guard
             {
-                "function": "TIME_SERIES_DAILY",
+                "function": function,
                 "symbol": target["symbol"],
                 "outputsize": outputsize,
             },
@@ -158,7 +206,10 @@ def fetch_history(
         series = payload.get("Time Series (Daily)")
         if not isinstance(series, dict) or not series:
             raise HistoryError(f"Alpha Vantage returned no daily history for {target['symbol']}")
-        bars = [_bar_from_av(day_text, values, target["symbol"]) for day_text, values in series.items()]
+        bars = [
+            _bar_from_av(day_text, values, target["symbol"], price_basis)
+            for day_text, values in series.items()
+        ]
         bars.sort(key=lambda row: row["date"])
         if len(bars) < 21:
             raise HistoryError(f"Alpha Vantage returned fewer than 21 daily sessions for {target['symbol']}")
@@ -169,8 +220,16 @@ def fetch_history(
         "prototype_version": VERSION,
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "source": "alpha_vantage",
-        "quote_type": "daily_raw_ohlcv",
+        "quote_type": "daily_adjusted_ohlcv_derived" if price_basis == PRICE_BASIS_ADJUSTED else "daily_raw_ohlcv",
+        "price_basis": price_basis,
+        "adjustment_method": (
+            "scale_raw_ohlc_by_adjusted_close_over_raw_close"
+            if price_basis == PRICE_BASIS_ADJUSTED
+            else None
+        ),
+        "volume_basis": "provider_supplied_unmodified",
         "requested_outputsize": outputsize,
+        "alpha_vantage_function": function,
         "alpha_vantage_policy": guard.usage(),
         "targets": fetched,
     }
@@ -179,12 +238,19 @@ def fetch_history(
 
 
 
-def import_history_csv(csv_path: Path, output_path: Path) -> dict[str, Any]:
+def import_history_csv(
+    csv_path: Path,
+    output_path: Path,
+    *,
+    price_basis: str = PRICE_BASIS_RAW,
+) -> dict[str, Any]:
     """Import provider-neutral daily OHLCV history from a consolidated CSV.
 
     Required columns: isin,name,symbol,currency,region,date,open,high,low,close.
     Optional column: volume. One row per trading session.
     """
+    if price_basis not in {PRICE_BASIS_RAW, PRICE_BASIS_ADJUSTED}:
+        raise HistoryError("price_basis must be raw or adjusted")
     try:
         handle = csv_path.open("r", encoding="utf-8-sig", newline="")
     except OSError as exc:
@@ -231,7 +297,10 @@ def import_history_csv(csv_path: Path, output_path: Path) -> dict[str, Any]:
         "prototype_version": VERSION,
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "source": "imported_csv",
-        "quote_type": "daily_raw_ohlcv",
+        "quote_type": "daily_adjusted_ohlcv_imported" if price_basis == PRICE_BASIS_ADJUSTED else "daily_raw_ohlcv",
+        "price_basis": price_basis,
+        "adjustment_method": "imported_pre_adjusted_ohlc" if price_basis == PRICE_BASIS_ADJUSTED else None,
+        "volume_basis": "provider_or_source_supplied",
         "requested_outputsize": None,
         "targets": sorted(grouped.values(), key=lambda item: item["isin"]),
     }
@@ -255,6 +324,14 @@ def load_history(path: Path) -> tuple[dict[str, Any], list[HistoricalTarget]]:
         raise HistoryError(f"cannot read historical market data: {path}") from exc
     if not isinstance(raw, dict) or raw.get("schema") != HISTORY_SCHEMA:
         raise HistoryError("historical market data must be schema 1")
+    price_basis = str(raw.get("price_basis", PRICE_BASIS_RAW)).strip().lower()
+    if price_basis not in {PRICE_BASIS_RAW, PRICE_BASIS_ADJUSTED}:
+        raise HistoryError("historical market data price_basis must be raw or adjusted")
+    quote_type = str(raw.get("quote_type", "")).strip()
+    if price_basis == PRICE_BASIS_ADJUSTED and quote_type == "daily_raw_ohlcv":
+        raise HistoryError("adjusted history cannot declare daily_raw_ohlcv")
+    if price_basis == PRICE_BASIS_RAW and quote_type.startswith("daily_adjusted_"):
+        raise HistoryError("raw history cannot declare an adjusted quote_type")
     items = raw.get("targets")
     if not isinstance(items, list) or not items:
         raise HistoryError("historical market data targets must be non-empty")
@@ -706,6 +783,9 @@ def replay_history(
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "scope": "research-only historical cadence replay",
         "history_source": source_doc.get("source", "unknown"),
+        "history_quote_type": source_doc.get("quote_type", "unknown"),
+        "history_price_basis": source_doc.get("price_basis", PRICE_BASIS_RAW),
+        "history_adjustment_method": source_doc.get("adjustment_method"),
         "history_requested_outputsize": source_doc.get("requested_outputsize"),
         "replay_window": {"anchor": anchor.isoformat(), "start": start.isoformat(), "end": end.isoformat()},
         "frequencies": list(frequencies),
@@ -745,6 +825,9 @@ def render_report(document: dict[str, Any]) -> str:
         f"prototype_version: {document['prototype_version']}",
         f"generated_at: {document['generated_at']}",
         f"history_source: {document['history_source']}",
+        f"history_quote_type: {document.get('history_quote_type')}",
+        f"history_price_basis: {document.get('history_price_basis')}",
+        f"history_adjustment_method: {document.get('history_adjustment_method')}",
         f"history_requested_outputsize: {document.get('history_requested_outputsize')}",
         f"replay_window: {document['replay_window']['start']}..{document['replay_window']['end']}",
         f"anchor: {document['replay_window']['anchor']}",
@@ -795,6 +878,9 @@ def render_forensics_report(document: dict[str, Any]) -> str:
         f"prototype_version: {document['prototype_version']}",
         f"generated_at: {document['generated_at']}",
         f"history_source: {document['history_source']}",
+        f"history_quote_type: {document.get('history_quote_type')}",
+        f"history_price_basis: {document.get('history_price_basis')}",
+        f"history_adjustment_method: {document.get('history_adjustment_method')}",
         f"replay_window: {document['replay_window']['start']}..{document['replay_window']['end']}",
         "",
         "BOUNDARIES",
@@ -893,6 +979,12 @@ def build_parser() -> argparse.ArgumentParser:
     fetch.add_argument("--mapping", type=Path, default=Path("output/mapping.json"))
     fetch.add_argument("--output", type=Path, default=Path("output/history/historical_market_data.json"))
     fetch.add_argument("--outputsize", choices=("compact", "full"), default="compact")
+    fetch.add_argument(
+        "--price-basis",
+        choices=(PRICE_BASIS_RAW, PRICE_BASIS_ADJUSTED),
+        default=PRICE_BASIS_RAW,
+        help="raw preserves legacy behavior; adjusted requests TIME_SERIES_DAILY_ADJUSTED and derives adjusted OHLC",
+    )
     fetch.add_argument("--pause-seconds", type=float, default=md.DEFAULT_AV_MIN_INTERVAL_SECONDS)
     fetch.add_argument("--av-daily-limit", type=int, default=md.DEFAULT_AV_DAILY_LIMIT)
     fetch.add_argument("--av-used-last-24h", type=int, default=0)
@@ -900,6 +992,12 @@ def build_parser() -> argparse.ArgumentParser:
     imp = sub.add_parser("history-import-csv", help="import provider-neutral daily OHLCV CSV into the canonical history format")
     imp.add_argument("--csv", type=Path, required=True)
     imp.add_argument("--output", type=Path, default=Path("output/history/historical_market_data.json"))
+    imp.add_argument(
+        "--price-basis",
+        choices=(PRICE_BASIS_RAW, PRICE_BASIS_ADJUSTED),
+        default=PRICE_BASIS_RAW,
+        help="declare whether imported OHLC is raw or already adjusted",
+    )
 
     replay = sub.add_parser("history-replay", help="replay real historical daily prices through cadence-aware TT persistence")
     replay.add_argument("--history", type=Path, default=Path("output/history/historical_market_data.json"))
@@ -924,8 +1022,14 @@ def main(argv: list[str] | None = None) -> int:
                 daily_limit=args.av_daily_limit,
                 initial_used_last_24h=args.av_used_last_24h,
             )
-            document = fetch_history(args.mapping, args.output, av_key, guard, outputsize=args.outputsize)
-            print(f"history: ok={len(document['targets'])} outputsize={args.outputsize}")
+            document = fetch_history(
+                args.mapping, args.output, av_key, guard,
+                outputsize=args.outputsize, price_basis=args.price_basis,
+            )
+            print(
+                f"history: ok={len(document['targets'])} outputsize={args.outputsize} "
+                f"price_basis={args.price_basis}"
+            )
             usage = guard.usage()
             limit = usage["daily_limit"]
             if limit:
@@ -935,8 +1039,8 @@ def main(argv: list[str] | None = None) -> int:
             print(f"history file: {args.output}")
             return 0
         if args.command == "history-import-csv":
-            document = import_history_csv(args.csv, args.output)
-            print(f"history import: ok={len(document['targets'])}")
+            document = import_history_csv(args.csv, args.output, price_basis=args.price_basis)
+            print(f"history import: ok={len(document['targets'])} price_basis={args.price_basis}")
             print(f"history file: {args.output}")
             return 0
         if args.command == "history-replay":

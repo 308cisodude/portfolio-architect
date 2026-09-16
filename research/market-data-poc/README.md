@@ -1,8 +1,8 @@
-# Portfolio Architect Tactical Tilt PoC 0.4.3
+# Portfolio Architect Tactical Tilt PoC 0.4.4
 
 A deliberately standalone research prototype for the proposed optional **Tactical Tilt (TT)** recommendation-enhancement layer.
 
-Version 0.4.3 keeps the established tactical scorer, calibration model, stress qualification, cadence thresholds, idempotent state contract, provider-neutral historical acquisition, and v0.4.2 confirmed-recovery continuity unchanged, then fixes **cadence-independent recovery confirmation**. A recovery streak is now derived continuously from completed market sessions across PA-cycle boundaries, and the market session used by the current PA cycle may complete the configured recovery run. This prevents weekly plans from being structurally unable to confirm a five-session recovery merely because only four completed sessions fall strictly between two weekly PA cycles.
+Version 0.4.4 keeps the established tactical scorer, calibration model, stress qualification, cadence thresholds, idempotent state contract, v0.4.3 cadence-independent recovery behavior, and historical replay semantics unchanged. It hardens **historical data acquisition** for multi-year calibration by adding an explicit adjusted-price basis. Alpha Vantage adjusted history is converted into internally consistent adjusted OHLC using the provider's adjusted close, so historical split/dividend discontinuities cannot masquerade as Tactical Tilt drawdowns.
 
 ## Product boundary
 
@@ -21,23 +21,23 @@ Persistent weakness is a different problem from a temporary dent. v0.3.0 therefo
 
 The human PA user remains authoritative over any strategic target change.
 
-## What v0.4.3 changes
+## What v0.4.4 changes
 
 - preserves the v0.2.x rebound-aware tactical scoring and v0.2.2 tactical-bonus-ceiling semantics unchanged;
-- preserves the v0.3.0 stress qualification and cadence thresholds unchanged;
-- preserves the v0.3.1 idempotency, execution-independence, no-tactical-debt, cadence-segmentation, target-replacement, and restart/replay contracts unchanged;
-- preserves the v0.4.0 provider-neutral historical acquisition/replay path, v0.4.1 episode forensics, and v0.4.2 confirmed-recovery-only episode closure;
-- makes recovery confirmation **market-session based rather than cadence-window based**;
-- lets the completed market session used by the current PA cycle count as the final session of a recovery run;
-- carries a partial non-stress recovery streak across a PA-cycle boundary instead of resetting it at every cycle;
-- reports only a newly crossed recovery threshold after the previous PA cycle, so an already-confirmed calm run is not rediscovered repeatedly;
-- still allows a confirmed recovery followed by renewed weakness before the next PA cycle to split the old episode and start a new one;
-- keeps daily sessions evidence-only: they can prove recovery but never increment governance state;
-- adds regressions for the exact weekly Monday-to-Monday five-session case, partial-streak carry-over across a cycle boundary, and recovery followed by renewed stress.
+- preserves the v0.3.x stress qualification, cadence thresholds, idempotency, execution-independence, no-tactical-debt, cadence-segmentation, target-replacement, and restart/replay contracts unchanged;
+- preserves the v0.4.0 historical replay, v0.4.1 episode forensics, v0.4.2 confirmed-recovery-only closure, and v0.4.3 cadence-independent recovery behavior unchanged;
+- adds `--price-basis adjusted` to `history-fetch`;
+- uses Alpha Vantage `TIME_SERIES_DAILY_ADJUSTED` only when adjusted history is explicitly requested;
+- derives adjusted open/high/low from the daily `adjusted_close / raw_close` factor, with adjusted close as the canonical close;
+- retains volume exactly as supplied because TT does not currently use volume;
+- records `price_basis`, `quote_type`, adjustment method, and provider function in the canonical history file and replay reports;
+- keeps `--price-basis raw` as the default, preserving the proven v0.4.3 fetch behavior and avoiding accidental premium-endpoint calls;
+- lets provider-neutral CSV imports explicitly declare `--price-basis adjusted` when their OHLC is already adjusted;
+- remains backward-compatible with existing schema-1 raw history files that predate the `price_basis` field.
 
-No Alpha Vantage re-fetch is required to compare v0.4.2 and v0.4.3. Re-run the existing `historical_market_data.json` through `history-replay`.
+The existing 100-session raw file remains valid for reproducing the v0.4.3 recovery results. The adjusted path is intended for the upcoming **multi-year calibration dataset**, not as a reason to re-fetch recent history unnecessarily.
 
-The Market Data PoC acquisition path remains version 0.1.2. Historical acquisition credentials, symbols, and provider limits are unchanged.
+The Market Data PoC acquisition path remains version 0.1.2. Live/regular EOD Tactical Tilt input is unchanged; v0.4.4 changes only the historical-research acquisition layer.
 
 # Part A — stateless Tactical Tilt scoring
 
@@ -347,9 +347,11 @@ The supplied fixture demonstrates exact duplicate replay, later audit enrichment
 
 Historical replay intentionally separates **market evidence** from **governance events**. Daily bars may update the evidence attached to a synthetic cycle and may confirm recovery through a continuous completed-session run across PA-cycle boundaries, but only scheduled PA cycles are passed into the persistence state machine. The current cycle's completed market session may be the session that completes recovery; this does not make the daily session a governance event.
 
-## Acquire recent real history with the existing Alpha Vantage identity cache
+## Acquire Alpha Vantage history with an explicit price basis
 
 `history-fetch` reuses `output/mapping.json` and the same ignored `output/.alpha_vantage_usage.json` rolling-24h guard used by the Market Data PoC. It does not write the API key.
+
+The existing raw path remains the default and is unchanged:
 
 ```powershell
 python .\tactical_history_poc.py history-fetch `
@@ -358,9 +360,42 @@ python .\tactical_history_poc.py history-fetch `
   --outputsize compact
 ```
 
-This requires seven provider calls for the current seven-target research set. `compact` returns the latest 100 daily sessions and is enough for a useful recent weekly/monthly calibration window, and often two quarterly observations, but it is normally too short for meaningful yearly persistence calibration. The replay reports insufficient coverage rather than inventing older evidence.
+For **multi-year calibration**, request adjusted history explicitly:
 
-If the Alpha Vantage key has full-history entitlement, use `--outputsize full`.
+```powershell
+python .\tactical_history_poc.py history-fetch `
+  --mapping .\output\mapping.json `
+  --output .\output\history\historical_market_data.json `
+  --outputsize full `
+  --price-basis adjusted
+```
+
+The adjusted path requests `TIME_SERIES_DAILY_ADJUSTED`. Alpha Vantage supplies raw daily OHLC plus adjusted close; v0.4.4 derives an internally consistent adjusted OHLC basis for each session:
+
+```text
+adjustment_factor = adjusted_close / raw_close
+adjusted_open      = raw_open  × adjustment_factor
+adjusted_high      = raw_high  × adjustment_factor
+adjusted_low       = raw_low   × adjustment_factor
+adjusted_close     = provider adjusted close
+```
+
+TT currently derives its historical signals from closes, but keeping OHLC on one coherent basis prevents later research code from accidentally mixing adjusted close with raw intraday ranges. Volume is retained provider-supplied and is not consumed by TT.
+
+The canonical history document records:
+
+```text
+price_basis
+quote_type
+adjustment_method
+volume_basis
+alpha_vantage_function
+requested_outputsize
+```
+
+`raw` remains the default intentionally. The adjusted Alpha Vantage endpoint is a separate provider capability; v0.4.4 never silently upgrades an ordinary history request to it.
+
+`compact` remains useful for recent research. `full` is the target for multi-year calibration when the API key is entitled to the provider's full adjusted history. The current seven-target set still requires seven provider requests.
 
 ## Provider-neutral history import
 
@@ -378,7 +413,16 @@ python .\tactical_history_poc.py history-import-csv `
   --output .\output\history\historical_market_data.json
 ```
 
-The importer rejects duplicate session dates, changing identity metadata, invalid prices, and targets with fewer than 21 sessions.
+If that external dataset is already split/dividend adjusted, declare it rather than silently treating it as raw:
+
+```powershell
+python .\tactical_history_poc.py history-import-csv `
+  --csv .\my_adjusted_historical_prices.csv `
+  --output .\output\history\historical_market_data.json `
+  --price-basis adjusted
+```
+
+The importer rejects duplicate session dates, changing identity metadata, invalid prices, targets with fewer than 21 sessions, and inconsistent price-basis metadata. Imported adjusted data is trusted to be pre-adjusted by its source; v0.4.4 does not invent corporate-action adjustments for an arbitrary CSV.
 
 ## Replay the history
 
@@ -404,7 +448,7 @@ The compact replay report retains the aggregate view: planning-cycle count, qual
 
 The forensics report expands every detected episode into dated evidence. It distinguishes `active_stressed`, `active_unresolved`, and `closed_recovered` continuity, records first/last stressed market evidence, the last observed PA cycle, unresolved non-stress cycle count, peak/latest signals, worst 5-day and 20-day return, maximum drawdown, and highest governance state. For episodes closed by recovery it records the exact completed market sessions that satisfied the configured recovery run. A review entry or episode is **calibration evidence only**; it is not evidence by itself that the target should have been replaced.
 
-The default recovery rule remains 5 consecutive completed sessions that no longer meet qualified-stress conditions. v0.4.2 made that confirmation authoritative for market-episode closure; v0.4.3 makes the confirmation **cadence-independent** by carrying the daily recovery streak continuously across PA-cycle boundaries and allowing the current cycle's market session to complete it. A non-qualified PA cycle without that evidence still leaves the episode unresolved. The five-session value remains a research constant to evaluate against real episodes, not production policy.
+The default recovery rule remains 5 consecutive completed sessions that no longer meet qualified-stress conditions. v0.4.2 made that confirmation authoritative for market-episode closure and v0.4.3 made it cadence-independent. v0.4.4 does not alter those semantics. A non-qualified PA cycle without recovery evidence still leaves the episode unresolved. The five-session value remains a research constant to evaluate against real episodes, not production policy.
 
 # Fresh market data
 
@@ -414,7 +458,7 @@ Generate or refresh market context as before:
 python .\market_data_poc.py fetch
 ```
 
-Then run `score` or `calibrate`. The persistence fixtures remain deterministic and offline; v0.4.3 reuses the same historical data and fixes recovery confirmation without another provider call.
+Then run `score` or `calibrate`. The persistence fixtures remain deterministic and offline. v0.4.4 does not change the live/EOD market-context acquisition path; adjusted history is a separate research input for long-horizon replay.
 
 # Offline validation
 
@@ -423,32 +467,29 @@ python -m unittest discover -s tests -v
 python -m py_compile .\market_data_poc.py .\tactical_tilt_poc.py .\tactical_persistence_poc.py .\tactical_history_poc.py
 ```
 
-The v0.4.3 bundle should report **89 tests passed**:
+The v0.4.4 bundle should report **95 tests passed**:
 
 - 14 Market Data tests;
 - 25 Tactical Tilt scoring/calibration tests;
 - 27 cadence/persistence/state-contract tests;
-- 23 historical acquisition/import/schedule/replay/forensics/recovery-boundary tests.
+- 29 historical acquisition/import/schedule/replay/forensics/recovery/adjusted-price tests.
 
-# Success criterion for v0.4.3
+# Success criterion for v0.4.4
 
-v0.4.3 succeeds if it demonstrates that:
+v0.4.4 succeeds if it demonstrates that:
 
-- historical replay uses only market sessions available on or before each synthetic PA cycle;
-- historical tactical signals are calculated by the same scorer used by the live PoC;
-- daily history never increments governance state directly;
-- a non-qualified PA cycle without confirmed recovery cannot fragment an active weakness episode;
-- unresolved non-stress PA cycles extend wall-clock persistence but do not increment stressed-cycle count;
-- the same continuous five-session non-stress run is recognized regardless of PA cadence;
-- the current PA cycle's completed market session may legitimately be the fifth recovery session;
-- a partial recovery streak survives a PA-cycle boundary rather than resetting to zero;
-- a recovery confirmed before renewed stress still separates the old episode from the later one;
-- recovery forensics preserve the actual non-stress market-session run that caused episode separation;
-- cadence changes and target replacement remain explicit segment boundaries independent of market recovery;
-- weekly/monthly/quarterly/yearly schedules reuse the same cadence policy without changing thresholds;
-- insufficient history fails closed per cadence;
-- strategic-review entries remain evidence for human review, never automatic target replacement or selling.
+- all v0.4.3 scoring, persistence, episode, recovery, and human-governance semantics remain unchanged;
+- legacy/raw historical fetch remains the default and still uses `TIME_SERIES_DAILY`;
+- adjusted historical fetch is explicit and uses `TIME_SERIES_DAILY_ADJUSTED`;
+- adjusted close cannot be combined with raw OHLC silently; adjusted OHLC is derived deterministically from one per-session factor;
+- malformed/non-positive adjusted prices fail closed without publishing a partial history file;
+- API keys remain absent from history artifacts;
+- canonical history and replay output expose the price basis and adjustment provenance;
+- provider-neutral CSV history can explicitly declare already-adjusted OHLC without provider-specific coupling;
+- existing schema-1 raw history remains replay-compatible;
+- insufficient history still fails closed per cadence;
+- strategic-review evidence remains advisory and target replacement remains human-owned.
 
 # Next research milestone
 
-Do **not** integrate v0.4.3 directly into production PA and do not change qualification, recovery, or cadence thresholds yet. First replay the exact existing 100-session `historical_market_data.json` with zero additional provider calls and compare the weekly episode boundaries with the monthly recovery evidence that exposed the v0.4.2 bug. Emerging Markets should be able to recognize the 2026-08-04..2026-08-10 five-session recovery, AI the 2026-08-03..2026-08-07 recovery, and Cybersecurity the 2026-06-24..2026-06-30 recovery when those runs fall within the replayed history. If weekly and monthly recovery boundaries now agree on the same underlying market evidence, the next substantial milestone is a **multi-year provider-neutral history replay** across several market regimes, including at least one prolonged stress period. Only after that evidence should thresholds change or historical allocation-state reconstruction begin.
+Do **not** integrate v0.4.4 directly into production PA and do not tune TT thresholds yet. The next evidence step is to obtain a **multi-year adjusted daily dataset** for the seven resolved Xetra targets and replay the unchanged v0.4.4 model across weekly, monthly, quarterly, and yearly cadences. Prefer the full adjusted Alpha Vantage path if the key is entitled to it; otherwise use the provider-neutral adjusted-CSV import path. The desired sample should span several ordinary corrections and at least one prolonged stress regime. Only after that replay should qualification, recovery, cadence thresholds, or historical allocation-state reconstruction change.
