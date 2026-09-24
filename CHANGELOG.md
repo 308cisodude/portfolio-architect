@@ -1,3 +1,7 @@
+## 1.64.3
+
+- Supply DKB's verified BIC to PyFinTS's HKWPD account converter after validating the UPD depot belongs to the fixed DKB bank code. Prevent a local `TypeError` on a missing BIC before the read-only request is constructed. CSV authority and bounded research diagnostics remain unchanged.
+
 ## 1.64.2
 
 - Distinguish the fixed failure stage and safe error category in DKB read-only holdings research; show when eligible-depot count was never determined. Keep exception text, raw bank messages, identifiers and holdings private. CSV remains authoritative.

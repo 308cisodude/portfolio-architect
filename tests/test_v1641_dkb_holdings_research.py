@@ -69,6 +69,7 @@ def test_login_approval_fetches_one_depot_without_persisting_holdings(monkeypatc
                                   "supported_operations": {Operations.GET_HOLDINGS: True}}]}
         def get_holdings(self, account):
             assert account[2] == "ACCOUNT-123"
+            assert account[1] == research.DKB_BIC
             calls.append("holdings")
             return [type("Holding", (), {"ISIN": "PRIVATE-ISIN"})()]
     Operations, Challenge = fake_fints(monkeypatch, Client)
@@ -165,3 +166,19 @@ def test_legacy_failed_observation_does_not_claim_zero_eligible_depots(tmp_path)
     result = controller.holdings_observation()
     assert result.eligible_accounts is None
     assert result.failure_stage is None
+
+
+def test_pinned_pyfints_hkwpd_account_conversion_needs_bic():
+    """Offline proof of the v1.64.2 failure when PyFinTS is installed."""
+    pytest.importorskip("fints")
+    from fints.formals import Account2, Account3
+    from fints.models import SEPAAccount
+
+    research, _ = modules()
+    old = SEPAAccount(None, None, "SYNTHETIC-DEPOT", None, "12030000")
+    corrected = old._replace(bic=research.DKB_BIC)
+    for account_type in (Account2, Account3):
+        with pytest.raises(TypeError):
+            account_type.from_sepa_account(old)
+        converted = account_type.from_sepa_account(corrected)
+        assert converted.account_number == "SYNTHETIC-DEPOT"

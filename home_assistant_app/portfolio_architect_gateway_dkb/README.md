@@ -1,3 +1,7 @@
+## v1.64.3
+
+The read-only HKWPD probe now supplies DKB's verified BIC to PyFinTS when converting its one UPD-authorized depot. This corrects the local `TypeError` observed in v1.64.2. The BIC is used for library account conversion; account identifiers and holdings stay transient.
+
 ## v1.64.2
 
 Failed read-only research observations now report a fixed failure stage and error category. An eligible-depot count is shown as not determined when account discovery did not finish. Bank response text, exception messages, identifiers and positions are not retained.
