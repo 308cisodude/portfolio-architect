@@ -1,10 +1,10 @@
-# Portfolio Architect v1.64.5 release notes
+# Portfolio Architect v1.65.0 release notes
 
-See [v1.64.5 DKB holdings research](RELEASE-NOTES-1.64.5.md) and [upgrade guide](UPGRADE-1.64.5.md).
+See [v1.65.0 DKB holdings research](RELEASE-NOTES-1.65.0.md) and [upgrade guide](UPGRADE-1.65.0.md).
 
 ## Previous release
 
-> v1.64.4: see [RELEASE-NOTES-1.64.4.md](RELEASE-NOTES-1.64.4.md).
+> v1.64.5: see [RELEASE-NOTES-1.64.5.md](RELEASE-NOTES-1.64.5.md).
 
 # Portfolio Architect v1.63.0 release notes
 

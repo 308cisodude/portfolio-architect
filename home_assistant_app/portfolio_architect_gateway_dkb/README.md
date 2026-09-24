@@ -1,6 +1,6 @@
-## v1.64.5
+## v1.65.0
 
-After a successful read-only HKWPD observation, admin Ingress temporarily displays separate DKB CSV and FinTS tables with parsed ISIN, quantity, value, currency and source timing. A bounded bank instrument field and total-value currency code are captured before PyFinTS discards them; the library's unit-price currency is labeled separately. Missing raw fields remain unavailable and are never inferred. This is a five-minute in-memory view for human review; no automatic equivalence judgment or acquisition switch occurs. The CSV export has a date only.
+After a successful user-initiated read-only HKWPD observation, admin Ingress temporarily displays independent DKB CSV and FinTS cards with normalized ISIN, quantity, value, currency and source timing. A bounded bank instrument field and total-value currency code are captured before PyFinTS discards them; the library's unit-price currency is labeled separately. Only an explicit `ISIN` marker supplies a missing parser ISIN, and conflicting identifiers suppress normalization. The shadow detail and its completeness count are available in App memory for five minutes. Approval and expiry are shown on the page. No automatic equivalence judgment, credential storage, background refresh or acquisition switch occurs. The CSV export has a date only.
 
 ## v1.64.3
 

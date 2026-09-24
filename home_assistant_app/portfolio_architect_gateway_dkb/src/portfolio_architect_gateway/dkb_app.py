@@ -457,11 +457,23 @@ class DKBProbeController:
         with self._lock:
             if self._holdings_review is not None and time.monotonic() >= self._review_deadline:
                 self._holdings_review = None
+                self._review_deadline = 0.0
             return self._holdings_review
+
+    def holdings_review_seconds_remaining(self) -> int:
+        with self._lock:
+            if self._holdings_review is None:
+                return 0
+            remaining = max(0, int(self._review_deadline - time.monotonic() + 0.999))
+            if not remaining:
+                self._holdings_review = None
+                self._review_deadline = 0.0
+            return remaining
 
     def clear_holdings_review(self) -> None:
         with self._lock:
             self._holdings_review = None
+            self._review_deadline = 0.0
 
     def _capture_review(self, rows: list[tuple[ReviewRow, ...]],
                         snapshot: PortfolioSnapshot | None, result: HoldingsObservation) -> None:
@@ -945,11 +957,25 @@ class DKBIngressHandler(BaseHTTPRequestHandler):
                 '<br><button type="submit">Check or complete bank approval</button></form>'
             )
         review = controller.holdings_review()
+        remaining = controller.holdings_review_seconds_remaining()
+        if not remaining:
+            review = None
+        if holdings_pending:
+            shadow_state = 'Approval required: confirm the DKB challenge and use the Check button below.'
+        elif review is not None and remaining:
+            shadow_state = f'Shadow detail available for another {remaining} seconds. CSV remains authoritative.'
+        elif holdings_result is not None and holdings_result.outcome == 'retrieved':
+            shadow_state = 'Last retrieval succeeded; shadow detail expired. Start a new manual refresh to inspect it.'
+        elif holdings_result is None:
+            shadow_state = 'No shadow snapshot yet. Start a manual read-only refresh below.'
+        else:
+            shadow_state = f'No shadow snapshot: {holdings_result.outcome}. Check the result below and retry manually.'
         review_html = (render_review(review) if review is not None else
                        '<p>Transient position detail has expired or is unavailable.</p>'
                        if holdings_result is not None and holdings_result.outcome == "retrieved" else '')
         holdings_html = (
             '<section class="mode-card research"><h2>Read-only holdings retrieval research</h2>'
+            f'<p role="status"><strong>{escape(shadow_state)}</strong></p>'
             f'<p>{holdings_summary}</p>'
             '<p class="small">This is a one-shot HKWPD research request for exactly one UPD-authorized depot. '
             'The App retains only an outcome, eligible-depot count, holdings count, numeric return codes and timestamp. '
@@ -963,7 +989,7 @@ class DKBIngressHandler(BaseHTTPRequestHandler):
             '<label for="holdings-pin">DKB banking password</label><br>'
             '<input id="holdings-pin" name="pin" type="password" maxlength="256" autocomplete="off" required><br>'
             f'<button type="submit" {"disabled" if product is None or pending or holdings_pending else ""}>'
-            'Observe read-only holdings response</button></form>'
+            'Refresh read-only shadow snapshot</button></form>'
             f'{holdings_approval}{review_html}</section>'
         )
         authority_html = render_acquisition_authority(

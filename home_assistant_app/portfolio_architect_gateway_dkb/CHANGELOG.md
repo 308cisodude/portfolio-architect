@@ -1,3 +1,7 @@
+## 1.65.0
+
+- Normalize the explicit `:35B:` ISIN in transient shadow research; suppress conflicts and show responsive position cards with refresh/approval state. Preserve five-minute expiry and CSV authority.
+
 ## 1.64.5
 
 - Show bounded MT535 instrument identification and total holding currency only in the five-minute admin review, with unit price currency labeled separately. Stack the evidence tables for legibility; no persisted position detail or acquisition change.
