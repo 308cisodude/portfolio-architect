@@ -1,0 +1,7 @@
+# Portfolio Architect v1.64.5 — inspect bounded DKB holdings evidence
+
+The live v1.64.4 review retrieved one FinTS holding but could not show its ISIN or total-value currency. PyFinTS 5.0.0 recognizes only a narrow MT535 `:35B:` form as an ISIN and discards the currency code from `:19A::HOLD` when building its `Holding` object. This release captures those two fields from the same HIWPD response before the library projects it, and displays them in the five-minute admin-only review. It also labels `value_symbol` as **unit price currency**, separately from the total-value currency. An alternative instrument identifier can therefore be inspected without claiming it is an ISIN.
+
+The bank instrument field is limited to 96 printable characters; total currency is accepted only as a three-letter code in the `HOLD` field. Raw responses, account details and credentials are never retained by the new projection. The position evidence is still bounded to 64 rows, never saved or exported to REST, health, logs or Home Assistant, and cleared on expiry, new observation, CSV import, registration change or App restart. If the raw and parsed holding counts differ, raw fields are not attached to any row. Tables are stacked with horizontal scrolling for legibility.
+
+There is no automatic identity or value comparison, FinTS acquisition, planner change, dashboard change, or wire-schema change. DKB CSV remains authoritative. Live acceptance should inspect the actual instrument marker and total currency without inferring either from quantity or price proximity.

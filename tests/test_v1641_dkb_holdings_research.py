@@ -213,3 +213,73 @@ def test_transient_review_rejects_unbounded_and_untrusted_fields():
     assert "script" not in review_module.render_review(
         review_module.HoldingsReview(None, "2026-09-24T17:29:55+00:00", None, rows))
     assert review_module.project_fints([hostile] * (review_module.MAX_REVIEW_ROWS + 1)) is None
+
+
+def test_raw_hiwpd_instrument_and_total_currency_are_transient_and_independent():
+    review_module = importlib.import_module(f"{NAME}.dkb_holdings_review")
+    payload = ("\r\n:16R:FIN\r\n:35B:/DE/WKN123456|Synthetic ETF\r\n"
+               ":19A::HOLD//EUR282,85\r\n:16S:FIN\r\n")
+    raw = review_module.project_raw_hiwpd([type("Response", (), {"holdings": payload.encode()})()])
+    assert raw == (review_module.RawPositionEvidence("/DE/WKN123456|Synthetic ETF", "EUR"),)
+    holding = type("Holding", (), {"ISIN": None, "pieces": 2.0, "total_value": 282.85,
+                                   "value_symbol": "USD", "valuation_date": None})()
+    rows = review_module.project_fints([holding], raw)
+    assert (rows[0].isin, rows[0].instrument_line, rows[0].currency,
+            rows[0].unit_price_currency) == ("unavailable", "/DE/WKN123456|Synthetic ETF", "EUR", "USD")
+    html = review_module.render_review(review_module.HoldingsReview(None, "2026-09-24T18:29:14+00:00", None, rows))
+    assert "/DE/WKN123456|Synthetic ETF" in html
+    assert "Unit price currency" in html
+
+
+def test_raw_hiwpd_bounds_escape_and_unaligned_evidence():
+    review_module = importlib.import_module(f"{NAME}.dkb_holdings_review")
+    response = type("Response", (), {"holdings": ":16R:FIN\n:35B:<script>alert(1)</script>\n"
+                                                ":19A::HOLD//EUR9,00\n:16S:FIN"})()
+    raw = review_module.project_raw_hiwpd([response])
+    holding = type("Holding", (), {"ISIN": None, "pieces": 1, "total_value": 9,
+                                   "value_symbol": "EUR", "valuation_date": None})()
+    html = review_module.render_review(review_module.HoldingsReview(
+        None, "2026-09-24T18:29:14+00:00", None, review_module.project_fints([holding], raw)))
+    assert "&lt;script&gt;" in html and "<script>" not in html
+    assert review_module.project_fints([holding, holding], raw)[0].instrument_line == "unavailable"
+    wrapped = type("Response", (), {"holdings": ":16R:FIN\n:35B:\n/DE/WKN123456\n"
+                                               ":19A::HOLD//EUR9,00\n:16S:FIN"})()
+    assert review_module.project_raw_hiwpd([wrapped])[0].instrument_line == "/DE/WKN123456"
+    long_marker = type("Response", (), {"holdings": ":16R:FIN\n:35B:" + "X" * 120 + "\n:16S:FIN"})()
+    assert review_module.project_raw_hiwpd([long_marker])[0].instrument_line.endswith("…")
+    assert len(review_module.project_raw_hiwpd([long_marker])[0].instrument_line) == 97
+    too_many = [response] * (review_module.MAX_REVIEW_ROWS + 1)
+    assert review_module.project_raw_hiwpd(too_many) is None
+    assert review_module.project_raw_hiwpd([type("Response", (), {"holdings": "a" * (review_module.MAX_RAW_RESPONSE_BYTES + 1)})()]) is None
+
+
+def test_instance_local_hiwpd_hook_observes_only_bank_response(monkeypatch, tmp_path):
+    research, app = modules()
+    class Client:
+        init_tan_response = None
+        def __init__(self, *_args, **_kwargs): pass
+        def fetch_tan_mechanisms(self): pass
+        def __enter__(self): return self
+        def __exit__(self, *_args): pass
+        def _fetch_with_touchdowns(self, dialog, factory, processor, *args):
+            assert args == ("HIWPD",)
+            payload = "\n:16R:FIN\n:35B:/DE/TESTWKN|Synthetic ETF\n:19A::HOLD//EUR282,85\n:16S:FIN"
+            return processor([type("Response", (), {"holdings": payload})()])
+        def get_information(self):
+            return {"accounts": [{"account_number": "ACCOUNT-123",
+                                  "bank_identifier": type("Bank", (), {"bank_code": "12030000"})(),
+                                  "supported_operations": {Operations.GET_HOLDINGS: True}}]}
+        def get_holdings(self, _account):
+            self._fetch_with_touchdowns(None, None, lambda responses: responses, "HIWPD")
+            return [type("Holding", (), {"ISIN": None, "pieces": 2.0, "total_value": 282.85,
+                                          "value_symbol": "EUR", "valuation_date": None})()]
+    Operations, _ = fake_fints(monkeypatch, Client)
+    controller = app.DKBProbeController(tmp_path)
+    controller.configure_product_id(PRODUCT)
+    result = controller.run_holdings_observation("valid", "PRIVATE-PASSWORD")
+    assert result.outcome == "retrieved"
+    review = controller.holdings_review()
+    assert review.fints_rows[0].instrument_line == "/DE/TESTWKN|Synthetic ETF"
+    assert review.fints_rows[0].currency == "EUR"
+    persisted = controller.holdings_state_file.read_text()
+    assert "TESTWKN" not in persisted and "282.85" not in persisted

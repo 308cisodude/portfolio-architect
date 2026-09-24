@@ -8,7 +8,7 @@ from typing import Any, Callable
 
 from .dkb_authenticated import _IDENTIFIER, _TAN, _codes, _method
 from .dkb_fints import DKB_BANK_CODE, DKB_FINTS_ENDPOINT, normalise_product_id
-from .dkb_holdings_review import ReviewRow, project_fints
+from .dkb_holdings_review import ReviewRow, project_fints, project_raw_hiwpd
 
 # DKB's published BIC for BLZ 12030000. PyFinTS 5.0.0 uses its country
 # component when converting SEPAAccount to HKWPD5/6 Account2/3. The UPD
@@ -45,6 +45,46 @@ class HoldingsSession:
         except Exception:
             # Bank exception text can contain private challenge/response fields.
             pass
+        _clear_raw_hook(self.client)
+
+
+def _clear_raw_hook(client: Any) -> None:
+    if client is None:
+        return
+    if hasattr(client, "_pa_hiwpd_evidence"):
+        del client._pa_hiwpd_evidence
+    if "_fetch_with_touchdowns" in vars(client) and getattr(client, "_pa_raw_hook", False):
+        processor = getattr(client, "_touchdown_response_processor", None)
+        if getattr(processor, "_pa_observe", False):
+            client._touchdown_response_processor = None
+            client._touchdown_responses = []
+        del client._fetch_with_touchdowns
+        del client._pa_raw_hook
+
+
+def _install_raw_hook(client: Any) -> None:
+    """Observe only this client's HIWPD response before PyFinTS projects it.
+
+    PyFinTS 5.0.0 drops the HOLD currency and narrowly parses 35B. This
+    instance-local processor wrapper never retains the response or changes it.
+    """
+    original = getattr(client, "_fetch_with_touchdowns", None)
+    if original is None:
+        return  # Small offline test doubles may expose only get_holdings.
+
+    def fetch(dialog: Any, segment_factory: Any, processor: Any, *args: Any, **kwargs: Any) -> Any:
+        if args != ("HIWPD",):
+            return original(dialog, segment_factory, processor, *args, **kwargs)
+
+        def observe(responses: Any) -> Any:
+            client._pa_hiwpd_evidence = project_raw_hiwpd(responses)
+            return processor(responses)
+        observe._pa_observe = True
+
+        return original(dialog, segment_factory, observe, *args, **kwargs)
+
+    client._fetch_with_touchdowns = fetch
+    client._pa_raw_hook = True
 
 
 def _now() -> str:
@@ -80,7 +120,9 @@ def _summarize(client: Any, value: Any, accounts: int,
     if not isinstance(value, (list, tuple)) or len(value) > 256:
         return HoldingsObservation(_now(), "invalid_response", accounts, None, _codes(client))
     if capture is not None:
-        rows = project_fints(value)
+        rows = project_fints(value, getattr(client, "_pa_hiwpd_evidence", None))
+        if hasattr(client, "_pa_hiwpd_evidence"):
+            del client._pa_hiwpd_evidence
         if rows is not None:
             capture(rows)
     return HoldingsObservation(_now(), "retrieved", accounts, len(value), _codes(client))
@@ -144,6 +186,7 @@ def begin_holdings_observation(product_id: str, user_id: str, pin: str,
         stage = "client_creation"
         client = FinTS3PinTanClient(BankIdentifier("280", DKB_BANK_CODE), user_id, pin,
                                    DKB_FINTS_ENDPOINT, product_id=product_id)
+        _install_raw_hook(client)
         stage = "tan_mechanisms"
         client.fetch_tan_mechanisms()
         stage = "login_dialog"
@@ -155,6 +198,7 @@ def begin_holdings_observation(product_id: str, user_id: str, pin: str,
         observation, session = _read(client, capture)
         if session is None:
             client.__exit__(None, None, None)
+            _clear_raw_hook(client)
         return observation, session
     except Exception as err:
         result = _failure(client, stage, err)
