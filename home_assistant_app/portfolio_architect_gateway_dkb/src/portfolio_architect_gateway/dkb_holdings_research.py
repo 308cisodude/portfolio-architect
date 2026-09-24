@@ -14,12 +14,14 @@ from .dkb_fints import DKB_BANK_CODE, DKB_FINTS_ENDPOINT, normalise_product_id
 class HoldingsObservation:
     observed_at: str
     outcome: str
-    eligible_accounts: int
+    eligible_accounts: int | None
     holding_count: int | None
     return_codes: tuple[str, ...] = ()
+    failure_stage: str | None = None
+    failure_kind: str | None = None
 
     def as_dict(self) -> dict[str, object]:
-        return {"schema_version": 1, **asdict(self), "return_codes": list(self.return_codes)}
+        return {"schema_version": 2, **asdict(self), "return_codes": list(self.return_codes)}
 
 
 @dataclass(slots=True)
@@ -42,8 +44,28 @@ def _now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
-def _failure(client: Any, outcome: str = "request_failed") -> HoldingsObservation:
-    return HoldingsObservation(_now(), outcome, 0, None, _codes(client))
+def _failure(client: Any, stage: str, err: BaseException,
+             accounts: int | None = None) -> HoldingsObservation:
+    # Fixed labels only. Exception messages and bank response payloads may contain
+    # credentials, account numbers, positions or challenge text.
+    if isinstance(err, TimeoutError):
+        kind = "timeout"
+    elif isinstance(err, (ConnectionError, OSError)):
+        kind = "transport"
+    elif isinstance(err, AttributeError):
+        kind = "attribute_error"
+    elif isinstance(err, TypeError):
+        kind = "type_error"
+    elif isinstance(err, KeyError):
+        kind = "key_error"
+    elif isinstance(err, ValueError):
+        kind = "value_error"
+    elif isinstance(err, NotImplementedError):
+        kind = "unsupported"
+    else:
+        kind = "unclassified"
+    return HoldingsObservation(_now(), "request_failed", accounts, None,
+                               _codes(client), stage, kind)
 
 
 def _summarize(client: Any, value: Any, accounts: int) -> HoldingsObservation:
@@ -56,26 +78,35 @@ def _read(client: Any) -> tuple[HoldingsObservation, HoldingsSession | None]:
     from fints.client import FinTSOperations, NeedTANResponse
     from fints.models import SEPAAccount
 
-    info = client.get_information()
-    accounts = [a for a in info.get("accounts", ()) if isinstance(a, dict)
-                and a.get("supported_operations", {}).get(FinTSOperations.GET_HOLDINGS) is True]
-    if len(accounts) != 1:
-        # Never guess an account when the user has multiple eligible depots.
-        outcome = "no_eligible_account" if not accounts else "multiple_eligible_accounts"
-        return HoldingsObservation(_now(), outcome, min(len(accounts), 256), None, _codes(client)), None
-    account = accounts[0]
-    bank = account.get("bank_identifier")
-    code = getattr(bank, "bank_code", None)
-    number = account.get("account_number")
-    if not isinstance(code, str) or not isinstance(number, str) or not number:
-        return HoldingsObservation(_now(), "account_metadata_incomplete", 1, None, _codes(client)), None
-    sepa = SEPAAccount(account.get("iban"), None, number,
-                       account.get("subaccount_number"), code)
-    result = client.get_holdings(sepa)  # Only bank business operation in this module.
-    if isinstance(result, NeedTANResponse):
-        session = HoldingsSession(client, result, bool(result.decoupled), "holdings", _now())
-        return HoldingsObservation(_now(), "approval_pending", 1, None, _codes(client)), session
-    return _summarize(client, result, 1), None
+    stage = "account_discovery"
+    eligible: int | None = None
+    try:
+        info = client.get_information()
+        accounts = [a for a in info.get("accounts", ()) if isinstance(a, dict)
+                    and a.get("supported_operations", {}).get(FinTSOperations.GET_HOLDINGS) is True]
+        eligible = min(len(accounts), 256)
+        if len(accounts) != 1:
+            # Never guess an account when the user has multiple eligible depots.
+            outcome = "no_eligible_account" if not accounts else "multiple_eligible_accounts"
+            return HoldingsObservation(_now(), outcome, eligible, None, _codes(client)), None
+        stage = "account_metadata"
+        account = accounts[0]
+        bank = account.get("bank_identifier")
+        code = getattr(bank, "bank_code", None)
+        number = account.get("account_number")
+        if not isinstance(code, str) or not isinstance(number, str) or not number:
+            return HoldingsObservation(_now(), "account_metadata_incomplete", 1, None, _codes(client)), None
+        sepa = SEPAAccount(account.get("iban"), None, number,
+                           account.get("subaccount_number"), code)
+        stage = "holdings_request"
+        result = client.get_holdings(sepa)  # Only bank business operation in this module.
+        if isinstance(result, NeedTANResponse):
+            session = HoldingsSession(client, result, bool(result.decoupled), "holdings", _now())
+            return HoldingsObservation(_now(), "approval_pending", 1, None, _codes(client)), session
+        stage = "response_summary"
+        return _summarize(client, result, 1), None
+    except Exception as err:
+        return _failure(client, stage, err, eligible), None
 
 
 def begin_holdings_observation(product_id: str, user_id: str, pin: str) -> tuple[HoldingsObservation, HoldingsSession | None]:
@@ -93,21 +124,25 @@ def begin_holdings_observation(product_id: str, user_id: str, pin: str) -> tuple
         logger.addHandler(logging.NullHandler())
     logger.setLevel(logging.CRITICAL + 1)
     client = None
+    stage = "client_creation"
     try:
+        stage = "client_creation"
         client = FinTS3PinTanClient(BankIdentifier("280", DKB_BANK_CODE), user_id, pin,
                                    DKB_FINTS_ENDPOINT, product_id=product_id)
+        stage = "tan_mechanisms"
         client.fetch_tan_mechanisms()
+        stage = "login_dialog"
         client.__enter__()
         challenge = client.init_tan_response
         if isinstance(challenge, NeedTANResponse):
             session = HoldingsSession(client, challenge, bool(challenge.decoupled), "login", _now())
-            return HoldingsObservation(_now(), "approval_pending", 0, None, _codes(client)), session
+            return HoldingsObservation(_now(), "approval_pending", None, None, _codes(client)), session
         observation, session = _read(client)
         if session is None:
             client.__exit__(None, None, None)
         return observation, session
-    except Exception:
-        result = _failure(client)
+    except Exception as err:
+        result = _failure(client, stage, err)
         if client is not None:
             HoldingsSession(client, None, False, "login", _now()).close()
         return result, None
@@ -118,12 +153,14 @@ def continue_holdings_observation(session: HoldingsSession, tan: str = "") -> tu
 
     if not session.decoupled and (not isinstance(tan, str) or not _TAN.fullmatch(tan)):
         raise ValueError("A bounded login TAN is required")
+    stage = "login_approval" if session.stage == "login" else "holdings_approval"
     try:
         result = session.client.send_tan(session.challenge, "" if session.decoupled else tan)
         if isinstance(result, NeedTANResponse):
             session.challenge = result
             session.decoupled = bool(result.decoupled)
-            return HoldingsObservation(_now(), "approval_pending", 0, None, _codes(session.client)), session
+            return HoldingsObservation(_now(), "approval_pending", None if session.stage == "login" else 1,
+                                       None, _codes(session.client)), session
         if session.stage == "login":
             observation, pending = _read(session.client)
             if pending is not None:
@@ -134,7 +171,7 @@ def continue_holdings_observation(session: HoldingsSession, tan: str = "") -> tu
         observation = _summarize(session.client, result, 1)
         session.close()
         return observation, None
-    except Exception:
-        observation = _failure(session.client)
+    except Exception as err:
+        observation = _failure(session.client, stage, err, 1 if session.stage == "holdings" else None)
         session.close()
         return observation, None

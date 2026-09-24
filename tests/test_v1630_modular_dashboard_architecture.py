@@ -1,4 +1,4 @@
-"""v1.64.1 modular static dashboard source and localization contracts."""
+"""v1.64.2 modular static dashboard source and localization contracts."""
 
 from __future__ import annotations
 

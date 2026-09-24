@@ -410,13 +410,27 @@ class DKBProbeController:
         if raw is None:
             return None
         try:
-            if raw.get("schema_version") != 1 or set(raw) != {
-                "schema_version", "observed_at", "outcome", "eligible_accounts", "holding_count", "return_codes"
-            } or raw["outcome"] not in {
+            schema = raw.get("schema_version")
+            common = {"schema_version", "observed_at", "outcome", "eligible_accounts", "holding_count", "return_codes"}
+            if schema not in {1, 2} or set(raw) != (common if schema == 1 else common | {
+                "failure_stage", "failure_kind"
+            }) or raw["outcome"] not in {
                 "retrieved", "no_eligible_account", "multiple_eligible_accounts", "account_metadata_incomplete",
                 "invalid_response", "request_failed", "approval_expired"
-            } or type(raw["eligible_accounts"]) is not int or not 0 <= raw["eligible_accounts"] <= 256:
+            } or (raw["eligible_accounts"] is not None and (
+                type(raw["eligible_accounts"]) is not int or not 0 <= raw["eligible_accounts"] <= 256
+            )) or (schema == 1 and raw["eligible_accounts"] is None):
                 raise ValueError("invalid holdings observation")
+            stage = raw.get("failure_stage")
+            kind = raw.get("failure_kind")
+            stages = {"client_creation", "tan_mechanisms", "login_dialog", "login_approval",
+                      "account_discovery", "account_metadata", "holdings_request", "holdings_approval",
+                      "response_summary"}
+            kinds = {"timeout", "transport", "attribute_error", "type_error", "key_error",
+                     "value_error", "unsupported", "unclassified"}
+            if schema == 2 and ((raw["outcome"] == "request_failed") != (stage in stages and kind in kinds) or
+                                (stage is not None and stage not in stages) or (kind is not None and kind not in kinds)):
+                raise ValueError("invalid holdings diagnostic")
             count = raw["holding_count"]
             if count is not None and (type(count) is not int or not 0 <= count <= 256):
                 raise ValueError("invalid holdings count")
@@ -428,7 +442,9 @@ class DKBProbeController:
             ) or not isinstance(raw["observed_at"], str) or len(raw["observed_at"]) > 40:
                 raise ValueError("invalid holdings evidence")
             _probe_timestamp_display(raw["observed_at"])
-            return HoldingsObservation(raw["observed_at"], raw["outcome"], raw["eligible_accounts"], count, tuple(codes))
+            eligible = None if schema == 1 and raw["outcome"] in {"request_failed", "approval_expired"} else raw["eligible_accounts"]
+            return HoldingsObservation(raw["observed_at"], raw["outcome"], eligible,
+                                       count, tuple(codes), stage, kind)
         except (KeyError, TypeError, ValueError) as err:
             raise RuntimeError("Stored DKB holdings research state is invalid") from err
 
@@ -875,9 +891,12 @@ class DKBIngressHandler(BaseHTTPRequestHandler):
         holdings_pending = holdings_result is not None and holdings_result.outcome == "approval_pending"
         holdings_summary = (
             "No read-only holdings observation recorded" if holdings_result is None else
-            f"Outcome: {escape(holdings_result.outcome)}; eligible depots: {holdings_result.eligible_accounts}; "
+            f"Outcome: {escape(holdings_result.outcome)}; eligible depots: "
+            f"{escape(str(holdings_result.eligible_accounts)) if holdings_result.eligible_accounts is not None else 'not determined'}; "
             f"holdings returned: {escape(str(holdings_result.holding_count))}; "
             f"return codes: {escape(', '.join(holdings_result.return_codes) or 'none')}; "
+            f"failure stage: {escape(holdings_result.failure_stage or 'none')}; "
+            f"failure category: {escape(holdings_result.failure_kind or 'none')}; "
             f"observed UTC: {escape(holdings_result.observed_at)}"
         )
         holdings_approval = ""

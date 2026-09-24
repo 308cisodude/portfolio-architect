@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import importlib
 import importlib.util
+import json
 from pathlib import Path
 import sys
 from types import ModuleType
@@ -109,3 +110,58 @@ def test_research_source_contains_only_one_business_request():
     assert source.count("client.get_holdings(") == 1
     for forbidden in ("get_balance(", "get_transactions(", "sepa_transfer(", "sepa_debit("):
         assert forbidden not in source
+
+
+@pytest.mark.parametrize("failing_stage,expected_stage,expected_kind", [
+    ("approval", "login_approval", "timeout"),
+    ("account", "account_discovery", "attribute_error"),
+    ("holdings", "holdings_request", "type_error"),
+])
+def test_failure_stage_is_bounded_and_private(monkeypatch, tmp_path, failing_stage, expected_stage, expected_kind):
+    research, app = modules()
+    class Client:
+        _standing_dialog = None
+        def __init__(self, *_args, **_kwargs): pass
+        def fetch_tan_mechanisms(self): pass
+        def __enter__(self):
+            self.init_tan_response = Challenge()
+            return self
+        def __exit__(self, *_args): pass
+        def send_tan(self, *_args):
+            if failing_stage == "approval":
+                raise TimeoutError("PRIVATE-ACCOUNT")
+            return object()
+        def get_information(self):
+            if failing_stage == "account":
+                raise AttributeError("PRIVATE-ACCOUNT")
+            return {"accounts": [{"iban": "DE00123456789012345678", "account_number": "ACCOUNT-123",
+                                  "bank_identifier": type("Bank", (), {"bank_code": "12030000"})(),
+                                  "supported_operations": {Operations.GET_HOLDINGS: True}}]}
+        def get_holdings(self, _account):
+            raise TypeError("PRIVATE-ISIN")
+    Operations, Challenge = fake_fints(monkeypatch, Client)
+    controller = app.DKBProbeController(tmp_path)
+    controller.configure_product_id(PRODUCT)
+    assert controller.run_holdings_observation("valid", "PRIVATE-PASSWORD").outcome == "approval_pending"
+    result = controller.continue_holdings_observation()
+    assert (result.outcome, result.failure_stage, result.failure_kind) == (
+        "request_failed", expected_stage, expected_kind
+    )
+    assert result.eligible_accounts == (1 if failing_stage == "holdings" else None)
+    persisted = controller.holdings_state_file.read_text()
+    for secret in ("PRIVATE-PASSWORD", "PRIVATE-ACCOUNT", "ACCOUNT-123", "DE00123456789012345678", "PRIVATE-ISIN"):
+        assert secret not in persisted
+    assert controller.holdings_observation() == result
+
+
+def test_legacy_failed_observation_does_not_claim_zero_eligible_depots(tmp_path):
+    _, app = modules()
+    controller = app.DKBProbeController(tmp_path)
+    controller.holdings_state_file.write_text(json.dumps({
+        "schema_version": 1, "observed_at": "2026-09-24T16:03:52+00:00",
+        "outcome": "request_failed", "eligible_accounts": 0,
+        "holding_count": None, "return_codes": [],
+    }))
+    result = controller.holdings_observation()
+    assert result.eligible_accounts is None
+    assert result.failure_stage is None
