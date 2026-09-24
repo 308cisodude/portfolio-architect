@@ -1,3 +1,7 @@
+## v1.64.0
+
+One-shot authenticated DKB UPD capability observation is available in admin Ingress. It never changes CSV acquisition.
+
 # Portfolio Architect Gateway — DKB v1.63.0
 
 Version 1.63.0 is a package-alignment release for this App. DKB CSV holdings/cash acquisition and research-only anonymous FinTS probing, private state, health schema 10, discovery transport, verified private-PKI/bearer trust and `fallback_policy: none` are unchanged; the v1.63.0 work is confined to Portfolio Architect static reference-dashboard presentation and release tooling.

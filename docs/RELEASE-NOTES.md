@@ -1,3 +1,11 @@
+# Portfolio Architect v1.64.0 release notes
+
+See [v1.64.0 DKB capability research](RELEASE-NOTES-1.64.0.md) and [upgrade guide](UPGRADE-1.64.0.md).
+
+## Previous release
+
+> v1.64.0: see [RELEASE-NOTES-1.64.0.md](RELEASE-NOTES-1.64.0.md).
+
 # Portfolio Architect v1.63.0 release notes
 
 v1.63.0 replaces the duplicated English/German reference-dashboard authoring model with a deterministic shared-source localization architecture and includes the already accepted zero-exception policy-review presentation correction. It is deliberately **runtime-neutral**: provider acquisition, source arbitration, planning, freshness/LKG, wire schemas, and the verified private-PKI trust boundary are unchanged from v1.62.5.

@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "source": "anonymous_bpd_prior_observation",
+  "bpd_version": 29,
+  "holdings_parameter_segment": "HIWPDS",
+  "holdings_advertised": true,
+  "return_codes": [
+    "0010"
+  ],
+  "raw_response_sha256": "eda00da3742cac0ddf27ce888532fa340932b1dd2fa07f92ea9a0b8a9f95d8f3",
+  "raw_response_bytes": 6524,
+  "decoded_response_sha256": "39968ec04903bea76948194a8dd0154a0f407b7faf8fe507ef74f713ac15dc00",
+  "decoded_response_bytes": 4891,
+  "note": "Sanitized exact fingerprint and byte-count evidence from the first successful anonymous probe. No raw response or personal data is included.",
+  "probed_at": "2026-09-23T17:48:38Z"
+}

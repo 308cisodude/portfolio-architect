@@ -75,7 +75,7 @@ def test_recovery_translations_icons_and_dashboard_are_present() -> None:
         assert "gateway_attention_required" in runtime
         assert "attention_reason" in runtime
         assert "recommended_action" in runtime
-        # v1.63.0 makes the modular bilingual view the sole dashboard behavior
+        # v1.64.0 makes the modular bilingual view the sole dashboard behavior
         # baseline; single-language artifacts are generated from that same view.
         assert "sensor.portfolio_architect_gateway_attention_reason" in runtime
         assert "sensor.portfolio_architect_gateway_recommended_action" in runtime

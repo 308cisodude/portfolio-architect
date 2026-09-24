@@ -1,3 +1,7 @@
+## 1.64.0
+
+- Add one-shot authenticated dialog and bounded UPD/user-capability observation; no acquisition or business commands.
+
 # Changelog
 
 ## 1.63.0
