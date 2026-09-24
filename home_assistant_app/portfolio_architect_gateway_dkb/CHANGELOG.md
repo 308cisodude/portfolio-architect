@@ -1,3 +1,7 @@
+## 1.64.2
+
+- Add bounded failure-stage and error-category diagnostics to the one-shot HKWPD research flow. Preserve v1.64.1 observations and leave CSV acquisition unchanged.
+
 ## 1.64.1
 
 - Add one-shot read-only HKWPD research for a single UPD-authorized depot, retaining bounded counts and codes only. CSV authority and all wire contracts remain unchanged.

@@ -1,3 +1,7 @@
+## 1.64.2
+
+- Distinguish the fixed failure stage and safe error category in DKB read-only holdings research; show when eligible-depot count was never determined. Keep exception text, raw bank messages, identifiers and holdings private. CSV remains authoritative.
+
 ## 1.64.1
 
 - Add bounded, admin-only read-only DKB holdings retrieval research after positive authenticated UPD acceptance. CSV remains authoritative and no holdings are persisted or supplied to the planner.
