@@ -9,6 +9,12 @@ from typing import Any
 from .dkb_authenticated import _IDENTIFIER, _TAN, _codes, _method
 from .dkb_fints import DKB_BANK_CODE, DKB_FINTS_ENDPOINT, normalise_product_id
 
+# DKB's published BIC for BLZ 12030000. PyFinTS 5.0.0 uses its country
+# component when converting SEPAAccount to HKWPD5/6 Account2/3. The UPD
+# get_information() projection has no BIC; passing None raises TypeError.
+# Account2/3 transmit the verified account number and bank identifier, not BIC.
+DKB_BIC = "BYLADEM1001"
+
 
 @dataclass(frozen=True, slots=True)
 class HoldingsObservation:
@@ -94,9 +100,9 @@ def _read(client: Any) -> tuple[HoldingsObservation, HoldingsSession | None]:
         bank = account.get("bank_identifier")
         code = getattr(bank, "bank_code", None)
         number = account.get("account_number")
-        if not isinstance(code, str) or not isinstance(number, str) or not number:
+        if code != DKB_BANK_CODE or not isinstance(number, str) or not number:
             return HoldingsObservation(_now(), "account_metadata_incomplete", 1, None, _codes(client)), None
-        sepa = SEPAAccount(account.get("iban"), None, number,
+        sepa = SEPAAccount(account.get("iban"), DKB_BIC, number,
                            account.get("subaccount_number"), code)
         stage = "holdings_request"
         result = client.get_holdings(sepa)  # Only bank business operation in this module.
