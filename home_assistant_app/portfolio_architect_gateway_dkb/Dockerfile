@@ -1,6 +1,6 @@
 FROM python:3.14.6-alpine3.24@sha256:26730869004e2b9c4b9ad09cab8625e81d256d1ce97e72df5520e806b1709f92
 
-ARG BUILD_VERSION=1.63.0
+ARG BUILD_VERSION=1.64.0
 ARG BUILD_ARCH
 ARG APP_UID=65532
 ARG APP_GID=65532
@@ -10,6 +10,8 @@ RUN apk add --no-cache openssl tzdata \
     && adduser -S -D -H -u "${APP_UID}" -G portfolio portfolio
 
 WORKDIR /app
+COPY requirements-fints.txt /app/requirements-fints.txt
+RUN /usr/local/bin/python3.14 -m pip install --no-cache-dir --require-hashes --only-binary=:all: -r /app/requirements-fints.txt
 COPY src/ /app/src/
 COPY entrypoint.py /entrypoint.py
 
@@ -22,7 +24,7 @@ LABEL \
     io.hass.type="app" \
     io.hass.arch="${BUILD_ARCH}" \
     org.opencontainers.image.title="Portfolio Architect Provider Gateway" \
-    org.opencontainers.image.description="Registration-gated DKB FinTS capability-probe Gateway for Portfolio Architect" \
+    org.opencontainers.image.description="DKB CSV Gateway with isolated FinTS capability research for Portfolio Architect" \
     org.opencontainers.image.licenses="MIT"
 
 RUN /usr/local/bin/python3.14 -c \

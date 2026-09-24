@@ -1,3 +1,8 @@
+## 1.64.0
+
+- Add isolated, one-shot authenticated DKB FinTS UPD/user-capability research with transient credentials and bounded observations; DKB CSV remains authoritative and FinTS research-only.
+- Pin PyFinTS and its transitive runtime wheels with hashes for both App architectures; preserve all acquisition, planner and wire contracts.
+
 # Changelog
 
 ## 1.63.0

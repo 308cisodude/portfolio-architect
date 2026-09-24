@@ -1,3 +1,5 @@
+Version 1.64.0 adds authenticated UPD capability research with a transient DKB app/TAN confirmation session. CSV remains authoritative; FinTS stays research-only. See `docs/UPGRADE-1.64.0.md`.
+
 # Portfolio Architect Gateway — DKB v1.63.0
 
 Version 1.63.0 is a package-alignment release for this App. DKB CSV holdings/cash acquisition and research-only anonymous FinTS probing, private state, health schema 10, discovery transport, verified private-PKI/bearer trust and `fallback_policy: none` are unchanged; the v1.63.0 work is confined to Portfolio Architect static reference-dashboard presentation and release tooling.

@@ -8,7 +8,7 @@
   },
   "dataLicense": "CC0-1.0",
   "documentNamespace": "urn:uuid:d852acac-5e95-541f-918f-bd506dfbb0b7",
-  "name": "Portfolio Architect v1.63.0 SBOM",
+  "name": "Portfolio Architect v1.64.0 SBOM",
   "packages": [
     {
       "SPDXID": "SPDXRef-Package-Integration",
@@ -19,7 +19,7 @@
       "licenseDeclared": "MIT",
       "name": "Portfolio Architect Home Assistant integration",
       "supplier": "Organization: Portfolio Architect contributors",
-      "versionInfo": "1.63.0"
+      "versionInfo": "1.64.0"
     },
     {
       "SPDXID": "SPDXRef-Package-Gateway-ComdirectCanonical",
@@ -28,9 +28,9 @@
       "filesAnalyzed": false,
       "licenseConcluded": "MIT",
       "licenseDeclared": "MIT",
-      "name": "Portfolio Architect Gateway \u2014 Comdirect App",
+      "name": "Portfolio Architect Gateway — Comdirect App",
       "supplier": "Organization: Portfolio Architect contributors",
-      "versionInfo": "1.63.0"
+      "versionInfo": "1.64.0"
     },
     {
       "SPDXID": "SPDXRef-Package-PythonBase",
@@ -56,9 +56,9 @@
       "filesAnalyzed": false,
       "licenseConcluded": "MIT",
       "licenseDeclared": "MIT",
-      "name": "Portfolio Architect Gateway \u2014 DKB App",
+      "name": "Portfolio Architect Gateway — DKB App",
       "supplier": "Organization: Portfolio Architect contributors",
-      "versionInfo": "1.63.0"
+      "versionInfo": "1.64.0"
     },
     {
       "SPDXID": "SPDXRef-Package-Gateway-TradeRepublic",
@@ -66,9 +66,9 @@
       "filesAnalyzed": false,
       "licenseConcluded": "MIT",
       "licenseDeclared": "MIT",
-      "name": "Portfolio Architect Gateway \u2014 Trade Republic App",
+      "name": "Portfolio Architect Gateway — Trade Republic App",
       "supplier": "Organization: Portfolio Architect contributors",
-      "versionInfo": "1.63.0"
+      "versionInfo": "1.64.0"
     },
     {
       "SPDXID": "SPDXRef-Package-Gateway-GenericImport",
@@ -76,9 +76,9 @@
       "filesAnalyzed": false,
       "licenseConcluded": "MIT",
       "licenseDeclared": "MIT",
-      "name": "Portfolio Architect Gateway \u2014 Generic Import App",
+      "name": "Portfolio Architect Gateway — Generic Import App",
       "supplier": "Organization: Portfolio Architect contributors",
-      "versionInfo": "1.63.0"
+      "versionInfo": "1.64.0"
     },
     {
       "SPDXID": "SPDXRef-Package-pypdf",
@@ -133,6 +133,295 @@
       "name": "Alpine tzdata runtime database",
       "supplier": "Organization: Alpine Linux",
       "versionInfo": "build-resolved"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-DKB-bleach",
+      "name": "bleach",
+      "versionInfo": "6.4.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/bleach@6.4.0",
+          "referenceType": "purl"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-DKB-certifi",
+      "name": "certifi",
+      "versionInfo": "2026.7.22",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/certifi@2026.7.22",
+          "referenceType": "purl"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-DKB-charsetnormalizer",
+      "name": "charset-normalizer",
+      "versionInfo": "3.5.1",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/charset-normalizer@3.5.1",
+          "referenceType": "purl"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-DKB-elementpath",
+      "name": "elementpath",
+      "versionInfo": "5.1.4",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/elementpath@5.1.4",
+          "referenceType": "purl"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-DKB-enumtools",
+      "name": "enum-tools",
+      "versionInfo": "0.12.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/enum-tools@0.12.0",
+          "referenceType": "purl"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-DKB-fints",
+      "name": "fints",
+      "versionInfo": "5.0.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "LGPL-3.0-or-later",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/fints@5.0.0",
+          "referenceType": "purl"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-DKB-idna",
+      "name": "idna",
+      "versionInfo": "3.20",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/idna@3.20",
+          "referenceType": "purl"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-DKB-lxml",
+      "name": "lxml",
+      "versionInfo": "6.0.4",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/lxml@6.0.4",
+          "referenceType": "purl"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-DKB-mt940",
+      "name": "mt-940",
+      "versionInfo": "5.1.1",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/mt-940@5.1.1",
+          "referenceType": "purl"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-DKB-pygments",
+      "name": "pygments",
+      "versionInfo": "2.21.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/pygments@2.21.0",
+          "referenceType": "purl"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-DKB-requests",
+      "name": "requests",
+      "versionInfo": "2.34.2",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/requests@2.34.2",
+          "referenceType": "purl"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-DKB-sepaxml",
+      "name": "sepaxml",
+      "versionInfo": "2.7.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/sepaxml@2.7.0",
+          "referenceType": "purl"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-DKB-textunidecode",
+      "name": "text-unidecode",
+      "versionInfo": "1.3",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/text-unidecode@1.3",
+          "referenceType": "purl"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-DKB-typingextensions",
+      "name": "typing-extensions",
+      "versionInfo": "4.16.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/typing-extensions@4.16.0",
+          "referenceType": "purl"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-DKB-urllib3",
+      "name": "urllib3",
+      "versionInfo": "2.8.0",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/urllib3@2.8.0",
+          "referenceType": "purl"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-DKB-webencodings",
+      "name": "webencodings",
+      "versionInfo": "0.6.1",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/webencodings@0.6.1",
+          "referenceType": "purl"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-DKB-xmlschema",
+      "name": "xmlschema",
+      "versionInfo": "4.3.2",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/xmlschema@4.3.2",
+          "referenceType": "purl"
+        }
+      ]
     }
   ],
   "relationships": [
@@ -210,6 +499,91 @@
       "relatedSpdxElement": "SPDXRef-Package-Tzdata",
       "relationshipType": "DEPENDS_ON",
       "spdxElementId": "SPDXRef-Package-Gateway-DKB"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-Gateway-DKB",
+      "relatedSpdxElement": "SPDXRef-Package-DKB-bleach",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-Gateway-DKB",
+      "relatedSpdxElement": "SPDXRef-Package-DKB-certifi",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-Gateway-DKB",
+      "relatedSpdxElement": "SPDXRef-Package-DKB-charsetnormalizer",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-Gateway-DKB",
+      "relatedSpdxElement": "SPDXRef-Package-DKB-elementpath",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-Gateway-DKB",
+      "relatedSpdxElement": "SPDXRef-Package-DKB-enumtools",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-Gateway-DKB",
+      "relatedSpdxElement": "SPDXRef-Package-DKB-fints",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-Gateway-DKB",
+      "relatedSpdxElement": "SPDXRef-Package-DKB-idna",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-Gateway-DKB",
+      "relatedSpdxElement": "SPDXRef-Package-DKB-lxml",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-Gateway-DKB",
+      "relatedSpdxElement": "SPDXRef-Package-DKB-mt940",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-Gateway-DKB",
+      "relatedSpdxElement": "SPDXRef-Package-DKB-pygments",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-Gateway-DKB",
+      "relatedSpdxElement": "SPDXRef-Package-DKB-requests",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-Gateway-DKB",
+      "relatedSpdxElement": "SPDXRef-Package-DKB-sepaxml",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-Gateway-DKB",
+      "relatedSpdxElement": "SPDXRef-Package-DKB-textunidecode",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-Gateway-DKB",
+      "relatedSpdxElement": "SPDXRef-Package-DKB-typingextensions",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-Gateway-DKB",
+      "relatedSpdxElement": "SPDXRef-Package-DKB-urllib3",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-Gateway-DKB",
+      "relatedSpdxElement": "SPDXRef-Package-DKB-webencodings",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-Gateway-DKB",
+      "relatedSpdxElement": "SPDXRef-Package-DKB-xmlschema",
+      "relationshipType": "DEPENDS_ON"
     }
   ],
   "spdxVersion": "SPDX-2.3"
