@@ -1,3 +1,7 @@
+## v1.64.1
+
+Admin Ingress can make a one-shot read-only FinTS holdings research request for one authorized depot. Only a bounded count and outcome persist; DKB CSV remains authoritative. Use the banking Anmeldename and password, not the product registration number or DKB app PIN.
+
 ## v1.64.0
 
 One-shot authenticated DKB UPD capability observation is available in admin Ingress. It never changes CSV acquisition.

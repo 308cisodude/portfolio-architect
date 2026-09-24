@@ -1,5 +1,5 @@
 name: Portfolio Architect Gateway — DKB
-version: 1.64.0
+version: 1.64.1
 slug: portfolio_architect_gateway_dkb
 description: Stable bounded local DKB depot-CSV holdings plus Girokonto cash CSV evidence; includes experimental anonymous FinTS capability probe for research and one-shot authenticated UPD capability research; FinTS acquisition remains disabled.
 url: https://developers.home-assistant.io/docs/apps/

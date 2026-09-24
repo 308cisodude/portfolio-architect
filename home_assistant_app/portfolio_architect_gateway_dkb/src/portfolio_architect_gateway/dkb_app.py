@@ -24,6 +24,7 @@ from zoneinfo import ZoneInfo
 from . import __version__
 from .acquisition_presentation import ACQUISITION_AUTHORITY_CSS, render_acquisition_authority
 from .dkb_authenticated import AuthObservation, AuthSession, begin_authenticated_observation, continue_authenticated_observation
+from .dkb_holdings_research import HoldingsObservation, HoldingsSession, begin_holdings_observation, continue_holdings_observation
 from .dkb_cash_csv import DkbCashCsvImportError, MAX_CASH_CSV_BYTES, parse_dkb_cash_csv
 from .dkb_csv import (
     DkbCsvImportError,
@@ -103,11 +104,14 @@ class DKBProbeController:
         self.probe_state_file = data_directory / PROBE_STATE_FILE_NAME
         self.probe_sent_at_file = data_directory / PROBE_SENT_AT_FILE_NAME
         self.auth_state_file = data_directory / AUTH_STATE_FILE_NAME
+        self.holdings_state_file = data_directory / "dkb-fints-holdings-observation.json"
         self.csrf_token = secrets.token_urlsafe(32)
         self._lock = threading.RLock()
         self._probe_in_progress = False
         self._auth_session: AuthSession | None = None
         self._auth_deadline = 0.0
+        self._holdings_session: HoldingsSession | None = None
+        self._holdings_deadline = 0.0
 
     def product_id(self) -> str | None:
         try:
@@ -127,6 +131,10 @@ class DKBProbeController:
             if self._auth_session is not None:
                 self._auth_session.close()
                 self._auth_session = None
+            if self._holdings_session is not None:
+                self._holdings_session.close()
+                self._holdings_session = None
+            self.holdings_state_file.unlink(missing_ok=True)
         # Capability evidence belongs to the registration identity that produced it.
         # Remove any previous result before changing that identity so stale BPD data
         # can never be presented as evidence for a newly configured product.
@@ -344,7 +352,7 @@ class DKBProbeController:
         if product_id is None:
             raise ValueError("FinTS registration required")
         with self._lock:
-            if self._probe_in_progress or self._auth_session is not None:
+            if self._probe_in_progress or self._auth_session is not None or self._holdings_session is not None:
                 raise ValueError("FinTS research is already running")
             self._probe_in_progress = True
         try:
@@ -388,12 +396,96 @@ class DKBProbeController:
         with self._lock:
             return bool(self._auth_session and self._auth_session.decoupled)
 
+    def holdings_observation(self) -> HoldingsObservation | None:
+        with self._lock:
+            if self._holdings_session is not None:
+                if time.monotonic() < self._holdings_deadline:
+                    return HoldingsObservation(self._holdings_session.started_at, "approval_pending", 0, None)
+                self._holdings_session.close()
+                self._holdings_session = None
+                expired = HoldingsObservation(datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                                              "approval_expired", 0, None)
+                save_json_state(self.holdings_state_file, expired.as_dict())
+        raw = load_json_state(self.holdings_state_file)
+        if raw is None:
+            return None
+        try:
+            if raw.get("schema_version") != 1 or set(raw) != {
+                "schema_version", "observed_at", "outcome", "eligible_accounts", "holding_count", "return_codes"
+            } or raw["outcome"] not in {
+                "retrieved", "no_eligible_account", "multiple_eligible_accounts", "account_metadata_incomplete",
+                "invalid_response", "request_failed", "approval_expired"
+            } or type(raw["eligible_accounts"]) is not int or not 0 <= raw["eligible_accounts"] <= 256:
+                raise ValueError("invalid holdings observation")
+            count = raw["holding_count"]
+            if count is not None and (type(count) is not int or not 0 <= count <= 256):
+                raise ValueError("invalid holdings count")
+            if (raw["outcome"] == "retrieved") != (count is not None):
+                raise ValueError("invalid holdings outcome")
+            codes = raw["return_codes"]
+            if not isinstance(codes, list) or len(codes) > 32 or any(
+                not isinstance(code, str) or not re.fullmatch(r"[0-9]{4}", code) for code in codes
+            ) or not isinstance(raw["observed_at"], str) or len(raw["observed_at"]) > 40:
+                raise ValueError("invalid holdings evidence")
+            _probe_timestamp_display(raw["observed_at"])
+            return HoldingsObservation(raw["observed_at"], raw["outcome"], raw["eligible_accounts"], count, tuple(codes))
+        except (KeyError, TypeError, ValueError) as err:
+            raise RuntimeError("Stored DKB holdings research state is invalid") from err
+
+    def run_holdings_observation(self, user_id: str, pin: str) -> HoldingsObservation:
+        product_id = self.product_id()
+        if product_id is None:
+            raise ValueError("FinTS registration required")
+        with self._lock:
+            if self._probe_in_progress or self._auth_session is not None or self._holdings_session is not None:
+                raise ValueError("FinTS research is already running")
+            self._probe_in_progress = True
+        try:
+            self.holdings_state_file.unlink(missing_ok=True)
+            result, session = begin_holdings_observation(product_id, user_id, pin)
+            if session is not None:
+                with self._lock:
+                    self._holdings_session = session
+                    self._holdings_deadline = time.monotonic() + 300
+            else:
+                save_json_state(self.holdings_state_file, result.as_dict())
+            _LOGGER.info("DKB read-only holdings research outcome=%s", result.outcome)
+            return result
+        finally:
+            with self._lock:
+                self._probe_in_progress = False
+
+    def continue_holdings_observation(self, tan: str = "") -> HoldingsObservation:
+        with self._lock:
+            session = self._holdings_session
+            if session is None or time.monotonic() >= self._holdings_deadline:
+                self.holdings_observation()
+                raise ValueError("No pending bank approval")
+            if self._probe_in_progress:
+                raise ValueError("FinTS research is already running")
+            self._probe_in_progress = True
+        try:
+            result, pending = continue_holdings_observation(session, tan)
+            with self._lock:
+                self._holdings_session = pending
+            if pending is None:
+                save_json_state(self.holdings_state_file, result.as_dict())
+            return result
+        finally:
+            with self._lock:
+                self._probe_in_progress = False
+
+    def pending_holdings_is_decoupled(self) -> bool:
+        with self._lock:
+            return bool(self._holdings_session and self._holdings_session.decoupled)
+
     def status_document(self, gateway_state: GatewayState) -> dict[str, Any]:
         view = self.probe_view()
         auth = self.auth_observation()
         return {
             "gateway": gateway_state.health_document(version=8),
             "authenticated_research": auth.as_dict() if auth else None,
+            "holdings_research": (holdings.as_dict() if (holdings := self.holdings_observation()) else None),
             "fints": {
                 "endpoint": DKB_FINTS_ENDPOINT,
                 "bank_code": DKB_BANK_CODE,
@@ -607,6 +699,40 @@ class DKBIngressHandler(BaseHTTPRequestHandler):
                 form.clear()
             self._redirect("./")
             return
+        if path == "/observe-holdings":
+            if set(form) != {"csrf", "user_id", "pin"}:
+                self._empty(HTTPStatus.BAD_REQUEST)
+                return
+            try:
+                self.app_server.controller.run_holdings_observation(form["user_id"], form["pin"])
+            except ValueError:
+                self._empty(HTTPStatus.BAD_REQUEST)
+                return
+            except Exception:
+                _LOGGER.error("DKB read-only holdings research failed internally")
+                self._empty(HTTPStatus.INTERNAL_SERVER_ERROR)
+                return
+            finally:
+                form.clear()
+            self._redirect("./")
+            return
+        if path == "/complete-holdings-approval":
+            if set(form) != {"csrf", "tan"}:
+                self._empty(HTTPStatus.BAD_REQUEST)
+                return
+            try:
+                self.app_server.controller.continue_holdings_observation(form["tan"])
+            except ValueError:
+                self._empty(HTTPStatus.BAD_REQUEST)
+                return
+            except Exception:
+                _LOGGER.error("DKB read-only holdings approval failed internally")
+                self._empty(HTTPStatus.INTERNAL_SERVER_ERROR)
+                return
+            finally:
+                form.clear()
+            self._redirect("./")
+            return
         if path == "/probe":
             if set(form) != {"csrf"}:
                 self._empty(HTTPStatus.BAD_REQUEST)
@@ -745,11 +871,50 @@ class DKBIngressHandler(BaseHTTPRequestHandler):
                              '<br><button type="submit">Check or complete bank approval</button></form>')
         else:
             approval_form = ""
+        holdings_result = controller.holdings_observation()
+        holdings_pending = holdings_result is not None and holdings_result.outcome == "approval_pending"
+        holdings_summary = (
+            "No read-only holdings observation recorded" if holdings_result is None else
+            f"Outcome: {escape(holdings_result.outcome)}; eligible depots: {holdings_result.eligible_accounts}; "
+            f"holdings returned: {escape(str(holdings_result.holding_count))}; "
+            f"return codes: {escape(', '.join(holdings_result.return_codes) or 'none')}; "
+            f"observed UTC: {escape(holdings_result.observed_at)}"
+        )
+        holdings_approval = ""
+        if holdings_pending:
+            if controller.pending_holdings_is_decoupled():
+                holdings_instruction = "Approve the DKB login or holdings request in the banking app, then check here."
+                holdings_tan = '<input type="hidden" name="tan" value="">'
+            else:
+                holdings_instruction = "Enter the TAN for this DKB research challenge."
+                holdings_tan = '<label for="holdings-tan">TAN</label><br><input id="holdings-tan" type="password" name="tan" maxlength="32" autocomplete="off" required>'
+            holdings_approval = (
+                f'<p>{holdings_instruction}</p><form method="post" action="complete-holdings-approval">'
+                f'<input type="hidden" name="csrf" value="{csrf}">{holdings_tan}'
+                '<br><button type="submit">Check or complete bank approval</button></form>'
+            )
+        holdings_html = (
+            '<section class="mode-card research"><h2>Read-only holdings retrieval research</h2>'
+            f'<p>{holdings_summary}</p>'
+            '<p class="small">This is a one-shot HKWPD research request for exactly one UPD-authorized depot. '
+            'The App retains only an outcome, eligible-depot count, holdings count, numeric return codes and timestamp. '
+            'No position, account number, identifier, valuation, response body or credentials are saved. '
+            'Multiple eligible depots stop without a request. DKB CSV remains the sole holdings source.</p>'
+            '<form method="post" action="observe-holdings">'
+            f'<input type="hidden" name="csrf" value="{csrf}">'
+            '<label for="holdings-user">DKB banking Anmeldename</label><br>'
+            '<input id="holdings-user" name="user_id" maxlength="128" autocomplete="off" required><br>'
+            '<label for="holdings-pin">DKB banking password</label><br>'
+            '<input id="holdings-pin" name="pin" type="password" maxlength="256" autocomplete="off" required><br>'
+            f'<button type="submit" {"disabled" if product is None or pending or holdings_pending else ""}>'
+            'Observe read-only holdings response</button></form>'
+            f'{holdings_approval}</section>'
+        )
         authority_html = render_acquisition_authority(
             self.app_server.csv_provider.acquisition_control,
             evidence_timestamps=self.app_server.gateway_state.capability_evidence_timestamps(),
         )
-        body = f"""<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Portfolio Architect Gateway — DKB</title><style>body{{font-family:system-ui,sans-serif;max-width:850px;margin:2rem auto;padding:0 1rem;background:#111;color:#eee}}section{{border:1px solid #444;border-radius:12px;padding:1rem;margin:1rem 0}}.mode-card.active{{border:2px solid #22c55eaa;background:#22c55e12}}.mode-card.research{{border:2px solid #f59e0baa;background:#f59e0b12}}.mode-head{{display:flex;justify-content:space-between;align-items:center;gap:12px}}.badge{{font-size:.78rem;font-weight:800;padding:4px 9px;border-radius:999px;border:1px solid currentColor}}.mode-card.active .badge{{color:#4ade80}}.mode-card.research .badge{{color:#fbbf24}}code{{word-break:break-all}}input{{width:min(34rem,95%);padding:.55rem}}button{{padding:.55rem .8rem;margin-top:.5rem}}.warn{{color:#ffca28}}.ok{{color:#66bb6a}}.small{{font-size:.9rem;color:#bbb}}{ACQUISITION_AUTHORITY_CSS}</style></head><body><main><h1>Portfolio Architect Gateway — DKB</h1><section class="mode-card active"><div class="mode-head"><h2>Static acquisition · DKB CSV</h2><span class="badge">ACTIVE</span></div><p>Portfolio Architect v{escape(__version__)} keeps DKB depot holdings and Girokonto cash as independent evidence families. Uploaded CSVs are parsed only in memory; depot/account identifiers, transaction rows, and raw CSV content are never persisted. Only bounded normalized provider state survives.</p>{notice}<h3>Depot holdings</h3><p>{escape(snapshot_text)}</p><form method=\"post\" action=\"import-csv\" enctype=\"multipart/form-data\"><input type=\"hidden\" name=\"nonce\" value=\"{csrf}\"><label for=\"statement\">Current DKB depot CSV export(s)</label><input id=\"statement\" type=\"file\" name=\"statement\" accept=\"text/csv,.csv\" multiple required><br><button type=\"submit\">Import DKB depot CSV batch</button></form><p class=\"small\">Upload all current DKB depot exports together. Up to {MAX_CSV_FILES} files are accepted. If several dated exports of one depot are included, only the newest is counted. The batch replaces only the DKB holdings evidence.</p><h3>Investment cash</h3><p>{escape(cash_text)}</p><form method=\"post\" action=\"import-cash\" enctype=\"multipart/form-data\"><input type=\"hidden\" name=\"nonce\" value=\"{csrf}\"><label for=\"cash-statement\">DKB Girokonto Umsatzliste CSV</label><input id=\"cash-statement\" type=\"file\" name=\"statement\" accept=\"text/csv,.csv\" required><br><button type=\"submit\">Import DKB cash CSV</button></form><p class=\"small\">The importer uses only the explicit dated EUR Kontostand as cash evidence. Transaction rows and account identifiers are discarded. A negative balance authorizes EUR 0; no overdraft or credit facility is inferred. Importing cash does not refresh holdings evidence, and importing holdings does not refresh cash evidence.</p></section><section class="mode-card research"><div class="mode-head"><h2>Live acquisition · DKB FinTS</h2><span class="badge">UNAVAILABLE · RESEARCH ONLY</span></div><p>Authenticated FinTS acquisition is not enabled. The controls below are isolated bank-level capability research and cannot replace or fall back from CSV evidence.</p><h3>FinTS registration and research probe</h3><p>Fixed endpoint: <code>{escape(DKB_FINTS_ENDPOINT)}</code><br>Bank code: <code>{escape(DKB_BANK_CODE)}</code><br>Configured registration: <code>{escape(suffix)}</code></p><form method=\"post\" action=\"configure-product\"><input type=\"hidden\" name=\"csrf\" value=\"{csrf}\"><label for=\"product_id\">FinTS product registration number</label><br><input id=\"product_id\" name=\"product_id\" minlength=\"25\" maxlength=\"25\" pattern=\"[A-Za-z0-9]{{25}}\" autocomplete=\"off\" required><br><button type=\"submit\">Store registration number</button></form><p class=\"small\">Use the complete 25-character registration number issued for Portfolio Architect itself. It is transmitted only as the HKVVB product designation; a library/kernel registration must not be reused for production access.</p></section><section class="mode-card research"><div class="mode-head"><h2>Anonymous BPD capability probe</h2><span class="badge">EXPERIMENTAL · RESEARCH ONLY</span></div><p>State: <strong>{escape(view.state)}</strong><br>Last probe sent · Europe/Berlin: <strong>{escape(probe_sent_berlin)}</strong><br><span class="small">Authoritative server-side dispatch timestamp · UTC: <code>{escape(probe_sent_utc)}</code></span></p><p>{escape(view.message)}</p><form method=\"post\" action=\"probe\"><input type=\"hidden\" name=\"csrf\" value=\"{csrf}\"><button type=\"submit\" {'disabled' if product is None else ''}>Probe DKB FinTS capabilities</button></form><p>BPD version: <code>{escape(bpd)}</code><br>{HOLDINGS_PARAMETER_SEGMENT} advertised: <strong>{holdings}</strong><br>Observed parameter segments: <code>{escape(param)}</code><br>Bounded return codes: <code>{escape(codes)}</code></p><p>Sanitized bank return messages:</p>{bank_messages}<p>Raw response body SHA-256: <code>{escape(raw_response_fingerprint)}</code><br>Raw response body bytes: <code>{escape(raw_response_bytes)}</code><br>Decoded response SHA-256: <code>{escape(response_fingerprint)}</code><br>Decoded response bytes: <code>{escape(response_bytes)}</code></p><p class=\"small\">Only bounded HIRMG/HIRMS return-message text plus cryptographic response fingerprints and byte counts are retained for diagnostics. The configured product registration is redacted if echoed; arbitrary segment payload and the raw FinTS response are discarded after fingerprinting; exact raw/decoded response bytes never persist. A positive bank-level BPD result is only evidence to continue research; authenticated user-parameter validation is still required before holdings acquisition may be implemented.</p></section><section class="mode-card research"><h2>Authenticated user capability research</h2><p>{auth_html}</p><form method="post" action="observe-user"><input type="hidden" name="csrf" value="{csrf}"><label for="user_id">DKB FinTS user identifier</label><br><input id="user_id" name="user_id" maxlength="128" autocomplete="off" required><br><label for="pin">FinTS PIN</label><br><input id="pin" name="pin" type="password" maxlength="256" autocomplete="off" required><br><button type="submit" {'disabled' if product is None or pending else ''}>Observe authenticated capabilities</button></form>{approval_form}<p class="small">Credentials are used once in App memory, never persisted or included in status, diagnostics, logs or Home Assistant. Approve a decoupled DKB app challenge or submit the login TAN through this transient session (five-minute limit). The observation reports only UPD presence/version, account-level securities capability and authentication method. No account identifiers or raw UPD are retained.</p></section>{authority_html}<section><h2>Gateway boundary</h2><p>Acquisition mode: <strong>csv</strong></p><p>Bearer token: <code>{escape(self.app_server.api_token)}</code></p><p class=\"small\">The token, normalized DKB holdings/cash state, and FinTS registration state are App-private and survive in-place upgrades. FinTS cannot replace or silently fall back to CSV evidence; authenticated DKB FinTS acquisition remains disabled.</p></section></main></body></html>"""
+        body = f"""<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Portfolio Architect Gateway — DKB</title><style>body{{font-family:system-ui,sans-serif;max-width:850px;margin:2rem auto;padding:0 1rem;background:#111;color:#eee}}section{{border:1px solid #444;border-radius:12px;padding:1rem;margin:1rem 0}}.mode-card.active{{border:2px solid #22c55eaa;background:#22c55e12}}.mode-card.research{{border:2px solid #f59e0baa;background:#f59e0b12}}.mode-head{{display:flex;justify-content:space-between;align-items:center;gap:12px}}.badge{{font-size:.78rem;font-weight:800;padding:4px 9px;border-radius:999px;border:1px solid currentColor}}.mode-card.active .badge{{color:#4ade80}}.mode-card.research .badge{{color:#fbbf24}}code{{word-break:break-all}}input{{width:min(34rem,95%);padding:.55rem}}button{{padding:.55rem .8rem;margin-top:.5rem}}.warn{{color:#ffca28}}.ok{{color:#66bb6a}}.small{{font-size:.9rem;color:#bbb}}{ACQUISITION_AUTHORITY_CSS}</style></head><body><main><h1>Portfolio Architect Gateway — DKB</h1><section class="mode-card active"><div class="mode-head"><h2>Static acquisition · DKB CSV</h2><span class="badge">ACTIVE</span></div><p>Portfolio Architect v{escape(__version__)} keeps DKB depot holdings and Girokonto cash as independent evidence families. Uploaded CSVs are parsed only in memory; depot/account identifiers, transaction rows, and raw CSV content are never persisted. Only bounded normalized provider state survives.</p>{notice}<h3>Depot holdings</h3><p>{escape(snapshot_text)}</p><form method=\"post\" action=\"import-csv\" enctype=\"multipart/form-data\"><input type=\"hidden\" name=\"nonce\" value=\"{csrf}\"><label for=\"statement\">Current DKB depot CSV export(s)</label><input id=\"statement\" type=\"file\" name=\"statement\" accept=\"text/csv,.csv\" multiple required><br><button type=\"submit\">Import DKB depot CSV batch</button></form><p class=\"small\">Upload all current DKB depot exports together. Up to {MAX_CSV_FILES} files are accepted. If several dated exports of one depot are included, only the newest is counted. The batch replaces only the DKB holdings evidence.</p><h3>Investment cash</h3><p>{escape(cash_text)}</p><form method=\"post\" action=\"import-cash\" enctype=\"multipart/form-data\"><input type=\"hidden\" name=\"nonce\" value=\"{csrf}\"><label for=\"cash-statement\">DKB Girokonto Umsatzliste CSV</label><input id=\"cash-statement\" type=\"file\" name=\"statement\" accept=\"text/csv,.csv\" required><br><button type=\"submit\">Import DKB cash CSV</button></form><p class=\"small\">The importer uses only the explicit dated EUR Kontostand as cash evidence. Transaction rows and account identifiers are discarded. A negative balance authorizes EUR 0; no overdraft or credit facility is inferred. Importing cash does not refresh holdings evidence, and importing holdings does not refresh cash evidence.</p></section><section class="mode-card research"><div class="mode-head"><h2>Live acquisition · DKB FinTS</h2><span class="badge">UNAVAILABLE · RESEARCH ONLY</span></div><p>Authenticated FinTS acquisition is not enabled. The controls below are isolated bank-level capability research and cannot replace or fall back from CSV evidence.</p><h3>FinTS registration and research probe</h3><p>Fixed endpoint: <code>{escape(DKB_FINTS_ENDPOINT)}</code><br>Bank code: <code>{escape(DKB_BANK_CODE)}</code><br>Configured registration: <code>{escape(suffix)}</code></p><form method=\"post\" action=\"configure-product\"><input type=\"hidden\" name=\"csrf\" value=\"{csrf}\"><label for=\"product_id\">FinTS product registration number</label><br><input id=\"product_id\" name=\"product_id\" minlength=\"25\" maxlength=\"25\" pattern=\"[A-Za-z0-9]{{25}}\" autocomplete=\"off\" required><br><button type=\"submit\">Store registration number</button></form><p class=\"small\">Use the complete 25-character registration number issued for Portfolio Architect itself. It is transmitted only as the HKVVB product designation; a library/kernel registration must not be reused for production access.</p></section><section class="mode-card research"><div class="mode-head"><h2>Anonymous BPD capability probe</h2><span class="badge">EXPERIMENTAL · RESEARCH ONLY</span></div><p>State: <strong>{escape(view.state)}</strong><br>Last probe sent · Europe/Berlin: <strong>{escape(probe_sent_berlin)}</strong><br><span class="small">Authoritative server-side dispatch timestamp · UTC: <code>{escape(probe_sent_utc)}</code></span></p><p>{escape(view.message)}</p><form method=\"post\" action=\"probe\"><input type=\"hidden\" name=\"csrf\" value=\"{csrf}\"><button type=\"submit\" {'disabled' if product is None else ''}>Probe DKB FinTS capabilities</button></form><p>BPD version: <code>{escape(bpd)}</code><br>{HOLDINGS_PARAMETER_SEGMENT} advertised: <strong>{holdings}</strong><br>Observed parameter segments: <code>{escape(param)}</code><br>Bounded return codes: <code>{escape(codes)}</code></p><p>Sanitized bank return messages:</p>{bank_messages}<p>Raw response body SHA-256: <code>{escape(raw_response_fingerprint)}</code><br>Raw response body bytes: <code>{escape(raw_response_bytes)}</code><br>Decoded response SHA-256: <code>{escape(response_fingerprint)}</code><br>Decoded response bytes: <code>{escape(response_bytes)}</code></p><p class=\"small\">Only bounded HIRMG/HIRMS return-message text plus cryptographic response fingerprints and byte counts are retained for diagnostics. The configured product registration is redacted if echoed; arbitrary segment payload and the raw FinTS response are discarded after fingerprinting; exact raw/decoded response bytes never persist. A positive bank-level BPD result is only evidence to continue research; authenticated user-parameter validation is still required before holdings acquisition may be implemented.</p></section><section class="mode-card research"><h2>Authenticated user capability research</h2><p>{auth_html}</p><form method="post" action="observe-user"><input type="hidden" name="csrf" value="{csrf}"><label for="user_id">DKB FinTS user identifier</label><br><input id="user_id" name="user_id" maxlength="128" autocomplete="off" required><br><label for="pin">FinTS PIN</label><br><input id="pin" name="pin" type="password" maxlength="256" autocomplete="off" required><br><button type="submit" {'disabled' if product is None or pending else ''}>Observe authenticated capabilities</button></form>{approval_form}<p class="small">Credentials are used once in App memory, never persisted or included in status, diagnostics, logs or Home Assistant. Approve a decoupled DKB app challenge or submit the login TAN through this transient session (five-minute limit). The observation reports only UPD presence/version, account-level securities capability and authentication method. No account identifiers or raw UPD are retained.</p></section>{holdings_html}{authority_html}<section><h2>Gateway boundary</h2><p>Acquisition mode: <strong>csv</strong></p><p>Bearer token: <code>{escape(self.app_server.api_token)}</code></p><p class=\"small\">The token, normalized DKB holdings/cash state, and FinTS registration state are App-private and survive in-place upgrades. FinTS cannot replace or silently fall back to CSV evidence; authenticated DKB FinTS acquisition remains disabled.</p></section></main></body></html>"""
         return body.encode("utf-8")
 
     def _redirect(self, location: str) -> None:
