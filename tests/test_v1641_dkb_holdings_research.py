@@ -169,7 +169,8 @@ def test_legacy_failed_observation_does_not_claim_zero_eligible_depots(tmp_path)
 
 
 def test_pinned_pyfints_hkwpd_account_conversion_needs_bic():
-    """Offline proof of the v1.64.3 failure; no bank request or private data."""
+    """Offline proof of the v1.64.2 failure when PyFinTS is installed."""
+    pytest.importorskip("fints")
     from fints.formals import Account2, Account3
     from fints.models import SEPAAccount
 
