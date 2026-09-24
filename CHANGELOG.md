@@ -1,3 +1,7 @@
+## 1.64.1
+
+- Add bounded, admin-only read-only DKB holdings retrieval research after positive authenticated UPD acceptance. CSV remains authoritative and no holdings are persisted or supplied to the planner.
+
 ## 1.64.0
 
 - Add isolated, one-shot authenticated DKB FinTS UPD/user-capability research with transient credentials and bounded observations; DKB CSV remains authoritative and FinTS research-only.

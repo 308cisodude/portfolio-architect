@@ -106,7 +106,7 @@ def test_all_reference_date_tiles_use_date_domain_counterparts_only_for_display(
             if node.get("condition") == "state":
                 assert node.get("entity") not in PRESENTATION_DATES, path
 
-    # v1.64.0 replaced the duplicated dashboard authoring tree with one shared
+    # v1.64.1 replaced the duplicated dashboard authoring tree with one shared
     # structural source plus generated locale projections. Across the tracked
     # dashboard tree, each presentation date therefore appears once in shared
     # source, once in each single-language projection, twice in the generated

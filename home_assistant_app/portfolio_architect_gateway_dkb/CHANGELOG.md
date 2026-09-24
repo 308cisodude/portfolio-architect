@@ -1,3 +1,7 @@
+## 1.64.1
+
+- Add one-shot read-only HKWPD research for a single UPD-authorized depot, retaining bounded counts and codes only. CSV authority and all wire contracts remain unchanged.
+
 ## 1.64.0
 
 - Add one-shot authenticated dialog and bounded UPD/user-capability observation; no acquisition or business commands.
