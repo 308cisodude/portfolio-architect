@@ -1,3 +1,7 @@
+## 1.64.5
+
+- Show the bounded bank instrument field and `HOLD` total-value currency in the transient DKB admin review before PyFinTS discards them. Keep unit price currency distinct, improve table layout, and retain CSV authority and research-only scope.
+
 ## 1.64.4
 
 - Add a five-minute, admin-only, in-memory DKB holdings evidence view. Display independent CSV and FinTS ISIN, quantity, value and source time fields for human review without automatic matching, scoring or acquisition changes. Never persist FinTS position detail.

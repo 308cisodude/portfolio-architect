@@ -1,3 +1,7 @@
+## 1.64.5
+
+- Show bounded MT535 instrument identification and total holding currency only in the five-minute admin review, with unit price currency labeled separately. Stack the evidence tables for legibility; no persisted position detail or acquisition change.
+
 ## 1.64.4
 
 - Show bounded transient CSV and FinTS position details separately in admin Ingress for human review; expire detail after five minutes. Do not persist FinTS positions or change CSV authority.
