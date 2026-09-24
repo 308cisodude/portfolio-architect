@@ -4,6 +4,8 @@ from __future__ import annotations
 import importlib
 import importlib.util
 import json
+from datetime import datetime, date, timezone
+from decimal import Decimal
 from pathlib import Path
 import sys
 from types import ModuleType
@@ -71,18 +73,36 @@ def test_login_approval_fetches_one_depot_without_persisting_holdings(monkeypatc
             assert account[2] == "ACCOUNT-123"
             assert account[1] == research.DKB_BIC
             calls.append("holdings")
-            return [type("Holding", (), {"ISIN": "PRIVATE-ISIN"})()]
+            return [type("Holding", (), {"ISIN": "IE00BJ0KDQ92", "pieces": 1.5,
+                                          "total_value": 42.0, "valuation_date": date(2026, 9, 24)})()]
     Operations, Challenge = fake_fints(monkeypatch, Client)
     controller = app.DKBProbeController(tmp_path)
     controller.configure_product_id(PRODUCT)
-    assert controller.run_holdings_observation("test.user", "PRIVATE-PASSWORD").outcome == "approval_pending"
+    models = importlib.import_module(f"{NAME}.models")
+    csv = models.PortfolioSnapshot(
+        generated_at=datetime(2026, 9, 20, tzinfo=timezone.utc),
+        positions=(models.Position("A12345", "Synthetic", Decimal("40"),
+                                   Decimal("1.5"), "IE00BJ0KDQ92", "etf"),),
+    )
+    assert controller.run_holdings_observation("test.user", "PRIVATE-PASSWORD", csv).outcome == "approval_pending"
     assert not controller.holdings_state_file.exists()
-    result = controller.continue_holdings_observation()
+    result = controller.continue_holdings_observation(csv_snapshot=csv)
     assert (result.outcome, result.eligible_accounts, result.holding_count) == ("retrieved", 1, 1)
     assert calls == ["created", "approved", "holdings", "closed"]
     persisted = controller.holdings_state_file.read_text()
-    for secret in ("PRIVATE-PASSWORD", "test.user", "DE00123456789012345678", "ACCOUNT-123", "PRIVATE-ISIN"):
+    for secret in ("PRIVATE-PASSWORD", "test.user", "DE00123456789012345678", "ACCOUNT-123", "IE00BJ0KDQ92"):
         assert secret not in persisted
+    assert controller.holdings_observation() == result
+    review = controller.holdings_review()
+    assert review is not None
+    assert review.csv_rows[0].value == "40"
+    assert review.fints_rows[0].quantity == "1.5"
+    assert review.fints_rows[0].value == "42.0"
+    assert review.fints_rows[0].currency == "unavailable"
+    assert "IE00BJ0KDQ92" in importlib.import_module(f"{NAME}.dkb_holdings_review").render_review(review)
+    assert "IE00BJ0KDQ92" not in json.dumps(controller.holdings_observation().as_dict())
+    controller._review_deadline = 0
+    assert controller.holdings_review() is None
     assert controller.holdings_observation() == result
 
 
@@ -182,3 +202,14 @@ def test_pinned_pyfints_hkwpd_account_conversion_needs_bic():
             account_type.from_sepa_account(old)
         converted = account_type.from_sepa_account(corrected)
         assert converted.account_number == "SYNTHETIC-DEPOT"
+
+
+def test_transient_review_rejects_unbounded_and_untrusted_fields():
+    review_module = importlib.import_module(f"{NAME}.dkb_holdings_review")
+    hostile = type("Holding", (), {"ISIN": "<script>bad</script>", "pieces": float("nan"),
+                                   "total_value": float("inf"), "valuation_date": "not a date"})()
+    rows = review_module.project_fints([hostile])
+    assert rows[0].isin == rows[0].quantity == rows[0].value == "unavailable"
+    assert "script" not in review_module.render_review(
+        review_module.HoldingsReview(None, "2026-09-24T17:29:55+00:00", None, rows))
+    assert review_module.project_fints([hostile] * (review_module.MAX_REVIEW_ROWS + 1)) is None

@@ -4,10 +4,11 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 import logging
-from typing import Any
+from typing import Any, Callable
 
 from .dkb_authenticated import _IDENTIFIER, _TAN, _codes, _method
 from .dkb_fints import DKB_BANK_CODE, DKB_FINTS_ENDPOINT, normalise_product_id
+from .dkb_holdings_review import ReviewRow, project_fints
 
 # DKB's published BIC for BLZ 12030000. PyFinTS 5.0.0 uses its country
 # component when converting SEPAAccount to HKWPD5/6 Account2/3. The UPD
@@ -74,13 +75,19 @@ def _failure(client: Any, stage: str, err: BaseException,
                                _codes(client), stage, kind)
 
 
-def _summarize(client: Any, value: Any, accounts: int) -> HoldingsObservation:
+def _summarize(client: Any, value: Any, accounts: int,
+               capture: Callable[[tuple[ReviewRow, ...]], None] | None = None) -> HoldingsObservation:
     if not isinstance(value, (list, tuple)) or len(value) > 256:
         return HoldingsObservation(_now(), "invalid_response", accounts, None, _codes(client))
+    if capture is not None:
+        rows = project_fints(value)
+        if rows is not None:
+            capture(rows)
     return HoldingsObservation(_now(), "retrieved", accounts, len(value), _codes(client))
 
 
-def _read(client: Any) -> tuple[HoldingsObservation, HoldingsSession | None]:
+def _read(client: Any, capture: Callable[[tuple[ReviewRow, ...]], None] | None = None
+          ) -> tuple[HoldingsObservation, HoldingsSession | None]:
     from fints.client import FinTSOperations, NeedTANResponse
     from fints.models import SEPAAccount
 
@@ -110,12 +117,14 @@ def _read(client: Any) -> tuple[HoldingsObservation, HoldingsSession | None]:
             session = HoldingsSession(client, result, bool(result.decoupled), "holdings", _now())
             return HoldingsObservation(_now(), "approval_pending", 1, None, _codes(client)), session
         stage = "response_summary"
-        return _summarize(client, result, 1), None
+        return _summarize(client, result, 1, capture), None
     except Exception as err:
         return _failure(client, stage, err, eligible), None
 
 
-def begin_holdings_observation(product_id: str, user_id: str, pin: str) -> tuple[HoldingsObservation, HoldingsSession | None]:
+def begin_holdings_observation(product_id: str, user_id: str, pin: str,
+                               capture: Callable[[tuple[ReviewRow, ...]], None] | None = None
+                               ) -> tuple[HoldingsObservation, HoldingsSession | None]:
     from fints.client import FinTS3PinTanClient, NeedTANResponse
     from fints.formals import BankIdentifier
 
@@ -143,7 +152,7 @@ def begin_holdings_observation(product_id: str, user_id: str, pin: str) -> tuple
         if isinstance(challenge, NeedTANResponse):
             session = HoldingsSession(client, challenge, bool(challenge.decoupled), "login", _now())
             return HoldingsObservation(_now(), "approval_pending", None, None, _codes(client)), session
-        observation, session = _read(client)
+        observation, session = _read(client, capture)
         if session is None:
             client.__exit__(None, None, None)
         return observation, session
@@ -154,7 +163,9 @@ def begin_holdings_observation(product_id: str, user_id: str, pin: str) -> tuple
         return result, None
 
 
-def continue_holdings_observation(session: HoldingsSession, tan: str = "") -> tuple[HoldingsObservation, HoldingsSession | None]:
+def continue_holdings_observation(session: HoldingsSession, tan: str = "",
+                                  capture: Callable[[tuple[ReviewRow, ...]], None] | None = None
+                                  ) -> tuple[HoldingsObservation, HoldingsSession | None]:
     from fints.client import NeedTANResponse
 
     if not session.decoupled and (not isinstance(tan, str) or not _TAN.fullmatch(tan)):
@@ -168,13 +179,13 @@ def continue_holdings_observation(session: HoldingsSession, tan: str = "") -> tu
             return HoldingsObservation(_now(), "approval_pending", None if session.stage == "login" else 1,
                                        None, _codes(session.client)), session
         if session.stage == "login":
-            observation, pending = _read(session.client)
+            observation, pending = _read(session.client, capture)
             if pending is not None:
                 pending.started_at = session.started_at
             else:
                 session.close()
             return observation, pending
-        observation = _summarize(session.client, result, 1)
+        observation = _summarize(session.client, result, 1, capture)
         session.close()
         return observation, None
     except Exception as err:

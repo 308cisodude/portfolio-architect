@@ -1,3 +1,7 @@
+## 1.64.4
+
+- Add a five-minute, admin-only, in-memory DKB holdings evidence view. Display independent CSV and FinTS ISIN, quantity, value and source time fields for human review without automatic matching, scoring or acquisition changes. Never persist FinTS position detail.
+
 ## 1.64.3
 
 - Supply DKB's verified BIC to PyFinTS's HKWPD account converter after validating the UPD depot belongs to the fixed DKB bank code. Prevent a local `TypeError` on a missing BIC before the read-only request is constructed. CSV authority and bounded research diagnostics remain unchanged.
