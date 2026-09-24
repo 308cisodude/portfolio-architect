@@ -4,11 +4,12 @@ from __future__ import annotations
 import importlib
 import importlib.util
 import json
+from enum import Enum
 from pathlib import Path
 import sys
+from types import ModuleType
 
 import pytest
-from fints.client import FinTSOperations
 
 ROOT = Path(__file__).parents[1]
 APP = ROOT / 'home_assistant_app/portfolio_architect_gateway_dkb'
@@ -26,9 +27,27 @@ def modules():
     return importlib.import_module(f'{NAME}.dkb_authenticated'), importlib.import_module(f'{NAME}.dkb_app')
 
 
+def fake_fints(monkeypatch):
+    """Keep App-only PyFinTS out of the integration's CI dependencies."""
+    package = ModuleType('fints')
+    package.__path__ = []
+    client = ModuleType('fints.client')
+    formals = ModuleType('fints.formals')
+    class FinTSOperations(Enum):
+        GET_HOLDINGS = 'HKWPD'
+    client.FinTSOperations = FinTSOperations
+    formals.BankIdentifier = lambda country, code: (country, code)
+    package.client = client
+    package.formals = formals
+    monkeypatch.setitem(sys.modules, 'fints', package)
+    monkeypatch.setitem(sys.modules, 'fints.client', client)
+    monkeypatch.setitem(sys.modules, 'fints.formals', formals)
+    return client, FinTSOperations
+
+
 def test_decoupled_approval_completes_and_secrets_remain_transient(monkeypatch, tmp_path):
     research, app = modules()
-    import fints.client
+    fints_client, FinTSOperations = fake_fints(monkeypatch)
     class Challenge:
         decoupled = True
     class Client:
@@ -49,8 +68,8 @@ def test_decoupled_approval_completes_and_secrets_remain_transient(monkeypatch, 
             return {'accounts': [{'iban': 'PRIVATE-IBAN', 'owner_name': ['PRIVATE-NAME'],
                                   'supported_operations': {FinTSOperations.GET_HOLDINGS: True}}],
                     'auth': {'current_tan_mechanism': '920'}}
-    monkeypatch.setattr(fints.client, 'FinTS3PinTanClient', Client)
-    monkeypatch.setattr(fints.client, 'NeedTANResponse', Challenge)
+    fints_client.FinTS3PinTanClient = Client
+    fints_client.NeedTANResponse = Challenge
     controller = app.DKBProbeController(tmp_path)
     controller.configure_product_id(PRODUCT)
     pending = controller.run_auth_observation('test.user', 'PRIVATE-PIN')
@@ -69,7 +88,7 @@ def test_decoupled_approval_completes_and_secrets_remain_transient(monkeypatch, 
 
 def test_decoupled_poll_stays_pending_then_times_out(monkeypatch, tmp_path):
     research, app = modules()
-    import fints.client
+    fints_client, _ = fake_fints(monkeypatch)
     class Challenge:
         decoupled = True
     class Client:
@@ -81,8 +100,8 @@ def test_decoupled_poll_stays_pending_then_times_out(monkeypatch, tmp_path):
         def __enter__(self): return self
         def __exit__(self, *_args): pass
         def send_tan(self, *_args): return Challenge()
-    monkeypatch.setattr(fints.client, 'FinTS3PinTanClient', Client)
-    monkeypatch.setattr(fints.client, 'NeedTANResponse', Challenge)
+    fints_client.FinTS3PinTanClient = Client
+    fints_client.NeedTANResponse = Challenge
     controller = app.DKBProbeController(tmp_path)
     controller.configure_product_id(PRODUCT)
     controller.run_auth_observation('valid', 'PRIVATE-PIN')
