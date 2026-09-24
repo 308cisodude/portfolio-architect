@@ -25,6 +25,7 @@ from . import __version__
 from .acquisition_presentation import ACQUISITION_AUTHORITY_CSS, render_acquisition_authority
 from .dkb_authenticated import AuthObservation, AuthSession, begin_authenticated_observation, continue_authenticated_observation
 from .dkb_holdings_research import HoldingsObservation, HoldingsSession, begin_holdings_observation, continue_holdings_observation
+from .dkb_holdings_review import HoldingsReview, ReviewRow, build_review, render_review
 from .dkb_cash_csv import DkbCashCsvImportError, MAX_CASH_CSV_BYTES, parse_dkb_cash_csv
 from .dkb_csv import (
     DkbCsvImportError,
@@ -49,6 +50,7 @@ from .dkb_fints import (
     probe_dkb_bpd,
 )
 from .errors import GatewayError, ProtocolError, RemoteApiError
+from .models import PortfolioSnapshot
 from .pending_app import PendingAppOptions, build_server_config
 from .runtime_config import ensure_api_token
 from .server import GatewayState, create_server
@@ -112,6 +114,8 @@ class DKBProbeController:
         self._auth_deadline = 0.0
         self._holdings_session: HoldingsSession | None = None
         self._holdings_deadline = 0.0
+        self._holdings_review: HoldingsReview | None = None
+        self._review_deadline = 0.0
 
     def product_id(self) -> str | None:
         try:
@@ -134,6 +138,7 @@ class DKBProbeController:
             if self._holdings_session is not None:
                 self._holdings_session.close()
                 self._holdings_session = None
+            self._holdings_review = None
             self.holdings_state_file.unlink(missing_ok=True)
         # Capability evidence belongs to the registration identity that produced it.
         # Remove any previous result before changing that identity so stale BPD data
@@ -448,7 +453,25 @@ class DKBProbeController:
         except (KeyError, TypeError, ValueError) as err:
             raise RuntimeError("Stored DKB holdings research state is invalid") from err
 
-    def run_holdings_observation(self, user_id: str, pin: str) -> HoldingsObservation:
+    def holdings_review(self) -> HoldingsReview | None:
+        with self._lock:
+            if self._holdings_review is not None and time.monotonic() >= self._review_deadline:
+                self._holdings_review = None
+            return self._holdings_review
+
+    def clear_holdings_review(self) -> None:
+        with self._lock:
+            self._holdings_review = None
+
+    def _capture_review(self, rows: list[tuple[ReviewRow, ...]],
+                        snapshot: PortfolioSnapshot | None, result: HoldingsObservation) -> None:
+        if result.outcome == "retrieved" and rows:
+            with self._lock:
+                self._holdings_review = build_review(snapshot, result.observed_at, rows[0])
+                self._review_deadline = time.monotonic() + 300
+
+    def run_holdings_observation(self, user_id: str, pin: str,
+                                 csv_snapshot: PortfolioSnapshot | None = None) -> HoldingsObservation:
         product_id = self.product_id()
         if product_id is None:
             raise ValueError("FinTS registration required")
@@ -458,7 +481,10 @@ class DKBProbeController:
             self._probe_in_progress = True
         try:
             self.holdings_state_file.unlink(missing_ok=True)
-            result, session = begin_holdings_observation(product_id, user_id, pin)
+            self.clear_holdings_review()
+            rows: list[tuple[ReviewRow, ...]] = []
+            result, session = begin_holdings_observation(product_id, user_id, pin, rows.append)
+            self._capture_review(rows, csv_snapshot, result)
             if session is not None:
                 with self._lock:
                     self._holdings_session = session
@@ -471,7 +497,8 @@ class DKBProbeController:
             with self._lock:
                 self._probe_in_progress = False
 
-    def continue_holdings_observation(self, tan: str = "") -> HoldingsObservation:
+    def continue_holdings_observation(self, tan: str = "",
+                                      csv_snapshot: PortfolioSnapshot | None = None) -> HoldingsObservation:
         with self._lock:
             session = self._holdings_session
             if session is None or time.monotonic() >= self._holdings_deadline:
@@ -481,7 +508,9 @@ class DKBProbeController:
                 raise ValueError("FinTS research is already running")
             self._probe_in_progress = True
         try:
-            result, pending = continue_holdings_observation(session, tan)
+            rows: list[tuple[ReviewRow, ...]] = []
+            result, pending = continue_holdings_observation(session, tan, rows.append)
+            self._capture_review(rows, csv_snapshot, result)
             with self._lock:
                 self._holdings_session = pending
             if pending is None:
@@ -596,6 +625,7 @@ class DKBIngressHandler(BaseHTTPRequestHandler):
                 if not self.app_server.gateway_state.refresh(trigger="manual"):
                     self.app_server.csv_provider.replace_snapshot(previous)
                     raise DkbCsvImportError("Imported DKB CSV batch could not be activated")
+                self.app_server.controller.clear_holdings_review()
                 self.app_server.last_import_notice = (
                     "accepted",
                     f"DKB CSV batch accepted: {summary.position_count} positions from "
@@ -720,7 +750,8 @@ class DKBIngressHandler(BaseHTTPRequestHandler):
                 self._empty(HTTPStatus.BAD_REQUEST)
                 return
             try:
-                self.app_server.controller.run_holdings_observation(form["user_id"], form["pin"])
+                self.app_server.controller.run_holdings_observation(
+                    form["user_id"], form["pin"], self.app_server.csv_provider.holdings_snapshot)
             except ValueError:
                 self._empty(HTTPStatus.BAD_REQUEST)
                 return
@@ -737,7 +768,8 @@ class DKBIngressHandler(BaseHTTPRequestHandler):
                 self._empty(HTTPStatus.BAD_REQUEST)
                 return
             try:
-                self.app_server.controller.continue_holdings_observation(form["tan"])
+                self.app_server.controller.continue_holdings_observation(
+                    form["tan"], self.app_server.csv_provider.holdings_snapshot)
             except ValueError:
                 self._empty(HTTPStatus.BAD_REQUEST)
                 return
@@ -912,12 +944,17 @@ class DKBIngressHandler(BaseHTTPRequestHandler):
                 f'<input type="hidden" name="csrf" value="{csrf}">{holdings_tan}'
                 '<br><button type="submit">Check or complete bank approval</button></form>'
             )
+        review = controller.holdings_review()
+        review_html = (render_review(review) if review is not None else
+                       '<p>Transient position detail has expired or is unavailable.</p>'
+                       if holdings_result is not None and holdings_result.outcome == "retrieved" else '')
         holdings_html = (
             '<section class="mode-card research"><h2>Read-only holdings retrieval research</h2>'
             f'<p>{holdings_summary}</p>'
             '<p class="small">This is a one-shot HKWPD research request for exactly one UPD-authorized depot. '
             'The App retains only an outcome, eligible-depot count, holdings count, numeric return codes and timestamp. '
-            'No position, account number, identifier, valuation, response body or credentials are saved. '
+            'Position detail is displayed only in the transient admin review after retrieval; '
+            'no FinTS position, account number, identifier, valuation, response body or credentials are persisted. '
             'Multiple eligible depots stop without a request. DKB CSV remains the sole holdings source.</p>'
             '<form method="post" action="observe-holdings">'
             f'<input type="hidden" name="csrf" value="{csrf}">'
@@ -927,7 +964,7 @@ class DKBIngressHandler(BaseHTTPRequestHandler):
             '<input id="holdings-pin" name="pin" type="password" maxlength="256" autocomplete="off" required><br>'
             f'<button type="submit" {"disabled" if product is None or pending or holdings_pending else ""}>'
             'Observe read-only holdings response</button></form>'
-            f'{holdings_approval}</section>'
+            f'{holdings_approval}{review_html}</section>'
         )
         authority_html = render_acquisition_authority(
             self.app_server.csv_provider.acquisition_control,

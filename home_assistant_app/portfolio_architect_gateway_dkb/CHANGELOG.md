@@ -1,3 +1,7 @@
+## 1.64.4
+
+- Show bounded transient CSV and FinTS position details separately in admin Ingress for human review; expire detail after five minutes. Do not persist FinTS positions or change CSV authority.
+
 ## 1.64.3
 
 - Fix the one-shot HKWPD account conversion by supplying DKB's verified BIC to PyFinTS for its country derivation; the request still uses only a single UPD-authorized depot.

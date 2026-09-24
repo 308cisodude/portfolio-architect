@@ -1,3 +1,7 @@
+## v1.64.4
+
+After a successful read-only HKWPD observation, admin Ingress temporarily displays separate DKB CSV and FinTS tables with ISIN, quantity, value, currency availability and source timing. This is a five-minute in-memory view for human review; no automatic equivalence judgment or acquisition switch occurs. The CSV export has a date only, and PyFinTS does not expose the currency for its total holding value.
+
 ## v1.64.3
 
 The read-only HKWPD probe now supplies DKB's verified BIC to PyFinTS when converting its one UPD-authorized depot. This corrects the local `TypeError` observed in v1.64.2. The BIC is used for library account conversion; account identifiers and holdings stay transient.
