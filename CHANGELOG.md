@@ -1,3 +1,7 @@
+## 1.65.0
+
+- Add a bounded in-memory DKB FinTS shadow snapshot: normalize the explicit bank `:35B:` ISIN, reject parser/bank conflicts, show projection completeness and five-minute refresh/approval state in responsive admin cards. CSV holdings and cash remain authoritative; no background refresh or credential storage.
+
 ## 1.64.5
 
 - Show the bounded bank instrument field and `HOLD` total-value currency in the transient DKB admin review before PyFinTS discards them. Keep unit price currency distinct, improve table layout, and retain CSV authority and research-only scope.

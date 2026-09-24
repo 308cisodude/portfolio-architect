@@ -13,6 +13,7 @@ from .models import PortfolioSnapshot, canonical_decimal
 MAX_REVIEW_ROWS = 64
 MAX_RAW_RESPONSE_BYTES = 1_048_576
 _ISIN = re.compile(r"^[A-Z]{2}[A-Z0-9]{9}[0-9]$")
+_BANK_ISIN = re.compile(r"^ISIN\s+([A-Z]{2}[A-Z0-9]{9}[0-9])(?=$|[| ])")
 _TOTAL_CURRENCY = re.compile(r"^:19A::HOLD//([A-Z]{3})[0-9]+,[0-9]+(?:$|[^0-9])")
 _SYMBOL = re.compile(r"^[A-Z]{3}$")
 _MAX_NUMBER = Decimal("1000000000")
@@ -27,6 +28,8 @@ class ReviewRow:
     price_date: str
     instrument_line: str = "unavailable"
     unit_price_currency: str = "unavailable"
+    parsed_isin: str = "unavailable"
+    isin_source: str = "unavailable"
 
 
 @dataclass(frozen=True, slots=True)
@@ -124,7 +127,18 @@ def project_fints(holdings: list[Any] | tuple[Any, ...],
     evidence = raw if raw is not None and len(raw) == len(holdings) else None
     for index, item in enumerate(holdings):
         identifier = getattr(item, "ISIN", None)
-        isin = identifier.upper() if isinstance(identifier, str) and _ISIN.fullmatch(identifier.upper()) else "unavailable"
+        parsed_isin = identifier.upper() if isinstance(identifier, str) and _ISIN.fullmatch(identifier.upper()) else "unavailable"
+        marker = evidence[index].instrument_line if evidence is not None else "unavailable"
+        match = _BANK_ISIN.match(marker)
+        bank_isin = match.group(1) if match else "unavailable"
+        if parsed_isin != "unavailable" and bank_isin != "unavailable" and parsed_isin != bank_isin:
+            isin, source = "unavailable", "conflicting bank and parser identifiers"
+        elif bank_isin != "unavailable":
+            isin, source = bank_isin, "bank 35B field" if parsed_isin == "unavailable" else "bank and parser agree"
+        elif parsed_isin != "unavailable":
+            isin, source = parsed_isin, "PyFinTS parser"
+        else:
+            isin, source = "unavailable", "unavailable"
         price_date = getattr(item, "valuation_date", None)
         symbol = getattr(item, "value_symbol", None)
         rows.append(ReviewRow(
@@ -135,6 +149,8 @@ def project_fints(holdings: list[Any] | tuple[Any, ...],
             price_date=price_date.isoformat() if type(price_date) is date else "unavailable",
             instrument_line=evidence[index].instrument_line if evidence is not None else "unavailable",
             unit_price_currency=symbol if isinstance(symbol, str) and _SYMBOL.fullmatch(symbol) else "unavailable",
+            parsed_isin=parsed_isin,
+            isin_source=source,
         ))
     return tuple(rows)
 
@@ -159,30 +175,41 @@ def build_review(snapshot: PortfolioSnapshot | None, observed_at: str,
 
 
 def render_review(review: HoldingsReview) -> str:
-    def table(label: str, time_label: str, as_of: str, rows: tuple[ReviewRow, ...] | None) -> str:
+    def cards(label: str, time_label: str, as_of: str, rows: tuple[ReviewRow, ...] | None,
+              fints: bool) -> str:
         heading = f"<h4>{escape(label)}</h4><p>{escape(time_label)}: {escape(as_of)}</p>"
         if rows is None:
             return heading + f"<p>Position detail unavailable (missing source or over {MAX_REVIEW_ROWS} rows).</p>"
-        body = "".join(
-            "<tr>" + "".join(f"<th scope=\"row\">{escape(row.isin)}</th>" if index == 0 else
-                                  f"<td>{escape(value)}</td>" for index, value in enumerate((
-                row.isin, row.quantity, row.value, row.currency, row.price_date,
-                row.instrument_line, row.unit_price_currency,
-            ))) + "</tr>" for row in rows
-        )
-        return (heading + '<div style="overflow-x:auto"><table style="border-collapse:separate;border-spacing:.7rem .4rem;white-space:nowrap">'
-                '<thead><tr><th>Parsed ISIN</th><th>Quantity</th><th>Total value</th><th>Total currency</th>'
-                '<th>Price date</th><th>Bank instrument field</th><th>Unit price currency</th></tr></thead><tbody>'
-                + body + '</tbody></table></div>')
+        def field(name: str, value: str) -> str:
+            return (f'<div><dt class="small">{escape(name)}</dt>'
+                    f'<dd style="margin:0;overflow-wrap:anywhere">{escape(value)}</dd></div>')
+        body = []
+        for row in rows:
+            fields = [('Quantity', row.quantity), ('Total value', row.value), ('Total currency', row.currency)]
+            if fints:
+                fields += [('Identity evidence', row.isin_source), ('PyFinTS ISIN', row.parsed_isin),
+                           ('Bank instrument field', row.instrument_line),
+                           ('Price date', row.price_date), ('Unit price currency', row.unit_price_currency)]
+            body.append('<article style="border:1px solid #555;border-radius:8px;padding:.75rem;margin:.6rem 0">'
+                        f'<strong style="overflow-wrap:anywhere">ISIN: {escape(row.isin)}</strong>'
+                        '<dl style="display:grid;grid-template-columns:repeat(auto-fit,minmax(10rem,1fr));gap:.6rem 1rem">'
+                        + ''.join(field(name, value) for name, value in fields) + '</dl></article>')
+        return heading + (''.join(body) if body else '<p>No holdings returned.</p>')
+
+    normalized = sum(row.isin != "unavailable" and row.quantity != "unavailable" and
+                     row.value != "unavailable" and row.currency != "unavailable" for row in review.fints_rows)
+    summary = (f'<p><strong>Read-only shadow snapshot: {normalized}/{len(review.fints_rows)} '
+               'positions have bounded ISIN, quantity, total value and currency.</strong> '
+               'This is a projection count, not a CSV match or acquisition readiness decision.</p>')
 
     return ('<h3>Transient holdings evidence</h3><p>Review the two observations yourself. '
             'Different timestamps, trades or valuation methods can explain differences. '
             'The CSV snapshot may aggregate several depot exports; FinTS reads one authorized depot. '
             'The bank instrument field and total-value currency are shown only when a bounded FIN section can be read; '
             'the unit-price currency is a separate field and must not be used as the total-value currency. '
-            'This detail expires five minutes after retrieval and is never saved.</p>'
+            'This detail expires five minutes after retrieval and is never saved.</p>' + summary +
             '<div style="display:grid;grid-template-columns:minmax(0,1fr);gap:1rem">'
-            + '<div>' + table('DKB CSV (authoritative)', 'Export date (date only)',
-                              review.csv_as_of or 'unavailable', review.csv_rows) + '</div>'
-            + '<div>' + table('DKB FinTS (research only)', 'Observed UTC',
-                              review.fints_observed_at, review.fints_rows) + '</div></div>')
+            + '<div>' + cards('DKB CSV (authoritative)', 'Export date (date only)',
+                              review.csv_as_of or 'unavailable', review.csv_rows, False) + '</div>'
+            + '<div>' + cards('DKB FinTS (shadow research only)', 'Observed UTC',
+                              review.fints_observed_at, review.fints_rows, True) + '</div></div>')

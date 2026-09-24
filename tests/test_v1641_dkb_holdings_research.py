@@ -283,3 +283,44 @@ def test_instance_local_hiwpd_hook_observes_only_bank_response(monkeypatch, tmp_
     assert review.fints_rows[0].currency == "EUR"
     persisted = controller.holdings_state_file.read_text()
     assert "TESTWKN" not in persisted and "282.85" not in persisted
+
+
+def test_shadow_projection_uses_explicit_bank_isin_and_rejects_conflicts():
+    review_module = importlib.import_module(f"{NAME}.dkb_holdings_review")
+    raw = (review_module.RawPositionEvidence(
+        "ISIN IE00BJ0KDQ92|/DE/A1XB5U|XTR (IE) - MSCI WORLD", "EUR"),)
+    holding = type("Holding", (), {"ISIN": None, "pieces": 2.0, "total_value": 281.58,
+                                   "value_symbol": None, "valuation_date": None})()
+    rows = review_module.project_fints([holding], raw)
+    assert (rows[0].isin, rows[0].parsed_isin, rows[0].isin_source) == (
+        "IE00BJ0KDQ92", "unavailable", "bank 35B field")
+    assert (rows[0].quantity, rows[0].value, rows[0].currency) == ("2.0", "281.58", "EUR")
+    html = review_module.render_review(review_module.HoldingsReview(
+        "2026-09-24", "2026-09-24T19:14:05+00:00", None, rows))
+    assert "Read-only shadow snapshot: 1/1" in html
+    assert "<table" not in html and "overflow-wrap:anywhere" in html
+    conflicting = type("Holding", (), {"ISIN": "IE00BTJRMP35", "pieces": 2,
+                                       "total_value": 281.58, "value_symbol": None,
+                                       "valuation_date": None})()
+    result = review_module.project_fints([conflicting], raw)[0]
+    assert result.isin == "unavailable"
+    assert result.isin_source == "conflicting bank and parser identifiers"
+    assert result.parsed_isin == "IE00BTJRMP35"
+    wkn_only = (review_module.RawPositionEvidence("/DE/A1XB5U|Synthetic", "EUR"),)
+    assert review_module.project_fints([holding], wkn_only)[0].isin == "unavailable"
+
+
+def test_shadow_window_expires_without_persisting_position_detail(tmp_path):
+    _, app = modules()
+    review_module = importlib.import_module(f"{NAME}.dkb_holdings_review")
+    controller = app.DKBProbeController(tmp_path)
+    row = review_module.ReviewRow("IE00BJ0KDQ92", "2", "281.58", "EUR", "unavailable")
+    controller._holdings_review = review_module.HoldingsReview(None, "2026-09-24T19:14:05+00:00", None, (row,))
+    import time
+    controller._review_deadline = time.monotonic() + 30
+    assert 1 <= controller.holdings_review_seconds_remaining() <= 30
+    assert controller.holdings_review() is not None
+    controller._review_deadline = 0
+    assert controller.holdings_review_seconds_remaining() == 0
+    assert controller.holdings_review() is None
+    assert not controller.holdings_state_file.exists()
