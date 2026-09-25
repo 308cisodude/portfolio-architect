@@ -1,3 +1,7 @@
+## 1.65.3
+
+- Explain source freshness and execution blockers near the investment plan; show policy rule, observed and expected values for every active finding in the English and German dashboards. Preserve CSV authority and the research-only DKB FinTS shadows.
+
 ## 1.65.2
 
 - Add manual read-only DKB HKSAL booked-balance research with exact Girokonto selection, transient side-by-side CSV review, and a bounded App-private observation shadow. CSV remains authoritative; no planner source switch.

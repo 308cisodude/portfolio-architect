@@ -1,3 +1,9 @@
+# Portfolio Architect v1.65.3 release notes
+
+See [v1.65.3 visible plan and policy evidence](RELEASE-NOTES-1.65.3.md) and [upgrade guide](UPGRADE-1.65.3.md).
+
+## Previous release
+
 # Portfolio Architect v1.65.2 release notes
 
 See [v1.65.2 read-only DKB cash research](RELEASE-NOTES-1.65.2.md) and [upgrade guide](UPGRADE-1.65.2.md).

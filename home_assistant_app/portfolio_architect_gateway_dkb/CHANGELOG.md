@@ -1,3 +1,7 @@
+## 1.65.3
+
+- Align App version with the dashboard presentation release; DKB FinTS research and CSV authority are unchanged.
+
 ## 1.65.2
 
 - Add one-shot EUR Girokonto booked-balance research and private shadow status while retaining DKB CSV cash authority.

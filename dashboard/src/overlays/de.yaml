@@ -4,52 +4,52 @@ operations:
   path: /path
   value: portfolio-architekt
 - op: add
-  path: /sections/0/cards/10/state_content
+  path: /sections/0/cards/14/state_content
   value: display_state_de
 - op: replace
-  path: /sections/0/cards/11/entity
+  path: /sections/0/cards/15/entity
   value: sensor.portfolio_architect_plan_actionability
-- op: add
-  path: /sections/0/cards/11/state_content
-  value: recommended_total_display_de
-- op: replace
-  path: /sections/0/cards/12/entity
-  value: sensor.portfolio_architect_plan_actionability
-- op: add
-  path: /sections/0/cards/12/state_content
-  value: purchase_count_display_de
 - op: add
   path: /sections/0/cards/15/state_content
-  value: display_state_de
+  value: recommended_total_display_de
+- op: replace
+  path: /sections/0/cards/16/entity
+  value: sensor.portfolio_architect_plan_actionability
 - op: add
   path: /sections/0/cards/16/state_content
+  value: purchase_count_display_de
+- op: add
+  path: /sections/0/cards/19/state_content
   value: display_state_de
 - op: add
-  path: /sections/0/cards/18/state_content
+  path: /sections/0/cards/20/state_content
   value: display_state_de
 - op: add
-  path: /sections/0/cards/8/state_content
+  path: /sections/0/cards/22/state_content
   value: display_state_de
 - op: add
-  path: /sections/0/cards/9/state_content
+  path: /sections/0/cards/12/state_content
+  value: display_state_de
+- op: add
+  path: /sections/0/cards/13/state_content
   value: display_state_de
 - op: replace
   path: /sections/3/cards/37/state_content
   value: provider_summary_de
 - op: add
-  path: /sections/0/cards/11/tap_action/entity
+  path: /sections/0/cards/15/tap_action/entity
   value: sensor.portfolio_architect_recommended_total
 - op: add
-  path: /sections/0/cards/12/tap_action/entity
+  path: /sections/0/cards/16/tap_action/entity
   value: sensor.portfolio_architect_purchase_count
 - op: replace
-  path: /sections/0/cards/26/card/content
+  path: /sections/0/cards/30/card/content
   value: '{{ state_attr(''sensor.portfolio_architect_execution_path'', ''markdown_de'') or '''' }}'
 - op: replace
   path: /sections/0/cards/6/card/state_content
   value: plan_actionability_detail_de
 - op: add
-  path: /sections/0/cards/7/card/state_content
+  path: /sections/0/cards/11/card/state_content
   value: display_state_de
 - op: add
   path: /sections/3/cards/12/card/state_content
@@ -109,14 +109,14 @@ operations:
   path: /sections/3/cards/8/state_content/0
   value: display_state_de
 - op: replace
-  path: /sections/0/cards/19/card/state_content/0
+  path: /sections/0/cards/23/card/state_content/0
   value: display_state_de
 - op: replace
-  path: /sections/0/cards/19/card/state_content/1
+  path: /sections/0/cards/23/card/state_content/1
   value: cash_context_de
 - op: replace
-  path: /sections/0/cards/24/card/state_content/0
+  path: /sections/0/cards/28/card/state_content/0
   value: display_state_de
 - op: replace
-  path: /sections/0/cards/24/card/state_content/1
+  path: /sections/0/cards/28/card/state_content/1
   value: cash_context_de

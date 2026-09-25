@@ -117,6 +117,72 @@ cards:
 - type: conditional
   conditions:
   - condition: state
+    entity: sensor.portfolio_architect_plan_actionability
+    state: not_actionable
+  card:
+    type: markdown
+    title:
+      $i18n: why_plan_not_ready
+    content:
+      $i18n: plan_source_blocker_content
+    entity_id: sensor.portfolio_architect_plan_actionability
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_execution_state
+    state: no_eligible_purchase
+  - condition: state
+    entity: sensor.portfolio_architect_plan_actionability
+    state: not_ready
+  card:
+    type: markdown
+    title:
+      $i18n: why_plan_not_ready
+    content:
+      $i18n: no_eligible_detail
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_execution_state
+    state: reserve_unavailable
+  - condition: state
+    entity: sensor.portfolio_architect_plan_actionability
+    state: not_ready
+  card:
+    type: markdown
+    title:
+      $i18n: why_plan_not_ready
+    content:
+      $i18n: reserve_detail
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
+    entity: sensor.portfolio_architect_execution_state
+    state: deferred_for_cost_efficiency
+  - condition: state
+    entity: sensor.portfolio_architect_plan_actionability
+    state: not_ready
+  card:
+    type: markdown
+    title:
+      $i18n: why_plan_not_ready
+    content:
+      $i18n: deferred_detail
+  grid_options:
+    columns: full
+    rows: auto
+- type: conditional
+  conditions:
+  - condition: state
     entity: sensor.portfolio_architect_plan_change
     state_not: baseline_established
   - condition: state

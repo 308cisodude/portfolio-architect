@@ -40,7 +40,21 @@ strings:
   overdue_review: Overdue review
   exception_review: Exception review
   optimisation_opportunities: Optimisation opportunities
+  why_plan_not_ready: Why the plan is not ready
+  plan_source_blocker_content: '**Source evidence blocks this plan:** {{ state_attr("sensor.portfolio_architect_plan_actionability", "plan_actionability_detail") | default("Unavailable", true) }}. Refresh the indicated authoritative source and evaluate the plan again.'
+  no_eligible_detail: Current policy and execution routes produced no eligible purchase. Review the policy findings and route evidence below.
+  reserve_detail: Authorized investment cash is unavailable. Check the authoritative cash statement and cash authorization.
+  deferred_detail: The purchase is deferred by the execution cost policy. Review the execution path.
   active_policy_findings: Active policy findings
+  policy_findings_detail: Policy findings with observed and expected evidence
+  policy_findings_content: |
+    {% set findings = state_attr('sensor.portfolio_architect_presentation_model', 'active_policy_findings') or [] %}
+    {% set labels = {'savings_plan_required': 'Savings plan route required', 'free_savings_plan_preferred': 'Zero-fee savings plan preferred', 'metadata': 'Instrument metadata required', 'ucits_required': 'UCITS fund required', 'accumulating_preferred': 'Accumulating class preferred', 'ireland_preferred': 'Irish domicile preferred', 'max_ter_pct': 'TER exceeds policy limit', 'minimum_fund_size_eur': 'Fund size below threshold or unverified'} %}
+    {% for finding in findings %}
+    **{{ finding.fund_name | e }}** · {{ labels.get(finding.rule, finding.rule | replace('_', ' ')) }} · {{ finding.state | replace('_', ' ') }}  
+    Observed: `{{ finding.observed }}`; expected: `{{ finding.expected }}`. {% if finding.rule == "savings_plan_required" and finding.state == "error" %}Verify the route availability and fee with the provider, then update its dated evidence.{% endif %}
+    
+    {% endfor %}
   target_architecture: Target architecture
   coverage: Coverage
   architecture: Architecture

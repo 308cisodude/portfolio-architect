@@ -208,6 +208,16 @@ cards:
   grid_options:
     columns: full
     rows: auto
+- type: markdown
+  title:
+    $i18n: policy_findings_detail
+  content:
+    $i18n: policy_findings_content
+  entity_id: sensor.portfolio_architect_presentation_model
+  show_empty: false
+  grid_options:
+    columns: full
+    rows: auto
 - type: entity-filter
   entities:
   - entity: sensor.portfolio_architect_presentation_policy_001_finding

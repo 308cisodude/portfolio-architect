@@ -21,7 +21,7 @@ def test_reference_dashboard_does_not_render_the_aggregate_overview() -> None:
         source = path.read_text(encoding="utf-8")
         assert "sensor.portfolio_architect_allocation_overview" not in source, path
         if "type: markdown" in source.casefold():
-            assert "sensor.portfolio_architect_execution_path" in source, path
+            assert any(entity in source for entity in ("sensor.portfolio_architect_execution_path", "sensor.portfolio_architect_plan_actionability", "sensor.portfolio_architect_presentation_model")), path
 
 
 def test_release_tooling_cannot_republish_withdrawn_card_artifacts() -> None:

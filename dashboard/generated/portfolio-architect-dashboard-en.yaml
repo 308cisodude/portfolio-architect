@@ -119,6 +119,64 @@ views:
     - type: conditional
       conditions:
       - condition: state
+        entity: sensor.portfolio_architect_plan_actionability
+        state: not_actionable
+      card:
+        type: markdown
+        title: Why the plan is not ready
+        content: '**Source evidence blocks this plan:** {{ state_attr("sensor.portfolio_architect_plan_actionability", "plan_actionability_detail") | default("Unavailable", true) }}. Refresh the indicated authoritative source and evaluate the plan again.'
+        entity_id: sensor.portfolio_architect_plan_actionability
+      grid_options:
+        columns: full
+        rows: auto
+    - type: conditional
+      conditions:
+      - condition: state
+        entity: sensor.portfolio_architect_execution_state
+        state: no_eligible_purchase
+      - condition: state
+        entity: sensor.portfolio_architect_plan_actionability
+        state: not_ready
+      card:
+        type: markdown
+        title: Why the plan is not ready
+        content: Current policy and execution routes produced no eligible purchase. Review the policy findings and route evidence below.
+      grid_options:
+        columns: full
+        rows: auto
+    - type: conditional
+      conditions:
+      - condition: state
+        entity: sensor.portfolio_architect_execution_state
+        state: reserve_unavailable
+      - condition: state
+        entity: sensor.portfolio_architect_plan_actionability
+        state: not_ready
+      card:
+        type: markdown
+        title: Why the plan is not ready
+        content: Authorized investment cash is unavailable. Check the authoritative cash statement and cash authorization.
+      grid_options:
+        columns: full
+        rows: auto
+    - type: conditional
+      conditions:
+      - condition: state
+        entity: sensor.portfolio_architect_execution_state
+        state: deferred_for_cost_efficiency
+      - condition: state
+        entity: sensor.portfolio_architect_plan_actionability
+        state: not_ready
+      card:
+        type: markdown
+        title: Why the plan is not ready
+        content: The purchase is deferred by the execution cost policy. Review the execution path.
+      grid_options:
+        columns: full
+        rows: auto
+    - type: conditional
+      conditions:
+      - condition: state
         entity: sensor.portfolio_architect_plan_change
         state_not: baseline_established
       - condition: state
@@ -1000,6 +1058,14 @@ views:
           show_state: true
           tap_action:
             action: more-info
+      grid_options:
+        columns: full
+        rows: auto
+    - type: markdown
+      title: Policy findings with observed and expected evidence
+      content: "{% set findings = state_attr('sensor.portfolio_architect_presentation_model', 'active_policy_findings') or [] %}\n{% set labels = {'savings_plan_required': 'Savings plan route required', 'free_savings_plan_preferred': 'Zero-fee savings plan preferred', 'metadata': 'Instrument metadata required', 'ucits_required': 'UCITS fund required', 'accumulating_preferred': 'Accumulating class preferred', 'ireland_preferred': 'Irish domicile preferred', 'max_ter_pct': 'TER exceeds policy limit', 'minimum_fund_size_eur': 'Fund size below threshold or unverified'} %}\n{% for finding in findings %}\n**{{ finding.fund_name | e }}** · {{ labels.get(finding.rule, finding.rule | replace('_', ' ')) }} · {{ finding.state | replace('_', ' ') }}  \nObserved: `{{ finding.observed }}`; expected: `{{ finding.expected }}`. {% if finding.rule == \"savings_plan_required\" and finding.state == \"error\" %}Verify the route availability and fee with the provider, then update its dated evidence.{% endif %}\n\n{% endfor %}\n"
+      entity_id: sensor.portfolio_architect_presentation_model
+      show_empty: false
       grid_options:
         columns: full
         rows: auto

@@ -1,3 +1,7 @@
+## v1.65.3
+
+This version aligns the DKB Gateway App with the dashboard presentation release. FinTS cash and holdings research, private shadow retention, and CSV authority are unchanged.
+
 ## v1.65.2
 
 Manual DKB FinTS HKSAL booked-balance research selects one EUR Girokonto by its final four IBAN digits. The admin review compares the booked balance and CSV Kontostand for five minutes. App-private shadow status records observation and bank dates; CSV remains the sole planner cash source. See `docs/UPGRADE-1.65.2.md`.

@@ -48,7 +48,7 @@ def test_sections_use_native_responsive_cards():
         types={card.get('type') for card in cards if isinstance(card,dict)}
         # v1.42.0 deliberately adds one core Markdown renderer per locale for
         # integration-owned execution-path presentation; routing logic stays out of Lovelace.
-        assert sum(1 for card in cards if card.get('type') == 'markdown') == 1
+        assert sum(1 for card in cards if card.get('type') == 'markdown') == 6
         assert 'entities' in types
         assert 'entity-filter' in types
         # No nested fixed-column grid cards; only Sections themselves use grid.
