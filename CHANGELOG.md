@@ -1,3 +1,7 @@
+## 1.65.2
+
+- Add manual read-only DKB HKSAL booked-balance research with exact Girokonto selection, transient side-by-side CSV review, and a bounded App-private observation shadow. CSV remains authoritative; no planner source switch.
+
 ## 1.65.1
 
 - Persist bounded normalized DKB FinTS holdings shadow evidence after a complete manual retrieval, with a 24-hour freshness state; preserve the previous shadow on failed or incomplete refresh. DKB CSV remains authoritative.
