@@ -265,7 +265,7 @@ def test_reference_dashboard_only_renders_integration_owned_execution_text() -> 
     source = DASHBOARD.read_text(encoding="utf-8").casefold()
     for forbidden in ("auto-entities", "card-mod", "custom:", "javascript"):
         assert forbidden not in source
-    assert source.count("type: markdown") == 2
+    assert source.count("type: markdown") == 12
 
 
 def test_execution_path_entity_is_bilingual_bounded_and_wire_schemas_stay_unchanged() -> None:

@@ -40,7 +40,21 @@ strings:
   overdue_review: Überfällige Prüfung
   exception_review: Ausnahmeprüfung
   optimisation_opportunities: Optimierungsmöglichkeiten
+  why_plan_not_ready: Grund der fehlenden Umsetzbarkeit
+  plan_source_blocker_content: '**Quelldaten verhindern die Umsetzung:** {{ state_attr("sensor.portfolio_architect_plan_actionability", "plan_actionability_detail_de") | default("Nicht verfügbar", true) }}. Aktualisieren Sie die angegebene maßgebliche Quelle und bewerten Sie den Plan erneut.'
+  no_eligible_detail: Mit der aktuellen Richtlinie und den Ausführungswegen ist kein Kauf geeignet. Prüfen Sie die Richtlinienfeststellungen und die Nachweise der Wege unten.
+  reserve_detail: Freigegebenes Anlageguthaben ist nicht verfügbar. Prüfen Sie den maßgeblichen Kassenbeleg und die Freigabe.
+  deferred_detail: Der Kauf wird wegen der Kostenvorgaben aufgeschoben. Prüfen Sie den Ausführungspfad.
   active_policy_findings: Aktive Richtlinienfeststellungen
+  policy_findings_detail: Richtlinienfeststellungen mit beobachtetem und erwartetem Nachweis
+  policy_findings_content: |
+    {% set findings = state_attr('sensor.portfolio_architect_presentation_model', 'active_policy_findings') or [] %}
+    {% set labels = {'savings_plan_required': 'Sparplanweg erforderlich', 'free_savings_plan_preferred': 'Gebührenfreier Sparplan bevorzugt', 'metadata': 'Instrumentendaten erforderlich', 'ucits_required': 'UCITS-Fonds erforderlich', 'accumulating_preferred': 'Thesaurierende Anteilsklasse bevorzugt', 'ireland_preferred': 'Irischer Fondsdomizil bevorzugt', 'max_ter_pct': 'TER über Richtliniengrenze', 'minimum_fund_size_eur': 'Fondsvolumen unter Grenze oder ungeprüft'} %}
+    {% for finding in findings %}
+    **{{ finding.fund_name | e }}** · {{ labels.get(finding.rule, finding.rule | replace('_', ' ')) }} · {{ finding.state | replace('_', ' ') }}  
+    Beobachtet: `{{ finding.observed }}`; erwartet: `{{ finding.expected }}`. {% if finding.rule == "savings_plan_required" and finding.state == "error" %}Prüfen Sie Verfügbarkeit und Gebühr beim Anbieter und aktualisieren Sie den datierten Nachweis.{% endif %}
+    
+    {% endfor %}
   target_architecture: Zielarchitektur
   coverage: Abdeckung
   architecture: Architektur

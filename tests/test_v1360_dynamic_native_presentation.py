@@ -90,6 +90,11 @@ def test_presentation_schema2_slots_reconcile_with_validated_current_state() -> 
     assert [item["presentation_slot"] for item in result["active_policy_findings"]] == list(
         range(1, result["active_policy_finding_count"] + 1)
     )
+    for item in result["active_policy_findings"]:
+        finding = data.policy.findings[item["finding_key"]]
+        assert item["fund_name"] == finding.fund_name
+        assert item["observed"] == finding.attributes["observed"]
+        assert item["expected"] == finding.attributes["expected"]
 
 
 def test_reference_dashboard_has_no_instrument_specific_inventory() -> None:
@@ -151,14 +156,14 @@ def test_presentation_slots_are_explicitly_ephemeral_diagnostic_projection() -> 
 
 
 def test_current_version_metadata_is_aligned() -> None:
-    assert 'version = "1.65.2"' in (ROOT / "pyproject.toml").read_text()
-    assert '"version": "1.65.2"' in (COMPONENT / "manifest.json").read_text()
-    assert 'VERSION: Final = "1.65.2"' in (COMPONENT / "const.py").read_text()
-    assert '__version__ = "1.65.2"' in (COMPONENT / "engine" / "__init__.py").read_text()
+    assert 'version = "1.65.3"' in (ROOT / "pyproject.toml").read_text()
+    assert '"version": "1.65.3"' in (COMPONENT / "manifest.json").read_text()
+    assert 'VERSION: Final = "1.65.3"' in (COMPONENT / "const.py").read_text()
+    assert '__version__ = "1.65.3"' in (COMPONENT / "engine" / "__init__.py").read_text()
     for app in (
         "portfolio_architect_gateway_comdirect",
         "portfolio_architect_gateway_dkb",
         "portfolio_architect_gateway_trade_republic",
     ):
         config = yaml.safe_load((ROOT / "home_assistant_app" / app / "config.yaml").read_text())
-        assert config["version"] == "1.65.2"
+        assert config["version"] == "1.65.3"

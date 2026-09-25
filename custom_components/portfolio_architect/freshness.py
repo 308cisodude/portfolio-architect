@@ -207,26 +207,25 @@ def stale_summary(
     blockers = tuple(rows)
     if not blockers:
         return "Keine" if german else "None"
-    first = blockers[0]
-    label = _bounded_text(first.get("label"), fallback="Source", maximum=80)
-    status = first.get("timestamp_status")
-    if status == "invalid":
-        text = f"{label} · ungültiger Zeitstempel" if german else f"{label} · invalid timestamp"
-    elif status == "future":
-        text = f"{label} · Zeitstempel liegt in der Zukunft" if german else f"{label} · timestamp is in the future"
-    else:
-        age = first.get("age_seconds")
-        threshold = first.get("threshold_hours")
-        age_text = _age_text(age, german=german)
-        limit_text = _limit_text(threshold, german=german)
-        if german:
-            text = f"{label} · {age_text} alt · Grenze {limit_text}"
+    descriptions = []
+    for blocker in blockers[:3]:
+        label = _bounded_text(blocker.get("label"), fallback="Source", maximum=48)
+        status = blocker.get("timestamp_status")
+        if status == "invalid":
+            text = f"{label} · ungültiger Zeitstempel" if german else f"{label} · invalid timestamp"
+        elif status == "future":
+            text = f"{label} · Zeitstempel liegt in der Zukunft" if german else f"{label} · timestamp is in the future"
         else:
-            text = f"{label} · {age_text} old · limit {limit_text}"
-    if len(blockers) > 1:
-        suffix = f" · +{len(blockers) - 1} weitere" if german else f" · +{len(blockers) - 1} more"
-        text += suffix
-    return _bounded_summary(text)
+            age_text = _age_text(blocker.get("age_seconds"), german=german)
+            limit_text = _limit_text(blocker.get("threshold_hours"), german=german)
+            text = (
+                f"{label} · {age_text} alt · Grenze {limit_text}"
+                if german else f"{label} · {age_text} old · limit {limit_text}"
+            )
+        descriptions.append(text)
+    if len(blockers) > 3:
+        descriptions.append(f"+{len(blockers) - 3} weitere" if german else f"+{len(blockers) - 3} more")
+    return _bounded_summary("; ".join(descriptions))
 
 
 def _parse_timestamp(value: Any) -> datetime | None:

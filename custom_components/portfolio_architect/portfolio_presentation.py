@@ -83,7 +83,10 @@ def build_portfolio_presentation(
             "slot_key": f"policy_{slot:03d}",
             "finding_key": finding.key,
             "target_id": finding.fund_id,
+            "fund_name": finding.fund_name,
             "rule": finding.rule,
+            "observed": finding.attributes["observed"],
+            "expected": finding.attributes["expected"],
             "state": finding.entity_state,
         }
         for slot, finding in enumerate(ordered_non_pass_findings(data), start=1)

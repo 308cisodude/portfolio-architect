@@ -242,7 +242,7 @@ def test_multiple_cost_aware_orders_never_exceed_available_reserve() -> None:
 def test_v1160_dashboard_keeps_native_cost_aware_interaction_contract() -> None:
     dashboard = (ROOT / "dashboard" / "bilingual-dashboard.yaml").read_text()
 
-    assert dashboard.count("type: markdown") == 2
+    assert dashboard.count("type: markdown") == 12
     assert "sensor.portfolio_architect_execution_path" in dashboard
     assert "custom:" not in dashboard
     for entity in (

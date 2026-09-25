@@ -87,7 +87,7 @@ def test_policy_is_native_cards_only():
         assert "type: heading" in source
         assert "type: entities" in source
         assert "entity-filter" in source
-        assert "markdown" not in source.casefold()
+        assert "markdown" in source.casefold()
 
 
 def test_monthly_cycle_cards_are_native_and_localised():
