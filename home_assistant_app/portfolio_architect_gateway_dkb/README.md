@@ -1,3 +1,7 @@
+## v1.65.2
+
+Manual DKB FinTS HKSAL booked-balance research selects one EUR Girokonto by its final four IBAN digits. The admin review compares the booked balance and CSV Kontostand for five minutes. App-private shadow status records observation and bank dates; CSV remains the sole planner cash source. See `docs/UPGRADE-1.65.2.md`.
+
 ## v1.65.1
 
 Manual DKB FinTS holdings research can now retain a bounded normalized App-private shadow for 24 hours; CSV stays authoritative. See `docs/UPGRADE-1.65.1.md`.

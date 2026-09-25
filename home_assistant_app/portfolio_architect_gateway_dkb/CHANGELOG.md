@@ -1,3 +1,7 @@
+## 1.65.2
+
+- Add one-shot EUR Girokonto booked-balance research and private shadow status while retaining DKB CSV cash authority.
+
 ## 1.65.1
 
 - Persist only complete normalized manual FinTS holdings shadow rows in App-private state, with a 24-hour freshness signal. CSV remains authoritative.

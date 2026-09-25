@@ -26,6 +26,9 @@ from .acquisition_presentation import ACQUISITION_AUTHORITY_CSS, render_acquisit
 from .dkb_authenticated import AuthObservation, AuthSession, begin_authenticated_observation, continue_authenticated_observation
 from .dkb_holdings_research import HoldingsObservation, HoldingsSession, begin_holdings_observation, continue_holdings_observation
 from .dkb_holdings_review import HoldingsReview, ReviewRow, build_review, render_review
+from .dkb_cash_research import (BookedBalance, CashObservation, CashSession,
+                                begin_cash_observation, continue_cash_observation,
+                                save_shadow as save_cash_shadow, shadow_summary as cash_shadow_summary)
 from .dkb_shadow import project_shadow, save_shadow, shadow_summary
 from .dkb_cash_csv import DkbCashCsvImportError, MAX_CASH_CSV_BYTES, parse_dkb_cash_csv
 from .dkb_csv import (
@@ -109,6 +112,8 @@ class DKBProbeController:
         self.auth_state_file = data_directory / AUTH_STATE_FILE_NAME
         self.holdings_state_file = data_directory / "dkb-fints-holdings-observation.json"
         self.shadow_file = data_directory / "dkb-fints-holdings-shadow.json"
+        self.cash_research_file = data_directory / "dkb-fints-cash-observation.json"
+        self.cash_shadow_file = data_directory / "dkb-fints-cash-shadow.json"
         self.csrf_token = secrets.token_urlsafe(32)
         self._lock = threading.RLock()
         self._probe_in_progress = False
@@ -118,6 +123,10 @@ class DKBProbeController:
         self._holdings_deadline = 0.0
         self._holdings_review: HoldingsReview | None = None
         self._review_deadline = 0.0
+        self._cash_session: CashSession | None = None
+        self._cash_deadline = 0.0
+        self._cash_review: tuple[Any, BookedBalance] | None = None
+        self._cash_review_deadline = 0.0
 
     def product_id(self) -> str | None:
         try:
@@ -140,6 +149,12 @@ class DKBProbeController:
             if self._holdings_session is not None:
                 self._holdings_session.close()
                 self._holdings_session = None
+            if self._cash_session is not None:
+                self._cash_session.close()
+                self._cash_session = None
+            self._cash_review = None
+            self.cash_research_file.unlink(missing_ok=True)
+            self.cash_shadow_file.unlink(missing_ok=True)
             self._holdings_review = None
             self.holdings_state_file.unlink(missing_ok=True)
             self.shadow_file.unlink(missing_ok=True)
@@ -226,7 +241,7 @@ class DKBProbeController:
         if product_id is None:
             return ProbeView("registration_required", "Configure a FinTS product registration number first.", None)
         with self._lock:
-            if self._probe_in_progress:
+            if self._probe_in_progress or self._auth_session is not None or self._holdings_session is not None or self._cash_session is not None:
                 return ProbeView("running", "A capability probe is already running.", None)
             self._probe_in_progress = True
         try:
@@ -360,7 +375,7 @@ class DKBProbeController:
         if product_id is None:
             raise ValueError("FinTS registration required")
         with self._lock:
-            if self._probe_in_progress or self._auth_session is not None or self._holdings_session is not None:
+            if self._probe_in_progress or self._auth_session is not None or self._holdings_session is not None or self._cash_session is not None:
                 raise ValueError("FinTS research is already running")
             self._probe_in_progress = True
         try:
@@ -494,7 +509,7 @@ class DKBProbeController:
         if product_id is None:
             raise ValueError("FinTS registration required")
         with self._lock:
-            if self._probe_in_progress or self._auth_session is not None or self._holdings_session is not None:
+            if self._probe_in_progress or self._auth_session is not None or self._holdings_session is not None or self._cash_session is not None:
                 raise ValueError("FinTS research is already running")
             self._probe_in_progress = True
         try:
@@ -542,6 +557,122 @@ class DKBProbeController:
         with self._lock:
             return bool(self._holdings_session and self._holdings_session.decoupled)
 
+    def cash_observation(self) -> CashObservation | None:
+        with self._lock:
+            if self._cash_session is not None:
+                if time.monotonic() < self._cash_deadline:
+                    return CashObservation(self._cash_session.started_at, "approval_pending", None)
+                self._cash_session.close()
+                self._cash_session = None
+                expired = CashObservation(datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                                          "approval_expired", None)
+                save_json_state(self.cash_research_file, expired.as_dict())
+        raw = load_json_state(self.cash_research_file)
+        if raw is None:
+            return None
+        try:
+            if set(raw) != {"schema_version", "observed_at", "outcome", "eligible_accounts",
+                            "return_codes", "failure_stage", "failure_kind"} or raw["schema_version"] != 1:
+                raise ValueError("invalid cash observation")
+            outcomes = {"retrieved", "invalid_balance", "invalid_account_list", "account_not_found",
+                        "ambiguous_account", "account_metadata_incomplete", "request_failed", "approval_expired"}
+            stages = {"client_creation", "tan_mechanisms", "login_dialog", "login_approval",
+                      "account_discovery", "account_metadata", "balance_request", "balance_approval",
+                      "response_summary"}
+            kinds = {"timeout", "transport", "attribute_error", "type_error", "key_error",
+                     "value_error", "unsupported", "unclassified"}
+            if raw["outcome"] not in outcomes or (raw["outcome"] == "request_failed") != (
+                raw["failure_stage"] in stages and raw["failure_kind"] in kinds):
+                raise ValueError("invalid cash result")
+            if raw["outcome"] != "request_failed" and (
+                raw["failure_stage"] is not None or raw["failure_kind"] is not None):
+                raise ValueError("invalid cash failure")
+            count = raw["eligible_accounts"]
+            if count is not None and (type(count) is not int or not 0 <= count <= 256):
+                raise ValueError("invalid cash account count")
+            codes = raw["return_codes"]
+            if not isinstance(codes, list) or len(codes) > 32 or any(
+                not isinstance(code, str) or not re.fullmatch(r"[0-9]{4}", code) for code in codes
+            ) or not isinstance(raw["observed_at"], str) or len(raw["observed_at"]) > 40:
+                raise ValueError("invalid cash codes or timestamp")
+            _probe_timestamp_display(raw["observed_at"])
+            return CashObservation(raw["observed_at"], raw["outcome"], count,
+                                   tuple(codes), raw["failure_stage"], raw["failure_kind"])
+        except (KeyError, TypeError, ValueError) as err:
+            raise RuntimeError("Stored DKB cash research state is invalid") from err
+
+    def cash_review(self) -> tuple[Any, BookedBalance] | None:
+        with self._lock:
+            if self._cash_review is not None and time.monotonic() >= self._cash_review_deadline:
+                self._cash_review = None
+            return self._cash_review
+
+    def clear_cash_review(self) -> None:
+        with self._lock:
+            self._cash_review = None
+            self._cash_review_deadline = 0.0
+
+    def _capture_cash(self, values: list[BookedBalance], csv_snapshot: Any,
+                      result: CashObservation) -> None:
+        if result.outcome == "retrieved" and len(values) == 1:
+            save_cash_shadow(self.cash_shadow_file, values[0])
+            with self._lock:
+                self._cash_review = (csv_snapshot, values[0])
+                self._cash_review_deadline = time.monotonic() + 300
+
+    def run_cash_observation(self, user_id: str, pin: str, suffix: str,
+                             csv_snapshot: Any = None) -> CashObservation:
+        product_id = self.product_id()
+        if product_id is None:
+            raise ValueError("FinTS registration required")
+        with self._lock:
+            if self._probe_in_progress or self._auth_session is not None or self._holdings_session is not None or self._cash_session is not None:
+                raise ValueError("FinTS research is already running")
+            self._probe_in_progress = True
+        try:
+            self.cash_research_file.unlink(missing_ok=True)
+            self.clear_cash_review()
+            values: list[BookedBalance] = []
+            result, session = begin_cash_observation(product_id, user_id, pin, suffix, values.append)
+            self._capture_cash(values, csv_snapshot, result)
+            if session is not None:
+                with self._lock:
+                    self._cash_session = session
+                    self._cash_deadline = time.monotonic() + 300
+            else:
+                save_json_state(self.cash_research_file, result.as_dict())
+            _LOGGER.info("DKB read-only booked-balance research outcome=%s", result.outcome)
+            return result
+        finally:
+            with self._lock:
+                self._probe_in_progress = False
+
+    def continue_cash_observation(self, tan: str = "", csv_snapshot: Any = None) -> CashObservation:
+        with self._lock:
+            session = self._cash_session
+            if session is None or time.monotonic() >= self._cash_deadline:
+                self.cash_observation()
+                raise ValueError("No pending bank approval")
+            if self._probe_in_progress:
+                raise ValueError("FinTS research is already running")
+            self._probe_in_progress = True
+        try:
+            values: list[BookedBalance] = []
+            result, pending = continue_cash_observation(session, tan, values.append)
+            self._capture_cash(values, csv_snapshot, result)
+            with self._lock:
+                self._cash_session = pending
+            if pending is None:
+                save_json_state(self.cash_research_file, result.as_dict())
+            return result
+        finally:
+            with self._lock:
+                self._probe_in_progress = False
+
+    def pending_cash_is_decoupled(self) -> bool:
+        with self._lock:
+            return bool(self._cash_session and self._cash_session.decoupled)
+
     def status_document(self, gateway_state: GatewayState) -> dict[str, Any]:
         view = self.probe_view()
         auth = self.auth_observation()
@@ -550,6 +681,8 @@ class DKBProbeController:
             "authenticated_research": auth.as_dict() if auth else None,
             "holdings_research": (holdings.as_dict() if (holdings := self.holdings_observation()) else None),
             "holdings_shadow": shadow_summary(self.shadow_file),
+            "cash_research": (cash.as_dict() if (cash := self.cash_observation()) else None),
+            "cash_shadow": cash_shadow_summary(self.cash_shadow_file),
             "fints": {
                 "endpoint": DKB_FINTS_ENDPOINT,
                 "bank_code": DKB_BANK_CODE,
@@ -688,6 +821,7 @@ class DKBIngressHandler(BaseHTTPRequestHandler):
                     self.app_server.csv_provider.replace_cash_snapshot(previous_cash)
                     self.app_server.csv_provider.persist_cash_snapshot(previous_cash)
                     raise DkbCashCsvImportError("Imported DKB cash CSV could not be activated")
+                self.app_server.controller.clear_cash_review()
                 self.app_server.last_import_notice = (
                     "accepted",
                     f"DKB cash CSV accepted: EUR {cash.eligible_eur}; cash timestamp "
@@ -794,6 +928,43 @@ class DKBIngressHandler(BaseHTTPRequestHandler):
                 return
             except Exception:
                 _LOGGER.error("DKB read-only holdings approval failed internally")
+                self._empty(HTTPStatus.INTERNAL_SERVER_ERROR)
+                return
+            finally:
+                form.clear()
+            self._redirect("./")
+            return
+        if path == "/observe-cash-balance":
+            if set(form) != {"csrf", "user_id", "pin", "iban_suffix"}:
+                self._empty(HTTPStatus.BAD_REQUEST)
+                return
+            try:
+                self.app_server.controller.run_cash_observation(
+                    form["user_id"], form["pin"], form["iban_suffix"],
+                    self.app_server.csv_provider.cash_snapshot)
+            except ValueError:
+                self._empty(HTTPStatus.BAD_REQUEST)
+                return
+            except Exception:
+                _LOGGER.error("DKB read-only cash research failed internally")
+                self._empty(HTTPStatus.INTERNAL_SERVER_ERROR)
+                return
+            finally:
+                form.clear()
+            self._redirect("./")
+            return
+        if path == "/complete-cash-approval":
+            if set(form) != {"csrf", "tan"}:
+                self._empty(HTTPStatus.BAD_REQUEST)
+                return
+            try:
+                self.app_server.controller.continue_cash_observation(
+                    form["tan"], self.app_server.csv_provider.cash_snapshot)
+            except ValueError:
+                self._empty(HTTPStatus.BAD_REQUEST)
+                return
+            except Exception:
+                _LOGGER.error("DKB read-only cash approval failed internally")
                 self._empty(HTTPStatus.INTERNAL_SERVER_ERROR)
                 return
             finally:
@@ -1009,11 +1180,84 @@ class DKBIngressHandler(BaseHTTPRequestHandler):
             'Refresh read-only shadow snapshot</button></form>'
             f'{holdings_approval}{review_html}</section>'
         )
+        cash_result = controller.cash_observation()
+        cash_pending = cash_result is not None and cash_result.outcome == "approval_pending"
+        cash_summary = (
+            "No read-only cash observation recorded" if cash_result is None else
+            f"Outcome: {escape(cash_result.outcome)}; EUR balance-capable accounts: "
+            f"{escape(str(cash_result.eligible_accounts)) if cash_result.eligible_accounts is not None else 'not determined'}; "
+            f"return codes: {escape(', '.join(cash_result.return_codes) or 'none')}; "
+            f"failure stage: {escape(cash_result.failure_stage or 'none')}; "
+            f"failure category: {escape(cash_result.failure_kind or 'none')}; "
+            f"observed UTC: {escape(cash_result.observed_at)}"
+        )
+        cash_shadow = cash_shadow_summary(controller.cash_shadow_file)
+        cash_shadow_text = {
+            "recent_observation": "Stored cash research observation: less than 24 hours old",
+            "old_observation": "Stored cash research observation: more than 24 hours old",
+            "invalid": "Stored cash research observation invalid; refresh manually",
+            "absent": "No stored cash research observation",
+        }[cash_shadow["state"]]
+        if cash_shadow["observed_at"]:
+            cash_shadow_text += (f"; observed {cash_shadow['observed_at']} UTC; "
+                                 f"bank balance date {cash_shadow['bank_date']}")
+        cash_approval = ""
+        if cash_pending:
+            if controller.pending_cash_is_decoupled():
+                cash_instruction = "Approve the DKB login or balance request in the banking app, then check here."
+                cash_tan = '<input type="hidden" name="tan" value="">'
+            else:
+                cash_instruction = "Enter the TAN for this DKB research challenge."
+                cash_tan = ('<label for="cash-tan">TAN</label><br>'
+                            '<input id="cash-tan" type="password" name="tan" maxlength="32" autocomplete="off" required>')
+            cash_approval = (f'<p>{cash_instruction}</p><form method="post" action="complete-cash-approval">'
+                             f'<input type="hidden" name="csrf" value="{csrf}">{cash_tan}'
+                             '<br><button type="submit">Check or complete bank approval</button></form>')
+        cash_review = controller.cash_review()
+        if cash_review is None:
+            cash_review_html = ('<p>Transient balance detail has expired or is unavailable.</p>'
+                                if cash_result is not None and cash_result.outcome == "retrieved" else '')
+        else:
+            csv_cash, live_cash = cash_review
+            csv_date = (csv_cash.as_of.isoformat(timespec="seconds") if csv_cash is not None else "unavailable")
+            csv_amount = (str(csv_cash.account_balance_eur) if csv_cash is not None else "unavailable")
+            cash_review_html = (
+                '<h3>Transient cash evidence</h3>'
+                '<p>Review the two observations yourself. Dates and balances can legitimately differ. '
+                'The bank booked balance is not a spendable balance or an investment authorization. '
+                'No automatic comparison or cash source switch occurs. This detail expires five minutes after retrieval.</p>'
+                f'<div class="cash-compare"><div><h4>DKB Girokonto CSV (authoritative)</h4>'
+                f'<p>Explicit Kontostand: EUR {escape(csv_amount)}<br>CSV balance timestamp: {escape(csv_date)}</p></div>'
+                f'<div><h4>DKB FinTS (research only)</h4><p>Booked balance: '
+                f'{escape(live_cash.currency)} {escape(live_cash.amount)}<br>'
+                f'Bank balance date: {escape(live_cash.bank_date)}<br>'
+                f'Observed UTC: {escape(live_cash.observed_at)}</p></div></div>'
+            )
+        cash_html = (
+            '<section class="mode-card research"><h2>Read-only Girokonto booked-balance research</h2>'
+            f'<p role="status"><strong>{escape(cash_shadow_text)}</strong></p><p>{cash_summary}</p>'
+            '<p class="small">Manual, one-shot HKSAL request for exactly one EUR balance-capable UPD account. '
+            'Use the final four digits of the Girokonto IBAN to select it; no account identifier is saved or shown. '
+            'An absent or ambiguous account stops before the balance request. A complete successful observation '
+            'replaces the bounded App-private cash research shadow; a failed request leaves the previous observation intact. '
+            'The observation age is separate from the bank balance date. DKB cash CSV remains the sole planner source.</p>'
+            '<form method="post" action="observe-cash-balance">'
+            f'<input type="hidden" name="csrf" value="{csrf}">'
+            '<label for="cash-user">DKB banking Anmeldename</label><br>'
+            '<input id="cash-user" name="user_id" maxlength="128" autocomplete="off" required><br>'
+            '<label for="cash-pin">DKB banking password</label><br>'
+            '<input id="cash-pin" name="pin" type="password" maxlength="256" autocomplete="off" required><br>'
+            '<label for="cash-suffix">Final four digits of Girokonto IBAN</label><br>'
+            '<input id="cash-suffix" name="iban_suffix" inputmode="numeric" pattern="[0-9]{4}" minlength="4" maxlength="4" autocomplete="off" required><br>'
+            f'<button type="submit" {"disabled" if product is None or pending or holdings_pending or cash_pending else ""}>'
+            'Observe booked balance</button></form>'
+            f'{cash_approval}{cash_review_html}</section>'
+        )
         authority_html = render_acquisition_authority(
             self.app_server.csv_provider.acquisition_control,
             evidence_timestamps=self.app_server.gateway_state.capability_evidence_timestamps(),
         )
-        body = f"""<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Portfolio Architect Gateway — DKB</title><style>body{{font-family:system-ui,sans-serif;max-width:850px;margin:2rem auto;padding:0 1rem;background:#111;color:#eee}}section{{border:1px solid #444;border-radius:12px;padding:1rem;margin:1rem 0}}.mode-card.active{{border:2px solid #22c55eaa;background:#22c55e12}}.mode-card.research{{border:2px solid #f59e0baa;background:#f59e0b12}}.mode-head{{display:flex;justify-content:space-between;align-items:center;gap:12px}}.badge{{font-size:.78rem;font-weight:800;padding:4px 9px;border-radius:999px;border:1px solid currentColor}}.mode-card.active .badge{{color:#4ade80}}.mode-card.research .badge{{color:#fbbf24}}code{{word-break:break-all}}input{{width:min(34rem,95%);padding:.55rem}}button{{padding:.55rem .8rem;margin-top:.5rem}}.warn{{color:#ffca28}}.ok{{color:#66bb6a}}.small{{font-size:.9rem;color:#bbb}}{ACQUISITION_AUTHORITY_CSS}</style></head><body><main><h1>Portfolio Architect Gateway — DKB</h1><section class="mode-card active"><div class="mode-head"><h2>Static acquisition · DKB CSV</h2><span class="badge">ACTIVE</span></div><p>Portfolio Architect v{escape(__version__)} keeps DKB depot holdings and Girokonto cash as independent evidence families. Uploaded CSVs are parsed only in memory; depot/account identifiers, transaction rows, and raw CSV content are never persisted. Only bounded normalized provider state survives.</p>{notice}<h3>Depot holdings</h3><p>{escape(snapshot_text)}</p><form method=\"post\" action=\"import-csv\" enctype=\"multipart/form-data\"><input type=\"hidden\" name=\"nonce\" value=\"{csrf}\"><label for=\"statement\">Current DKB depot CSV export(s)</label><input id=\"statement\" type=\"file\" name=\"statement\" accept=\"text/csv,.csv\" multiple required><br><button type=\"submit\">Import DKB depot CSV batch</button></form><p class=\"small\">Upload all current DKB depot exports together. Up to {MAX_CSV_FILES} files are accepted. If several dated exports of one depot are included, only the newest is counted. The batch replaces only the DKB holdings evidence.</p><h3>Investment cash</h3><p>{escape(cash_text)}</p><form method=\"post\" action=\"import-cash\" enctype=\"multipart/form-data\"><input type=\"hidden\" name=\"nonce\" value=\"{csrf}\"><label for=\"cash-statement\">DKB Girokonto Umsatzliste CSV</label><input id=\"cash-statement\" type=\"file\" name=\"statement\" accept=\"text/csv,.csv\" required><br><button type=\"submit\">Import DKB cash CSV</button></form><p class=\"small\">The importer uses only the explicit dated EUR Kontostand as cash evidence. Transaction rows and account identifiers are discarded. A negative balance authorizes EUR 0; no overdraft or credit facility is inferred. Importing cash does not refresh holdings evidence, and importing holdings does not refresh cash evidence.</p></section><section class="mode-card research"><div class="mode-head"><h2>Live acquisition · DKB FinTS</h2><span class="badge">UNAVAILABLE · RESEARCH ONLY</span></div><p>Authenticated FinTS acquisition is not enabled. The controls below are isolated bank-level capability research and cannot replace or fall back from CSV evidence.</p><h3>FinTS registration and research probe</h3><p>Fixed endpoint: <code>{escape(DKB_FINTS_ENDPOINT)}</code><br>Bank code: <code>{escape(DKB_BANK_CODE)}</code><br>Configured registration: <code>{escape(suffix)}</code></p><form method=\"post\" action=\"configure-product\"><input type=\"hidden\" name=\"csrf\" value=\"{csrf}\"><label for=\"product_id\">FinTS product registration number</label><br><input id=\"product_id\" name=\"product_id\" minlength=\"25\" maxlength=\"25\" pattern=\"[A-Za-z0-9]{{25}}\" autocomplete=\"off\" required><br><button type=\"submit\">Store registration number</button></form><p class=\"small\">Use the complete 25-character registration number issued for Portfolio Architect itself. It is transmitted only as the HKVVB product designation; a library/kernel registration must not be reused for production access.</p></section><section class="mode-card research"><div class="mode-head"><h2>Anonymous BPD capability probe</h2><span class="badge">EXPERIMENTAL · RESEARCH ONLY</span></div><p>State: <strong>{escape(view.state)}</strong><br>Last probe sent · Europe/Berlin: <strong>{escape(probe_sent_berlin)}</strong><br><span class="small">Authoritative server-side dispatch timestamp · UTC: <code>{escape(probe_sent_utc)}</code></span></p><p>{escape(view.message)}</p><form method=\"post\" action=\"probe\"><input type=\"hidden\" name=\"csrf\" value=\"{csrf}\"><button type=\"submit\" {'disabled' if product is None else ''}>Probe DKB FinTS capabilities</button></form><p>BPD version: <code>{escape(bpd)}</code><br>{HOLDINGS_PARAMETER_SEGMENT} advertised: <strong>{holdings}</strong><br>Observed parameter segments: <code>{escape(param)}</code><br>Bounded return codes: <code>{escape(codes)}</code></p><p>Sanitized bank return messages:</p>{bank_messages}<p>Raw response body SHA-256: <code>{escape(raw_response_fingerprint)}</code><br>Raw response body bytes: <code>{escape(raw_response_bytes)}</code><br>Decoded response SHA-256: <code>{escape(response_fingerprint)}</code><br>Decoded response bytes: <code>{escape(response_bytes)}</code></p><p class=\"small\">Only bounded HIRMG/HIRMS return-message text plus cryptographic response fingerprints and byte counts are retained for diagnostics. The configured product registration is redacted if echoed; arbitrary segment payload and the raw FinTS response are discarded after fingerprinting; exact raw/decoded response bytes never persist. A positive bank-level BPD result is only evidence to continue research; authenticated user-parameter validation is still required before holdings acquisition may be implemented.</p></section><section class="mode-card research"><h2>Authenticated user capability research</h2><p>{auth_html}</p><form method="post" action="observe-user"><input type="hidden" name="csrf" value="{csrf}"><label for="user_id">DKB FinTS user identifier</label><br><input id="user_id" name="user_id" maxlength="128" autocomplete="off" required><br><label for="pin">FinTS PIN</label><br><input id="pin" name="pin" type="password" maxlength="256" autocomplete="off" required><br><button type="submit" {'disabled' if product is None or pending else ''}>Observe authenticated capabilities</button></form>{approval_form}<p class="small">Credentials are used once in App memory, never persisted or included in status, diagnostics, logs or Home Assistant. Approve a decoupled DKB app challenge or submit the login TAN through this transient session (five-minute limit). The observation reports only UPD presence/version, account-level securities capability and authentication method. No account identifiers or raw UPD are retained.</p></section>{holdings_html}{authority_html}<section><h2>Gateway boundary</h2><p>Acquisition mode: <strong>csv</strong></p><p>Bearer token: <code>{escape(self.app_server.api_token)}</code></p><p class=\"small\">The token, normalized DKB holdings/cash state, and FinTS registration state are App-private and survive in-place upgrades. FinTS cannot replace or silently fall back to CSV evidence; authenticated DKB FinTS acquisition remains disabled.</p></section></main></body></html>"""
+        body = f"""<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Portfolio Architect Gateway — DKB</title><style>body{{font-family:system-ui,sans-serif;max-width:850px;margin:2rem auto;padding:0 1rem;background:#111;color:#eee}}section{{border:1px solid #444;border-radius:12px;padding:1rem;margin:1rem 0}}.mode-card.active{{border:2px solid #22c55eaa;background:#22c55e12}}.mode-card.research{{border:2px solid #f59e0baa;background:#f59e0b12}}.mode-head{{display:flex;justify-content:space-between;align-items:center;gap:12px}}.badge{{font-size:.78rem;font-weight:800;padding:4px 9px;border-radius:999px;border:1px solid currentColor}}.mode-card.active .badge{{color:#4ade80}}.mode-card.research .badge{{color:#fbbf24}}code{{word-break:break-all}}input{{width:min(34rem,95%);padding:.55rem}}button{{padding:.55rem .8rem;margin-top:.5rem}}.warn{{color:#ffca28}}.ok{{color:#66bb6a}}.small{{font-size:.9rem;color:#bbb}}.cash-compare{{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1rem}}.cash-compare>div{{border:1px solid #555;border-radius:8px;padding:1rem;overflow-wrap:anywhere}}{ACQUISITION_AUTHORITY_CSS}</style></head><body><main><h1>Portfolio Architect Gateway — DKB</h1><section class="mode-card active"><div class="mode-head"><h2>Static acquisition · DKB CSV</h2><span class="badge">ACTIVE</span></div><p>Portfolio Architect v{escape(__version__)} keeps DKB depot holdings and Girokonto cash as independent evidence families. Uploaded CSVs are parsed only in memory; depot/account identifiers, transaction rows, and raw CSV content are never persisted. Only bounded normalized provider state survives.</p>{notice}<h3>Depot holdings</h3><p>{escape(snapshot_text)}</p><form method=\"post\" action=\"import-csv\" enctype=\"multipart/form-data\"><input type=\"hidden\" name=\"nonce\" value=\"{csrf}\"><label for=\"statement\">Current DKB depot CSV export(s)</label><input id=\"statement\" type=\"file\" name=\"statement\" accept=\"text/csv,.csv\" multiple required><br><button type=\"submit\">Import DKB depot CSV batch</button></form><p class=\"small\">Upload all current DKB depot exports together. Up to {MAX_CSV_FILES} files are accepted. If several dated exports of one depot are included, only the newest is counted. The batch replaces only the DKB holdings evidence.</p><h3>Investment cash</h3><p>{escape(cash_text)}</p><form method=\"post\" action=\"import-cash\" enctype=\"multipart/form-data\"><input type=\"hidden\" name=\"nonce\" value=\"{csrf}\"><label for=\"cash-statement\">DKB Girokonto Umsatzliste CSV</label><input id=\"cash-statement\" type=\"file\" name=\"statement\" accept=\"text/csv,.csv\" required><br><button type=\"submit\">Import DKB cash CSV</button></form><p class=\"small\">The importer uses only the explicit dated EUR Kontostand as cash evidence. Transaction rows and account identifiers are discarded. A negative balance authorizes EUR 0; no overdraft or credit facility is inferred. Importing cash does not refresh holdings evidence, and importing holdings does not refresh cash evidence.</p></section><section class="mode-card research"><div class="mode-head"><h2>Live acquisition · DKB FinTS</h2><span class="badge">UNAVAILABLE · RESEARCH ONLY</span></div><p>Authenticated FinTS acquisition is not enabled. The controls below are isolated bank-level capability research and cannot replace or fall back from CSV evidence.</p><h3>FinTS registration and research probe</h3><p>Fixed endpoint: <code>{escape(DKB_FINTS_ENDPOINT)}</code><br>Bank code: <code>{escape(DKB_BANK_CODE)}</code><br>Configured registration: <code>{escape(suffix)}</code></p><form method=\"post\" action=\"configure-product\"><input type=\"hidden\" name=\"csrf\" value=\"{csrf}\"><label for=\"product_id\">FinTS product registration number</label><br><input id=\"product_id\" name=\"product_id\" minlength=\"25\" maxlength=\"25\" pattern=\"[A-Za-z0-9]{{25}}\" autocomplete=\"off\" required><br><button type=\"submit\">Store registration number</button></form><p class=\"small\">Use the complete 25-character registration number issued for Portfolio Architect itself. It is transmitted only as the HKVVB product designation; a library/kernel registration must not be reused for production access.</p></section><section class="mode-card research"><div class="mode-head"><h2>Anonymous BPD capability probe</h2><span class="badge">EXPERIMENTAL · RESEARCH ONLY</span></div><p>State: <strong>{escape(view.state)}</strong><br>Last probe sent · Europe/Berlin: <strong>{escape(probe_sent_berlin)}</strong><br><span class="small">Authoritative server-side dispatch timestamp · UTC: <code>{escape(probe_sent_utc)}</code></span></p><p>{escape(view.message)}</p><form method=\"post\" action=\"probe\"><input type=\"hidden\" name=\"csrf\" value=\"{csrf}\"><button type=\"submit\" {'disabled' if product is None else ''}>Probe DKB FinTS capabilities</button></form><p>BPD version: <code>{escape(bpd)}</code><br>{HOLDINGS_PARAMETER_SEGMENT} advertised: <strong>{holdings}</strong><br>Observed parameter segments: <code>{escape(param)}</code><br>Bounded return codes: <code>{escape(codes)}</code></p><p>Sanitized bank return messages:</p>{bank_messages}<p>Raw response body SHA-256: <code>{escape(raw_response_fingerprint)}</code><br>Raw response body bytes: <code>{escape(raw_response_bytes)}</code><br>Decoded response SHA-256: <code>{escape(response_fingerprint)}</code><br>Decoded response bytes: <code>{escape(response_bytes)}</code></p><p class=\"small\">Only bounded HIRMG/HIRMS return-message text plus cryptographic response fingerprints and byte counts are retained for diagnostics. The configured product registration is redacted if echoed; arbitrary segment payload and the raw FinTS response are discarded after fingerprinting; exact raw/decoded response bytes never persist. A positive bank-level BPD result is only evidence to continue research; authenticated user-parameter validation is still required before holdings acquisition may be implemented.</p></section><section class="mode-card research"><h2>Authenticated user capability research</h2><p>{auth_html}</p><form method="post" action="observe-user"><input type="hidden" name="csrf" value="{csrf}"><label for="user_id">DKB FinTS user identifier</label><br><input id="user_id" name="user_id" maxlength="128" autocomplete="off" required><br><label for="pin">FinTS PIN</label><br><input id="pin" name="pin" type="password" maxlength="256" autocomplete="off" required><br><button type="submit" {'disabled' if product is None or pending else ''}>Observe authenticated capabilities</button></form>{approval_form}<p class="small">Credentials are used once in App memory, never persisted or included in status, diagnostics, logs or Home Assistant. Approve a decoupled DKB app challenge or submit the login TAN through this transient session (five-minute limit). The observation reports only UPD presence/version, account-level securities capability and authentication method. No account identifiers or raw UPD are retained.</p></section>{holdings_html}{cash_html}{authority_html}<section><h2>Gateway boundary</h2><p>Acquisition mode: <strong>csv</strong></p><p>Bearer token: <code>{escape(self.app_server.api_token)}</code></p><p class=\"small\">The token, normalized DKB holdings/cash state, and FinTS registration state are App-private and survive in-place upgrades. FinTS cannot replace or silently fall back to CSV evidence; authenticated DKB FinTS acquisition remains disabled.</p></section></main></body></html>"""
         return body.encode("utf-8")
 
     def _redirect(self, location: str) -> None:
