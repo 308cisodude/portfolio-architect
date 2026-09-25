@@ -26,6 +26,7 @@ from .acquisition_presentation import ACQUISITION_AUTHORITY_CSS, render_acquisit
 from .dkb_authenticated import AuthObservation, AuthSession, begin_authenticated_observation, continue_authenticated_observation
 from .dkb_holdings_research import HoldingsObservation, HoldingsSession, begin_holdings_observation, continue_holdings_observation
 from .dkb_holdings_review import HoldingsReview, ReviewRow, build_review, render_review
+from .dkb_shadow import project_shadow, save_shadow, shadow_summary
 from .dkb_cash_csv import DkbCashCsvImportError, MAX_CASH_CSV_BYTES, parse_dkb_cash_csv
 from .dkb_csv import (
     DkbCsvImportError,
@@ -107,6 +108,7 @@ class DKBProbeController:
         self.probe_sent_at_file = data_directory / PROBE_SENT_AT_FILE_NAME
         self.auth_state_file = data_directory / AUTH_STATE_FILE_NAME
         self.holdings_state_file = data_directory / "dkb-fints-holdings-observation.json"
+        self.shadow_file = data_directory / "dkb-fints-holdings-shadow.json"
         self.csrf_token = secrets.token_urlsafe(32)
         self._lock = threading.RLock()
         self._probe_in_progress = False
@@ -140,6 +142,7 @@ class DKBProbeController:
                 self._holdings_session = None
             self._holdings_review = None
             self.holdings_state_file.unlink(missing_ok=True)
+            self.shadow_file.unlink(missing_ok=True)
         # Capability evidence belongs to the registration identity that produced it.
         # Remove any previous result before changing that identity so stale BPD data
         # can never be presented as evidence for a newly configured product.
@@ -481,6 +484,9 @@ class DKBProbeController:
             with self._lock:
                 self._holdings_review = build_review(snapshot, result.observed_at, rows[0])
                 self._review_deadline = time.monotonic() + 300
+            projected = project_shadow(rows[0], result.observed_at)
+            if projected is not None:
+                save_shadow(self.shadow_file, projected)
 
     def run_holdings_observation(self, user_id: str, pin: str,
                                  csv_snapshot: PortfolioSnapshot | None = None) -> HoldingsObservation:
@@ -543,6 +549,7 @@ class DKBProbeController:
             "gateway": gateway_state.health_document(version=8),
             "authenticated_research": auth.as_dict() if auth else None,
             "holdings_research": (holdings.as_dict() if (holdings := self.holdings_observation()) else None),
+            "holdings_shadow": shadow_summary(self.shadow_file),
             "fints": {
                 "endpoint": DKB_FINTS_ENDPOINT,
                 "bank_code": DKB_BANK_CODE,
@@ -958,14 +965,21 @@ class DKBIngressHandler(BaseHTTPRequestHandler):
             )
         review = controller.holdings_review()
         remaining = controller.holdings_review_seconds_remaining()
+        shadow = shadow_summary(controller.shadow_file)
         if not remaining:
             review = None
+        shadow_description = {
+            'fresh': f"Stored shadow: fresh, {shadow['position_count']} positions, observed {shadow['observed_at']} UTC. Manual refresh required before 24 hours.",
+            'stale': f"Stored shadow: stale (older than 24 hours), last observed {shadow['observed_at']} UTC. Refresh manually.",
+            'invalid': 'Stored shadow: invalid and unusable. Refresh manually.',
+            'absent': 'Stored shadow: none. Refresh manually.',
+        }[shadow['state']]
         if holdings_pending:
             shadow_state = 'Approval required: confirm the DKB challenge and use the Check button below.'
         elif review is not None and remaining:
             shadow_state = f'Shadow detail available for another {remaining} seconds. CSV remains authoritative.'
         elif holdings_result is not None and holdings_result.outcome == 'retrieved':
-            shadow_state = 'Last retrieval succeeded; shadow detail expired. Start a new manual refresh to inspect it.'
+            shadow_state = 'Last retrieval succeeded; transient position detail expired.'
         elif holdings_result is None:
             shadow_state = 'No shadow snapshot yet. Start a manual read-only refresh below.'
         else:
@@ -976,11 +990,14 @@ class DKBIngressHandler(BaseHTTPRequestHandler):
         holdings_html = (
             '<section class="mode-card research"><h2>Read-only holdings retrieval research</h2>'
             f'<p role="status"><strong>{escape(shadow_state)}</strong></p>'
+            f'<p role="status"><strong>{escape(shadow_description)}</strong></p>'
             f'<p>{holdings_summary}</p>'
             '<p class="small">This is a one-shot HKWPD research request for exactly one UPD-authorized depot. '
-            'The App retains only an outcome, eligible-depot count, holdings count, numeric return codes and timestamp. '
+            'The App retains bounded normalized ISIN, quantity, total value, currency and timestamp in an App-private shadow file. '
+            'A complete successful manual retrieval replaces it; an incomplete or failed refresh leaves the previous observation intact. '
+            'It becomes stale after 24 hours and is never sent to the planner. '
             'Position detail is displayed only in the transient admin review after retrieval; '
-            'no FinTS position, account number, identifier, valuation, response body or credentials are persisted. '
+            'no account number, raw bank response or credentials are persisted. '
             'Multiple eligible depots stop without a request. DKB CSV remains the sole holdings source.</p>'
             '<form method="post" action="observe-holdings">'
             f'<input type="hidden" name="csrf" value="{csrf}">'

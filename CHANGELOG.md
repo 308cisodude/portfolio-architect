@@ -1,3 +1,7 @@
+## 1.65.1
+
+- Persist bounded normalized DKB FinTS holdings shadow evidence after a complete manual retrieval, with a 24-hour freshness state; preserve the previous shadow on failed or incomplete refresh. DKB CSV remains authoritative.
+
 ## 1.65.0
 
 - Add a bounded in-memory DKB FinTS shadow snapshot: normalize the explicit bank `:35B:` ISIN, reject parser/bank conflicts, show projection completeness and five-minute refresh/approval state in responsive admin cards. CSV holdings and cash remain authoritative; no background refresh or credential storage.

@@ -1,3 +1,9 @@
+# Portfolio Architect v1.65.1 release notes
+
+See [v1.65.1 DKB durable manual holdings shadow](RELEASE-NOTES-1.65.1.md) and [upgrade guide](UPGRADE-1.65.1.md).
+
+## Previous release
+
 # Portfolio Architect v1.65.0 release notes
 
 See [v1.65.0 DKB holdings research](RELEASE-NOTES-1.65.0.md) and [upgrade guide](UPGRADE-1.65.0.md).
