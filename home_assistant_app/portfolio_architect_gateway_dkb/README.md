@@ -1,3 +1,7 @@
+## v1.65.1
+
+Manual DKB FinTS holdings research can now retain a bounded normalized App-private shadow for 24 hours; CSV stays authoritative. See `docs/UPGRADE-1.65.1.md`.
+
 ## v1.65.0
 
 After a successful user-initiated read-only HKWPD observation, admin Ingress temporarily displays independent DKB CSV and FinTS cards with normalized ISIN, quantity, value, currency and source timing. A bounded bank instrument field and total-value currency code are captured before PyFinTS discards them; the library's unit-price currency is labeled separately. Only an explicit `ISIN` marker supplies a missing parser ISIN, and conflicting identifiers suppress normalization. The shadow detail and its completeness count are available in App memory for five minutes. Approval and expiry are shown on the page. No automatic equivalence judgment, credential storage, background refresh or acquisition switch occurs. The CSV export has a date only.

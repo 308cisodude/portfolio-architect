@@ -1,3 +1,7 @@
+## 1.65.1
+
+- Persist only complete normalized manual FinTS holdings shadow rows in App-private state, with a 24-hour freshness signal. CSV remains authoritative.
+
 ## 1.65.0
 
 - Normalize the explicit `:35B:` ISIN in transient shadow research; suppress conflicts and show responsive position cards with refresh/approval state. Preserve five-minute expiry and CSV authority.
