@@ -4,7 +4,7 @@ from __future__ import annotations
 from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 from pathlib import Path
-from types import SimpleNamespace
+from types import ModuleType, SimpleNamespace
 import importlib
 import importlib.util
 import sys
@@ -26,6 +26,41 @@ def _balance(amount: str = "281.58", currency: str = "EUR"):
                            date=date(2026, 9, 25))
 
 
+@pytest.fixture
+def fake_fints(monkeypatch):
+    """Exercise the bank-independent control flow without a PyFinTS install."""
+    package = ModuleType("fints")
+    package.__path__ = []
+    client = ModuleType("fints.client")
+    models = ModuleType("fints.models")
+    formals = ModuleType("fints.formals")
+
+    class Operations:
+        GET_BALANCE = "HKSAL"
+
+    class NeedTANResponse:
+        pass
+
+    class SEPAAccount:
+        def __init__(self, *args):
+            self.fields = args
+
+    class BankIdentifier:
+        def __init__(self, country, bank_code):
+            self.country = country
+            self.bank_code = bank_code
+
+    client.FinTSOperations = Operations
+    client.NeedTANResponse = NeedTANResponse
+    models.SEPAAccount = SEPAAccount
+    formals.BankIdentifier = BankIdentifier
+    package.client, package.models, package.formals = client, models, formals
+    for name, value in (("fints", package), ("fints.client", client),
+                        ("fints.models", models), ("fints.formals", formals)):
+        monkeypatch.setitem(sys.modules, name, value)
+    return client
+
+
 def test_booked_balance_projection_rejects_missing_non_eur_and_unbounded_values():
     observed = datetime.now(timezone.utc).isoformat(timespec="seconds")
     assert cash.project_booked_balance(_balance("-12.34"), observed).amount == "-12.34"
@@ -34,8 +69,8 @@ def test_booked_balance_projection_rejects_missing_non_eur_and_unbounded_values(
     assert cash.project_booked_balance(SimpleNamespace(amount=None, date=date.today()), observed) is None
 
 
-def test_exact_account_selection_and_ambiguous_suffix_stop_before_hksal():
-    from fints.client import FinTSOperations
+def test_exact_account_selection_and_ambiguous_suffix_stop_before_hksal(fake_fints):
+    FinTSOperations = fake_fints.FinTSOperations
     calls = []
     account = lambda iban: {
         "iban": iban, "currency": "EUR", "supported_operations": {FinTSOperations.GET_BALANCE: True},
@@ -58,9 +93,9 @@ def test_exact_account_selection_and_ambiguous_suffix_stop_before_hksal():
     assert result.outcome == "account_not_found" and pending is None and len(calls) == 1
 
 
-def test_decoupled_login_then_one_hksal_response(monkeypatch):
-    import fints.client
-    from fints.client import FinTSOperations, NeedTANResponse
+def test_decoupled_login_then_one_hksal_response(monkeypatch, fake_fints):
+    FinTSOperations = fake_fints.FinTSOperations
+    NeedTANResponse = fake_fints.NeedTANResponse
     class Challenge(NeedTANResponse):
         def __init__(self):
             self.decoupled = True
@@ -84,7 +119,7 @@ def test_decoupled_login_then_one_hksal_response(monkeypatch):
         def get_balance(self, account):
             self.calls += 1
             return _balance()
-    monkeypatch.setattr(fints.client, "FinTS3PinTanClient", Client)
+    monkeypatch.setattr(fake_fints, "FinTS3PinTanClient", Client, raising=False)
     values = []
     pending, session = cash.begin_cash_observation("A" * 25, "login", "password", "1234", values.append)
     assert pending.outcome == "approval_pending" and session is not None and not values
