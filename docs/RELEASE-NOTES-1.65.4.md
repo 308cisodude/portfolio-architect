@@ -1,0 +1,5 @@
+# Portfolio Architect v1.65.4 — DKB system-ID research
+
+The DKB Gateway App can test whether a bank-assigned FinTS system ID changes the approval requirement on a subsequent **manual** read-only cash observation. After a complete successful HKSAL result, it retains one bounded system ID in App memory, bound to the product registration and banking user. The next cash request for that same user passes the ID to PyFinTS. Admin Ingress reports only whether an ID was reused and whether a bank approval challenge occurred. The ID itself is never shown, logged, sent to PA, or persisted. App restart and product reconfiguration clear it.
+
+The first observation after an App restart seeds the in-memory trial. A second manual observation in the same App process tests reuse. Both still require entering the banking login and password. DKB may require approval regardless of the ID. No background request, credential retention, persistent client/dialog state, acquisition selection, or source promotion is added. DKB CSV remains the sole cash and holdings source for planning.

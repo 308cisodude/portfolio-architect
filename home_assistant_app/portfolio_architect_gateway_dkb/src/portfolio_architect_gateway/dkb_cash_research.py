@@ -132,17 +132,21 @@ def shadow_summary(path: Path, now: datetime | None = None) -> dict[str, Any]:
 
 
 def _summarize(client: Any, value: Any, count: int,
-               capture: Callable[[BookedBalance], None] | None) -> CashObservation:
+               capture: Callable[[BookedBalance], None] | None,
+               capture_system_id: Callable[[object], None] | None = None) -> CashObservation:
     timestamp = _now()
     projected = project_booked_balance(value, timestamp)
     if projected is None:
         return CashObservation(timestamp, "invalid_balance", count, _codes(client))
     if capture is not None:
         capture(projected)
+    if capture_system_id is not None:
+        capture_system_id(getattr(client, "system_id", None))
     return CashObservation(timestamp, "retrieved", count, _codes(client))
 
 
-def _read(client: Any, suffix: str, capture: Callable[[BookedBalance], None] | None
+def _read(client: Any, suffix: str, capture: Callable[[BookedBalance], None] | None,
+          capture_system_id: Callable[[object], None] | None = None
           ) -> tuple[CashObservation, CashSession | None]:
     from fints.client import FinTSOperations, NeedTANResponse
     from fints.models import SEPAAccount
@@ -177,13 +181,15 @@ def _read(client: Any, suffix: str, capture: Callable[[BookedBalance], None] | N
             session = CashSession(client, value, bool(value.decoupled), "balance", _now(), suffix, eligible)
             return CashObservation(_now(), "approval_pending", eligible, _codes(client)), session
         stage = "response_summary"
-        return _summarize(client, value, eligible, capture), None
+        return _summarize(client, value, eligible, capture, capture_system_id), None
     except Exception as err:
         return _failure(client, stage, err, eligible), None
 
 
 def begin_cash_observation(product_id: str, user_id: str, pin: str, suffix: str,
-                           capture: Callable[[BookedBalance], None] | None = None
+                           capture: Callable[[BookedBalance], None] | None = None,
+                           *, system_id: str | None = None,
+                           capture_system_id: Callable[[object], None] | None = None
                            ) -> tuple[CashObservation, CashSession | None]:
     from fints.client import FinTS3PinTanClient, NeedTANResponse
     from fints.formals import BankIdentifier
@@ -202,8 +208,11 @@ def begin_cash_observation(product_id: str, user_id: str, pin: str, suffix: str,
     client = None
     stage = "client_creation"
     try:
+        kwargs = {"product_id": product_id}
+        if system_id is not None:
+            kwargs["system_id"] = system_id
         client = FinTS3PinTanClient(BankIdentifier("280", DKB_BANK_CODE), user_id, pin,
-                                   DKB_FINTS_ENDPOINT, product_id=product_id)
+                                   DKB_FINTS_ENDPOINT, **kwargs)
         stage = "tan_mechanisms"
         client.fetch_tan_mechanisms()
         stage = "login_dialog"
@@ -212,7 +221,7 @@ def begin_cash_observation(product_id: str, user_id: str, pin: str, suffix: str,
         if isinstance(challenge, NeedTANResponse):
             session = CashSession(client, challenge, bool(challenge.decoupled), "login", _now(), suffix)
             return CashObservation(_now(), "approval_pending", None, _codes(client)), session
-        observation, session = _read(client, suffix, capture)
+        observation, session = _read(client, suffix, capture, capture_system_id)
         if session is None:
             client.__exit__(None, None, None)
         return observation, session
@@ -224,7 +233,8 @@ def begin_cash_observation(product_id: str, user_id: str, pin: str, suffix: str,
 
 
 def continue_cash_observation(session: CashSession, tan: str = "",
-                              capture: Callable[[BookedBalance], None] | None = None
+                              capture: Callable[[BookedBalance], None] | None = None,
+                              capture_system_id: Callable[[object], None] | None = None
                               ) -> tuple[CashObservation, CashSession | None]:
     from fints.client import NeedTANResponse
     if not session.decoupled and (not isinstance(tan, str) or not _TAN.fullmatch(tan)):
@@ -237,13 +247,14 @@ def continue_cash_observation(session: CashSession, tan: str = "",
             session.decoupled = bool(value.decoupled)
             return CashObservation(_now(), "approval_pending", session.eligible_accounts, _codes(session.client)), session
         if session.stage == "login":
-            observation, pending = _read(session.client, session.suffix, capture)
+            observation, pending = _read(session.client, session.suffix, capture, capture_system_id)
             if pending is None:
                 session.close()
             else:
                 pending.started_at = session.started_at
             return observation, pending
-        observation = _summarize(session.client, value, session.eligible_accounts or 1, capture)
+        observation = _summarize(session.client, value, session.eligible_accounts or 1,
+                                 capture, capture_system_id)
         session.close()
         return observation, None
     except Exception as err:
