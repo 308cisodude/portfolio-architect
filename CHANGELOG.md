@@ -1,3 +1,7 @@
+## v1.65.4
+
+- Add a research-only DKB cash trial for in-memory FinTS system-ID reuse on a second manual request. CSV authority and credentials handling are unchanged.
+
 ## 1.65.3
 
 - Explain source freshness and execution blockers near the investment plan; show policy rule, observed and expected values for every active finding in the English and German dashboards. Preserve CSV authority and the research-only DKB FinTS shadows.

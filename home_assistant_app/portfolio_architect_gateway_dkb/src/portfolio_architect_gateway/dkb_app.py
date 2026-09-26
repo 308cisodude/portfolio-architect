@@ -15,6 +15,7 @@ import logging
 import re
 from pathlib import Path
 import secrets
+import hashlib
 import threading
 import time
 from typing import Any, Final
@@ -127,6 +128,12 @@ class DKBProbeController:
         self._cash_deadline = 0.0
         self._cash_review: tuple[Any, BookedBalance] | None = None
         self._cash_review_deadline = 0.0
+        # Research-only: one bank system ID bound to one registration/user in RAM.
+        # It is never a credential, persisted, rendered or included in diagnostics.
+        self._cash_system_identity: str | None = None
+        self._cash_system_id: str | None = None
+        self._cash_system_trial: tuple[bool, bool] | None = None
+        self._cash_pending_identity: str | None = None
 
     def product_id(self) -> str | None:
         try:
@@ -153,6 +160,10 @@ class DKBProbeController:
                 self._cash_session.close()
                 self._cash_session = None
             self._cash_review = None
+            self._cash_system_identity = None
+            self._cash_system_id = None
+            self._cash_system_trial = None
+            self._cash_pending_identity = None
             self.cash_research_file.unlink(missing_ok=True)
             self.cash_shadow_file.unlink(missing_ok=True)
             self._holdings_review = None
@@ -633,13 +644,28 @@ class DKBProbeController:
             self.cash_research_file.unlink(missing_ok=True)
             self.clear_cash_review()
             values: list[BookedBalance] = []
-            result, session = begin_cash_observation(product_id, user_id, pin, suffix, values.append)
+            identity = hashlib.sha256((product_id + "\0" + user_id).encode("utf-8")).hexdigest()
+            with self._lock:
+                prior_id = self._cash_system_id if self._cash_system_identity == identity else None
+                self._cash_system_trial = (prior_id is not None, False)
+            def capture_id(value: object) -> None:
+                if isinstance(value, str) and value != "0" and re.fullmatch(r"[A-Za-z0-9]{1,64}", value):
+                    with self._lock:
+                        self._cash_system_identity = identity
+                        self._cash_system_id = value
+            result, session = begin_cash_observation(
+                product_id, user_id, pin, suffix, values.append,
+                system_id=prior_id, capture_system_id=capture_id)
             self._capture_cash(values, csv_snapshot, result)
+            with self._lock:
+                self._cash_system_trial = (prior_id is not None, session is not None)
             if session is not None:
                 with self._lock:
                     self._cash_session = session
                     self._cash_deadline = time.monotonic() + 300
+                    self._cash_pending_identity = identity
             else:
+                self._cash_pending_identity = None
                 save_json_state(self.cash_research_file, result.as_dict())
             _LOGGER.info("DKB read-only booked-balance research outcome=%s", result.outcome)
             return result
@@ -658,10 +684,18 @@ class DKBProbeController:
             self._probe_in_progress = True
         try:
             values: list[BookedBalance] = []
-            result, pending = continue_cash_observation(session, tan, values.append)
+            def capture_id(value: object) -> None:
+                if (self._cash_pending_identity is not None and isinstance(value, str)
+                        and value != "0" and re.fullmatch(r"[A-Za-z0-9]{1,64}", value)):
+                    with self._lock:
+                        self._cash_system_identity = self._cash_pending_identity
+                        self._cash_system_id = value
+            result, pending = continue_cash_observation(session, tan, values.append, capture_id)
             self._capture_cash(values, csv_snapshot, result)
             with self._lock:
                 self._cash_session = pending
+                if pending is None:
+                    self._cash_pending_identity = None
             if pending is None:
                 save_json_state(self.cash_research_file, result.as_dict())
             return result
@@ -672,6 +706,11 @@ class DKBProbeController:
     def pending_cash_is_decoupled(self) -> bool:
         with self._lock:
             return bool(self._cash_session and self._cash_session.decoupled)
+
+    def cash_system_trial(self) -> tuple[bool, bool] | None:
+        """Only bounded, current-process research facts; no system ID is exposed."""
+        with self._lock:
+            return self._cash_system_trial
 
     def status_document(self, gateway_state: GatewayState) -> dict[str, Any]:
         view = self.probe_view()
@@ -1192,6 +1231,14 @@ class DKBIngressHandler(BaseHTTPRequestHandler):
             f"observed UTC: {escape(cash_result.observed_at)}"
         )
         cash_shadow = cash_shadow_summary(controller.cash_shadow_file)
+        trial = controller.cash_system_trial()
+        trial_html = (
+            '<p role="status">In-memory system ID trial: '
+            f'prior ID reused: {"yes" if trial[0] else "no"}; '
+            f'bank approval requested: {"yes" if trial[1] else "no"}. '
+            'This reports only this App process and does not expose the ID.</p>'
+            if trial is not None else ''
+        )
         cash_shadow_text = {
             "recent_observation": "Stored cash research observation: less than 24 hours old",
             "old_observation": "Stored cash research observation: more than 24 hours old",
@@ -1235,12 +1282,14 @@ class DKBIngressHandler(BaseHTTPRequestHandler):
             )
         cash_html = (
             '<section class="mode-card research"><h2>Read-only Girokonto booked-balance research</h2>'
-            f'<p role="status"><strong>{escape(cash_shadow_text)}</strong></p><p>{cash_summary}</p>'
+            f'<p role="status"><strong>{escape(cash_shadow_text)}</strong></p><p>{cash_summary}</p>{trial_html}'
             '<p class="small">Manual, one-shot HKSAL request for exactly one EUR balance-capable UPD account. '
             'Use the final four digits of the Girokonto IBAN to select it; no account identifier is saved or shown. '
             'An absent or ambiguous account stops before the balance request. A complete successful observation '
             'replaces the bounded App-private cash research shadow; a failed request leaves the previous observation intact. '
-            'The observation age is separate from the bank balance date. DKB cash CSV remains the sole planner source.</p>'
+            'The observation age is separate from the bank balance date. DKB cash CSV remains the sole planner source. '
+            'For this research trial, a successful read retains only a bank system ID in App memory for the next '
+            'manual cash observation with credentials entered again. An App restart clears that ID.</p>'
             '<form method="post" action="observe-cash-balance">'
             f'<input type="hidden" name="csrf" value="{csrf}">'
             '<label for="cash-user">DKB banking Anmeldename</label><br>'

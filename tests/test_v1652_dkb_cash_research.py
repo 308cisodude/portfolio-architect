@@ -157,3 +157,44 @@ def test_private_cash_observation_schema_rejects_amount_or_account_in_status(tmp
     cash.save_json_state(controller.cash_research_file, raw)
     with pytest.raises(RuntimeError, match="invalid"):
         controller.cash_observation()
+
+
+def test_system_id_trial_reuses_only_ram_state_for_same_user(monkeypatch, fake_fints, tmp_path: Path):
+    """The first approved read seeds a bank ID; the next manual read can test it."""
+    class Challenge(fake_fints.NeedTANResponse):
+        decoupled = True
+
+    class Client:
+        seen = []
+        def __init__(self, *args, **kwargs):
+            self.seen.append(kwargs.copy())
+            self.system_id = "BANKSYSTEM123"
+            self.init_tan_response = None if kwargs.get("system_id") else Challenge()
+        def fetch_tan_mechanisms(self): pass
+        def __enter__(self): return self
+        def __exit__(self, *args): pass
+        def send_tan(self, challenge, tan): return None
+        def get_information(self):
+            return {"accounts": [{"iban": "DE00000000000000001234", "currency": "EUR",
+                    "supported_operations": {fake_fints.FinTSOperations.GET_BALANCE: True},
+                    "bank_identifier": SimpleNamespace(bank_code=cash.DKB_BANK_CODE),
+                    "account_number": "111111"}]}
+        def get_balance(self, account): return _balance()
+
+    monkeypatch.setattr(fake_fints, "FinTS3PinTanClient", Client, raising=False)
+    controller = DKBProbeController(tmp_path)
+    controller.configure_product_id("A" * 25)
+    assert controller.run_cash_observation("user", "password", "1234").outcome == "approval_pending"
+    assert controller.continue_cash_observation().outcome == "retrieved"
+    assert controller.cash_system_trial() == (False, True)
+    assert controller.run_cash_observation("user", "password", "1234").outcome == "retrieved"
+    assert controller.cash_system_trial() == (True, False)
+    assert Client.seen[1]["system_id"] == "BANKSYSTEM123"
+    assert "BANKSYSTEM123" not in str(controller.status_document(
+        SimpleNamespace(health_document=lambda version: {})))
+    assert "BANKSYSTEM123" not in "".join(p.read_text(errors="replace") for p in tmp_path.iterdir())
+    controller.run_cash_observation("other_user", "password", "1234")
+    assert "system_id" not in Client.seen[2]
+    restarted = DKBProbeController(tmp_path)
+    restarted.run_cash_observation("user", "password", "1234")
+    assert "system_id" not in Client.seen[3]

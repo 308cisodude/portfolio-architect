@@ -1,3 +1,6 @@
+## v1.65.4
+A bounded bank-assigned system ID can be reused in App memory for a subsequent manual HKSAL research request by the same banking user. The Ingress trial line shows only reuse and approval-challenge booleans. No identifier or password is persisted; an App restart clears the ID. CSV remains authoritative. See `docs/UPGRADE-1.65.4.md`.
+
 ## v1.65.3
 
 This version aligns the DKB Gateway App with the dashboard presentation release. FinTS cash and holdings research, private shadow retention, and CSV authority are unchanged.

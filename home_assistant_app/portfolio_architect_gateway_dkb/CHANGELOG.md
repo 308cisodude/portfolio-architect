@@ -1,3 +1,6 @@
+## v1.65.4
+- Test in-memory reuse of a bank-assigned system ID on a second manual read-only cash request, with bounded approval outcome. Keep the ID and credentials out of persistent state, status and logs; CSV remains authoritative.
+
 ## 1.65.3
 
 - Align App version with the dashboard presentation release; DKB FinTS research and CSV authority are unchanged.
