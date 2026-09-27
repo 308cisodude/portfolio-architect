@@ -1,3 +1,6 @@
+## v1.65.8
+- Accept bounded printable bank IDs with safe private serialization for the restart reuse trial. No automatic acquisition or CSV authority change.
+
 ## v1.65.7
 - Report a bounded capture-rejection category for the latest manual cash research request without exposing or persisting the bank ID.
 

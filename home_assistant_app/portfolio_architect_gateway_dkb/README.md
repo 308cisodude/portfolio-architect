@@ -1,5 +1,8 @@
-## v1.65.7
-The admin-only manual cash research page classifies a rejected system-ID capture with a fixed category; no ID value is shown or persisted. The strict storage validator and CSV authority remain unchanged. See `docs/UPGRADE-1.65.7.md`.
+## v1.65.8
+The manual cash research path can save one printable, at most 30-character bank system ID in App-private, backup-excluded state. It remains read-only and separate from CSV planning. See `docs/UPGRADE-1.65.8.md`.
+
+## v1.65.8
+The admin-only manual cash research page classifies a rejected system-ID capture with a fixed category; no ID value is shown or persisted. The strict storage validator and CSV authority remain unchanged. See `docs/UPGRADE-1.65.8.md`.
 
 ## v1.65.6
 Manual cash research now shows bounded private-ID capture, save, and load outcomes with a short keyed HMAC fingerprint in admin Ingress. The ID and key stay App-private and are excluded from backups. DKB CSV remains authoritative. See `docs/UPGRADE-1.65.6.md`.

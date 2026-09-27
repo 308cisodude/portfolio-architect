@@ -169,7 +169,7 @@ def test_system_id_trial_survives_restart_without_extending_age(monkeypatch, fak
         seen = []
         def __init__(self, *args, **kwargs):
             self.seen.append(kwargs.copy())
-            self.system_id = "BANKSYSTEM123"
+            self.system_id = "BANK-SYSTEM_123"
             self.init_tan_response = None if kwargs.get("system_id") else Challenge()
         def fetch_tan_mechanisms(self): pass
         def __enter__(self): return self
@@ -193,7 +193,7 @@ def test_system_id_trial_survives_restart_without_extending_age(monkeypatch, fak
     assert diagnostic["capture"] == "valid" and diagnostic["save"] == "succeeded"
     assert diagnostic["capture_reason"] == "valid"
     fingerprint = diagnostic["fingerprint"]
-    assert len(fingerprint) == 16 and fingerprint != "BANKSYSTEM123"
+    assert len(fingerprint) == 16 and fingerprint != "BANK-SYSTEM_123"
     assert controller.cash_fingerprint_key_file.stat().st_mode & 0o777 == 0o600
     assert len(controller.cash_fingerprint_key_file.read_bytes()) == 32
     path = controller.cash_system_id_file
@@ -206,11 +206,11 @@ def test_system_id_trial_survives_restart_without_extending_age(monkeypatch, fak
     assert restarted.cash_system_diagnostic() == {
         "load": "loaded", "capture": "valid", "capture_reason": "valid",
         "save": "succeeded", "fingerprint": fingerprint}
-    assert Client.seen[1]["system_id"] == "BANKSYSTEM123"
+    assert Client.seen[1]["system_id"] == "BANK-SYSTEM_123"
     assert system_id.load(path, identity).seeded_at == seeded
-    assert "BANKSYSTEM123" not in str(restarted.status_document(
+    assert "BANK-SYSTEM_123" not in str(restarted.status_document(
         SimpleNamespace(health_document=lambda version: {})))
-    assert "BANKSYSTEM123" not in "".join(
+    assert "BANK-SYSTEM_123" not in "".join(
         p.read_text(errors="replace") for p in tmp_path.iterdir() if p != path)
     assert restarted.run_cash_observation("other_user", "password", "1234").outcome == "approval_pending"
     assert restarted.cash_system_diagnostic()["load"] == "different_user"
@@ -218,7 +218,7 @@ def test_system_id_trial_survives_restart_without_extending_age(monkeypatch, fak
     assert restarted.continue_cash_observation().outcome == "retrieved"
     assert system_id.load(path, identity) is None
     assert system_id.load(path, system_id.binding("A" * 25, "other_user")) is not None
-    system_id.save(path, identity, "BANKSYSTEM123", datetime.now(timezone.utc) - timedelta(hours=73))
+    system_id.save(path, identity, "BANK-SYSTEM_123", datetime.now(timezone.utc) - timedelta(hours=73))
     assert system_id.load(path, identity) is None and not path.exists()
     restarted.configure_product_id("B" * 25)
     assert not path.exists()
@@ -257,8 +257,10 @@ def test_system_id_is_bounded_and_excluded_from_cold_backup(tmp_path: Path):
 
 @pytest.mark.parametrize(("value", "category"), [
     (None, "absent"), (0, "non_string"), (b"BANK", "non_string"),
-    ("0", "zero_sentinel"), ("", "empty"), ("A" * 65, "over_limit"),
-    ("ABC-123", "non_alphanumeric"), ("\nPRIVATE", "non_alphanumeric"),
+    ("0", "zero_sentinel"), ("", "empty"), ("A" * 31, "over_limit"),
+    ("ABC-123", "valid"), ("A_B.C:?'\"+@\\", "valid"),
+    ("ÄBC-123", "valid"), ("\nPRIVATE", "non_printable"),
+    ("A\x00B", "non_printable"), ("A\x7fB", "non_printable"),
     ("BANKSYSTEM123", "valid"),
 ])
 def test_system_id_capture_categories_are_bounded(value: object, category: str) -> None:
@@ -272,12 +274,29 @@ def test_invalid_capture_does_not_persist_or_fingerprint_id(tmp_path: Path) -> N
                                    "capture_reason": "not_observed", "save": "skipped",
                                    "fingerprint": "unavailable"}
     ids: list[str] = []
-    controller._record_cash_system_id_capture("ABC-123", ids)
+    controller._record_cash_system_id_capture("ABC\n123", ids)
     assert ids == []
-    assert controller.cash_system_diagnostic()["capture_reason"] == "non_alphanumeric"
+    assert controller.cash_system_diagnostic()["capture_reason"] == "non_printable"
     assert not controller.cash_system_id_file.exists()
     assert not controller.cash_fingerprint_key_file.exists()
     controller._record_cash_system_id_capture("BANKSYSTEM123", ids)
     controller._record_cash_system_id_capture("0", ids)
     assert ids == ["BANKSYSTEM123"]
     assert controller.cash_system_diagnostic()["capture_reason"] == "valid"
+
+
+def test_system_id_private_json_roundtrip_and_fingerprint_with_special_characters(tmp_path: Path) -> None:
+    identity = system_id.binding("A" * 25, "user")
+    path = tmp_path / system_id.FILE_NAME
+    key_path = tmp_path / system_id.KEY_FILE_NAME
+    value = "Ä:?'\"+@\\_"
+    system_id.save(path, identity, value, datetime.now(timezone.utc))
+    assert system_id.load(path, identity).system_id == value
+    assert path.stat().st_mode & 0o777 == 0o600
+    assert len(system_id.fingerprint(key_path, value)) == 16
+    assert value not in path.read_text(encoding="ascii")
+    assert "\\u00c4" in path.read_text(encoding="ascii")
+    for rejected in ("A\nB", "A\x00B", "A" * 31, "0"):
+        with pytest.raises(ValueError):
+            system_id.save(path, identity, rejected, datetime.now(timezone.utc))
+        assert system_id.fingerprint(key_path, rejected) is None

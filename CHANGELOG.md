@@ -1,3 +1,7 @@
+## 1.65.8
+
+- Accept a bounded printable FinTS customer system ID in App-private manual cash research state, with safe JSON serialization and keyed fingerprinting. CSV remains authoritative.
+
 ## 1.65.7
 
 - Classify a rejected transient DKB FinTS system ID with a fixed admin-only category; preserve the strict storage gate, privacy boundary, and CSV authority.

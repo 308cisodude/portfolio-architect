@@ -87,11 +87,11 @@ def test_v1201_version_alignment_and_wire_compatibility() -> None:
         encoding="utf-8"
     )
 
-    assert manifest["version"] == "1.65.7"
-    assert app["version"] == "1.65.7"
-    assert 'VERSION: Final = "1.65.7"' in const
-    assert '__version__ = "1.65.7"' in engine
-    assert '__version__ = "1.65.7"' in gateway
+    assert manifest["version"] == "1.65.8"
+    assert app["version"] == "1.65.8"
+    assert 'VERSION: Final = "1.65.8"' in const
+    assert '__version__ = "1.65.8"' in engine
+    assert '__version__ = "1.65.8"' in gateway
     assert app["stage"] == "stable"
 
     # v1.20.1 is propagation/repair hygiene only. No payload or wire-schema bump.

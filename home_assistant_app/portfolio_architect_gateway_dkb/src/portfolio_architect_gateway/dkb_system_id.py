@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 import hashlib
 import hmac
+import json
 import os
 from pathlib import Path
 import re
@@ -18,8 +19,15 @@ FILE_NAME = "dkb-fints-system-id.json"
 KEY_FILE_NAME = "dkb-fints-fingerprint-key"
 MAX_AGE = timedelta(hours=72)
 MAX_BYTES = 512
-_ID = re.compile(r"[A-Za-z0-9]{1,64}\Z")
 _DIGEST = re.compile(r"[0-9a-f]{64}\Z")
+
+
+def _valid_id(value: object) -> bool:
+    # PyFinTS models HISYN.system_id as an IDField (maximum 30 characters),
+    # which does not restrict the decoded value to ASCII letters and digits.
+    # Keep it opaque; reject control characters before writing private state.
+    return (isinstance(value, str) and value != "0"
+            and 1 <= len(value) <= 30 and value.isprintable())
 
 
 def capture_category(value: object) -> str:
@@ -32,10 +40,10 @@ def capture_category(value: object) -> str:
         return "zero_sentinel"
     if not value:
         return "empty"
-    if len(value) > 64:
+    if len(value) > 30:
         return "over_limit"
-    if not _ID.fullmatch(value):
-        return "non_alphanumeric"
+    if not _valid_id(value):
+        return "non_printable"
     return "valid"
 
 
@@ -47,7 +55,7 @@ class SystemIdRecord:
 
 def fingerprint(key_path: Path, system_id: str) -> str | None:
     """Short keyed fingerprint; an unkeyed hash of a numeric ID is guessable."""
-    if not _ID.fullmatch(system_id):
+    if not _valid_id(system_id):
         return None
     try:
         details = key_path.lstat()
@@ -64,7 +72,7 @@ def fingerprint(key_path: Path, system_id: str) -> str | None:
             return None
     except OSError:
         return None
-    return hmac.new(key, system_id.encode("ascii"), hashlib.sha256).hexdigest()[:16]
+    return hmac.new(key, system_id.encode("utf-8"), hashlib.sha256).hexdigest()[:16]
 
 
 def binding(product_id: str, user_id: str) -> str:
@@ -103,7 +111,7 @@ def inspect(path: Path, identity: str, now: datetime | None = None) -> tuple[Sys
         if not isinstance(raw["binding"], str) or not _DIGEST.fullmatch(raw["binding"]):
             raise ValueError("invalid system ID binding")
         value = raw["system_id"]
-        if not isinstance(value, str) or value == "0" or not _ID.fullmatch(value):
+        if not _valid_id(value):
             raise ValueError("invalid system ID")
         seeded_at = _valid_time(raw["seeded_at"])
         if seeded_at is None:
@@ -126,13 +134,14 @@ def inspect(path: Path, identity: str, now: datetime | None = None) -> tuple[Sys
 
 
 def save(path: Path, identity: str, system_id: str, seeded_at: datetime) -> None:
-    if not _DIGEST.fullmatch(identity) or system_id == "0" or not _ID.fullmatch(system_id):
+    if not _DIGEST.fullmatch(identity) or not _valid_id(system_id):
         raise ValueError("invalid bounded system ID record")
     if seeded_at.tzinfo is None or seeded_at.utcoffset() is None:
         raise ValueError("invalid system ID timestamp")
     timestamp = seeded_at.astimezone(timezone.utc).isoformat(timespec="seconds")
-    data = (f'{{"schema_version":1,"binding":"{identity}",'
-            f'"system_id":"{system_id}","seeded_at":"{timestamp}"}}').encode("ascii")
+    data = json.dumps({"schema_version": 1, "binding": identity,
+                       "system_id": system_id, "seeded_at": timestamp},
+                      ensure_ascii=True, separators=(",", ":")).encode("ascii")
     if len(data) > MAX_BYTES:
         raise ValueError("system ID record exceeds limit")
     atomic_write(path, data)
