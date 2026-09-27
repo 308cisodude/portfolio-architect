@@ -1,3 +1,6 @@
+## v1.65.5
+- Persist one bank system ID for at most 72 hours in App-private state excluded from cold HA backups; use it only for manual read-only cash research with credentials entered again. Keep CSV authoritative.
+
 ## v1.65.4
 - Test in-memory reuse of a bank-assigned system ID on a second manual read-only cash request, with bounded approval outcome. Keep the ID and credentials out of persistent state, status and logs; CSV remains authoritative.
 

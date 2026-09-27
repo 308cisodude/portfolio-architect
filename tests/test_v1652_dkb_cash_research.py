@@ -18,6 +18,7 @@ module = importlib.util.module_from_spec(spec)
 sys.modules[NAME] = module
 spec.loader.exec_module(module)
 cash = importlib.import_module(f"{NAME}.dkb_cash_research")
+system_id = importlib.import_module(f"{NAME}.dkb_system_id")
 DKBProbeController = importlib.import_module(f"{NAME}.dkb_app").DKBProbeController
 
 
@@ -159,8 +160,8 @@ def test_private_cash_observation_schema_rejects_amount_or_account_in_status(tmp
         controller.cash_observation()
 
 
-def test_system_id_trial_reuses_only_ram_state_for_same_user(monkeypatch, fake_fints, tmp_path: Path):
-    """The first approved read seeds a bank ID; the next manual read can test it."""
+def test_system_id_trial_survives_restart_without_extending_age(monkeypatch, fake_fints, tmp_path: Path):
+    """A bank ID survives a cold backup restart, but no-approval reads do not renew it."""
     class Challenge(fake_fints.NeedTANResponse):
         decoupled = True
 
@@ -187,14 +188,54 @@ def test_system_id_trial_reuses_only_ram_state_for_same_user(monkeypatch, fake_f
     assert controller.run_cash_observation("user", "password", "1234").outcome == "approval_pending"
     assert controller.continue_cash_observation().outcome == "retrieved"
     assert controller.cash_system_trial() == (False, True)
-    assert controller.run_cash_observation("user", "password", "1234").outcome == "retrieved"
-    assert controller.cash_system_trial() == (True, False)
-    assert Client.seen[1]["system_id"] == "BANKSYSTEM123"
-    assert "BANKSYSTEM123" not in str(controller.status_document(
-        SimpleNamespace(health_document=lambda version: {})))
-    assert "BANKSYSTEM123" not in "".join(p.read_text(errors="replace") for p in tmp_path.iterdir())
-    controller.run_cash_observation("other_user", "password", "1234")
-    assert "system_id" not in Client.seen[2]
+    path = controller.cash_system_id_file
+    assert path.stat().st_mode & 0o777 == 0o600
+    identity = system_id.binding("A" * 25, "user")
+    seeded = system_id.load(path, identity).seeded_at
     restarted = DKBProbeController(tmp_path)
-    restarted.run_cash_observation("user", "password", "1234")
-    assert "system_id" not in Client.seen[3]
+    assert restarted.run_cash_observation("user", "password", "1234").outcome == "retrieved"
+    assert restarted.cash_system_trial() == (True, False)
+    assert Client.seen[1]["system_id"] == "BANKSYSTEM123"
+    assert system_id.load(path, identity).seeded_at == seeded
+    assert "BANKSYSTEM123" not in str(restarted.status_document(
+        SimpleNamespace(health_document=lambda version: {})))
+    assert "BANKSYSTEM123" not in "".join(
+        p.read_text(errors="replace") for p in tmp_path.iterdir() if p != path)
+    assert restarted.run_cash_observation("other_user", "password", "1234").outcome == "approval_pending"
+    assert "system_id" not in Client.seen[2]
+    assert restarted.continue_cash_observation().outcome == "retrieved"
+    assert system_id.load(path, identity) is None
+    assert system_id.load(path, system_id.binding("A" * 25, "other_user")) is not None
+    system_id.save(path, identity, "BANKSYSTEM123", datetime.now(timezone.utc) - timedelta(hours=73))
+    assert system_id.load(path, identity) is None and not path.exists()
+    restarted.configure_product_id("B" * 25)
+    assert not path.exists()
+
+
+def test_system_id_is_bounded_and_excluded_from_cold_backup(tmp_path: Path):
+    from fnmatch import fnmatchcase
+    import yaml
+    config = yaml.safe_load((PACKAGE.parents[1] / "config.yaml").read_text())
+    assert config["backup"] == "cold"
+    assert config["backup_exclude"] == [f"gateway/{system_id.FILE_NAME}",
+                                        f"gateway/.{system_id.FILE_NAME}.*"]
+    assert all(any(fnmatchcase(name, pattern) for pattern in config["backup_exclude"])
+               for name in (f"gateway/{system_id.FILE_NAME}",
+                            f"gateway/.{system_id.FILE_NAME}.orphan"))
+    path = tmp_path / system_id.FILE_NAME
+    binding = system_id.binding("A" * 25, "user")
+    now = datetime.now(timezone.utc)
+    system_id.save(path, binding, "BANKSYSTEM123", now)
+    assert system_id.load(path, binding, now + timedelta(hours=71)) is not None
+    assert system_id.load(path, binding, now + timedelta(hours=72)) is None
+    path.write_text('{"schema_version":1,"system_id":"secret"}')
+    path.chmod(0o600)
+    assert system_id.load(path, binding) is None and not path.exists()
+    path.write_text('not json')
+    path.chmod(0o600)
+    assert system_id.load(path, binding) is None and not path.exists()
+    system_id.save(path, binding, "BANKSYSTEM123", now)
+    path.chmod(0o644)
+    assert system_id.load(path, binding) is None and not path.exists()
+    path.symlink_to(tmp_path / "unrelated")
+    assert system_id.load(path, binding) is None and not path.exists()
