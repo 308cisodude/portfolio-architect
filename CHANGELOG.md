@@ -1,3 +1,7 @@
+## 1.65.7
+
+- Classify a rejected transient DKB FinTS system ID with a fixed admin-only category; preserve the strict storage gate, privacy boundary, and CSV authority.
+
 ## 1.65.6
 
 - Add bounded DKB private system-ID capture/save/load diagnostics and an App-private keyed fingerprint for manual cash research; keep DKB CSV authoritative.

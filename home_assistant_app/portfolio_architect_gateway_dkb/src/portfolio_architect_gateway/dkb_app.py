@@ -653,6 +653,19 @@ class DKBProbeController:
                 if self._cash_diagnostic is not None:
                     self._cash_diagnostic["save"] = "failed"
 
+    def _record_cash_system_id_capture(self, value: object, ids: list[str]) -> None:
+        category = dkb_system_id.capture_category(value)
+        if category == "valid":
+            # The classifier has proved that this is a bounded ASCII string.
+            ids.append(value)
+        with self._lock:
+            if self._cash_diagnostic is not None:
+                # A later invalid callback must not erase a valid capture.
+                if category == "valid" or self._cash_diagnostic["capture"] != "valid":
+                    self._cash_diagnostic["capture"] = (
+                        "valid" if category == "valid" else "absent" if category == "absent" else "invalid")
+                    self._cash_diagnostic["capture_reason"] = category
+
     def run_cash_observation(self, user_id: str, pin: str, suffix: str,
                              csv_snapshot: Any = None) -> CashObservation:
         product_id = self.product_id()
@@ -672,6 +685,7 @@ class DKBProbeController:
             with self._lock:
                 self._cash_system_trial = (prior_id is not None, False)
                 self._cash_diagnostic = {"load": load_reason, "capture": "absent",
+                                         "capture_reason": "not_observed",
                                          "save": "skipped", "fingerprint": "unavailable"}
                 if prior_id is not None:
                     self._cash_diagnostic["fingerprint"] = (
@@ -679,13 +693,7 @@ class DKBProbeController:
                         or "unavailable")
             ids: list[str] = []
             def capture_id(value: object) -> None:
-                if isinstance(value, str) and value != "0" and re.fullmatch(r"[A-Za-z0-9]{1,64}", value):
-                    ids.append(value)
-                    with self._lock:
-                        self._cash_diagnostic["capture"] = "valid"
-                else:
-                    with self._lock:
-                        self._cash_diagnostic["capture"] = "absent" if value is None else "invalid"
+                self._record_cash_system_id_capture(value, ids)
             result, session = begin_cash_observation(
                 product_id, user_id, pin, suffix, values.append,
                 system_id=prior_id, capture_system_id=capture_id)
@@ -721,14 +729,8 @@ class DKBProbeController:
             values: list[BookedBalance] = []
             ids: list[str] = []
             def capture_id(value: object) -> None:
-                if (self._cash_pending_identity is not None and isinstance(value, str)
-                        and value != "0" and re.fullmatch(r"[A-Za-z0-9]{1,64}", value)):
-                    ids.append(value)
-                    with self._lock:
-                        self._cash_diagnostic["capture"] = "valid"
-                else:
-                    with self._lock:
-                        self._cash_diagnostic["capture"] = "absent" if value is None else "invalid"
+                if self._cash_pending_identity is not None:
+                    self._record_cash_system_id_capture(value, ids)
             result, pending = continue_cash_observation(session, tan, values.append, capture_id)
             self._capture_cash(values, csv_snapshot, result)
             if pending is None and self._cash_pending_identity is not None:
@@ -1287,7 +1289,8 @@ class DKBIngressHandler(BaseHTTPRequestHandler):
             f'bank approval requested: {"yes" if trial[1] else "no"}. '
             'This reports only the latest manual request and does not expose the ID.</p>'
             f'<p class="small">Private ID diagnostics: load {escape(diagnostic["load"])}; '
-            f'capture {escape(diagnostic["capture"])}; save {escape(diagnostic["save"])}; '
+            f'capture {escape(diagnostic["capture"])}; '
+            f'capture reason {escape(diagnostic["capture_reason"])}; save {escape(diagnostic["save"])}; '
             f'keyed fingerprint {escape(diagnostic["fingerprint"])}. '
             'The fingerprint is a short HMAC with an App-private key, not an unkeyed hash; '
             'it is shown only in this admin page and resets on App restart.</p>'

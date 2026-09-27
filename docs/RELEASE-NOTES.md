@@ -1,7 +1,7 @@
-# Portfolio Architect v1.65.6
+# Portfolio Architect v1.65.7
 
-DKB cash research now shows bounded private-ID diagnostics for the latest manual read: load reason, ID capture and save outcome, and a short keyed fingerprint. The fingerprint uses an App-private random HMAC key rather than an unkeyed hash of a potentially predictable bank ID. Neither the ID nor the key is displayed, logged, or included in Portfolio Architect state or diagnostics. Both private files are excluded from HA App backups.
+The DKB manual cash research page now explains why a transient bank system ID was rejected by the existing strict storage gate. It reports only a fixed category: absent, zero sentinel, non-string, empty, over-limit, non-alphanumeric, or valid. No ID value, character, length, type name, credential, or raw response is rendered or logged. The keyed fingerprint remains unavailable when capture fails.
 
-This helps locate the v1.65.5 restart-continuity failure before further bank trials. It does not claim that reuse after restart has been accepted. DKB CSV remains the sole cash and holdings source for planning; FinTS remains read-only research, with manual credentials and bank approval when requested. No automated acquisition or source switch is added.
+This follows v1.65.6 live evidence: the cash read succeeded, but ID capture was invalid and persistence was skipped. The category will guide a narrowly scoped correction if the bank provides a reusable ID in a shape the current gate does not accept. No acceptance of restart-safe reuse is claimed. DKB CSV remains authoritative for planning.
 
-See [details](RELEASE-NOTES-1.65.6.md), the [upgrade guide](UPGRADE-1.65.6.md), and the [previous release](RELEASE-NOTES-1.65.5.md).
+See [details](RELEASE-NOTES-1.65.7.md), the [upgrade guide](UPGRADE-1.65.7.md), and the [previous release](RELEASE-NOTES-1.65.6.md).

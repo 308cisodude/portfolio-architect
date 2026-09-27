@@ -22,6 +22,23 @@ _ID = re.compile(r"[A-Za-z0-9]{1,64}\Z")
 _DIGEST = re.compile(r"[0-9a-f]{64}\Z")
 
 
+def capture_category(value: object) -> str:
+    """Describe only why a transient bank ID cannot pass the storage gate."""
+    if value is None:
+        return "absent"
+    if not isinstance(value, str):
+        return "non_string"
+    if value == "0":
+        return "zero_sentinel"
+    if not value:
+        return "empty"
+    if len(value) > 64:
+        return "over_limit"
+    if not _ID.fullmatch(value):
+        return "non_alphanumeric"
+    return "valid"
+
+
 @dataclass(frozen=True, slots=True)
 class SystemIdRecord:
     system_id: str
