@@ -1,3 +1,6 @@
+## v1.65.6
+Manual cash research now shows bounded private-ID capture, save, and load outcomes with a short keyed HMAC fingerprint in admin Ingress. The ID and key stay App-private and are excluded from backups. DKB CSV remains authoritative. See `docs/UPGRADE-1.65.6.md`.
+
 ## v1.65.5
 The DKB App retains one bounded system ID across cold-backup restarts in a `0600` private file excluded from HA backups. An approved successful read starts a fixed 72-hour research window; approval-free reads do not extend it. Each manual read still requires credentials, and CSV remains authoritative. See `docs/UPGRADE-1.65.5.md`.
 

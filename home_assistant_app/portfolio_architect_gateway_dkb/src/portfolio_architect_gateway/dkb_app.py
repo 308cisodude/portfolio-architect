@@ -116,6 +116,7 @@ class DKBProbeController:
         self.cash_research_file = data_directory / "dkb-fints-cash-observation.json"
         self.cash_shadow_file = data_directory / "dkb-fints-cash-shadow.json"
         self.cash_system_id_file = data_directory / dkb_system_id.FILE_NAME
+        self.cash_fingerprint_key_file = data_directory / dkb_system_id.KEY_FILE_NAME
         self.csrf_token = secrets.token_urlsafe(32)
         self._lock = threading.RLock()
         self._probe_in_progress = False
@@ -132,6 +133,7 @@ class DKBProbeController:
         # Only trial booleans and a pending identity are held in RAM. The bounded
         # bank ID is App-private, excluded from backups and never rendered.
         self._cash_system_trial: tuple[bool, bool] | None = None
+        self._cash_diagnostic: dict[str, str] | None = None
         self._cash_pending_identity: str | None = None
 
     def product_id(self) -> str | None:
@@ -160,8 +162,10 @@ class DKBProbeController:
                 self._cash_session = None
             self._cash_review = None
             self._cash_system_trial = None
+            self._cash_diagnostic = None
             self._cash_pending_identity = None
             self.cash_system_id_file.unlink(missing_ok=True)
+            self.cash_fingerprint_key_file.unlink(missing_ok=True)
             self.cash_research_file.unlink(missing_ok=True)
             self.cash_shadow_file.unlink(missing_ok=True)
             self._holdings_review = None
@@ -636,10 +640,18 @@ class DKBProbeController:
         try:
             dkb_system_id.save(self.cash_system_id_file, identity, values[0],
                                seeded_at or datetime.now(timezone.utc))
+            fingerprint = dkb_system_id.fingerprint(self.cash_fingerprint_key_file, values[0])
+            with self._lock:
+                if self._cash_diagnostic is not None:
+                    self._cash_diagnostic["save"] = "succeeded"
+                    self._cash_diagnostic["fingerprint"] = fingerprint or "unavailable"
         except (OSError, ValueError):
             # The booked balance remains a valid research observation. A failed
             # hint write must never expose its value or the bank identifier.
             _LOGGER.warning("DKB private system ID research state unavailable")
+            with self._lock:
+                if self._cash_diagnostic is not None:
+                    self._cash_diagnostic["save"] = "failed"
 
     def run_cash_observation(self, user_id: str, pin: str, suffix: str,
                              csv_snapshot: Any = None) -> CashObservation:
@@ -655,14 +667,25 @@ class DKBProbeController:
             self.clear_cash_review()
             values: list[BookedBalance] = []
             identity = dkb_system_id.binding(product_id, user_id)
-            prior = dkb_system_id.load(self.cash_system_id_file, identity)
+            prior, load_reason = dkb_system_id.inspect(self.cash_system_id_file, identity)
             prior_id = prior.system_id if prior else None
             with self._lock:
                 self._cash_system_trial = (prior_id is not None, False)
+                self._cash_diagnostic = {"load": load_reason, "capture": "absent",
+                                         "save": "skipped", "fingerprint": "unavailable"}
+                if prior_id is not None:
+                    self._cash_diagnostic["fingerprint"] = (
+                        dkb_system_id.fingerprint(self.cash_fingerprint_key_file, prior_id)
+                        or "unavailable")
             ids: list[str] = []
             def capture_id(value: object) -> None:
                 if isinstance(value, str) and value != "0" and re.fullmatch(r"[A-Za-z0-9]{1,64}", value):
                     ids.append(value)
+                    with self._lock:
+                        self._cash_diagnostic["capture"] = "valid"
+                else:
+                    with self._lock:
+                        self._cash_diagnostic["capture"] = "absent" if value is None else "invalid"
             result, session = begin_cash_observation(
                 product_id, user_id, pin, suffix, values.append,
                 system_id=prior_id, capture_system_id=capture_id)
@@ -701,6 +724,11 @@ class DKBProbeController:
                 if (self._cash_pending_identity is not None and isinstance(value, str)
                         and value != "0" and re.fullmatch(r"[A-Za-z0-9]{1,64}", value)):
                     ids.append(value)
+                    with self._lock:
+                        self._cash_diagnostic["capture"] = "valid"
+                else:
+                    with self._lock:
+                        self._cash_diagnostic["capture"] = "absent" if value is None else "invalid"
             result, pending = continue_cash_observation(session, tan, values.append, capture_id)
             self._capture_cash(values, csv_snapshot, result)
             if pending is None and self._cash_pending_identity is not None:
@@ -726,6 +754,11 @@ class DKBProbeController:
         """Only bounded, current-process research facts; no system ID is exposed."""
         with self._lock:
             return self._cash_system_trial
+
+    def cash_system_diagnostic(self) -> dict[str, str] | None:
+        """Bounded current-process facts for admin Ingress only."""
+        with self._lock:
+            return self._cash_diagnostic.copy() if self._cash_diagnostic else None
 
     def status_document(self, gateway_state: GatewayState) -> dict[str, Any]:
         view = self.probe_view()
@@ -1247,11 +1280,17 @@ class DKBIngressHandler(BaseHTTPRequestHandler):
         )
         cash_shadow = cash_shadow_summary(controller.cash_shadow_file)
         trial = controller.cash_system_trial()
+        diagnostic = controller.cash_system_diagnostic()
         trial_html = (
             '<p role="status">Private system ID trial: '
             f'prior ID reused: {"yes" if trial[0] else "no"}; '
             f'bank approval requested: {"yes" if trial[1] else "no"}. '
             'This reports only the latest manual request and does not expose the ID.</p>'
+            f'<p class="small">Private ID diagnostics: load {escape(diagnostic["load"])}; '
+            f'capture {escape(diagnostic["capture"])}; save {escape(diagnostic["save"])}; '
+            f'keyed fingerprint {escape(diagnostic["fingerprint"])}. '
+            'The fingerprint is a short HMAC with an App-private key, not an unkeyed hash; '
+            'it is shown only in this admin page and resets on App restart.</p>'
             if trial is not None else ''
         )
         cash_shadow_text = {

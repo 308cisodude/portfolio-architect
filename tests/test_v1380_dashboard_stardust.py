@@ -154,7 +154,7 @@ def test_cash_sensors_expose_context_attributes_without_changing_wire_contracts(
     assert "eligible_eur" in presentation
     assert "authorized_eur" in presentation
 
-    release_notes = (ROOT / "docs" / "RELEASE-NOTES.md").read_text(encoding="utf-8")
+    release_notes = (ROOT / "docs" / "RELEASE-NOTES-1.63.0.md").read_text(encoding="utf-8")
     for contract in (
         "payload schema 8: unchanged",
         "REST portfolio schema 1: unchanged",
@@ -165,12 +165,12 @@ def test_cash_sensors_expose_context_attributes_without_changing_wire_contracts(
 
 
 def test_v1380_metadata_dashboard_and_translation_contracts_are_aligned() -> None:
-    assert 'version = "1.65.5"' in (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    assert 'version = "1.65.6"' in (ROOT / "pyproject.toml").read_text(encoding="utf-8")
     manifest = json.loads((COMPONENT / "manifest.json").read_text(encoding="utf-8"))
-    assert manifest["version"] == "1.65.5"
-    assert 'VERSION: Final = "1.65.5"' in (COMPONENT / "const.py").read_text(encoding="utf-8")
-    assert '__version__ = "1.65.5"' in (COMPONENT / "engine" / "__init__.py").read_text(encoding="utf-8")
-    assert (ROOT / "docs" / "UPGRADE-1.65.5.md").is_file()
+    assert manifest["version"] == "1.65.6"
+    assert 'VERSION: Final = "1.65.6"' in (COMPONENT / "const.py").read_text(encoding="utf-8")
+    assert '__version__ = "1.65.6"' in (COMPONENT / "engine" / "__init__.py").read_text(encoding="utf-8")
+    assert (ROOT / "docs" / "UPGRADE-1.65.6.md").is_file()
 
     source = DASHBOARD.read_text(encoding="utf-8")
     lowered = source.casefold()
