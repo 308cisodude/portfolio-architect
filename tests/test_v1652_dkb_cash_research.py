@@ -191,6 +191,7 @@ def test_system_id_trial_survives_restart_without_extending_age(monkeypatch, fak
     diagnostic = controller.cash_system_diagnostic()
     assert diagnostic["load"] == "missing"
     assert diagnostic["capture"] == "valid" and diagnostic["save"] == "succeeded"
+    assert diagnostic["capture_reason"] == "valid"
     fingerprint = diagnostic["fingerprint"]
     assert len(fingerprint) == 16 and fingerprint != "BANKSYSTEM123"
     assert controller.cash_fingerprint_key_file.stat().st_mode & 0o777 == 0o600
@@ -203,7 +204,8 @@ def test_system_id_trial_survives_restart_without_extending_age(monkeypatch, fak
     assert restarted.run_cash_observation("user", "password", "1234").outcome == "retrieved"
     assert restarted.cash_system_trial() == (True, False)
     assert restarted.cash_system_diagnostic() == {
-        "load": "loaded", "capture": "valid", "save": "succeeded", "fingerprint": fingerprint}
+        "load": "loaded", "capture": "valid", "capture_reason": "valid",
+        "save": "succeeded", "fingerprint": fingerprint}
     assert Client.seen[1]["system_id"] == "BANKSYSTEM123"
     assert system_id.load(path, identity).seeded_at == seeded
     assert "BANKSYSTEM123" not in str(restarted.status_document(
@@ -251,3 +253,31 @@ def test_system_id_is_bounded_and_excluded_from_cold_backup(tmp_path: Path):
     assert system_id.load(path, binding) is None and not path.exists()
     path.symlink_to(tmp_path / "unrelated")
     assert system_id.load(path, binding) is None and not path.exists()
+
+
+@pytest.mark.parametrize(("value", "category"), [
+    (None, "absent"), (0, "non_string"), (b"BANK", "non_string"),
+    ("0", "zero_sentinel"), ("", "empty"), ("A" * 65, "over_limit"),
+    ("ABC-123", "non_alphanumeric"), ("\nPRIVATE", "non_alphanumeric"),
+    ("BANKSYSTEM123", "valid"),
+])
+def test_system_id_capture_categories_are_bounded(value: object, category: str) -> None:
+    assert system_id.capture_category(value) == category
+    assert category == "valid" or not value or str(value) not in category
+
+
+def test_invalid_capture_does_not_persist_or_fingerprint_id(tmp_path: Path) -> None:
+    controller = DKBProbeController(tmp_path)
+    controller._cash_diagnostic = {"load": "missing", "capture": "absent",
+                                   "capture_reason": "not_observed", "save": "skipped",
+                                   "fingerprint": "unavailable"}
+    ids: list[str] = []
+    controller._record_cash_system_id_capture("ABC-123", ids)
+    assert ids == []
+    assert controller.cash_system_diagnostic()["capture_reason"] == "non_alphanumeric"
+    assert not controller.cash_system_id_file.exists()
+    assert not controller.cash_fingerprint_key_file.exists()
+    controller._record_cash_system_id_capture("BANKSYSTEM123", ids)
+    controller._record_cash_system_id_capture("0", ids)
+    assert ids == ["BANKSYSTEM123"]
+    assert controller.cash_system_diagnostic()["capture_reason"] == "valid"

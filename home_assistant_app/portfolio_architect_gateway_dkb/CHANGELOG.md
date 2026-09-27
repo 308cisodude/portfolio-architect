@@ -1,3 +1,6 @@
+## v1.65.7
+- Report a bounded capture-rejection category for the latest manual cash research request without exposing or persisting the bank ID.
+
 ## v1.65.6
 - Show bounded admin-only system-ID trial stages and a keyed HMAC fingerprint. Exclude the App-private key and ID from backups; keep CSV authoritative.
 
