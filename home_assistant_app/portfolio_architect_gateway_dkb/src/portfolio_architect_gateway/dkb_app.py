@@ -656,7 +656,7 @@ class DKBProbeController:
     def _record_cash_system_id_capture(self, value: object, ids: list[str]) -> None:
         category = dkb_system_id.capture_category(value)
         if category == "valid":
-            # The classifier has proved that this is a bounded ASCII string.
+            # The classifier has proved that this is a bounded printable ID.
             ids.append(value)
         with self._lock:
             if self._cash_diagnostic is not None:
