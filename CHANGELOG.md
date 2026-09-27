@@ -1,3 +1,7 @@
+## v1.65.5
+
+- Keep one bounded DKB bank system ID in backup-excluded App-private state across cold-backup restarts for manual cash research. Expire after 72 hours without sliding on approval-free reads; preserve CSV authority and transient credentials.
+
 ## v1.65.4
 
 - Add a research-only DKB cash trial for in-memory FinTS system-ID reuse on a second manual request. CSV authority and credentials handling are unchanged.

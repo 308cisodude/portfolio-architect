@@ -1,3 +1,9 @@
+# Portfolio Architect v1.65.5 release notes
+
+See [v1.65.5 private system-ID continuity](RELEASE-NOTES-1.65.5.md) and [upgrade guide](UPGRADE-1.65.5.md).
+
+## Previous release
+
 # Portfolio Architect v1.65.4 release notes
 
 See [v1.65.4 DKB system-ID research](RELEASE-NOTES-1.65.4.md) and [upgrade guide](UPGRADE-1.65.4.md).

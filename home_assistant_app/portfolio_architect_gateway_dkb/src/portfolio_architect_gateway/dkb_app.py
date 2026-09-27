@@ -15,7 +15,6 @@ import logging
 import re
 from pathlib import Path
 import secrets
-import hashlib
 import threading
 import time
 from typing import Any, Final
@@ -30,6 +29,7 @@ from .dkb_holdings_review import HoldingsReview, ReviewRow, build_review, render
 from .dkb_cash_research import (BookedBalance, CashObservation, CashSession,
                                 begin_cash_observation, continue_cash_observation,
                                 save_shadow as save_cash_shadow, shadow_summary as cash_shadow_summary)
+from . import dkb_system_id
 from .dkb_shadow import project_shadow, save_shadow, shadow_summary
 from .dkb_cash_csv import DkbCashCsvImportError, MAX_CASH_CSV_BYTES, parse_dkb_cash_csv
 from .dkb_csv import (
@@ -115,6 +115,7 @@ class DKBProbeController:
         self.shadow_file = data_directory / "dkb-fints-holdings-shadow.json"
         self.cash_research_file = data_directory / "dkb-fints-cash-observation.json"
         self.cash_shadow_file = data_directory / "dkb-fints-cash-shadow.json"
+        self.cash_system_id_file = data_directory / dkb_system_id.FILE_NAME
         self.csrf_token = secrets.token_urlsafe(32)
         self._lock = threading.RLock()
         self._probe_in_progress = False
@@ -128,10 +129,8 @@ class DKBProbeController:
         self._cash_deadline = 0.0
         self._cash_review: tuple[Any, BookedBalance] | None = None
         self._cash_review_deadline = 0.0
-        # Research-only: one bank system ID bound to one registration/user in RAM.
-        # It is never a credential, persisted, rendered or included in diagnostics.
-        self._cash_system_identity: str | None = None
-        self._cash_system_id: str | None = None
+        # Only trial booleans and a pending identity are held in RAM. The bounded
+        # bank ID is App-private, excluded from backups and never rendered.
         self._cash_system_trial: tuple[bool, bool] | None = None
         self._cash_pending_identity: str | None = None
 
@@ -160,10 +159,9 @@ class DKBProbeController:
                 self._cash_session.close()
                 self._cash_session = None
             self._cash_review = None
-            self._cash_system_identity = None
-            self._cash_system_id = None
             self._cash_system_trial = None
             self._cash_pending_identity = None
+            self.cash_system_id_file.unlink(missing_ok=True)
             self.cash_research_file.unlink(missing_ok=True)
             self.cash_shadow_file.unlink(missing_ok=True)
             self._holdings_review = None
@@ -631,6 +629,18 @@ class DKBProbeController:
                 self._cash_review = (csv_snapshot, values[0])
                 self._cash_review_deadline = time.monotonic() + 300
 
+    def _store_cash_system_id(self, identity: str, values: list[str],
+                              result: CashObservation, seeded_at: datetime | None = None) -> None:
+        if result.outcome != "retrieved" or len(values) != 1:
+            return
+        try:
+            dkb_system_id.save(self.cash_system_id_file, identity, values[0],
+                               seeded_at or datetime.now(timezone.utc))
+        except (OSError, ValueError):
+            # The booked balance remains a valid research observation. A failed
+            # hint write must never expose its value or the bank identifier.
+            _LOGGER.warning("DKB private system ID research state unavailable")
+
     def run_cash_observation(self, user_id: str, pin: str, suffix: str,
                              csv_snapshot: Any = None) -> CashObservation:
         product_id = self.product_id()
@@ -644,19 +654,21 @@ class DKBProbeController:
             self.cash_research_file.unlink(missing_ok=True)
             self.clear_cash_review()
             values: list[BookedBalance] = []
-            identity = hashlib.sha256((product_id + "\0" + user_id).encode("utf-8")).hexdigest()
+            identity = dkb_system_id.binding(product_id, user_id)
+            prior = dkb_system_id.load(self.cash_system_id_file, identity)
+            prior_id = prior.system_id if prior else None
             with self._lock:
-                prior_id = self._cash_system_id if self._cash_system_identity == identity else None
                 self._cash_system_trial = (prior_id is not None, False)
+            ids: list[str] = []
             def capture_id(value: object) -> None:
                 if isinstance(value, str) and value != "0" and re.fullmatch(r"[A-Za-z0-9]{1,64}", value):
-                    with self._lock:
-                        self._cash_system_identity = identity
-                        self._cash_system_id = value
+                    ids.append(value)
             result, session = begin_cash_observation(
                 product_id, user_id, pin, suffix, values.append,
                 system_id=prior_id, capture_system_id=capture_id)
             self._capture_cash(values, csv_snapshot, result)
+            if session is None:
+                self._store_cash_system_id(identity, ids, result, prior.seeded_at if prior else None)
             with self._lock:
                 self._cash_system_trial = (prior_id is not None, session is not None)
             if session is not None:
@@ -684,14 +696,17 @@ class DKBProbeController:
             self._probe_in_progress = True
         try:
             values: list[BookedBalance] = []
+            ids: list[str] = []
             def capture_id(value: object) -> None:
                 if (self._cash_pending_identity is not None and isinstance(value, str)
                         and value != "0" and re.fullmatch(r"[A-Za-z0-9]{1,64}", value)):
-                    with self._lock:
-                        self._cash_system_identity = self._cash_pending_identity
-                        self._cash_system_id = value
+                    ids.append(value)
             result, pending = continue_cash_observation(session, tan, values.append, capture_id)
             self._capture_cash(values, csv_snapshot, result)
+            if pending is None and self._cash_pending_identity is not None:
+                # Completing an actual bank challenge starts a fresh, fixed
+                # research window. Approval-free reads never extend it.
+                self._store_cash_system_id(self._cash_pending_identity, ids, result)
             with self._lock:
                 self._cash_session = pending
                 if pending is None:
@@ -1233,10 +1248,10 @@ class DKBIngressHandler(BaseHTTPRequestHandler):
         cash_shadow = cash_shadow_summary(controller.cash_shadow_file)
         trial = controller.cash_system_trial()
         trial_html = (
-            '<p role="status">In-memory system ID trial: '
+            '<p role="status">Private system ID trial: '
             f'prior ID reused: {"yes" if trial[0] else "no"}; '
             f'bank approval requested: {"yes" if trial[1] else "no"}. '
-            'This reports only this App process and does not expose the ID.</p>'
+            'This reports only the latest manual request and does not expose the ID.</p>'
             if trial is not None else ''
         )
         cash_shadow_text = {
@@ -1288,8 +1303,9 @@ class DKBIngressHandler(BaseHTTPRequestHandler):
             'An absent or ambiguous account stops before the balance request. A complete successful observation '
             'replaces the bounded App-private cash research shadow; a failed request leaves the previous observation intact. '
             'The observation age is separate from the bank balance date. DKB cash CSV remains the sole planner source. '
-            'For this research trial, a successful read retains only a bank system ID in App memory for the next '
-            'manual cash observation with credentials entered again. An App restart clears that ID.</p>'
+            'For this research trial, a successful read retains one bank system ID in App-private storage for '
+            'at most 72 hours from the approved seed read. It survives an App restart but is excluded from HA '
+            'backups. Each manual observation still requires credentials entered again.</p>'
             '<form method="post" action="observe-cash-balance">'
             f'<input type="hidden" name="csrf" value="{csrf}">'
             '<label for="cash-user">DKB banking Anmeldename</label><br>'
