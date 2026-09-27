@@ -287,7 +287,7 @@ def test_gateway_server_retains_tls_minimum_and_wire_schemas_are_unchanged() -> 
     assert "context.minimum_version = ssl.TLSVersion.TLSv1_2" in server
     health = (GATEWAY / "server.py").read_text(encoding="utf-8")
     assert "health_schema_version" in health
-    release = (ROOT / "docs" / "RELEASE-NOTES.md").read_text(encoding="utf-8")
+    release = (ROOT / "docs" / "RELEASE-NOTES-1.63.0.md").read_text(encoding="utf-8")
     # These release-note strings are updated to 1.42.0 later in release preparation.
     assert "REST portfolio schema 1" in release
     assert "Gateway health schema 10" in release

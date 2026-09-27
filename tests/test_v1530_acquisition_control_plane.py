@@ -9,9 +9,9 @@ COMPONENT = ROOT / "custom_components" / "portfolio_architect"
 
 
 def test_v1530_versions_and_health_schema_are_aligned() -> None:
-    assert json.loads((COMPONENT / "manifest.json").read_text())["version"] == "1.65.5"
-    assert 'VERSION: Final = "1.65.5"' in (COMPONENT / "const.py").read_text()
-    assert '__version__ = "1.65.5"' in (ROOT / "gateway/src/portfolio_architect_gateway/__init__.py").read_text()
+    assert json.loads((COMPONENT / "manifest.json").read_text())["version"] == "1.65.6"
+    assert 'VERSION: Final = "1.65.6"' in (COMPONENT / "const.py").read_text()
+    assert '__version__ = "1.65.6"' in (ROOT / "gateway/src/portfolio_architect_gateway/__init__.py").read_text()
     for app in (
         "portfolio_architect_gateway_comdirect",
         "portfolio_architect_gateway_dkb",
@@ -19,7 +19,7 @@ def test_v1530_versions_and_health_schema_are_aligned() -> None:
         "portfolio_architect_gateway_import",
     ):
         config = yaml.safe_load((ROOT / "home_assistant_app" / app / "config.yaml").read_text())
-        assert config["version"] == "1.65.5"
+        assert config["version"] == "1.65.6"
     rest = (COMPONENT / "rest_client.py").read_text()
     server = (ROOT / "gateway/src/portfolio_architect_gateway/server.py").read_text()
     assert 'HEALTH_V9_MEDIA_TYPE' in rest
@@ -71,7 +71,7 @@ def test_comdirect_switch_is_gateway_local_atomic_and_requires_complete_csv_cand
 
 def test_v1530_does_not_advance_dkb_authenticated_fints_or_money_movement() -> None:
     dkb = (ROOT / "home_assistant_app/portfolio_architect_gateway_dkb/src/portfolio_architect_gateway/dkb_app.py").read_text()
-    release = (ROOT / "docs/RELEASE-NOTES.md").read_text()
+    release = (ROOT / "docs/RELEASE-NOTES-1.63.0.md").read_text()
     assert "EXPERIMENTAL · RESEARCH ONLY" in dkb
     lowered = release.lower()
     assert "authenticated dkb fints" in lowered

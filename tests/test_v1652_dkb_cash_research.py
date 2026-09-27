@@ -188,6 +188,13 @@ def test_system_id_trial_survives_restart_without_extending_age(monkeypatch, fak
     assert controller.run_cash_observation("user", "password", "1234").outcome == "approval_pending"
     assert controller.continue_cash_observation().outcome == "retrieved"
     assert controller.cash_system_trial() == (False, True)
+    diagnostic = controller.cash_system_diagnostic()
+    assert diagnostic["load"] == "missing"
+    assert diagnostic["capture"] == "valid" and diagnostic["save"] == "succeeded"
+    fingerprint = diagnostic["fingerprint"]
+    assert len(fingerprint) == 16 and fingerprint != "BANKSYSTEM123"
+    assert controller.cash_fingerprint_key_file.stat().st_mode & 0o777 == 0o600
+    assert len(controller.cash_fingerprint_key_file.read_bytes()) == 32
     path = controller.cash_system_id_file
     assert path.stat().st_mode & 0o777 == 0o600
     identity = system_id.binding("A" * 25, "user")
@@ -195,6 +202,8 @@ def test_system_id_trial_survives_restart_without_extending_age(monkeypatch, fak
     restarted = DKBProbeController(tmp_path)
     assert restarted.run_cash_observation("user", "password", "1234").outcome == "retrieved"
     assert restarted.cash_system_trial() == (True, False)
+    assert restarted.cash_system_diagnostic() == {
+        "load": "loaded", "capture": "valid", "save": "succeeded", "fingerprint": fingerprint}
     assert Client.seen[1]["system_id"] == "BANKSYSTEM123"
     assert system_id.load(path, identity).seeded_at == seeded
     assert "BANKSYSTEM123" not in str(restarted.status_document(
@@ -202,6 +211,7 @@ def test_system_id_trial_survives_restart_without_extending_age(monkeypatch, fak
     assert "BANKSYSTEM123" not in "".join(
         p.read_text(errors="replace") for p in tmp_path.iterdir() if p != path)
     assert restarted.run_cash_observation("other_user", "password", "1234").outcome == "approval_pending"
+    assert restarted.cash_system_diagnostic()["load"] == "different_user"
     assert "system_id" not in Client.seen[2]
     assert restarted.continue_cash_observation().outcome == "retrieved"
     assert system_id.load(path, identity) is None
@@ -218,7 +228,9 @@ def test_system_id_is_bounded_and_excluded_from_cold_backup(tmp_path: Path):
     config = yaml.safe_load((PACKAGE.parents[1] / "config.yaml").read_text())
     assert config["backup"] == "cold"
     assert config["backup_exclude"] == [f"gateway/{system_id.FILE_NAME}",
-                                        f"gateway/.{system_id.FILE_NAME}.*"]
+                                        f"gateway/.{system_id.FILE_NAME}.*",
+                                        f"gateway/{system_id.KEY_FILE_NAME}",
+                                        f"gateway/.{system_id.KEY_FILE_NAME}.*"]
     assert all(any(fnmatchcase(name, pattern) for pattern in config["backup_exclude"])
                for name in (f"gateway/{system_id.FILE_NAME}",
                             f"gateway/.{system_id.FILE_NAME}.orphan"))

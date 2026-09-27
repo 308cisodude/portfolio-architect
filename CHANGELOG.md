@@ -1,3 +1,7 @@
+## 1.65.6
+
+- Add bounded DKB private system-ID capture/save/load diagnostics and an App-private keyed fingerprint for manual cash research; keep DKB CSV authoritative.
+
 ## v1.65.5
 
 - Keep one bounded DKB bank system ID in backup-excluded App-private state across cold-backup restarts for manual cash research. Expire after 72 hours without sliding on approval-free reads; preserve CSV authority and transient credentials.

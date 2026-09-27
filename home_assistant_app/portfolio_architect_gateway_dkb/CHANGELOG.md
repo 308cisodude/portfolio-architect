@@ -1,3 +1,6 @@
+## v1.65.6
+- Show bounded admin-only system-ID trial stages and a keyed HMAC fingerprint. Exclude the App-private key and ID from backups; keep CSV authoritative.
+
 ## v1.65.5
 - Persist one bank system ID for at most 72 hours in App-private state excluded from cold HA backups; use it only for manual read-only cash research with credentials entered again. Keep CSV authoritative.
 

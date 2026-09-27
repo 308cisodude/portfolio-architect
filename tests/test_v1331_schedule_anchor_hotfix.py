@@ -65,7 +65,7 @@ def test_source_freshness_remains_source_timestamp_based_and_separate() -> None:
 
 
 def test_release_contract_keeps_v1330_freshness_policy_and_changes_only_schedule_anchor() -> None:
-    notes = (ROOT / "docs" / "RELEASE-NOTES.md").read_text(encoding="utf-8")
+    notes = (ROOT / "docs" / "RELEASE-NOTES-1.63.0.md").read_text(encoding="utf-8")
     assert "v1.33.0 source-freshness and plan-schedule separation" in notes
     assert "latest valid Portfolio Architect evaluation" in notes
     assert "does not change any configured freshness threshold" in notes

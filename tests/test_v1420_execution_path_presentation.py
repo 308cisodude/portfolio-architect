@@ -300,7 +300,7 @@ def test_execution_path_entity_is_bilingual_bounded_and_wire_schemas_stay_unchan
             "markdown_de",
         }
 
-    release_notes = (ROOT / "docs" / "RELEASE-NOTES.md").read_text(encoding="utf-8")
+    release_notes = (ROOT / "docs" / "RELEASE-NOTES-1.63.0.md").read_text(encoding="utf-8")
     for contract in (
         "payload schema 8: unchanged",
         "REST portfolio schema 1: unchanged",

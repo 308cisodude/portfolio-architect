@@ -31,7 +31,7 @@ def test_v1570_withdraws_legacy_package_and_keeps_only_four_active_apps() -> Non
     manifest = json.loads(
         (ROOT / "custom_components/portfolio_architect/manifest.json").read_text()
     )
-    assert manifest["version"] == "1.65.5"
+    assert manifest["version"] == "1.65.6"
     assert not LEGACY.exists()
 
     active = {
@@ -52,7 +52,7 @@ def test_v1570_withdraws_legacy_package_and_keeps_only_four_active_apps() -> Non
     assert active["portfolio_architect_gateway_dkb"]["stage"] == "stable"
     assert active["portfolio_architect_gateway_trade_republic"]["stage"] == "stable"
     assert active["portfolio_architect_gateway_import"]["stage"] == "stable"
-    assert all(config["version"] == "1.65.5" for config in active.values())
+    assert all(config["version"] == "1.65.6" for config in active.values())
 
 
 def test_release_and_publication_tooling_no_longer_carries_legacy_app() -> None:
@@ -116,7 +116,7 @@ def test_sbom_and_current_docs_describe_withdrawal_without_reusing_slug() -> Non
     assert "Portfolio Architect Gateway — Comdirect LEGACY App" not in package_names
     assert "Portfolio Architect Gateway — Comdirect App" in package_names
 
-    release_notes = (ROOT / "docs/RELEASE-NOTES.md").read_text(encoding="utf-8")
+    release_notes = (ROOT / "docs/RELEASE-NOTES-1.63.0.md").read_text(encoding="utf-8")
     upgrade = (ROOT / "docs/UPGRADE-1.57.0.md").read_text(encoding="utf-8")
     roadmap = (ROOT / "docs/ROADMAP.md").read_text(encoding="utf-8")
     providers = (ROOT / "docs/GATEWAY-PROVIDERS.md").read_text(encoding="utf-8")
