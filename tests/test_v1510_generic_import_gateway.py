@@ -37,8 +37,8 @@ def _generic():
 
 
 def test_release_versions_and_schema_are_aligned() -> None:
-    assert json.loads((COMPONENT / "manifest.json").read_text())["version"] == "1.65.8"
-    assert 'VERSION: Final = "1.65.8"' in (COMPONENT / "const.py").read_text()
+    assert json.loads((COMPONENT / "manifest.json").read_text())["version"] == "1.65.9"
+    assert 'VERSION: Final = "1.65.9"' in (COMPONENT / "const.py").read_text()
     assert 'VERSION = 13' in (COMPONENT / "config_flow.py").read_text()
     for slug in (
         "portfolio_architect_gateway_comdirect",
@@ -46,7 +46,7 @@ def test_release_versions_and_schema_are_aligned() -> None:
         "portfolio_architect_gateway_trade_republic",
         "portfolio_architect_gateway_import",
     ):
-        assert yaml.safe_load((APPS / slug / "config.yaml").read_text())["version"] == "1.65.8"
+        assert yaml.safe_load((APPS / slug / "config.yaml").read_text())["version"] == "1.65.9"
 
 
 def test_portfolio_architect_runtime_is_acquisition_format_neutral() -> None:
@@ -141,8 +141,7 @@ def test_dkb_probe_timestamp_is_utc_canonical_with_deterministic_berlin_display(
     assert 'ZoneInfo("Europe/Berlin")' in source
     assert "Intl.DateTimeFormat" not in source
     assert 'data-utc=' not in source
-    assert "Authoritative server-side dispatch timestamp" in source
-    assert "Last probe sent · Europe/Berlin" in source
+    assert "Anonymous BPD capability probe" not in source
 
 
 def test_v151_upgrade_documents_no_automatic_generic_gateway_requirement() -> None:

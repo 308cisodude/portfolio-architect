@@ -1,3 +1,7 @@
+## v1.65.9
+
+- Add private DKB EUR account binding, manual combined read and CSV cash policy. Retire BPD Ingress panel.
+
 ## v1.65.8
 - Accept bounded printable bank IDs with safe private serialization for the restart reuse trial. No automatic acquisition or CSV authority change.
 

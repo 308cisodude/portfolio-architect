@@ -273,16 +273,11 @@ def test_ingress_post_redirects_are_relative_and_cannot_escape_to_ha_root() -> N
     assert 'self._redirect("/?error=invalid_product_id")' not in source
 
 
-def test_ingress_ui_requires_exact_length_and_presents_failure_evidence() -> None:
+def test_ingress_ui_requires_exact_length_and_retires_anonymous_probe() -> None:
     source = (PACKAGE / "dkb_app.py").read_text(encoding="utf-8")
-    assert 'minlength=\\"25\\" maxlength=\\"25\\" pattern=\\"[A-Za-z0-9]{{25}}\\"' in source
-    assert "complete 25-character registration number" in source
-    assert "Bounded return codes" in source
-    assert "Sanitized bank return messages" in source
-    assert "Decoded response SHA-256" in source
-    assert "arbitrary segment payload and the raw FinTS response are discarded after fingerprinting" in source
-    assert 'holdings = "not available"' in source
-    assert "newly issued product registration that has not propagated yet is one possible cause" in source
+    assert 'minlength="25" maxlength="25" pattern="[A-Za-z0-9]{{25}}"' in source
+    assert "Anonymous BPD capability probe" not in source
+    assert "Dedicated investment account" in source
 
 
 def test_schema1_success_evidence_remains_loadable(tmp_path: Path) -> None:

@@ -1,3 +1,7 @@
+## v1.65.9
+
+Select one eligible EUR account and manually refresh the depot and booked balance through admin Ingress. Cash authorization applies to CSV immediately. See `docs/UPGRADE-1.65.9.md`.
+
 ## v1.65.8
 The manual cash research path can save one printable, at most 30-character bank system ID in App-private, backup-excluded state. It remains read-only and separate from CSV planning. See `docs/UPGRADE-1.65.8.md`.
 
@@ -49,6 +53,6 @@ One-shot authenticated DKB UPD capability observation is available in admin Ingr
 
 Version 1.63.0 is a package-alignment release for this App. DKB CSV holdings/cash acquisition and research-only anonymous FinTS probing, private state, health schema 10, discovery transport, verified private-PKI/bearer trust and `fallback_policy: none` are unchanged; the v1.63.0 work is confined to Portfolio Architect static reference-dashboard presentation and release tooling.
 
-Version 1.62.0 aligns this stable App with the additive common Gateway contracts used by Generic Import graduation: health schema 10 adds bounded `provider_name` while schemas 1–9 remain compatible. Supported CSV holdings/cash acquisition is unchanged; the anonymous FinTS probe remains experimental/research-only and authenticated FinTS remains disabled.
+Version 1.62.0 aligned this stable App with the additive common Gateway contracts used by Generic Import graduation: health schema 10 added bounded `provider_name` while schemas 1–9 remained compatible. DKB CSV holdings/cash acquisition remains supported. The historical anonymous FinTS probe has been removed from the admin page; manual authenticated FinTS research remains outside planning.
 
 Private-PKI HTTPS, bearer authentication, provider identity, canonical evidence, `fallback_policy: none` and advisory-only semantics are unchanged.

@@ -42,27 +42,26 @@ def _config(app: Path) -> dict[str, object]:
 def test_current_release_versions_and_app_maturity_are_aligned() -> None:
     assert json.loads(
         (ROOT / "custom_components" / "portfolio_architect" / "manifest.json").read_text()
-    )["version"] == "1.65.8"
+    )["version"] == "1.65.9"
     assert _config(COMDIRECT)["stage"] == "stable"
     assert _config(DKB)["stage"] == "stable"
     assert _config(TR)["stage"] == "stable"
     assert _config(GENERIC)["stage"] == "stable"
     assert not (APPS / "portfolio_architect_gateway").exists()
     for app in (COMDIRECT, DKB, TR, GENERIC):
-        assert _config(app)["version"] == "1.65.8"
+        assert _config(app)["version"] == "1.65.9"
 
 
 def test_dkb_stability_is_scoped_to_csv_while_fints_probe_stays_experimental() -> None:
     config = _config(DKB)
-    assert "Stable bounded local DKB" in str(config["description"])
-    assert "experimental anonymous FinTS capability probe for research" in str(config["description"])
+    assert "Authoritative DKB depot and Girokonto CSV evidence" in str(config["description"])
+    assert "manual read-only FinTS portfolio preparation" in str(config["description"])
     source = (DKB / "src" / "portfolio_architect_gateway" / "dkb_app.py").read_text(
         encoding="utf-8"
     )
-    assert "Static acquisition · DKB CSV" in source
-    assert "EXPERIMENTAL · RESEARCH ONLY" in source
-    assert "Authenticated FinTS acquisition is not enabled" in source
-    assert "FinTS cannot replace or silently fall back to CSV evidence" in source
+    assert "DKB CSV · authoritative" in source
+    assert "Manual DKB FinTS preparation" in source
+    assert "FinTS preparation never switches authority" in source
 
 
 def test_trade_republic_stable_label_does_not_invent_live_api_acquisition() -> None:
@@ -123,4 +122,4 @@ def test_sbom_describes_all_four_gateway_apps() -> None:
         for package in sbom["packages"]
         if package["name"] == "Portfolio Architect Gateway — Generic Import App"
     )
-    assert generic["versionInfo"] == "1.65.8"
+    assert generic["versionInfo"] == "1.65.9"

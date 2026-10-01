@@ -4,6 +4,14 @@ This roadmap records intended sequencing rather than a compatibility promise. Ea
 milestone remains subject to design, security review, tests, and live acceptance.
 
 
+## v1.65.9 — DKB manual portfolio preparation — prepared
+
+Add an explicit account selector, combined read-only refresh, and CSV cash policy. FinTS remains outside planning. The single FinTS depot matches the DKB holdings CSV; select only the relevant one of the banking user's many cash accounts. Live acceptance remains.
+
+## Next — DKB manual FinTS authority — proposed
+
+Review explicit per-capability activation, independent 14-day freshness/provenance, fail-closed expiry and no silent fallback before promoting any FinTS evidence.
+
 ## v1.58.0 — capability-level acquisition arbitration — completed
 
 Introduces health-schema-9 capability authority for holdings and cash while preserving one canonical provider snapshot per Gateway. Authority is explicit, bounded and fail-closed; every capability uses `fallback_policy: none`. Current effective authorities remain Comdirect `live_api`, Trade Republic `pdf`, and DKB `csv`; authenticated DKB FinTS remains disabled.

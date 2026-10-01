@@ -109,7 +109,7 @@ def test_dkb_app_is_autostart_csv_source_but_fints_stays_separate() -> None:
     assert config["stage"] == "stable"
     assert "parse_dkb_csv_batch" in app
     assert 'path == "/import-csv"' in app
-    assert "FinTS cannot replace or silently fall back to CSV evidence" in app
+    assert "FinTS preparation never switches authority or falls back automatically" in app
     for forbidden in ("HKWPO", "HKCCS", "HKDSE"):
         assert forbidden not in fints
 

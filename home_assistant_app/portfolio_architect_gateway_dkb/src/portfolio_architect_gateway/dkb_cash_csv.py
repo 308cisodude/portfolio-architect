@@ -17,6 +17,7 @@ from typing import Final
 from zoneinfo import ZoneInfo
 
 from .errors import ProtocolError
+from .dkb_cash_policy import InvestmentCashPolicy
 from .models import InvestmentCash, canonical_signed_decimal
 from .store import load_json_state, save_json_state
 
@@ -63,14 +64,17 @@ class DkbCashSnapshot:
         """Never turn a negative account balance or overdraft into investment cash."""
         return max(Decimal("0"), self.account_balance_eur)
 
-    def investment_cash(self) -> InvestmentCash:
+    def investment_cash(self, policy: InvestmentCashPolicy | None = None) -> InvestmentCash:
         eligible = self.eligible_eur
+        active = policy or InvestmentCashPolicy()
         return InvestmentCash(
             account_balance_eur=self.account_balance_eur,
             eligible_eur=eligible,
-            authorized_eur=eligible,
-            policy="all_available",
+            authorized_eur=active.authorize(eligible),
+            policy=active.mode,
             as_of=self.as_of,
+            cap_eur=active.cap_eur,
+            retain_eur=active.retain_eur,
         )
 
 

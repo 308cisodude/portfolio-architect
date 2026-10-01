@@ -163,10 +163,8 @@ def test_dkb_ingress_exposes_separate_cash_import_without_fints_fallback() -> No
     app = (PACKAGE / "dkb_app.py").read_text(encoding="utf-8")
     assert 'path == "/import-cash"' in app
     assert "parse_dkb_cash_csv" in app
-    assert "DKB Girokonto Umsatzliste CSV" in app
-    assert "Importing cash does not refresh holdings evidence" in app
-    assert "no overdraft or credit facility is inferred" in app
-    assert "FinTS cannot replace or silently fall back to CSV evidence" in app
+    assert "DKB Girokonto cash CSV" in app
+    assert "FinTS preparation never switches authority or falls back automatically" in app
 
 
 def test_real_private_dkb_cash_export_is_not_a_repository_fixture() -> None:
