@@ -18,7 +18,7 @@ def test_v1590_all_official_ingress_pages_render_read_only_authority_status() ->
         source = _read(target)
         assert "render_acquisition_authority" in source
         assert "ACQUISITION_AUTHORITY_CSS" in source
-        assert "authority_html" in source
+        assert "authority_html" in source or "{authority}" in source
 
 
 def test_v1590_presentation_helper_is_common_synced_source_and_has_no_control_endpoint() -> None:

@@ -1,3 +1,7 @@
+## 1.65.9
+
+- Prepare DKB account selection, manual portfolio refresh and CSV investment cash authorization. Keep CSV authoritative.
+
 ## 1.65.8
 
 - Accept a bounded printable FinTS customer system ID in App-private manual cash research state, with safe JSON serialization and keyed fingerprinting. CSV remains authoritative.

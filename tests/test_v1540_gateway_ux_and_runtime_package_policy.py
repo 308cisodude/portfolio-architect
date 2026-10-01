@@ -23,11 +23,10 @@ def test_acquisition_colour_semantics_are_consistent() -> None:
     assert ".mode-card.active" in comdirect and "#22c55e" in comdirect
     assert ".mode-card.inactive-ready" in comdirect and "#3b82f6" in comdirect
     assert ".mode-card.inactive-unavailable" in comdirect and "#f59e0b" in comdirect
-    for source in (trade_republic, dkb):
-        assert ".mode-card.active" in source
-        assert "#22c55e" in source
+    assert ".mode-card.active" in trade_republic and "#22c55e" in trade_republic
+    assert ".active" in dkb and "#4ade80" in dkb
     assert ".mode-card.unavailable" in trade_republic and "#f59e0b" in trade_republic
-    assert ".mode-card.research" in dkb and "#f59e0b" in dkb
+    assert ".prepared" in dkb and "#fbbf24" in dkb
     assert "ACQUISITION_AUTHORITY_CSS" in generic
     assert "render_acquisition_authority" in generic
 
@@ -97,4 +96,4 @@ def test_v1540_keeps_gateway_wire_schemas_unchanged() -> None:
     rest = (ROOT / "custom_components/portfolio_architect/rest_client.py").read_text(encoding="utf-8")
     assert '"health_schema_version": min(version, 10)' in server
     assert '"requested_health_schema_version": 10' in rest
-    assert json.loads((ROOT / "custom_components/portfolio_architect/manifest.json").read_text())["version"] == "1.65.8"
+    assert json.loads((ROOT / "custom_components/portfolio_architect/manifest.json").read_text())["version"] == "1.65.9"

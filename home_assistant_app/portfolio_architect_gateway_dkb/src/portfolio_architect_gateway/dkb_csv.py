@@ -23,6 +23,7 @@ from .dkb_cash_csv import (
     load_cash_snapshot,
     save_cash_snapshot,
 )
+from .dkb_cash_policy import InvestmentCashPolicy, load_investment_cash_policy, save_investment_cash_policy
 from .acquisition_control import (
     AUTHORITY_PROVIDER_FIXED,
     CAPABILITY_CASH,
@@ -120,6 +121,7 @@ class DkbCsvProvider:
     def __init__(self, snapshot_file: Path) -> None:
         self._snapshot_file = Path(snapshot_file)
         self._cash_file = self._snapshot_file.parent / CASH_STATE_FILE_NAME
+        self._cash_policy_file = self._snapshot_file.parent / "dkb-investment-cash-policy.json"
         try:
             loaded = load_snapshot(self._snapshot_file)
             self._holdings_snapshot = _holdings_only(loaded) if loaded is not None else None
@@ -194,7 +196,7 @@ class DkbCsvProvider:
             return None
         if self._cash_snapshot is None:
             return self._holdings_snapshot
-        cash = self._cash_snapshot.investment_cash()
+        cash = self._cash_snapshot.investment_cash(self.investment_cash_policy())
         return validate_snapshot(
             PortfolioSnapshot(
                 generated_at=self._holdings_snapshot.generated_at,
@@ -221,6 +223,12 @@ class DkbCsvProvider:
 
     def persist_cash_snapshot(self, snapshot: DkbCashSnapshot | None) -> None:
         save_cash_snapshot(self._cash_file, snapshot)
+
+    def investment_cash_policy(self) -> InvestmentCashPolicy:
+        return load_investment_cash_policy(self._cash_policy_file)
+
+    def set_investment_cash_policy(self, policy: InvestmentCashPolicy) -> None:
+        save_investment_cash_policy(self._cash_policy_file, policy)
 
 
 def _holdings_only(snapshot: PortfolioSnapshot) -> PortfolioSnapshot:

@@ -184,7 +184,7 @@ def test_product_registration_and_probe_result_are_private_and_sanitized(tmp_pat
 
 def test_dkb_app_is_stable_csv_source_with_experimental_probe_and_without_authenticated_fints_acquisition() -> None:
     config = yaml.safe_load((APP / "config.yaml").read_text(encoding="utf-8"))
-    assert config["version"] == "1.65.8"
+    assert config["version"] == "1.65.9"
     assert config["stage"] == "stable"
     assert config["boot"] == "auto"
     assert config["environment"]["PA_PROVIDER_ID"] == "dkb"
@@ -205,16 +205,13 @@ def test_dkb_app_is_stable_csv_source_with_experimental_probe_and_without_authen
         assert method in source
 
 
-def test_dkb_ingress_has_no_bank_credential_or_transaction_form_fields() -> None:
+def test_dkb_ingress_credentials_are_manual_and_no_transaction_forms_exist() -> None:
     source = (PACKAGE / "dkb_app.py").read_text(encoding="utf-8")
-    assert 'name=\\"product_id\\"' in source
-    assert 'name=\\"csrf\\"' in source
+    assert 'name="product_id"' in source
+    assert 'name="csrf"' in source
+    assert 'name="pin"' in source
+    assert 'action="refresh-portfolio"' in source
     for forbidden in (
-        'name=\\"username\\"',
-        'name=\\"login\\"',
-        'name=\\"pin\\"',
-        'name=\\"tan\\"',
-        'name=\\"password\\"',
         "submit_order",
         "place_order",
         "create_transfer",

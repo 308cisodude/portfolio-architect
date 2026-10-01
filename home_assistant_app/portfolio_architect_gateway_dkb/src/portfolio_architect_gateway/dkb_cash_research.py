@@ -59,12 +59,107 @@ class CashSession:
     started_at: str
     suffix: str
     eligible_accounts: int | None = None
+    account_matcher: Callable[[dict[str, Any]], bool] | None = None
 
     def close(self) -> None:
         try:
             self.client.__exit__(None, None, None)
         except Exception:
             pass  # Exception text may contain account or challenge detail.
+
+
+@dataclass(slots=True)
+class AccountDiscoverySession:
+    client: Any
+    challenge: Any
+    decoupled: bool
+
+    def close(self) -> None:
+        try:
+            self.client.__exit__(None, None, None)
+        except Exception:
+            pass
+
+
+def _eligible_accounts(client: Any) -> tuple[dict[str, str], ...]:
+    from fints.client import FinTSOperations
+
+    raw = client.get_information().get("accounts", ())
+    if not isinstance(raw, (list, tuple)) or len(raw) > 256:
+        raise ValueError("Invalid bank account inventory")
+    candidates: list[dict[str, str]] = []
+    seen: set[str] = set()
+    for account in raw:
+        if (not isinstance(account, dict) or account.get("currency") != "EUR"
+                or not isinstance(account.get("supported_operations"), dict)
+                or account["supported_operations"].get(FinTSOperations.GET_BALANCE) is not True):
+            continue
+        iban = account.get("iban")
+        number = account.get("account_number")
+        bank = getattr(account.get("bank_identifier"), "bank_code", None)
+        if not isinstance(iban, str) or not _IBAN.fullmatch(iban) or not isinstance(number, str) or not number or bank != DKB_BANK_CODE:
+            continue
+        if iban in seen:
+            raise ValueError("Duplicate eligible bank account")
+        seen.add(iban)
+        candidates.append({"iban": iban, "account_number": number, "bank_code": bank})
+    return tuple(candidates)
+
+
+def begin_account_discovery(product_id: str, user_id: str, pin: str,
+                            *, system_id: str | None = None
+                            ) -> tuple[tuple[dict[str, str], ...] | None, AccountDiscoverySession | None]:
+    """Discover eligible EUR accounts after DKB's normal login challenge."""
+    from fints.client import FinTS3PinTanClient, NeedTANResponse
+    from fints.formals import BankIdentifier
+
+    product_id = normalise_product_id(product_id)
+    if not isinstance(user_id, str) or not _IDENTIFIER.fullmatch(user_id):
+        raise ValueError("Invalid bank user identifier")
+    if not isinstance(pin, str) or not 1 <= len(pin) <= 256 or any(ord(c) < 32 for c in pin):
+        raise ValueError("Invalid bank password")
+    logger = logging.getLogger("fints")
+    logger.propagate = False
+    if not logger.handlers:
+        logger.addHandler(logging.NullHandler())
+    logger.setLevel(logging.CRITICAL + 1)
+    kwargs = {"product_id": product_id}
+    if system_id is not None:
+        kwargs["system_id"] = system_id
+    client = FinTS3PinTanClient(BankIdentifier("280", DKB_BANK_CODE), user_id, pin,
+                               DKB_FINTS_ENDPOINT, **kwargs)
+    try:
+        client.fetch_tan_mechanisms()
+        client.__enter__()
+        if isinstance(client.init_tan_response, NeedTANResponse):
+            challenge = client.init_tan_response
+            return None, AccountDiscoverySession(client, challenge, bool(challenge.decoupled))
+        result = _eligible_accounts(client)
+        client.__exit__(None, None, None)
+        return result, None
+    except Exception:
+        AccountDiscoverySession(client, None, False).close()
+        raise
+
+
+def continue_account_discovery(session: AccountDiscoverySession, tan: str = ""
+                               ) -> tuple[tuple[dict[str, str], ...] | None, AccountDiscoverySession | None]:
+    from fints.client import NeedTANResponse
+
+    if not session.decoupled and (not isinstance(tan, str) or not _TAN.fullmatch(tan)):
+        raise ValueError("A bounded TAN is required")
+    try:
+        response = session.client.send_tan(session.challenge, "" if session.decoupled else tan)
+        if isinstance(response, NeedTANResponse):
+            session.challenge = response
+            session.decoupled = bool(response.decoupled)
+            return None, session
+        result = _eligible_accounts(session.client)
+        session.close()
+        return result, None
+    except Exception:
+        session.close()
+        raise
 
 
 def _failure(client: Any, stage: str, error: BaseException,
@@ -146,7 +241,8 @@ def _summarize(client: Any, value: Any, count: int,
 
 
 def _read(client: Any, suffix: str, capture: Callable[[BookedBalance], None] | None,
-          capture_system_id: Callable[[object], None] | None = None
+          capture_system_id: Callable[[object], None] | None = None,
+          account_matcher: Callable[[dict[str, Any]], bool] | None = None
           ) -> tuple[CashObservation, CashSession | None]:
     from fints.client import FinTSOperations, NeedTANResponse
     from fints.models import SEPAAccount
@@ -162,7 +258,8 @@ def _read(client: Any, suffix: str, capture: Callable[[BookedBalance], None] | N
                       and a["supported_operations"].get(FinTSOperations.GET_BALANCE) is True]
         eligible = len(candidates)
         matches = [a for a in candidates if isinstance(a.get("iban"), str)
-                   and _IBAN.fullmatch(a["iban"]) and a["iban"].endswith(suffix)]
+                   and _IBAN.fullmatch(a["iban"]) and a["iban"].endswith(suffix)
+                   and (account_matcher is None or account_matcher(a))]
         if len(matches) != 1:
             outcome = "account_not_found" if not matches else "ambiguous_account"
             return CashObservation(_now(), outcome, eligible, _codes(client)), None
@@ -178,7 +275,7 @@ def _read(client: Any, suffix: str, capture: Callable[[BookedBalance], None] | N
         stage = "balance_request"
         value = client.get_balance(sepa)  # Exactly one read-only HKSAL request.
         if isinstance(value, NeedTANResponse):
-            session = CashSession(client, value, bool(value.decoupled), "balance", _now(), suffix, eligible)
+            session = CashSession(client, value, bool(value.decoupled), "balance", _now(), suffix, eligible, account_matcher)
             return CashObservation(_now(), "approval_pending", eligible, _codes(client)), session
         stage = "response_summary"
         return _summarize(client, value, eligible, capture, capture_system_id), None
@@ -189,7 +286,8 @@ def _read(client: Any, suffix: str, capture: Callable[[BookedBalance], None] | N
 def begin_cash_observation(product_id: str, user_id: str, pin: str, suffix: str,
                            capture: Callable[[BookedBalance], None] | None = None,
                            *, system_id: str | None = None,
-                           capture_system_id: Callable[[object], None] | None = None
+                           capture_system_id: Callable[[object], None] | None = None,
+                           account_matcher: Callable[[dict[str, Any]], bool] | None = None
                            ) -> tuple[CashObservation, CashSession | None]:
     from fints.client import FinTS3PinTanClient, NeedTANResponse
     from fints.formals import BankIdentifier
@@ -219,9 +317,10 @@ def begin_cash_observation(product_id: str, user_id: str, pin: str, suffix: str,
         client.__enter__()
         challenge = client.init_tan_response
         if isinstance(challenge, NeedTANResponse):
-            session = CashSession(client, challenge, bool(challenge.decoupled), "login", _now(), suffix)
+            session = CashSession(client, challenge, bool(challenge.decoupled), "login", _now(), suffix,
+                                  account_matcher=account_matcher)
             return CashObservation(_now(), "approval_pending", None, _codes(client)), session
-        observation, session = _read(client, suffix, capture, capture_system_id)
+        observation, session = _read(client, suffix, capture, capture_system_id, account_matcher)
         if session is None:
             client.__exit__(None, None, None)
         return observation, session
@@ -247,7 +346,8 @@ def continue_cash_observation(session: CashSession, tan: str = "",
             session.decoupled = bool(value.decoupled)
             return CashObservation(_now(), "approval_pending", session.eligible_accounts, _codes(session.client)), session
         if session.stage == "login":
-            observation, pending = _read(session.client, session.suffix, capture, capture_system_id)
+            observation, pending = _read(session.client, session.suffix, capture, capture_system_id,
+                                         session.account_matcher)
             if pending is None:
                 session.close()
             else:

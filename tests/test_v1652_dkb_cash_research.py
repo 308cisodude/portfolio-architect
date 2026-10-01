@@ -229,10 +229,10 @@ def test_system_id_is_bounded_and_excluded_from_cold_backup(tmp_path: Path):
     import yaml
     config = yaml.safe_load((PACKAGE.parents[1] / "config.yaml").read_text())
     assert config["backup"] == "cold"
-    assert config["backup_exclude"] == [f"gateway/{system_id.FILE_NAME}",
+    assert set(config["backup_exclude"]) >= {f"gateway/{system_id.FILE_NAME}",
                                         f"gateway/.{system_id.FILE_NAME}.*",
                                         f"gateway/{system_id.KEY_FILE_NAME}",
-                                        f"gateway/.{system_id.KEY_FILE_NAME}.*"]
+                                        f"gateway/.{system_id.KEY_FILE_NAME}.*"}
     assert all(any(fnmatchcase(name, pattern) for pattern in config["backup_exclude"])
                for name in (f"gateway/{system_id.FILE_NAME}",
                             f"gateway/.{system_id.FILE_NAME}.orphan"))

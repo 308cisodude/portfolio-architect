@@ -29,8 +29,8 @@ from portfolio_architect_gateway.errors import ConfigurationError  # noqa: E402
 
 
 def test_v1580_versions_and_health_schema9_are_aligned() -> None:
-    assert json.loads((COMPONENT / "manifest.json").read_text())["version"] == "1.65.8"
-    assert 'VERSION: Final = "1.65.8"' in (COMPONENT / "const.py").read_text()
+    assert json.loads((COMPONENT / "manifest.json").read_text())["version"] == "1.65.9"
+    assert 'VERSION: Final = "1.65.9"' in (COMPONENT / "const.py").read_text()
     for slug in (
         "portfolio_architect_gateway_comdirect",
         "portfolio_architect_gateway_dkb",
@@ -38,7 +38,7 @@ def test_v1580_versions_and_health_schema9_are_aligned() -> None:
         "portfolio_architect_gateway_import",
     ):
         cfg = yaml.safe_load((ROOT / "home_assistant_app" / slug / "config.yaml").read_text())
-        assert cfg["version"] == "1.65.8"
+        assert cfg["version"] == "1.65.9"
     rest = (COMPONENT / "rest_client.py").read_text()
     server = (GATEWAY_SRC / "portfolio_architect_gateway/server.py").read_text()
     assert "HEALTH_V9_MEDIA_TYPE" in rest
