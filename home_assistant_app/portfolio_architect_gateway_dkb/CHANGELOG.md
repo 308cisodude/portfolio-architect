@@ -1,3 +1,7 @@
+## v1.66.0
+
+Explicit, operator-confirmed CSV/FinTS authority for the one depot and selected EUR cash account. A fresh combined manual read stages bounded private evidence with two independent observation times and the keyed account binding. Both observations have a hard 14-day limit. Expired or missing FinTS evidence makes the Gateway snapshot unavailable; it never activates CSV automatically. CSV holdings and FinTS canonical cache are stored separately. Existing 24-hour research status remains unchanged.
+
 ## v1.65.9
 
 - Add private DKB EUR account binding, manual combined read and CSV cash policy. Retire BPD Ingress panel.

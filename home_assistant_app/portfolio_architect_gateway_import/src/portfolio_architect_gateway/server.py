@@ -82,7 +82,7 @@ class GatewayState:
         )
         self._lock = threading.RLock()
         self._snapshot: PortfolioSnapshot | None = load_snapshot(
-            config.snapshot_file
+            getattr(client, "canonical_snapshot_file", config.snapshot_file)
         )
         self._last_refresh_success: datetime | None = (
             self._snapshot.generated_at.astimezone(timezone.utc)
@@ -187,7 +187,7 @@ class GatewayState:
         success = False
         try:
             snapshot = self._client.fetch_snapshot()
-            save_snapshot(self._config.snapshot_file, snapshot)
+            save_snapshot(getattr(self._client, "canonical_snapshot_file", self._config.snapshot_file), snapshot)
         except ReauthenticationRequired:
             self._record_refresh_failure(
                 attempted_at=attempted_at,
@@ -342,6 +342,11 @@ class GatewayState:
         with self._lock:
             snapshot = self._snapshot
         if snapshot is None:
+            return None
+        current_check = getattr(self._client, "snapshot_is_current", None)
+        if current_check is not None and not current_check(snapshot):
+            # A provider may have changed authority or lost private evidence
+            # since its last canonical publication. Never serve that cache.
             return None
         maximum = self._effective_max_cached_snapshot_age_seconds()
         if maximum:

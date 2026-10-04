@@ -286,6 +286,9 @@ class PortfolioArchitectCoordinator(TimestampDataUpdateCoordinator[PortfolioData
             # Health schema 7 uses acquisition_mode=csv for provider Gateways.
             # Keep the established imported_csv key as well for legacy/local CSV.
             "csv": csv_threshold,
+            # Dedicated hard limit for manual DKB FinTS evidence. No generic
+            # live-API setting can extend this provider-specific boundary.
+            "fints": 14 * 24,
             "other": _bounded_int(
                 entry.options.get(CONF_FRESHNESS_OTHER_HOURS),
                 default=default_thresholds["other"],
@@ -1822,6 +1825,9 @@ def _cash_timestamp_is_fresh(
     if threshold_hours_by_kind is None:
         return True
     threshold = threshold_hours_by_kind.get(cash_evidence_kind(provider_id, acquisition_mode))
+    if provider_id == "dkb" and acquisition_mode == "fints":
+        threshold = min(threshold if isinstance(threshold, int) and not isinstance(threshold, bool)
+                        else 14 * 24, 14 * 24)
     if isinstance(threshold, bool) or not isinstance(threshold, int):
         return False
     current = now.astimezone(timezone.utc)

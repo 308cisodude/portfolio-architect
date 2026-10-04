@@ -4,13 +4,13 @@ This roadmap records intended sequencing rather than a compatibility promise. Ea
 milestone remains subject to design, security review, tests, and live acceptance.
 
 
-## v1.65.9 — DKB manual portfolio preparation — prepared
+## v1.66.0 — DKB manual FinTS authority — prepared; live acceptance pending
 
-Add an explicit account selector, combined read-only refresh, and CSV cash policy. FinTS remains outside planning. The single FinTS depot matches the DKB holdings CSV; select only the relevant one of the banking user's many cash accounts. Live acceptance remains.
+Explicit CSV/FinTS selection, independent 14-day FinTS evidence and no automatic fallback. A new combined read is required before promotion.
 
-## Next — DKB manual FinTS authority — proposed
+## Next — dashboard freshness and policy blockers
 
-Review explicit per-capability activation, independent 14-day freshness/provenance, fail-closed expiry and no silent fallback before promoting any FinTS evidence.
+Make source age, authority and policy findings immediately understandable on the PA dashboard without entity-state or log inspection.
 
 ## v1.58.0 — capability-level acquisition arbitration — completed
 

@@ -121,6 +121,7 @@ def test_manual_portfolio_refresh_and_timeout(monkeypatch, tmp_path):
     with pytest.raises(ValueError, match="pending bank refresh"):
         controller.clear_selected_account()
     assert controller.continue_portfolio_refresh() == "complete"
+    assert controller.authority_evidence_file.is_file()
     assert calls == [("holdings", "login", "secret"), ("cash", "login", "secret", "1234")]
     assert controller._portfolio_credentials is None
     assert "secret" not in "".join(p.read_text(errors="ignore") for p in tmp_path.iterdir() if p.is_file())
@@ -147,7 +148,7 @@ def test_csv_policy_and_gui_without_probe(tmp_path):
     assert "Dedicated investment account" in body
     assert "Refresh portfolio now" in body
     assert "Investment cash authorization" in body
-    assert "FinTS preparation never switches authority" in body
+    assert "Automatic fallback: <strong>none</strong>" in body
 
 
 def test_selection_does_not_change_during_legacy_cash_challenge(tmp_path):

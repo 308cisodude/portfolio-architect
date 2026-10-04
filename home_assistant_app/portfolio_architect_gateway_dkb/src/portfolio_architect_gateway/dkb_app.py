@@ -33,7 +33,7 @@ from .dkb_cash_research import (BookedBalance, CashObservation, CashSession,
 from . import dkb_system_id
 from . import dkb_account_selection
 from .dkb_cash_policy import MODE_ALL_AVAILABLE, MODE_CAPPED, MODE_RETAIN, parse_policy_input
-from .dkb_shadow import project_shadow, save_shadow, shadow_summary
+from .dkb_shadow import load_shadow as load_holdings_shadow, project_shadow, save_shadow, shadow_summary
 from .dkb_cash_csv import DkbCashCsvImportError, MAX_CASH_CSV_BYTES, parse_dkb_cash_csv
 from .dkb_csv import (
     DkbCsvImportError,
@@ -42,6 +42,9 @@ from .dkb_csv import (
     MAX_CSV_FILE_BYTES,
     MAX_CSV_FILES,
     parse_dkb_csv_batch,
+)
+from .dkb_fints_authority import (
+    DkbAcquisitionProvider, EVIDENCE_FILE_NAME, MODE_CSV, MODE_FINTS, stage_evidence,
 )
 from .dkb_fints import (
     CapabilityProbeResult,
@@ -57,7 +60,7 @@ from .dkb_fints import (
     normalise_product_id,
     probe_dkb_bpd,
 )
-from .errors import GatewayError, ProtocolError, RemoteApiError
+from .errors import ConfigurationError, GatewayError, ProtocolError, RemoteApiError
 from .models import PortfolioSnapshot
 from .pending_app import PendingAppOptions, build_server_config
 from .runtime_config import ensure_api_token
@@ -118,6 +121,8 @@ class DKBProbeController:
         self.shadow_file = data_directory / "dkb-fints-holdings-shadow.json"
         self.cash_research_file = data_directory / "dkb-fints-cash-observation.json"
         self.cash_shadow_file = data_directory / "dkb-fints-cash-shadow.json"
+        self.authority_evidence_file = data_directory / EVIDENCE_FILE_NAME
+        self.acquisition_provider: DkbAcquisitionProvider | None = None
         self.cash_system_id_file = data_directory / dkb_system_id.FILE_NAME
         self.cash_fingerprint_key_file = data_directory / dkb_system_id.KEY_FILE_NAME
         self.selected_account_file = data_directory / dkb_account_selection.SELECTION_FILE_NAME
@@ -147,6 +152,7 @@ class DKBProbeController:
         self._account_discovery_user: str | None = None
         self._account_discovery_state = "not_started"
         self._portfolio_stage = "idle"
+        self._portfolio_holdings_observed_at: str | None = None
         self._portfolio_credentials: tuple[str, str] | None = None
         self._portfolio_deadline = 0.0
         self._portfolio_generation = 0
@@ -189,6 +195,8 @@ class DKBProbeController:
             raise RuntimeError("Stored FinTS product registration state is invalid") from err
 
     def configure_product_id(self, value: str) -> None:
+        if self.acquisition_provider is not None and self.acquisition_provider.acquisition_mode == MODE_FINTS:
+            raise ValueError("Switch DKB authority to CSV before changing FinTS registration")
         product_id = normalise_product_id(value)
         with self._lock:
             if self._auth_session is not None:
@@ -218,6 +226,7 @@ class DKBProbeController:
             self.cash_fingerprint_key_file.unlink(missing_ok=True)
             self.cash_research_file.unlink(missing_ok=True)
             self.cash_shadow_file.unlink(missing_ok=True)
+            self.authority_evidence_file.unlink(missing_ok=True)
             self._holdings_review = None
             self.holdings_state_file.unlink(missing_ok=True)
             self.shadow_file.unlink(missing_ok=True)
@@ -907,6 +916,8 @@ class DKBProbeController:
                 self._probe_in_progress = False
 
     def select_account(self, token: str) -> dkb_account_selection.SelectedAccount:
+        if self.acquisition_provider is not None and self.acquisition_provider.acquisition_mode == MODE_FINTS:
+            raise ValueError("Switch DKB authority to CSV before changing the account")
         with self._lock:
             self.account_discovery_view()
             if self.portfolio_refresh_state() in {"holdings_pending", "cash_pending"}:
@@ -924,11 +935,14 @@ class DKBProbeController:
             self._account_discovery_user = None
             self._account_discovery_state = "selected"
             self.cash_shadow_file.unlink(missing_ok=True)
+            self.authority_evidence_file.unlink(missing_ok=True)
             self.cash_research_file.unlink(missing_ok=True)
             self.clear_cash_review()
             return selected
 
     def clear_selected_account(self) -> None:
+        if self.acquisition_provider is not None and self.acquisition_provider.acquisition_mode == MODE_FINTS:
+            raise ValueError("Switch DKB authority to CSV before clearing the account")
         with self._lock:
             if self.portfolio_refresh_state() in {"holdings_pending", "cash_pending"}:
                 raise ValueError("Complete the pending bank refresh first")
@@ -936,6 +950,7 @@ class DKBProbeController:
                 raise ValueError("Complete the pending bank request first")
             self.selected_account_file.unlink(missing_ok=True)
             self.cash_shadow_file.unlink(missing_ok=True)
+            self.authority_evidence_file.unlink(missing_ok=True)
             self.cash_research_file.unlink(missing_ok=True)
             self.clear_cash_review()
 
@@ -963,6 +978,7 @@ class DKBProbeController:
                 self._drop_portfolio_credentials()
                 self._portfolio_stage = "incomplete_holdings"
                 return self._portfolio_stage
+            self._portfolio_holdings_observed_at = result.observed_at
             credentials = self._portfolio_credentials
             self._drop_portfolio_credentials()
             selected = self.selected_account()
@@ -975,6 +991,20 @@ class DKBProbeController:
         if cash_shadow["observed_at"] != result.observed_at:
             self._portfolio_stage = "incomplete_cash"
             return self._portfolio_stage
+        try:
+            selected = self.selected_account()
+            holdings_raw = load_holdings_shadow(self.shadow_file)
+            cash_raw = load_json_state(self.cash_shadow_file)
+            if (selected is None or holdings_raw is None or cash_raw is None
+                    or holdings_raw["observed_at"] != self._portfolio_holdings_observed_at
+                    or cash_raw.get("observed_at") != result.observed_at):
+                raise ValueError("Complete DKB FinTS evidence is unavailable")
+            stage_evidence(self.authority_evidence_file, selected, holdings_raw, cash_raw)
+        except (ValueError, ProtocolError, ConfigurationError, OSError):
+            self._portfolio_stage = "incomplete_evidence"
+            return self._portfolio_stage
+        finally:
+            self._portfolio_holdings_observed_at = None
         self._portfolio_stage = "complete"
         return self._portfolio_stage
 
@@ -993,6 +1023,7 @@ class DKBProbeController:
             if self._account_discovery is not None or self._probe_in_progress:
                 raise ValueError("Complete the pending bank request first")
             self._portfolio_stage = "starting"
+            self._portfolio_holdings_observed_at = None
             self._portfolio_credentials = (user_id, pin)
             self._portfolio_deadline = time.monotonic() + 300
             self._portfolio_generation += 1
@@ -1081,7 +1112,7 @@ class DKBIngressServer(ThreadingHTTPServer):
         *,
         state: GatewayState,
         controller: DKBProbeController,
-        provider: DkbCsvProvider,
+        provider: DkbAcquisitionProvider,
         api_token: str,
         allowed_sources: frozenset[str],
         require_user_header: bool,
@@ -1137,18 +1168,19 @@ class DKBIngressHandler(BaseHTTPRequestHandler):
                 snapshot, summary = parse_dkb_csv_batch(documents)
                 previous = self.app_server.csv_provider.snapshot
                 self.app_server.csv_provider.replace_snapshot(snapshot)
-                if not self.app_server.gateway_state.refresh(trigger="manual"):
+                if (self.app_server.csv_provider.acquisition_mode == MODE_CSV
+                        and not self.app_server.gateway_state.refresh(trigger="manual")):
                     self.app_server.csv_provider.replace_snapshot(previous)
                     raise DkbCsvImportError("Imported DKB CSV batch could not be activated")
                 self.app_server.controller.clear_holdings_review()
                 self.app_server.last_import_notice = (
                     "accepted",
-                    f"DKB CSV batch accepted: {summary.position_count} positions from "
+                    f"DKB CSV batch stored: {summary.position_count} positions from "
                     f"{summary.selected_depot_count} selected depot export(s); snapshot timestamp "
                     f"{summary.generated_at.isoformat(timespec='seconds')}.",
                 )
                 _LOGGER.info(
-                    "DKB CSV import activated a canonical snapshot: input_files=%s selected_exports=%s positions=%s",
+                    "DKB CSV import stored: input_files=%s selected_exports=%s positions=%s",
                     summary.input_file_count,
                     summary.selected_depot_count,
                     summary.position_count,
@@ -1180,17 +1212,18 @@ class DKBIngressHandler(BaseHTTPRequestHandler):
                 previous_cash = self.app_server.csv_provider.cash_snapshot
                 self.app_server.csv_provider.replace_cash_snapshot(cash)
                 self.app_server.csv_provider.persist_cash_snapshot(cash)
-                if not self.app_server.gateway_state.refresh(trigger="manual"):
+                if (self.app_server.csv_provider.acquisition_mode == MODE_CSV
+                        and not self.app_server.gateway_state.refresh(trigger="manual")):
                     self.app_server.csv_provider.replace_cash_snapshot(previous_cash)
                     self.app_server.csv_provider.persist_cash_snapshot(previous_cash)
                     raise DkbCashCsvImportError("Imported DKB cash CSV could not be activated")
                 self.app_server.controller.clear_cash_review()
                 self.app_server.last_import_notice = (
                     "accepted",
-                    f"DKB cash CSV accepted: EUR {cash.eligible_eur}; cash timestamp "
+                    f"DKB cash CSV stored: EUR {cash.eligible_eur}; cash timestamp "
                     f"{cash.as_of.isoformat(timespec='seconds')}.",
                 )
-                _LOGGER.info("DKB cash CSV import activated normalized provider-scoped cash evidence")
+                _LOGGER.info("DKB cash CSV import stored normalized provider-scoped cash evidence")
             except (DkbCashCsvImportError, DkbCsvImportError) as err:
                 _LOGGER.warning("DKB cash CSV import rejected")
                 self.app_server.last_import_notice = ("rejected", _public_cash_csv_error(err))
@@ -1254,7 +1287,8 @@ class DKBIngressHandler(BaseHTTPRequestHandler):
                 self._empty(HTTPStatus.BAD_REQUEST)
                 return
             try:
-                selected = self.app_server.controller.select_account(form["candidate"])
+                with self.app_server.csv_provider.selection_guard():
+                    selected = self.app_server.controller.select_account(form["candidate"])
                 self.app_server.last_import_notice = ("accepted", f"Selected {selected.masked_label}. A fresh manual read is required.")
             except ValueError:
                 self._empty(HTTPStatus.BAD_REQUEST)
@@ -1270,7 +1304,8 @@ class DKBIngressHandler(BaseHTTPRequestHandler):
                 self._empty(HTTPStatus.BAD_REQUEST)
                 return
             try:
-                self.app_server.controller.clear_selected_account()
+                with self.app_server.csv_provider.selection_guard():
+                    self.app_server.controller.clear_selected_account()
             except ValueError:
                 self._empty(HTTPStatus.BAD_REQUEST)
                 return
@@ -1300,14 +1335,38 @@ class DKBIngressHandler(BaseHTTPRequestHandler):
                 return
             self._redirect("./")
             return
+        if path == "/set-acquisition":
+            if set(form) != {"csrf", "mode", "confirm"} or form["confirm"] != "yes":
+                self._empty(HTTPStatus.BAD_REQUEST)
+                return
+            try:
+                provider = self.app_server.csv_provider
+                if self.app_server.controller.portfolio_refresh_state() in {"holdings_pending", "cash_pending", "starting"}:
+                    raise ValueError("Complete the current bank read before switching")
+                provider.activate_mode(form["mode"],
+                                       lambda: self.app_server.gateway_state.refresh(trigger="manual"))
+                self.app_server.last_import_notice = (
+                    "accepted", f"DKB {provider.acquisition_mode.upper()} acquisition selected explicitly.")
+            except (ValueError, ConfigurationError):
+                self._empty(HTTPStatus.BAD_REQUEST)
+                return
+            except Exception:
+                _LOGGER.error("DKB acquisition switch failed internally")
+                self._empty(HTTPStatus.INTERNAL_SERVER_ERROR)
+                return
+            self._redirect("./")
+            return
         if path == "/refresh-portfolio":
             if set(form) != {"csrf", "user_id", "pin"}:
                 self._empty(HTTPStatus.BAD_REQUEST)
                 return
             try:
-                self.app_server.controller.run_portfolio_refresh(
+                outcome = self.app_server.controller.run_portfolio_refresh(
                     form["user_id"], form["pin"], self.app_server.csv_provider.holdings_snapshot,
                     self.app_server.csv_provider.cash_snapshot)
+                if (outcome == "complete" and self.app_server.csv_provider.acquisition_mode == MODE_FINTS
+                        and not self.app_server.gateway_state.refresh(trigger="manual")):
+                    raise ValueError("DKB FinTS observation could not be published")
             except ValueError:
                 self._empty(HTTPStatus.BAD_REQUEST)
                 return
@@ -1324,9 +1383,12 @@ class DKBIngressHandler(BaseHTTPRequestHandler):
                 self._empty(HTTPStatus.BAD_REQUEST)
                 return
             try:
-                self.app_server.controller.continue_portfolio_refresh(
+                outcome = self.app_server.controller.continue_portfolio_refresh(
                     form["tan"], self.app_server.csv_provider.holdings_snapshot,
                     self.app_server.csv_provider.cash_snapshot)
+                if (outcome == "complete" and self.app_server.csv_provider.acquisition_mode == MODE_FINTS
+                        and not self.app_server.gateway_state.refresh(trigger="manual")):
+                    raise ValueError("DKB FinTS observation could not be published")
             except ValueError:
                 self._empty(HTTPStatus.BAD_REQUEST)
                 return
@@ -1343,7 +1405,8 @@ class DKBIngressHandler(BaseHTTPRequestHandler):
                 self._empty(HTTPStatus.BAD_REQUEST)
                 return
             try:
-                self.app_server.controller.configure_product_id(form.get("product_id", ""))
+                with self.app_server.csv_provider.selection_guard():
+                    self.app_server.controller.configure_product_id(form.get("product_id", ""))
             except ValueError:
                 self._redirect("./?error=invalid_product_id")
                 return
@@ -1546,6 +1609,9 @@ class DKBIngressHandler(BaseHTTPRequestHandler):
             cash_policy = None
             policy_warning = '<p class="warn">Stored cash authorization is invalid; planning cash is unavailable.</p>'
         mode = cash_policy.mode if cash_policy else ""
+        acquisition_mode = self.app_server.csv_provider.acquisition_mode
+        fints_ready = next(item.can_activate for item in self.app_server.csv_provider.acquisition_control.methods
+                           if item.method_id == MODE_FINTS)
         cap = str(cash_policy.cap_eur) if cash_policy and cash_policy.cap_eur is not None else ""
         retain = str(cash_policy.retain_eur) if cash_policy and cash_policy.retain_eur is not None else ""
         notice = ""
@@ -1608,14 +1674,14 @@ h1{{font-size:1.55rem}}section{{border:1px solid #555;border-radius:12px;padding
 label{{display:block;margin-top:.7rem}}input,select{{box-sizing:border-box;width:min(34rem,100%);padding:.55rem;margin-top:.25rem}}
 button{{padding:.55rem .8rem;margin:.6rem .4rem .2rem 0}}code{{overflow-wrap:anywhere}}details{{margin-top:1rem}}
 {ACQUISITION_AUTHORITY_CSS}</style></head><body><main><h1>Portfolio Architect Gateway — DKB</h1>{notice}
-<section class="active"><h2>DKB CSV · authoritative</h2><p>Depot: {escape(csv_holdings)}<br>Girokonto: {escape(csv_cash)}</p>
+<section class="{'active' if acquisition_mode == MODE_CSV else 'prepared'}"><h2>DKB CSV · {'authoritative' if acquisition_mode == MODE_CSV else 'staged'}</h2><p>Depot: {escape(csv_holdings)}<br>Girokonto: {escape(csv_cash)}</p>
 <form method="post" action="import-csv" enctype="multipart/form-data"><input type="hidden" name="nonce" value="{csrf}">
 <label for="statement">DKB depot CSV export(s)</label><input id="statement" type="file" name="statement" accept="text/csv,.csv" multiple required>
 <button type="submit">Import depot CSV</button></form>
 <form method="post" action="import-cash" enctype="multipart/form-data"><input type="hidden" name="nonce" value="{csrf}">
 <label for="cash-statement">DKB Girokonto cash CSV</label><input id="cash-statement" type="file" name="statement" accept="text/csv,.csv" required>
-<button type="submit">Import cash CSV</button></form><p class="small">Portfolio Architect v{escape(__version__)} still plans from DKB CSV. FinTS preparation never switches authority or falls back automatically.</p></section>
-<section class="prepared"><h2>Manual DKB FinTS preparation</h2><p>Registration: <code>{escape(registration)}</code></p>
+<button type="submit">Import cash CSV</button></form><p class="small">CSV imports update this independent source. They never switch acquisition authority.</p></section>
+<section class="{'active' if acquisition_mode == MODE_FINTS else 'prepared'}"><h2>Manual DKB FinTS · {'authoritative' if acquisition_mode == MODE_FINTS else 'staged'}</h2><p>Registration: <code>{escape(registration)}</code></p>
 <form method="post" action="configure-product"><input type="hidden" name="csrf" value="{csrf}">
 <label for="product-id">Portfolio Architect FinTS registration number</label><input id="product-id" name="product_id" minlength="25" maxlength="25" pattern="[A-Za-z0-9]{{25}}" autocomplete="off" required>
 <button type="submit">Store registration number</button></form>
@@ -1631,7 +1697,7 @@ button{{padding:.55rem .8rem;margin:.6rem .4rem .2rem 0}}code{{overflow-wrap:any
 <label for="refresh-user">DKB banking login name</label><input id="refresh-user" name="user_id" maxlength="128" autocomplete="off" required>
 <label for="refresh-pin">DKB banking password</label><input id="refresh-pin" name="pin" type="password" maxlength="256" autocomplete="off" required>
 <button type="submit" {disabled if selected is not None else 'disabled'}>Refresh portfolio now</button></form>{portfolio_approval}
-<p class="small">One manual workflow reads the authorized depot and selected account. DKB may ask for approval at either step. Both results remain private research evidence until an explicit acquisition switch is implemented and accepted.</p>
+<p class="small">One manual workflow reads the authorized depot and selected account. DKB may ask for approval at either step. A complete read stages private evidence; it affects planning only while FinTS is explicitly authoritative.</p>
 <details><summary>Transient FinTS review</summary>{holdings_detail}{cash_detail or '<p>No current detail; a successful read is visible for five minutes.</p>'}</details></section>
 <section><h2>Investment cash authorization</h2>{policy_warning}
 <form method="post" action="set-cash-policy" autocomplete="off"><input type="hidden" name="csrf" value="{csrf}">
@@ -1642,8 +1708,16 @@ button{{padding:.55rem .8rem;margin:.6rem .4rem .2rem 0}}code{{overflow-wrap:any
 <label for="cap">Authorized cash cap in EUR</label><input id="cap" name="cap_eur" inputmode="decimal" maxlength="16" value="{escape(cap, quote=True)}">
 <label for="retain">Cash reserve to keep unallocated in EUR</label><input id="retain" name="retain_eur" inputmode="decimal" maxlength="16" value="{escape(retain, quote=True)}">
 <button type="submit">Save authorization policy</button></form>
-<p class="small">This policy applies to authoritative DKB CSV cash now. A future FinTS source would use the same policy. A negative booked balance authorizes EUR 0; pending transactions can make booked cash differ from spendable cash.</p></section>
-{authority}<section><h2>Home Assistant connection</h2><p>Acquisition mode: <strong>csv</strong></p><details><summary>Show bearer token</summary><code>{escape(self.app_server.api_token)}</code></details></section>
+<p class="small">This policy applies to the authoritative DKB cash source. A negative booked balance authorizes EUR 0; pending transactions can make booked cash differ from spendable cash.</p></section>
+<section><h2>Acquisition source</h2><p>Selected source: <strong>{escape(acquisition_mode)}</strong>. Automatic fallback: <strong>none</strong>.</p>
+<p class="small">FinTS requires one complete manual read made with this release and the selected account. Both observations expire after 14 days. When FinTS evidence is unavailable, planning stops until a manual refresh or an explicit switch to fresh CSV.</p>
+<form method="post" action="set-acquisition"><input type="hidden" name="csrf" value="{csrf}">
+<label for="acquisition-mode">Use for holdings and cash</label><select id="acquisition-mode" name="mode" required>
+<option value="csv" {'selected' if acquisition_mode == MODE_CSV else ''}>DKB CSV</option>
+<option value="fints" {'selected' if acquisition_mode == MODE_FINTS else ''} {'disabled' if not fints_ready and acquisition_mode != MODE_FINTS else ''}>Manual DKB FinTS{' · fresh read required' if not fints_ready and acquisition_mode != MODE_FINTS else ''}</option></select>
+<label><input type="checkbox" name="confirm" value="yes" required> Confirm explicit source change</label>
+<button type="submit">Switch acquisition source</button></form></section>
+{authority}<section><h2>Home Assistant connection</h2><p>Acquisition mode: <strong>{escape(acquisition_mode)}</strong></p><details><summary>Show bearer token</summary><code>{escape(self.app_server.api_token)}</code></details></section>
 <script>const mode=document.getElementById('mode'),cap=document.getElementById('cap'),retain=document.getElementById('retain');
 function sync(){{cap.disabled=mode.value!=='capped';cap.required=mode.value==='capped';retain.disabled=mode.value!=='retain';retain.required=mode.value==='retain';}}
 mode.addEventListener('change',sync);sync();</script></main></body></html>'''
@@ -1996,17 +2070,18 @@ def _parse_persisted_probe(raw: dict[str, Any]) -> CapabilityProbeResult:
 
 
 def serve_dkb_probe_app(*, provider_id: str, provider_name: str, options: PendingAppOptions | None = None, data_directory: Path = APP_DATA_DIRECTORY, ingress_address: tuple[str, int] = (INGRESS_BIND, INGRESS_PORT), allowed_ingress_sources: frozenset[str] = frozenset({"172.30.32.2"}), require_user_header: bool = True, ready_callback: Callable[[], None] | None = None, tls_cert_file: Path | None = None, tls_key_file: Path | None = None) -> None:
-    """Run DKB CSV acquisition with an isolated anonymous FinTS research probe."""
+    """Run explicit DKB CSV/FinTS acquisition with no automatic fallback."""
     data_directory.mkdir(mode=0o700, parents=True, exist_ok=True)
     options = options or PendingAppOptions.load()
     server_config = build_server_config(options, data_directory, tls_cert_file=tls_cert_file, tls_key_file=tls_key_file)
     api_token = ensure_api_token(server_config.api_token_file)
     if provider_id != "dkb":
         raise RuntimeError("DKB Gateway provider identity is invalid")
-    provider = DkbCsvProvider(server_config.snapshot_file)
+    provider = DkbAcquisitionProvider(server_config.snapshot_file)
     state = GatewayState(server_config, provider)
     state.refresh(trigger="startup")
     controller = DKBProbeController(data_directory)
+    controller.acquisition_provider = provider
     if not isinstance(provider_name, str) or not provider_name.strip() or len(provider_name.strip()) > 64:
         raise RuntimeError("Provider display name is invalid")
     gateway_server = create_server(server_config, state)
@@ -2021,7 +2096,7 @@ def serve_dkb_probe_app(*, provider_id: str, provider_name: str, options: Pendin
     )
     gateway_thread = threading.Thread(target=gateway_server.serve_forever, kwargs={"poll_interval": 0.5}, name="portfolio-dkb-api", daemon=True)
     gateway_thread.start()
-    _LOGGER.info("DKB CSV Gateway initialized; FinTS authenticated acquisition remains disabled")
+    _LOGGER.info("DKB Gateway initialized; acquisition mode=%s", provider.acquisition_mode)
     if ready_callback:
         ready_callback()
     try:

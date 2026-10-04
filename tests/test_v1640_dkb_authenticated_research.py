@@ -123,6 +123,6 @@ def test_research_boundary_and_lock_are_packaged():
     assert 'get_holdings(' not in source and 'get_balance(' not in source
     assert 'get_transactions(' not in source and 'sepa_transfer(' not in source
     config = (APP / 'config.yaml').read_text()
-    assert 'manual read-only FinTS' in config and 'FinTS acquisition remains disabled' in config
+    assert 'manual read-only FinTS acquisition' in config and 'no automatic fallback' in config
     lock = (APP / 'requirements-fints.txt').read_text()
     assert 'fints==5.0.0' in lock and lock.count('--hash=sha256:') >= 17

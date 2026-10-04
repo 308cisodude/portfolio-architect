@@ -1,7 +1,7 @@
 name: Portfolio Architect Gateway — DKB
-version: 1.65.9
+version: 1.66.0
 slug: portfolio_architect_gateway_dkb
-description: Authoritative DKB depot and Girokonto CSV evidence with manual read-only FinTS portfolio preparation, dedicated cash account selection and investment cash authorization; FinTS acquisition remains disabled.
+description: Explicit DKB CSV or manual read-only FinTS acquisition for one depot and selected EUR cash account, with 14-day FinTS expiry and no automatic fallback.
 url: https://developers.home-assistant.io/docs/apps/
 arch:
 - amd64
@@ -27,6 +27,10 @@ apparmor: true
 tmpfs: true
 backup: cold
 backup_exclude:
+- gateway/dkb-fints-authority-evidence.json
+- gateway/.dkb-fints-authority-evidence.json.*
+- gateway/dkb-fints-canonical.json
+- gateway/.dkb-fints-canonical.json.*
 - gateway/dkb-fints-system-id.json
 - gateway/.dkb-fints-system-id.json.*
 - gateway/dkb-fints-fingerprint-key

@@ -10,7 +10,7 @@ DKB=ROOT/"home_assistant_app"/"portfolio_architect_gateway_dkb"/"src"/"portfolio
 TRADE_REPUBLIC=ROOT/"home_assistant_app"/"portfolio_architect_gateway_trade_republic"/"src"/"portfolio_architect_gateway"
 GENERIC_IMPORT=ROOT/"home_assistant_app"/"portfolio_architect_gateway_import"/"src"/"portfolio_architect_gateway"
 SHELL_FILES={"__init__.py","errors.py","human_input.py","models.py","provider.py","runtime_config.py","server.py","store.py","pending_app.py","supervisor_tls.py","acquisition_control.py","acquisition_presentation.py"}
-DKB_PROVIDER_FILES={"dkb_app.py","dkb_cash_csv.py","dkb_csv.py","dkb_fints.py"}
+DKB_PROVIDER_FILES={"dkb_app.py","dkb_cash_csv.py","dkb_cash_policy.py","dkb_account_selection.py","dkb_cash_research.py","dkb_system_id.py","dkb_csv.py","dkb_fints.py","dkb_fints_authority.py","dkb_authenticated.py","dkb_holdings_research.py","dkb_holdings_review.py","dkb_shadow.py"}
 TR_PROVIDER_FILES={"trade_republic_app.py","trade_republic_statement.py","trade_republic_cash_statement.py","trade_republic_pdf.py"}
 GENERIC_IMPORT_PROVIDER_FILES={"generic_import_app.py","generic_csv.py","generic_profiles.py"}
 

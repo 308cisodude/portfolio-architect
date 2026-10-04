@@ -1,6 +1,6 @@
 FROM python:3.14.6-alpine3.24@sha256:26730869004e2b9c4b9ad09cab8625e81d256d1ce97e72df5520e806b1709f92
 
-ARG BUILD_VERSION=1.65.9
+ARG BUILD_VERSION=1.66.0
 ARG BUILD_ARCH
 ARG APP_UID=65532
 ARG APP_GID=65532
@@ -24,7 +24,7 @@ LABEL \
     io.hass.type="app" \
     io.hass.arch="${BUILD_ARCH}" \
     org.opencontainers.image.title="Portfolio Architect Provider Gateway" \
-    org.opencontainers.image.description="DKB CSV Gateway with isolated FinTS capability research for Portfolio Architect" \
+    org.opencontainers.image.description="Explicit DKB CSV or manual FinTS Gateway with fail-closed evidence expiry" \
     org.opencontainers.image.licenses="MIT"
 
 RUN /usr/local/bin/python3.14 -c \
