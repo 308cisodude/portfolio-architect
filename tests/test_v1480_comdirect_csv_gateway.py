@@ -186,15 +186,14 @@ def test_health_schema_7_exposes_bounded_acquisition_mode() -> None:
 def test_all_provider_ingress_pages_optically_separate_live_and_static_acquisition() -> None:
     dkb = (ROOT / "home_assistant_app" / "portfolio_architect_gateway_dkb" / "src" / "portfolio_architect_gateway" / "dkb_app.py").read_text(encoding="utf-8")
     tr = (ROOT / "home_assistant_app" / "portfolio_architect_gateway_trade_republic" / "src" / "portfolio_architect_gateway" / "trade_republic_app.py").read_text(encoding="utf-8")
-    assert 'class="active"' in dkb
-    assert 'class="prepared"' in dkb
-    assert "DKB CSV · authoritative" in dkb
-    assert "Manual DKB FinTS preparation" in dkb
+    assert "acquisition_mode == MODE_CSV else 'prepared'" in dkb
+    assert "DKB CSV · {'authoritative' if acquisition_mode == MODE_CSV else 'staged'}" in dkb
+    assert "Manual DKB FinTS · {'authoritative' if acquisition_mode == MODE_FINTS else 'staged'}" in dkb
     assert "mode-card active" in tr
     assert "Static acquisition" in tr
     assert "Live acquisition" in tr
     assert "mode-card unavailable" in tr
-    assert "FinTS preparation never switches authority" in dkb
+    assert "CSV imports update this independent source. They never switch acquisition authority." in dkb
     assert "UNAVAILABLE" in tr
     assert "No supported Trade Republic live/private API acquisition is used" in tr
 

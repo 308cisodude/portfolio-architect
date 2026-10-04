@@ -1,194 +1,84 @@
-# Portfolio Architect v1.63.0
+# Portfolio Architect
 
-Version 1.63.0 modularizes the static reference dashboard without moving presentation logic into Home Assistant runtime. Card/entity/condition/layout behavior is authored once, user-facing EN/DE text lives in locale catalogs, bounded German technical localization lives in a small overlay, and release tooling generates ordinary static Lovelace YAML. Separate English-only and German-only artifacts join the combined EN/DE compatibility dashboard. The release also corrects the zero-exception review presentation while preserving all provider, planner, freshness, schema and verified-HTTPS/private-PKI contracts from v1.62.5.
+Portfolio Architect is a Home Assistant integration for portfolio overview,
+policy checks, and deterministic investment planning. It combines independently
+acquired holdings and eligible EUR investment cash, explains freshness and policy
+findings, and proposes purchases and funding routes. All recommendations are
+advisory: Portfolio Architect cannot place orders or move money.
 
-Each new Generic profile receives an immutable generated `generic_<stable-id>` provider identity and a separately editable human name. Existing experimental `generic_csv` state retains that provider identity and legacy REST path. Holdings CSV data is parsed transiently; successful imports atomically replace only the selected profile's canonical holdings, optional provider-local EUR investment cash has its own evidence timestamp, and rejected imports retain the previous valid snapshot.
+For current changes and the corresponding upgrade guide, read the
+[release notes](docs/RELEASE-NOTES.md).
 
-Gateway health schema 10 adds a bounded human `provider_name` while schemas 1–9 remain compatible. Supervisor discovery schema 2 adds exact per-profile REST paths and provider names. Provider identity, transport trust, snapshot integrity and all mutation boundaries remain fail-closed.
+## Portfolio and planning
 
-Portfolio Architect is a Home Assistant-native portfolio overview, policy-check,
-and deterministic investment-planning system. It supports provider-isolated acquisition, multi-source consolidation, cost-aware recommendations, and separate read-only Gateway Apps, including DKB depot-CSV acquisition inside the DKB Gateway and simultaneous aggregation of multiple local Gateway REST snapshots.
+- Consolidate provider-isolated portfolio snapshots in one Home Assistant service.
+- Define target allocations, investment policies, savings-plan routes, fees, and
+  optional directed funding relationships through native configuration flows.
+- Evaluate evidence age and route readiness before producing an actionable plan.
+  Stale or incomplete evidence does not silently become fresh or authoritative.
+- Review the plan, cash authorization, source health, policy findings, and
+  execution sequence in native entities and generated English/German dashboards.
+- Use separate, read-only Gateway Apps for provider acquisition. Gateways publish
+  bounded, provider-neutral snapshots over verified private HTTPS and bearer
+  authentication; they do not execute transactions.
 
-Portfolio Architect is advisory software. It exposes no trading, order,
-transfer, payment, or account-transaction capability.
+## Providers and source authority
 
-## Highlights
+| Gateway App | Current planning source | Other method |
+| --- | --- | --- |
+| Comdirect | Live API by default, or an explicitly activated complete holdings-and-cash CSV path | No automatic cross-method fallback |
+| DKB | Depot holdings and Girokonto cash CSV by default, or explicitly activated manual FinTS holdings and selected-account booked cash | No automatic cross-method fallback; FinTS observations expire after 14 days |
+| Trade Republic | Local `DEPOTAUSZUG` holdings and `KONTOAUSZUG` cash PDF imports | Live API unavailable |
+| Generic Import | Mapped holdings CSV, with optional provider-local EUR cash; up to eight separately identified profiles | Fixed CSV method |
 
-- Native Home Assistant entities, configuration flows, diagnostics, repairs, and
-  bilingual English/German reference dashboards.
-- Deterministic allocation, policy, and cost-aware investment recommendations.
-- Private two-evaluation Plan Delta & Decision Trace with bounded reason codes and recorder-safe attributes.
-- Explicit Comdirect acquisition through the credential-isolated **Portfolio Architect Gateway — Comdirect** App: live API by default or a complete operator-selected static CSV path for holdings and cash, with no silent cross-mode fallback.
-- Provider-neutral consolidation across Comdirect, DKB and Trade Republic Gateway REST snapshots plus the provider-neutral generic mapped CSV escape hatch through its dedicated Generic Import Gateway.
-- Provider-owned authorized investment cash with conservative eligibility and optional Gateway caps or retained cash reserves.
-- Explicit provider-scoped funding topology that keeps cash pools separate and combines funding source with execution-route economics without moving money.
-- Bounded graceful degradation: trusted LKG holdings stay informationally available while stale bank cash and new investment actions fail closed.
-- Evidence-based Gateway refresh diagnostics and locally time-derived snapshot freshness.
-- Provider-aware Gateway health schema 9 with bounded acquisition-method inventories, readiness, explicit no-fallback policy and operator switch history while retaining backward-compatible negotiation through schemas 1–8.
-- Separate scheduled-execution, last-evaluation, and current-actionability semantics; past schedule dates never imply transaction execution.
-- Explicit transaction-cost and execution policies.
-- Reproducible release archives, SHA-256 manifests, SPDX 2.3 SBOMs, and release
-  provenance workflows.
-- Fail-closed publication privacy checks plus immutable Gitleaks scanning of the
-  tracked tree, complete Git patch history, and built release artifacts.
-- Immutable GitHub Action and validator-image dependencies, plus a hash-locked
-  Python validation toolchain, enforced by local and release checks.
-- Verified-HTTPS Gateway transport with per-App private CA trust distributed through
-  Home Assistant Supervisor discovery, layered with the existing bearer token.
-- DNS-pinned local REST transport that binds the validated private address set to
-  the authenticated connection while preserving Host/SNI/certificate identity.
+The DKB Gateway can select one eligible EUR cash account using masked choices and
+manually refresh the authorized depot and selected account. The bank may require
+app approval. **CSV remains authoritative after upgrade.** A complete new FinTS
+read stages private account-bound evidence; a separate confirmation activates
+FinTS for both holdings and cash. The two observations have independent clocks
+and a fixed 14-day expiry. Expired or missing FinTS evidence stops that source
+without selecting CSV automatically. Investment cash authorization (all eligible
+cash, a cap, or a retained reserve) applies to the selected source. The detailed
+review remains temporary and the older research shadows stay separate. See the
+[DKB upgrade guide](docs/UPGRADE-1.66.0.md).
 
-## Provider Gateway Apps
+One provider may advertise several methods, but changing authority is explicit.
+There is no silent fallback from a failed or stale source to another method.
 
-Version 1.62.0 graduates Generic Import to stable multi-profile operation. Up to eight independently identified Generic source profiles can be hosted by one App/private-PKI origin. Each ready profile is discovered separately, retains its own canonical holdings and optional cash evidence, and appears to Portfolio Architect as an ordinary provider rather than a special multi-provider payload.
+## Install and configure
 
-Version 1.60.0 adds **Authoritative evidence** and **Evidence timestamp** rows to the common schema-9 capability cards. Holdings and cash clocks remain independent where the provider snapshot carries independent evidence (notably DKB and Trade Republic). Comdirect shows the clocks from the currently published active-method snapshot; prepared inactive CSV evidence is deliberately excluded until an explicit method switch publishes it. Generic Import shows holdings evidence only, and an empty installation explicitly shows that authoritative evidence is not available yet.
+Home Assistant **2026.7.0 or newer** is required. Install the integration through
+HACS as a custom **Integration** repository or use the versioned manual drop-in.
+Install each Gateway App separately through the Home Assistant App repository or
+as a local App; HACS does not install the Apps.
 
-Version 1.59.0 renders the schema-9 control plane consistently inside every official Gateway Ingress UI: per-capability authoritative method, authority reason, supported-method readiness/active state, and `fallback_policy: none`, plus a read-only method inventory. Green remains active/authoritative, blue ready-but-inactive, and amber unavailable/not-ready/research-only. Comdirect retains its existing explicit provider-local activation controls; the common presentation adds no control endpoint.
+Add **Portfolio Architect** in **Settings → Devices & services**. A new installation
+starts without inventing a portfolio source or investment assumptions. Configure
+and explicitly adopt a ready Gateway, then complete the native initial-plan setup
+or use an existing valid configuration. See the [installation guide](docs/INSTALL.md)
+and [dashboard guide](dashboard/README.md).
 
-Version 1.53.0 adds a provider-neutral acquisition-method control plane without giving Portfolio Architect provider-control authority. Comdirect is the first dual-method implementation: live API and complete static CSV evidence can be prepared independently and switched explicitly/crash-safely with no automatic fallback. DKB advertises CSV plus research-only FinTS, Trade Republic advertises PDF plus unavailable live acquisition, and Generic Import remains fixed CSV. Health schema 8 carries the bounded read-only control state while schemas 1–7 remain compatible.
+## Security and privacy
 
-Version 1.53.0 adds a provider-neutral read-only acquisition control plane. Comdirect is the first explicit switchable provider: a complete staged CSV candidate can be activated crash-safely instead of live API, with no automatic fallback; DKB and Trade Republic expose their fixed/research or unavailable alternatives without making them activatable. Portfolio Architect continues to consume one canonical provider identity per bank and has no acquisition-management authority.
+Bank credentials, authentication sessions, raw statements, full account identifiers,
+and private Gateway state remain outside Home Assistant entities and diagnostics.
+Gateway Apps keep provider-specific acquisition isolated and publish only the
+validated portfolio, authorized cash, and bounded health contracts needed by the
+integration. DKB FinTS feeds planning only after explicit activation. No Gateway
+provides order, transfer, payment, or transaction-history write operations.
 
-Version 1.48.1 makes freshness acquisition-aware: live sources keep a 24-hour default while unconfigured static CSV/PDF evidence defaults to 5 days for weekly plans and 14 days for monthly-or-slower plans. Existing explicit freshness thresholds are preserved.
-
-Version 1.48.0 moves Comdirect provider-specific CSV acquisition into the Comdirect Gateway. `live_api` remains the default; explicit `csv` mode provides independent holdings and cash imports with no silent fallback. All provider App Ingress pages now make live versus static acquisition optically distinct.
-
-## Installation channels
-
-### Manual installation
-
-Extract the versioned Home Assistant drop-in over the Home Assistant configuration
-folder so this directory exists:
-
-```text
-/config/custom_components/portfolio_architect
-```
-
-Restart Home Assistant, then add **Portfolio Architect** through
-**Settings → Devices & services**.
-
-### HACS publication
-
-The repository contains a stable HACS release asset named
-`portfolio_architect.zip`, HACS metadata, brand assets, HACS validation, and
-hassfest workflows. Before the first public release, the repository owner must run
-`tools/configure_publication.py` once to write the real GitHub repository URL and
-code owner into the integration manifest. Placeholder or invented repository URLs
-are deliberately not shipped.
-
-See `docs/PUBLICATION-SETUP.md` and `docs/PUBLISHING.md`.
-
-## Supported environment
-
-- Home Assistant 2026.7.0 or newer
-- Python 3.14 for source validation and Gateway builds
-- Gateway App 1.16.1 or newer for the established live Comdirect protocol; Gateway App 1.19.0 or newer for configurable cash authorization; 1.19.1 or newer includes the corrected capped-to-all-available transition; 1.20.1 or newer includes the LKG entity-propagation fix; 1.21.0 adds execution/actionability semantics; 1.22.0 adds publication/privacy hardening; 1.24.1 includes the distinct-provider shell startup hotfix; 1.25.0 adds private local Trade Republic `DEPOTAUSZUG` statement import; 1.26.0 adds simultaneous provider Gateway aggregation; 1.26.1 makes instrument identity ISIN-first without changing REST schema 1 or health schema 6; 1.26.2 adds localized dashboard presentation and privacy-safe unavailable-source diagnostics; 1.26.3 closes the remaining German unavailable-state dashboard edge case and polishes policy-compliance layout without changing machine-readable entity states; 1.26.4 attempts native Tile short-date rendering without changing entity states; 1.26.5 moves only dashboard date presentation to additive read-only native `date.*` counterparts after live acceptance showed the v1.26.4 Tile formatter is ineffective for `sensor` DATE states; 1.26.6 fixes non-live REST Gateway source identification without changing acquisition or authentication behavior; 1.26.7 preserves persisted quantities and corrects conditional-request precedence so Gateway cold restarts cannot create a false snapshot-fingerprint change; 1.27.0/1.27.1 introduce per-Gateway private-PKI verified HTTPS; 1.27.2 fixes existing-entry Supervisor discovery eligibility; 1.27.3 fixes DKB Gateway-vs-CSV discovery identity suppression; 1.27.4 decouples Comdirect OAuth session maintenance from portfolio polling while retaining fail-closed migration; 1.28.0 adds only a registration-gated anonymous DKB FinTS capability probe and keeps live DKB acquisition disabled; 1.28.1 refreshes immutable GitHub Actions to Node.js 24-capable major versions without changing runtime behavior; 1.28.2 groups GitHub Actions Dependabot version updates without changing runtime behavior; 1.29.0 adds native policy-dashboard hierarchy without changing entity or runtime contracts; 1.30.0 adds provider-aware local execution routing and route-scoped exception review without changing Gateway wire schemas; 1.31.0 retargets Robotics to the accumulating share class and retires the old distributing exception into audit history; 1.31.1 restores ISIN-only outside-scope holding validation without changing Gateway runtime; 1.31.2 hardens only the DKB registered capability-probe diagnostics/navigation while live DKB acquisition remains disabled; 1.32.0 adds provider freshness observability and cross-provider diagnostic hardening; 1.33.0 separates evidence-age freshness from plan scheduling and adds explicit user-owned evidence-kind thresholds; 1.33.1 corrects the remaining oldest-source schedule anchor without changing Gateway wire schemas; 1.34.0 adds opaque PA-generated 128-bit target IDs and a first-class current-state presentation contract while retaining schema-1 plan compatibility; 1.34.1 fixes whole-portfolio allocation presentation and ISIN-first outside-scope dashboard bindings; 1.35.0 adds provider-scoped cash and explicit advisory funding-transfer topology without changing Gateway wire schemas; 1.35.1 hardens Comdirect session-maintenance transport resilience without changing those wire schemas; 1.35.2 adds native execution-policy editing, explicit promotional/tie-break semantics, and retained-cash authorization; 1.35.3 restores the missing native broker-editor menu labels without changing those semantics; 1.35.4 accepts common human EUR cash-policy formats and replaces the generic invalid-amount Ingress 400 with bounded guidance; 1.36.0 adds native dynamic presentation slots and removes instrument-specific inventories from the reference dashboard; 1.36.1 fixes the live-observed entity-filter/Distribution composition and compact dynamic naming without changing the presentation-slot backend; 1.37.0 adds shared opt-in human-numeric Gateway validation and migrates the established Comdirect cash fields onto it without changing wire/provider semantics; 1.38.0 adds native copy-friendly recommendation ISIN interaction and policy-aware cash context without changing provider runtimes or wire schemas; 1.38.1 restores native dynamic per-target drift bars through bounded presentation slots, core Conditional + Tile cards and the Tile-native bar-gauge feature without changing provider runtimes or wire schemas; 1.39.0 adds paired colourful current/target allocation Tiles through the same bounded native presentation slots without changing provider runtimes or wire schemas; 1.40.0 adds evidence-backed freshness semantics for advisory directed funding edges without adding transfer execution; 1.40.1 fixes native Configure-form compatibility and evidence-date UX without changing funding semantics; 1.41.0 adds independent local Trade Republic `KONTOAUSZUG` cash evidence without changing REST schema 1 or the advisory-only boundary; 1.41.1 prefers sufficient execution-provider-local cash over an otherwise identical zero-fee/zero-day cross-provider funding transfer; 1.42.0 exposes the already-decided funding/purchase sequence as bounded bilingual Home Assistant presentation and renders it through a native dashboard Markdown block without changing route economics or provider runtimes; 1.44.0 adds independent per-route fee evidence and native funding-edge editing without changing route economics or provider runtimes; 1.45.0 moves DKB depot-CSV acquisition into the auto-starting experimental DKB Gateway with exact fail-closed legacy-source migration while authenticated FinTS remains disabled; 1.45.1 fixes migration of exact legacy snapshots older than the normal Gateway serving horizon without weakening runtime freshness; 1.46.0 retires the completed PA-side DKB CSV bridge and migration-only endpoint after live acceptance; 1.47.0 adds independent DKB Girokonto CSV cash evidence with imported-statement freshness and no overdraft inference; 1.48.0 adds explicit complete Comdirect CSV acquisition, health-schema-7 acquisition mode, and optically separated live/static Gateway UX; 1.48.1 uses that acquisition mode for live-vs-static freshness and adds cadence-aware static defaults while preserving explicit overrides
-- v1.53.0 acquisition control: health schema 8 exposes bounded method inventory/readiness and `fallback_policy: none`; Comdirect supports explicit crash-safe `live_api`/complete-`csv` switching; DKB `fints` remains research-only and Trade Republic `live_api` unavailable; Generic Import remains experimental.
-
-The current stable Portfolio Architect release and the immediately preceding
-stable release receive security and correctness fixes while a documented upgrade
-path exists. See `SUPPORT.md` and `docs/SUPPORTED-VERSIONS.md`.
-
-## Privacy and security
-
-Bank authentication remains inside the local Gateway App. Home Assistant receives
-only bounded provider-neutral portfolio, authorized-cash, and health contracts.
-The selected investment account identifier, IBAN, account holder, transaction
-history, OAuth material, qSession cookie, and bank credentials are not included
-in the public portfolio snapshot or diagnostics.
-
-Official v1.45.1 Gateway Apps use verified HTTPS on the private Home Assistant App network and retain bearer authentication. Never expose the Gateway REST port to an untrusted network.
-
-## AI-assisted development
-
-Portfolio Architect is developed with substantial use of generative AI, including
-AI-assisted implementation, tests, documentation, and release preparation under
-maintainer direction. The maintainer remains responsible for architecture,
-security decisions, merges, releases, and published content. Automated validation
-and live acceptance provide evidence; they do not transfer that responsibility.
-Selected material release candidates may also receive a separate security-focused AI
-second-opinion review under the limitations documented in `AI_POLICY.md`. The
-maintainer retains all merge, release, and publication authority. See `AI_POLICY.md`
-for the project's full disclosure and human-controlled development policy.
+Read the [privacy model](docs/PRIVACY.md), [security policy](SECURITY.md),
+[architecture](docs/ARCHITECTURE.md), and [support policy](SUPPORT.md).
 
 ## Development and validation
 
-```bash
-python -m pip install \
-  --disable-pip-version-check \
-  --no-deps \
-  --only-binary=:all: \
-  --require-hashes \
-  -r requirements/ci-python-3.14-linux-x86_64.txt
-./tools/release_check.sh
-```
+The repository includes regression tests, reproducible release archives,
+publication checks, privacy checks, HACS and hassfest workflows, and a pinned
+Python validation toolchain. See [quality and validation](docs/QUALITY.md) and
+[publishing](docs/PUBLISHING.md) for the complete gates.
 
-The lock targets CPython 3.14.6 on Linux x86-64. The local pipeline compiles
-Python, parses structured files, checks immutable publication and privacy
-contracts, runs the complete regression suite, builds reproducible archives, and
-verifies checksums, ZIP safety, and artifact privacy. Digest-pinned HACS, hassfest,
-and Gitleaks containers execute on GitHub-hosted runners as external publication
-validation. The Gitleaks gate covers the tracked tree, complete Git patch history,
-and built release contents before publication.
+## AI-assisted development
 
-## Documentation
-
-- `docs/INSTALL.md`
-- `docs/TARGET-ARCHITECTURE.md`
-- `docs/ARCHITECTURE.md`
-- `docs/SOURCE-ADAPTERS.md`
-- `docs/OPERATIONS.md`
-- `docs/PRIVACY.md`
-- `docs/SECURITY.md`
-- `docs/PUBLISHING.md`
-- `docs/ROADMAP.md`
-- `docs/PROVIDER-DIAGNOSTICS.md`
-- `docs/GATEWAY-PROVIDERS.md`
-- `docs/EXECUTION-PROVIDERS.md`
-- `docs/QUALITY.md`
-- `docs/DECISION-TRACE.md`
-- `AI_POLICY.md`
-- `docs/UPGRADE-1.39.0.md`
-- `docs/UPGRADE-1.45.1.md`
-- `docs/UPGRADE-1.42.0.md`
-- `docs/UPGRADE-1.41.1.md`
-- `docs/UPGRADE-1.41.0.md`
-- `docs/UPGRADE-1.40.1.md`
-- `docs/UPGRADE-1.38.1.md`
-- `docs/UPGRADE-1.38.0.md`
-- `docs/UPGRADE-1.37.0.md`
-- `docs/UPGRADE-1.36.0.md`
-- `docs/UPGRADE-1.35.4.md`
-- `docs/UPGRADE-1.35.3.md`
-- `docs/UPGRADE-1.35.2.md`
-- `docs/UPGRADE-1.35.0.md`
-- `docs/UPGRADE-1.34.1.md`
-- `docs/UPGRADE-1.34.0.md`
-- `docs/UPGRADE-1.33.1.md`
-- `docs/UPGRADE-1.31.2.md`
-- `docs/UPGRADE-1.31.1.md`
-- `docs/UPGRADE-1.31.0.md`
-- `docs/UPGRADE-1.30.0.md`
-- `docs/UPGRADE-1.29.0.md`
-- `docs/UPGRADE-1.28.2.md`
-- `docs/UPGRADE-1.28.1.md`
-- `docs/UPGRADE-1.28.0.md`
-- `docs/UPGRADE-1.27.4.md`
-- `docs/UPGRADE-1.27.3.md`
-- `docs/UPGRADE-1.26.7.md`
-- `docs/UPGRADE-1.26.6.md`
-- `docs/UPGRADE-1.26.5.md`
-- `docs/UPGRADE-1.26.4.md`
-- `docs/UPGRADE-1.26.3.md`
-- `docs/UPGRADE-1.26.2.md`
-- `docs/UPGRADE-1.26.1.md`
-- `docs/UPGRADE-1.26.0.md`
-- `docs/UPGRADE-1.24.1.md`
-- `docs/UPGRADE-1.24.0.md`
-- `docs/UPGRADE-1.22.0.md`
-- `docs/UPGRADE-1.21.0.md`
-- `docs/UPGRADE-1.20.1.md`
-- `docs/UPGRADE-1.20.0.md`
-- `docs/UPGRADE-1.19.1.md`
-- `docs/UPGRADE-1.19.0.md`
+Generative AI assists implementation, tests, documentation, and release
+preparation. The maintainer retains responsibility for architecture, security,
+review, merging, and publication. See [AI_POLICY.md](AI_POLICY.md).

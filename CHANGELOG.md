@@ -1,3 +1,9 @@
+## 1.66.0
+
+- Add an explicit DKB CSV/FinTS acquisition switch. A new, complete, account-bound manual read can stage independent FinTS holdings and cash evidence for at most 14 days. No automatic fallback occurs when evidence expires.
+- Keep CSV holdings in an independent private file and FinTS canonical output in a separate file so restarts and downgrades cannot reinterpret one source as the other.
+- Give DKB FinTS a fixed 14-day planner freshness class; retain the existing 24-hour research shadow presentation and five-minute transient review.
+
 ## 1.65.9
 
 - Prepare DKB account selection, manual portfolio refresh and CSV investment cash authorization. Keep CSV authoritative.

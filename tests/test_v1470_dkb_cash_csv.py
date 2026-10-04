@@ -164,7 +164,7 @@ def test_dkb_ingress_exposes_separate_cash_import_without_fints_fallback() -> No
     assert 'path == "/import-cash"' in app
     assert "parse_dkb_cash_csv" in app
     assert "DKB Girokonto cash CSV" in app
-    assert "FinTS preparation never switches authority or falls back automatically" in app
+    assert "Automatic fallback: <strong>none</strong>" in app
 
 
 def test_real_private_dkb_cash_export_is_not_a_repository_fixture() -> None:

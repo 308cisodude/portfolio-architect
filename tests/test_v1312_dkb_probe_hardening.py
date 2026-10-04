@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import http.client
 import importlib
@@ -217,7 +218,7 @@ def _post_and_location(app, controller: _DummyController, path: str, fields: dic
         ("127.0.0.1", 0),
         state=object(),
         controller=controller,
-        provider=object(),
+        provider=type("ProviderStub", (), {"selection_guard": lambda self: contextlib.nullcontext()})(),
         api_token="test-token",
         allowed_sources=frozenset({"127.0.0.1"}),
         require_user_header=False,

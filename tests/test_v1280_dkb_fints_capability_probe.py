@@ -184,7 +184,7 @@ def test_product_registration_and_probe_result_are_private_and_sanitized(tmp_pat
 
 def test_dkb_app_is_stable_csv_source_with_experimental_probe_and_without_authenticated_fints_acquisition() -> None:
     config = yaml.safe_load((APP / "config.yaml").read_text(encoding="utf-8"))
-    assert config["version"] == "1.65.9"
+    assert config["version"] == "1.66.0"
     assert config["stage"] == "stable"
     assert config["boot"] == "auto"
     assert config["environment"]["PA_PROVIDER_ID"] == "dkb"
@@ -195,11 +195,12 @@ def test_dkb_app_is_stable_csv_source_with_experimental_probe_and_without_authen
     assert config["docker_api"] is False
 
     source = (PACKAGE / "dkb_app.py").read_text(encoding="utf-8")
-    assert "DkbCsvProvider(server_config.snapshot_file)" in source
+    assert "DkbAcquisitionProvider(server_config.snapshot_file)" in source
     assert 'state.refresh(trigger="startup")' in source
     assert "parse_dkb_csv_batch" in source
     assert "probe_dkb_bpd(product_id)" in source
-    assert "FinTS authenticated acquisition remains disabled" in source
+    assert 'provider.acquisition_mode' in source
+    assert 'path == "/set-acquisition"' in source
     assert 'self.send_header("Allow", "GET, POST")' in source
     for method in ("do_PUT", "do_PATCH", "do_DELETE", "do_HEAD", "do_OPTIONS"):
         assert method in source

@@ -199,7 +199,7 @@ def test_bilingual_onboarding_copy_states_integration_ownership_and_no_invented_
 
 def test_release_version_and_changelog_target_v1621() -> None:
     const = CONST.read_text(encoding="utf-8")
-    assert 'VERSION: Final = "1.65.9"' in const
+    assert 'VERSION: Final = "1.66.0"' in const
     # Release metadata is finalized before the candidate is frozen.
 
 

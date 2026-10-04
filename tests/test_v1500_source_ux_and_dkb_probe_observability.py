@@ -184,4 +184,4 @@ def test_dkb_probe_ingress_displays_persisted_last_sent_timestamp_without_changi
     assert 'id="probe-sent-local"' not in source
     assert 'data-utc=' not in source
     assert '"probe_sent_at": self.last_probe_sent_at()' in source
-    assert "FinTS preparation never switches authority" in source
+    assert "They never switch acquisition authority" in source

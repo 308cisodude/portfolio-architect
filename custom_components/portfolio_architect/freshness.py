@@ -10,6 +10,7 @@ _MAX_SUMMARY_CHARS = 240
 _STATIC_WEEKLY_DEFAULT_HOURS = 5 * 24
 _STATIC_MONTHLY_DEFAULT_HOURS = 14 * 24
 _LIVE_DEFAULT_HOURS = 24
+FINTS_HARD_MAX_HOURS = 14 * 24
 
 
 def default_static_freshness_hours(plan_frequency: str | None) -> int:
@@ -87,6 +88,8 @@ def evidence_kind(provider: str, acquisition_mode: str | None = None) -> str:
     mode = str(acquisition_mode or "").strip().lower()
     if mode == "live_api":
         return "live_api"
+    if token == "dkb" and mode == "fints":
+        return "fints"
     if mode == "csv":
         return "csv"
     if mode == "pdf":
@@ -108,6 +111,8 @@ def cash_evidence_kind(provider: str, acquisition_mode: str | None = None) -> st
     mode = str(acquisition_mode or "").strip().lower()
     if mode == "live_api":
         return "live_api"
+    if token == "dkb" and mode == "fints":
+        return "fints"
     if mode == "csv":
         return "csv"
     if mode == "pdf":
@@ -152,7 +157,8 @@ def source_freshness_rows(
         label = _bounded_text(item.get("label"), fallback=source_id, maximum=80)
         acquisition_mode = item.get("acquisition_mode") if isinstance(item, dict) else None
         kind = evidence_kind(provider, acquisition_mode if isinstance(acquisition_mode, str) else None)
-        effective_threshold = thresholds.get(kind, fallback_threshold)
+        effective_threshold = (min(thresholds.get(kind, FINTS_HARD_MAX_HOURS), FINTS_HARD_MAX_HOURS)
+                               if kind == "fints" else thresholds.get(kind, fallback_threshold))
         threshold_seconds = effective_threshold * 3600
         generated_at = _parse_timestamp(item.get("generated_at"))
         if generated_at is None:

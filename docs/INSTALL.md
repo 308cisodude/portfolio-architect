@@ -1,118 +1,91 @@
 # Installation
 
-## HACS installation after public repository configuration
+Portfolio Architect requires Home Assistant 2026.7.0 or newer. The integration
+and its four Gateway Apps are separate packages. HACS installs only the
+integration; provider acquisition runs in the appropriate App.
 
-After the repository has been published and accepted as a HACS custom repository:
+## Install the integration
 
-1. Add the repository URL to HACS as an **Integration** repository.
-2. Install **Portfolio Architect**.
-3. Restart Home Assistant.
-4. Open **Settings → Devices & services → Add integration → Portfolio Architect**.
+### HACS
 
-HACS consumes the fixed release asset `portfolio_architect.zip`. The Gateway App
-is not installed by HACS and remains a separate local App or App-repository
-package.
+1. Add this repository to HACS as a custom **Integration** repository.
+2. Install **Portfolio Architect** and restart Home Assistant.
+3. Open **Settings → Devices & services → Add integration → Portfolio Architect**.
 
-## Manual Home Assistant installation
+HACS consumes the release asset `portfolio_architect.zip`. The repository's
+README appears in HACS; the current behavior and upgrade steps are documented in
+[release notes](RELEASE-NOTES.md).
 
-1. Extract the versioned integration drop-in so this directory exists:
-   `/config/custom_components/portfolio_architect`.
-2. Create a portfolio data directory, for example
-   `/config/portfolio-architect`.
-3. Put these files in that directory:
-   - `portfolio.yaml`
-   - `policy.yaml`
-   - `instruments.yaml`
-   - `broker.yaml`
-   - optional `exceptions.yaml`
-4. For a CSV source, put the current portfolio CSV below `/config`.
-5. Restart Home Assistant.
+### Manual
 
-Never store backup directories directly below `/config/custom_components`.
+Extract the versioned Home Assistant drop-in over `/config` so that
+`/config/custom_components/portfolio_architect` exists, then restart Home
+Assistant and add the integration. Do not store backups below
+`/config/custom_components`.
 
-## Optional local Gateway App
+## Initialize a new Portfolio Architect installation
 
-For Comdirect API access on Home Assistant OS, copy the complete
-`portfolio_architect_gateway` directory from the App bundle into:
+The integration creates one service entry with an explicit **source required**
+state. It does not invent a source, target allocation, investment policy, or
+execution provider.
 
-```text
-/addons/portfolio_architect_gateway
-```
+1. Choose a configuration directory below `/config` in the setup flow; the
+   default is `portfolio-architect`.
+2. Install and configure at least one Gateway App. Its ready provider is offered
+   as a candidate, not added silently. Under **Configure → Portfolio sources**,
+   explicitly adopt the first source.
+3. Complete the native **initial setup** when the integration shows
+   **plan required**. Select target instruments and supply the allocation and
+   policy facts yourself. The four required YAML files are written only after
+   the whole candidate validates.
+4. Add execution providers and savings-plan routes separately when you have
+   verified their availability and fees.
 
-In Home Assistant, open **Settings → Apps → App store**, select the three-dot
-menu, choose **Check for updates**, and install **Portfolio Architect Gateway — Comdirect**
-from **Local apps**. Start the App and open its Web UI to perform the PhotoTAN
-bootstrap.
+Advanced users may instead point the setup flow at a complete, valid existing
+directory containing `portfolio.yaml`, `policy.yaml`, `instruments.yaml`,
+and `broker.yaml`; `exceptions.yaml` is optional. Partial or invalid
+existing configuration is not overwritten automatically. See
+[initial setup](UPGRADE-1.62.1.md) and [target architecture](TARGET-ARCHITECTURE.md).
 
-The App keeps persistent state in its private `/data/gateway` directory. It
-requires no Home Assistant configuration mapping and publishes no port to the
-LAN. The standalone Docker Gateway remains documented in `gateway/README.md`.
+## Install provider Gateway Apps
 
-## UI setup
+Install the version-aligned App bundles through the Home Assistant App repository
+or extract each complete App directory below `/addons` for a local installation:
 
-Open **Settings → Devices & services → Add integration → Portfolio Architect**.
-Choose a provider:
+| App | Local directory | Supported acquisition |
+| --- | --- | --- |
+| Comdirect | `portfolio_architect_gateway_comdirect` | Live API or explicit complete CSV |
+| DKB | `portfolio_architect_gateway_dkb` | Depot and Girokonto CSV, or explicitly activated manual FinTS holdings and selected-account cash |
+| Trade Republic | `portfolio_architect_gateway_trade_republic` | Holdings and cash statement PDFs |
+| Generic Import | `portfolio_architect_gateway_import` | Mapped holdings CSV with optional EUR cash |
 
-- **Comdirect depot CSV** for the established Comdirect export;
-- **Generic mapped CSV** for another local CSV format;
-- **Local REST JSON gateway** for the bounded provider-neutral local API contract.
+In **Settings → Apps → App store**, use **Check for updates** after copying a
+local App, then install and start it. Configure acquisition through its admin
+Ingress page. Gateway Apps keep credentials and raw input private and do not
+publish a LAN port.
 
-Enter paths relative to `/config`:
+Home Assistant Supervisor discovery supplies each App's internal verified-HTTPS
+endpoint and public private-CA trust. You supply the App's dedicated bearer
+token when adopting it. An additional discovered Gateway also requires explicit
+confirmation and validation before it joins the portfolio. Avoid hard-coded
+App hostnames: repository-installed Apps may receive a generated prefix.
 
-```text
-Portfolio CSV path:              portfolio-architect/depot.csv
-Portfolio configuration folder:  portfolio-architect
-```
+DKB starts with CSV authority. Select one eligible EUR cash account in the DKB
+App, then perform a complete manual FinTS holdings-and-cash read with this
+release. The read alone does not change planning. Review the bounded authority
+status and separately confirm the switch to FinTS for both capabilities. Each
+observation expires after 14 days; a missing or expired observation blocks the
+FinTS snapshot without an automatic CSV fallback. The App's investment cash
+authorization applies to the selected source. Follow the
+[DKB upgrade guide](UPGRADE-1.66.0.md) before switching.
 
-For a generic CSV, the flow asks for encoding, delimiter, header row, number
-format, and column mapping. Official v1.27 Gateway Apps are discovered through Home
-Assistant Supervisor: discovery supplies the verified-HTTPS internal endpoint and
-public private-CA trust, while the user supplies the dedicated Gateway bearer token.
-Market values must already be in EUR in every adapter. Banking credentials and TLS
-private keys remain inside the Gateway App.
+## Check the installation
 
-For a local-development installation the Comdirect endpoint is typically
-`https://local-portfolio-architect-gateway:8787/api/v1/portfolio`; repository-installed
-Apps receive a Supervisor-generated repository prefix, so discovery rather than a
-hard-coded hostname is authoritative.
+Confirm the integration and installed Apps report the intended aligned release
+version. In **Configure → Portfolio sources**, verify the provider identities,
+active acquisition methods, evidence dates, and freshness. A missing or failed
+source must not silently switch acquisition methods. Check the plan's current
+actionability before acting on any recommendation.
 
-The flow calculates and validates the complete source before creating or
-reconfiguring the single service config entry. No YAML integration configuration
-or command-line sensor is required. New/reconfigured REST sources require verified
-HTTPS.
-
-### Additional provider Gateways (v1.27)
-
-A newly discovered supplemental Gateway is never added silently. Supervisor supplies
-its HTTPS endpoint/public CA; Portfolio Architect asks for explicit confirmation and
-the Gateway's dedicated bearer token, then validates health-schema-6 provider
-identity, the live snapshot and integrity metadata before changing portfolio scope.
-
-Existing v1.26 HTTP supplemental Gateways migrate in place when their v1.27 App is
-updated, but only after verified HTTPS succeeds with the existing token. Keep all
-Gateway endpoints on the private App network; no host/LAN port mapping is required.
-Additional bearer tokens and private CA trust are config-entry data/options and are
-never included as secret material in diagnostics or portfolio payloads.
-
-## Native plan configuration
-
-Open **Settings → Devices & services → Portfolio Architect → Configure →
-Investment plan**.
-
-`portfolio.yaml` supplies the initial plan and remains the fallback until the UI
-plan is saved. Portfolio schema 2 uses a stable user-owned `target_id` for each
-target; keep it unchanged across reordering, renaming, or deliberate instrument
-replacement so Home Assistant target entity identity remains stable. Schema 1
-legacy `id` plans remain supported. The UI supports budget, budget basis, frequency,
-recurring execution days, review lead time, instrument scope, stable target IDs,
-target weights, and purchase eligibility. See `docs/TARGET-ARCHITECTURE.md`.
-
-## Verification
-
-```bash
-grep -n '"version"' /config/custom_components/portfolio_architect/manifest.json
-grep -n '^VERSION' /config/custom_components/portfolio_architect/const.py
-grep -n '^__version__' /config/custom_components/portfolio_architect/engine/__init__.py
-```
-
-All three markers must report `1.44.0`.
+For source builds and release validation, see [quality](QUALITY.md) and
+[publishing](PUBLISHING.md).
