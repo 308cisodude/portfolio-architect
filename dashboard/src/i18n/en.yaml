@@ -41,9 +41,33 @@ strings:
   exception_review: Exception review
   optimisation_opportunities: Optimisation opportunities
   why_plan_not_ready: Why the plan is not ready
-  plan_source_blocker_content: '**Source evidence blocks this plan:** {{ state_attr("sensor.portfolio_architect_plan_actionability", "plan_actionability_detail") | default("Unavailable", true) }}. Refresh the indicated authoritative source and evaluate the plan again.'
-  no_eligible_detail: Current policy and execution routes produced no eligible purchase. Review the policy findings and route evidence below.
-  reserve_detail: Authorized investment cash is unavailable. Check the authoritative cash statement and cash authorization.
+  plan_source_blocker_content: |
+    **Plan blocked:** {{ state_attr('sensor.portfolio_architect_plan_actionability', 'plan_actionability_detail') | default('Unavailable', true) }}.
+
+    {% set rows = state_attr('binary_sensor.portfolio_architect_data_fresh', 'source_freshness') or [] %}
+    {% set old = rows | rejectattr('within_age_threshold', 'equalto', true) | list %}
+    {% if old %}
+    **Authoritative evidence to refresh:**
+    {% for row in old[:3] %}
+    - **{{ row.label | e }}** ({{ row.evidence_kind | e }}): observed `{{ row.generated_at or 'unavailable' }}`; freshness limit {{ row.threshold_hours }} hours.
+    {% endfor %}
+    {% if old | length > 3 %}Plus {{ old | length - 3 }} other sources.{% endif %}
+    {% else %}
+    Check the named provider Gateway, then evaluate the plan again.
+    {% endif %}
+  no_eligible_detail: |
+    {% set findings = state_attr('sensor.portfolio_architect_presentation_model', 'active_policy_findings') or [] %}
+    {% set errors = findings | selectattr('state', 'equalto', 'error') | list %}
+    {% if errors %}
+    **Policy findings to resolve before a purchase:**
+    {% for finding in errors[:3] %}
+    - **{{ finding.fund_name | e }}** · {{ finding.rule | replace('_', ' ') | e }}: observed `{{ finding.observed | e }}`; expected `{{ finding.expected | e }}`.
+    {% endfor %}
+    {% if errors | length > 3 %}Plus {{ errors | length - 3 }} other errors in Policy compliance below.{% endif %}
+    {% else %}
+    Current policy and execution routes produced no eligible purchase. Review the policy findings and route evidence below.
+    {% endif %}
+  reserve_detail: Authorized investment cash is unavailable. Check the investment accounts and their authorization policies; a zero cap contributes no cash even when the bank balance is positive.
   deferred_detail: The purchase is deferred by the execution cost policy. Review the execution path.
   active_policy_findings: Active policy findings
   policy_findings_detail: Policy findings with observed and expected evidence

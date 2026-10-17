@@ -77,7 +77,7 @@ status and separately confirm the switch to FinTS for both capabilities. Each
 observation expires after 14 days; a missing or expired observation blocks the
 FinTS snapshot without an automatic CSV fallback. The App's investment cash
 authorization applies to the selected source. Follow the
-[DKB upgrade guide](UPGRADE-1.66.0.md) before switching.
+[DKB upgrade guide](UPGRADE-1.66.1.md) before switching.
 
 ## Check the installation
 

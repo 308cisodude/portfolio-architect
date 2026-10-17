@@ -1654,7 +1654,7 @@ class DKBIngressHandler(BaseHTTPRequestHandler):
                     f'Cash: {cash_shadow["state"]}; observed {cash_shadow["observed_at"] or "none"} UTC; '
                     f'bank balance date {cash_shadow["bank_date"] or "none"}.')
         review = controller.holdings_review()
-        holdings_detail = render_review(review) if review is not None else ""
+        holdings_detail = render_review(review, authoritative_method=acquisition_mode) if review is not None else ""
         cash_review = controller.cash_review()
         cash_detail = ""
         if cash_review is not None:

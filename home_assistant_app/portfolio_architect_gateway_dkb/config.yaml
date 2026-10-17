@@ -1,5 +1,5 @@
 name: Portfolio Architect Gateway — DKB
-version: 1.66.0
+version: 1.66.1
 slug: portfolio_architect_gateway_dkb
 description: Explicit DKB CSV or manual read-only FinTS acquisition for one depot and selected EUR cash account, with 14-day FinTS expiry and no automatic fallback.
 url: https://developers.home-assistant.io/docs/apps/
