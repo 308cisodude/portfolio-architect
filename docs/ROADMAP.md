@@ -4,13 +4,17 @@ This roadmap records intended sequencing rather than a compatibility promise. Ea
 milestone remains subject to design, security review, tests, and live acceptance.
 
 
-## v1.66.0 — DKB manual FinTS authority — prepared; live acceptance pending
+## v1.66.0 — DKB manual FinTS authority — published and live accepted
 
-Explicit CSV/FinTS selection, independent 14-day FinTS evidence and no automatic fallback. A new combined read is required before promotion.
+Explicit CSV/FinTS selection, independent 14-day FinTS evidence and no automatic fallback. Manual reads on October 4 and 17, 2026 refreshed the selected depot and cash account; routine App restart/backup continuity and PA authority propagation were observed. DKB operating-account investment cash is explicitly capped at EUR 0.
 
-## Next — dashboard freshness and policy blockers
+## v1.66.1 — authority review labels and plan blockers — prepared
 
-Make source age, authority and policy findings immediately understandable on the PA dashboard without entity-state or log inspection.
+Align the transient DKB review labels with explicit authority. Show source observation dates, freshness limits and relevant error-level policy evidence in the dashboard plan blockers without entity-state or log inspection. DKB cash remains capped at zero; holdings freshness still governs inclusion in an actionable plan.
+
+## Later — operating-account cash semantics
+
+Consider explicit per-capability exclusion only if the zero cash authorization proves insufficient. Keep Comdirect and Trade Republic investment cash separate from DKB's volatile operating balance and preserve the manual, read-only FinTS boundary.
 
 ## v1.58.0 — capability-level acquisition arbitration — completed
 

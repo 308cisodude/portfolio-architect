@@ -231,6 +231,21 @@ def test_raw_hiwpd_instrument_and_total_currency_are_transient_and_independent()
     assert "Unit price currency" in html
 
 
+def test_transient_review_labels_follow_explicit_authority():
+    modules()
+    review_module = importlib.import_module(f"{NAME}.dkb_holdings_review")
+    review = review_module.HoldingsReview("2026-09-24", "2026-10-17T12:40:53+00:00", (), ())
+
+    csv_html = review_module.render_review(review, authoritative_method="csv")
+    fints_html = review_module.render_review(review, authoritative_method="fints")
+    assert "DKB CSV (authoritative)" in csv_html
+    assert "DKB FinTS (staged observation)" in csv_html
+    assert "DKB FinTS (authoritative)" in fints_html
+    assert "DKB CSV (inactive observation)" in fints_html
+    assert "DKB CSV (authoritative)" not in fints_html
+    assert "shadow research only" not in fints_html
+
+
 def test_raw_hiwpd_bounds_escape_and_unaligned_evidence():
     review_module = importlib.import_module(f"{NAME}.dkb_holdings_review")
     response = type("Response", (), {"holdings": ":16R:FIN\n:35B:<script>alert(1)</script>\n"
@@ -297,7 +312,7 @@ def test_shadow_projection_uses_explicit_bank_isin_and_rejects_conflicts():
     assert (rows[0].quantity, rows[0].value, rows[0].currency) == ("2.0", "281.58", "EUR")
     html = review_module.render_review(review_module.HoldingsReview(
         "2026-09-24", "2026-09-24T19:14:05+00:00", None, rows))
-    assert "Read-only shadow snapshot: 1/1" in html
+    assert "Read-only review projection: 1/1" in html
     assert "<table" not in html and "overflow-wrap:anywhere" in html
     conflicting = type("Holding", (), {"ISIN": "IE00BTJRMP35", "pieces": 2,
                                        "total_value": 281.58, "value_symbol": None,

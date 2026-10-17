@@ -174,7 +174,10 @@ def build_review(snapshot: PortfolioSnapshot | None, observed_at: str,
     return HoldingsReview(csv_as_of, observed_at, csv_rows, fints_rows)
 
 
-def render_review(review: HoldingsReview) -> str:
+def render_review(review: HoldingsReview, *, authoritative_method: str = "csv") -> str:
+    """Render transient observations using the currently selected authority."""
+    csv_label = "DKB CSV (authoritative)" if authoritative_method == "csv" else "DKB CSV (inactive observation)"
+    fints_label = "DKB FinTS (authoritative)" if authoritative_method == "fints" else "DKB FinTS (staged observation)"
     def cards(label: str, time_label: str, as_of: str, rows: tuple[ReviewRow, ...] | None,
               fints: bool) -> str:
         heading = f"<h4>{escape(label)}</h4><p>{escape(time_label)}: {escape(as_of)}</p>"
@@ -198,7 +201,7 @@ def render_review(review: HoldingsReview) -> str:
 
     normalized = sum(row.isin != "unavailable" and row.quantity != "unavailable" and
                      row.value != "unavailable" and row.currency != "unavailable" for row in review.fints_rows)
-    summary = (f'<p><strong>Read-only shadow snapshot: {normalized}/{len(review.fints_rows)} '
+    summary = (f'<p><strong>Read-only review projection: {normalized}/{len(review.fints_rows)} '
                'positions have bounded ISIN, quantity, total value and currency.</strong> '
                'This is a projection count, not a CSV match or acquisition readiness decision.</p>')
 
@@ -209,7 +212,7 @@ def render_review(review: HoldingsReview) -> str:
             'the unit-price currency is a separate field and must not be used as the total-value currency. '
             'This detail expires five minutes after retrieval and is never saved.</p>' + summary +
             '<div style="display:grid;grid-template-columns:minmax(0,1fr);gap:1rem">'
-            + '<div>' + cards('DKB CSV (authoritative)', 'Export date (date only)',
+            + '<div>' + cards(csv_label, 'Export date (date only)',
                               review.csv_as_of or 'unavailable', review.csv_rows, False) + '</div>'
-            + '<div>' + cards('DKB FinTS (shadow research only)', 'Observed UTC',
+            + '<div>' + cards(fints_label, 'Observed UTC',
                               review.fints_observed_at, review.fints_rows, True) + '</div></div>')

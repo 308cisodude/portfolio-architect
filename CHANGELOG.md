@@ -1,3 +1,9 @@
+## 1.66.1
+
+- Label the five-minute DKB CSV/FinTS holdings review according to the selected acquisition authority. The review remains a transient comparison and never changes authority or evidence.
+- Put bounded source observation dates and age limits directly in the plan blocker card; summarize active error-level policy evidence when no purchase is eligible. Clarify that a zero cash cap authorizes no investment cash.
+- Preserve the explicit no-fallback FinTS authority, fixed 14-day expiry, private evidence and existing planning semantics.
+
 ## 1.66.0
 
 - Add an explicit DKB CSV/FinTS acquisition switch. A new, complete, account-bound manual read can stage independent FinTS holdings and cash evidence for at most 14 days. No automatic fallback occurs when evidence expires.

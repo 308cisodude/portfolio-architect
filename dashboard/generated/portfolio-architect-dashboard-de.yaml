@@ -124,7 +124,32 @@ views:
       card:
         type: markdown
         title: Grund der fehlenden Umsetzbarkeit
-        content: '**Quelldaten verhindern die Umsetzung:** {{ state_attr("sensor.portfolio_architect_plan_actionability", "plan_actionability_detail_de") | default("Nicht verfügbar", true) }}. Aktualisieren Sie die angegebene maßgebliche Quelle und bewerten Sie den Plan erneut.'
+        content: '**Plan blockiert:** {{ state_attr(''sensor.portfolio_architect_plan_actionability'', ''plan_actionability_detail_de'') | default(''Nicht verfügbar'', true) }}.
+
+
+          {% set rows = state_attr(''binary_sensor.portfolio_architect_data_fresh'', ''source_freshness'') or [] %}
+
+          {% set old = rows | rejectattr(''within_age_threshold'', ''equalto'', true) | list %}
+
+          {% if old %}
+
+          **Maßgebliche Nachweise aktualisieren:**
+
+          {% for row in old[:3] %}
+
+          - **{{ row.label | e }}** ({{ row.evidence_kind | e }}): beobachtet `{{ row.generated_at or ''nicht verfügbar'' }}`; Aktualitätsgrenze {{ row.threshold_hours }} Stunden.
+
+          {% endfor %}
+
+          {% if old | length > 3 %}Weitere {{ old | length - 3 }} Quellen.{% endif %}
+
+          {% else %}
+
+          Prüfen Sie das angegebene Anbieter-Gateway und bewerten Sie den Plan danach erneut.
+
+          {% endif %}
+
+          '
         entity_id: sensor.portfolio_architect_plan_actionability
       grid_options:
         columns: full
@@ -140,7 +165,29 @@ views:
       card:
         type: markdown
         title: Grund der fehlenden Umsetzbarkeit
-        content: Mit der aktuellen Richtlinie und den Ausführungswegen ist kein Kauf geeignet. Prüfen Sie die Richtlinienfeststellungen und die Nachweise der Wege unten.
+        content: '{% set findings = state_attr(''sensor.portfolio_architect_presentation_model'', ''active_policy_findings'') or [] %}
+
+          {% set errors = findings | selectattr(''state'', ''equalto'', ''error'') | list %}
+
+          {% if errors %}
+
+          **Richtlinienfeststellungen vor einem Kauf klären:**
+
+          {% for finding in errors[:3] %}
+
+          - **{{ finding.fund_name | e }}** · {{ finding.rule | replace(''_'', '' '') | e }}: beobachtet `{{ finding.observed | e }}`; erwartet `{{ finding.expected | e }}`.
+
+          {% endfor %}
+
+          {% if errors | length > 3 %}Weitere {{ errors | length - 3 }} Fehler unter Richtlinienkonformität.{% endif %}
+
+          {% else %}
+
+          Mit der aktuellen Richtlinie und den Ausführungswegen ist kein Kauf geeignet. Prüfen Sie die Richtlinienfeststellungen und die Nachweise der Wege unten.
+
+          {% endif %}
+
+          '
       grid_options:
         columns: full
         rows: auto
@@ -155,7 +202,7 @@ views:
       card:
         type: markdown
         title: Grund der fehlenden Umsetzbarkeit
-        content: Freigegebenes Anlageguthaben ist nicht verfügbar. Prüfen Sie den maßgeblichen Kassenbeleg und die Freigabe.
+        content: Freigegebenes Anlageguthaben ist nicht verfügbar. Prüfen Sie die Anlagekonten und ihre Freigaben; eine Obergrenze von null gibt auch bei positivem Bankguthaben kein Geld frei.
       grid_options:
         columns: full
         rows: auto

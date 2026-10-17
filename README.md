@@ -40,7 +40,7 @@ and a fixed 14-day expiry. Expired or missing FinTS evidence stops that source
 without selecting CSV automatically. Investment cash authorization (all eligible
 cash, a cap, or a retained reserve) applies to the selected source. The detailed
 review remains temporary and the older research shadows stay separate. See the
-[DKB upgrade guide](docs/UPGRADE-1.66.0.md).
+[DKB upgrade guide](docs/UPGRADE-1.66.1.md).
 
 One provider may advertise several methods, but changing authority is explicit.
 There is no silent fallback from a failed or stale source to another method.
