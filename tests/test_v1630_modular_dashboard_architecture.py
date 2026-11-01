@@ -70,7 +70,7 @@ def test_dashboard_source_is_shared_and_catalogs_are_bounded() -> None:
         for locale in MANIFEST["locales"]
     }
     keys = {locale: set(catalog["strings"]) for locale, catalog in catalogs.items()}
-    assert len(keys["en"]) == 107
+    assert len(keys["en"]) == 108
     assert keys["en"] == keys["de"]
     assert not any(
         str(value).startswith("__TODO__")

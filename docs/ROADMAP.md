@@ -8,9 +8,17 @@ milestone remains subject to design, security review, tests, and live acceptance
 
 Explicit CSV/FinTS selection, independent 14-day FinTS evidence and no automatic fallback. Manual reads on October 4 and 17, 2026 refreshed the selected depot and cash account; routine App restart/backup continuity and PA authority propagation were observed. DKB operating-account investment cash is explicitly capped at EUR 0.
 
-## v1.66.1 — authority review labels and plan blockers — prepared
+## v1.66.1 — authority review labels and plan blockers — published; healthy-state acceptance passed
 
 Align the transient DKB review labels with explicit authority. Show source observation dates, freshness limits and relevant error-level policy evidence in the dashboard plan blockers without entity-state or log inspection. DKB cash remains capped at zero; holdings freshness still governs inclusion in an actionable plan.
+
+The current healthy dashboard and authority/cash-cap persistence were live checked on October 17, 2026. Blocker wording and the five-minute FinTS review label remain to be checked at the next naturally occurring blocker and manual read, respectively.
+
+## v1.66.2 — instrument-type diagnostic clarity — prepared
+
+Keep the existing diagnostic entity and planning source unchanged. Present missing instrument-type metadata from DKB FinTS and Trade Republic as unspecified, and distinguish it from contradictory known types in the English and German dashboards. The two observed cases are IE00BJ0KDQ92 and IE00BTJRMP35.
+
+Also clarify the plan blocker when DKB expiry leaves PA serving a stale last accepted calculation: old TR dates are retained calculation evidence, even if the TR Gateway has since accepted new statements. A complete source refresh remains mandatory before the planner can use new evidence.
 
 ## Later — operating-account cash semantics
 

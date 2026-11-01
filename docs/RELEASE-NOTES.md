@@ -1,7 +1,7 @@
-# Portfolio Architect v1.66.1
+# Portfolio Architect v1.66.2
 
-The five-minute DKB holdings comparison now labels the selected CSV or FinTS source as authoritative. The other source remains a separately timed observation; the comparison does not change acquisition or planning.
+The source diagnostic now describes instrument-type findings rather than calling them identity conflicts. When one source lacks a type, the dashboard shows a bounded summary such as **2 unspecified types**. If sources supply two different known types, the detail classifies that as a known-type conflict. The existing diagnostic entity ID and count remain available.
 
-The English and German reference dashboards explain stale-source dates and limits directly beside a blocked plan, summarize relevant error-level policy findings near a plan with no eligible purchase, and clarify that a zero cash cap contributes nothing to the investment budget. Replace the dashboard YAML to see these presentation changes.
+This presentation uses already validated source metadata, including older cached calculations. It does not change ISIN/WKN identity matching, portfolio values, planning, DKB FinTS authority or its 14-day evidence limit, or the user-set EUR 0 DKB investment-cash cap. No manual bank read or configuration migration is required. Replace the English, German or combined dashboard YAML to see the new label and summary. See the [full notes](RELEASE-NOTES-1.66.2.md) and [upgrade guide](UPGRADE-1.66.2.md).
 
-The v1.66.0 explicit DKB FinTS switch, independent 14-day observations and no automatic CSV fallback remain unchanged. No bank read, configuration migration or change to the user-set cash cap is required. See [full notes](RELEASE-NOTES-1.66.1.md) and the [upgrade guide](UPGRADE-1.66.1.md).
+When a source outage makes PA retain a prior calculation, the plan blocker now names the unavailable Gateway and clearly labels old dates as belonging to that retained calculation. An independently refreshed Gateway is no longer called stale based on the old calculation. A fresh DKB manual read is still required to restore planning after its FinTS evidence expires.

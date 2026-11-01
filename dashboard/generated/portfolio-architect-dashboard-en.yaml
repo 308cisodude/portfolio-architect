@@ -124,7 +124,29 @@ views:
       card:
         type: markdown
         title: Why the plan is not ready
-        content: '**Plan blocked:** {{ state_attr(''sensor.portfolio_architect_plan_actionability'', ''plan_actionability_detail'') | default(''Unavailable'', true) }}.
+        content: '{% set retained = is_state(''sensor.portfolio_architect_gateway_operating_mode'', ''last_known_good'') %}
+
+          {% if retained %}
+
+          **Plan blocked:** PA is retaining its last accepted calculation. It is too old for a new plan.
+
+          {% set missing = state_attr(''binary_sensor.portfolio_architect_source_healthy'', ''unavailable_source_summary'') %}
+
+          {% if missing and missing != ''None'' %}
+
+          **Current source to check:** {{ missing | e }}. PA cannot publish a partial calculation while this source is unavailable.
+
+          {% else %}
+
+          **Current source to check:** See Gateway status. PA cannot publish a partial calculation while a source read fails.
+
+          {% endif %}
+
+          {% else %}
+
+          **Plan blocked:** {{ state_attr(''sensor.portfolio_architect_plan_actionability'', ''plan_actionability_detail'') | default(''Unavailable'', true) }}.
+
+          {% endif %}
 
 
           {% set rows = state_attr(''binary_sensor.portfolio_architect_data_fresh'', ''source_freshness'') or [] %}
@@ -133,7 +155,15 @@ views:
 
           {% if old %}
 
+          {% if retained %}
+
+          **Dates in the retained calculation (not current Gateway observations):**
+
+          {% else %}
+
           **Authoritative evidence to refresh:**
+
+          {% endif %}
 
           {% for row in old[:3] %}
 
@@ -2306,7 +2336,8 @@ views:
       card:
         type: tile
         entity: sensor.portfolio_architect_source_conflict_count
-        name: Identity conflicts
+        name: Instrument types
+        state_content: finding_summary
         tap_action:
           action: more-info
         icon: mdi:source-branch-alert
