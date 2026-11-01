@@ -1,0 +1,9 @@
+# Portfolio Architect v1.66.2
+
+The dashboard's former “Identity conflicts” tile now says “Instrument types” and explains the count in place. Its Home Assistant diagnostic entity keeps the same ID and raw observations; extra bounded attributes distinguish a source that did not establish a type from contradictory known types. For the October 17 observations, DKB FinTS supplies `other` for MSCI World and the TR statement has no ETF/UCITS cue for Emerging Markets. Each is displayed as an unspecified type rather than an identity collision. A genuine `etf` versus `stock` disagreement remains visible as a known-type conflict.
+
+Existing cached findings are interpreted on display, so the corrected text does not require a new Gateway request. No source snapshots, bank responses, credentials or additional diagnostics are persisted. ISIN/WKN aggregation, holdings and cash authority, no-fallback behavior, planning calculations and freshness remain unchanged.
+
+The October 31/November 1 freshness boundary exposed a separate presentation error in v1.66.1. DKB FinTS expired while new TR holdings and cash statements were accepted by the TR Gateway. PA correctly refused to replace its complete calculation with only some sources and retained the October 17 calculation, but the blocker called the old TR date current authoritative evidence to refresh. The dashboard now identifies the unavailable Gateway and labels those dates as belonging to the retained calculation, not to current Gateway observations. This changes wording only; it does not permit a partial plan or relax source integrity.
+
+The corrected DKB five-minute review label from v1.66.1 still awaits the next ordinary manual FinTS read. Restoring an actionable plan after DKB expiry requires a fresh DKB manual read; no extra read is needed merely to test the wording.

@@ -1452,15 +1452,27 @@
             "name": "Portfolioquellen"
           },
           "conflict_count": {
-            "name": "Konflikte bei Quellenkennungen"
+            "name": "Angaben zum Instrumententyp"
           }
         }
       },
       "source_conflict_count": {
-        "name": "Konflikte bei Quellenkennungen",
+        "name": "Angaben zum Instrumententyp",
         "state_attributes": {
           "conflicts": {
-            "name": "Konflikte bei Quellenkennungen"
+            "name": "Angaben zum Instrumententyp"
+          },
+          "unspecified_type_count": {
+            "name": "Unbekannte Typangaben"
+          },
+          "known_type_conflict_count": {
+            "name": "Widersprüchliche bekannte Typen"
+          },
+          "finding_summary": {
+            "name": "Typangaben (Englisch)"
+          },
+          "finding_summary_de": {
+            "name": "Typangaben"
           }
         }
       },

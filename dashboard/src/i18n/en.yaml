@@ -42,12 +42,27 @@ strings:
   optimisation_opportunities: Optimisation opportunities
   why_plan_not_ready: Why the plan is not ready
   plan_source_blocker_content: |
+    {% set retained = is_state('sensor.portfolio_architect_gateway_operating_mode', 'last_known_good') %}
+    {% if retained %}
+    **Plan blocked:** PA is retaining its last accepted calculation. It is too old for a new plan.
+    {% set missing = state_attr('binary_sensor.portfolio_architect_source_healthy', 'unavailable_source_summary') %}
+    {% if missing and missing != 'None' %}
+    **Current source to check:** {{ missing | e }}. PA cannot publish a partial calculation while this source is unavailable.
+    {% else %}
+    **Current source to check:** See Gateway status. PA cannot publish a partial calculation while a source read fails.
+    {% endif %}
+    {% else %}
     **Plan blocked:** {{ state_attr('sensor.portfolio_architect_plan_actionability', 'plan_actionability_detail') | default('Unavailable', true) }}.
+    {% endif %}
 
     {% set rows = state_attr('binary_sensor.portfolio_architect_data_fresh', 'source_freshness') or [] %}
     {% set old = rows | rejectattr('within_age_threshold', 'equalto', true) | list %}
     {% if old %}
+    {% if retained %}
+    **Dates in the retained calculation (not current Gateway observations):**
+    {% else %}
     **Authoritative evidence to refresh:**
+    {% endif %}
     {% for row in old[:3] %}
     - **{{ row.label | e }}** ({{ row.evidence_kind | e }}): observed `{{ row.generated_at or 'unavailable' }}`; freshness limit {{ row.threshold_hours }} hours.
     {% endfor %}
@@ -93,7 +108,8 @@ strings:
   next_plan_review: Next plan review
   last_evaluation: Last evaluation
   portfolio_sources: Portfolio sources
-  identity_conflicts: Identity conflicts
+  instrument_type_findings: Instrument types
+  instrument_type_finding_summary_attribute: finding_summary
   gateway_reauthentication_required: Gateway reauthentication required
   gateway_status: Gateway status
   last_live_refresh: Last live refresh

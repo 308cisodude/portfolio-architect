@@ -1452,15 +1452,27 @@
             "name": "Portfolio sources"
           },
           "conflict_count": {
-            "name": "Source identity conflicts"
+            "name": "Instrument type findings"
           }
         }
       },
       "source_conflict_count": {
-        "name": "Source identity conflicts",
+        "name": "Instrument type findings",
         "state_attributes": {
           "conflicts": {
-            "name": "Source identity conflicts"
+            "name": "Instrument type findings"
+          },
+          "unspecified_type_count": {
+            "name": "Unspecified types"
+          },
+          "known_type_conflict_count": {
+            "name": "Conflicting known types"
+          },
+          "finding_summary": {
+            "name": "Type finding summary"
+          },
+          "finding_summary_de": {
+            "name": "Type finding summary (German)"
           }
         }
       },

@@ -166,7 +166,9 @@ cards:
     type: tile
     entity: sensor.portfolio_architect_source_conflict_count
     name:
-      $i18n: identity_conflicts
+      $i18n: instrument_type_findings
+    state_content:
+      $i18n: instrument_type_finding_summary_attribute
     tap_action:
       action: more-info
     icon: mdi:source-branch-alert

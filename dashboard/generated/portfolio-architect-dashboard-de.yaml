@@ -124,7 +124,29 @@ views:
       card:
         type: markdown
         title: Grund der fehlenden Umsetzbarkeit
-        content: '**Plan blockiert:** {{ state_attr(''sensor.portfolio_architect_plan_actionability'', ''plan_actionability_detail_de'') | default(''Nicht verfügbar'', true) }}.
+        content: '{% set retained = is_state(''sensor.portfolio_architect_gateway_operating_mode'', ''last_known_good'') %}
+
+          {% if retained %}
+
+          **Plan blockiert:** PA zeigt die letzte akzeptierte Berechnung. Für einen neuen Plan ist sie zu alt.
+
+          {% set missing = state_attr(''binary_sensor.portfolio_architect_source_healthy'', ''unavailable_source_summary_de'') %}
+
+          {% if missing and missing != ''Keine'' %}
+
+          **Aktuell zu prüfende Quelle:** {{ missing | e }}. Solange diese Quelle nicht verfügbar ist, veröffentlicht PA keine Teilberechnung.
+
+          {% else %}
+
+          **Aktuell zu prüfende Quelle:** Siehe Gateway-Status. Solange ein Quellenabruf fehlschlägt, veröffentlicht PA keine Teilberechnung.
+
+          {% endif %}
+
+          {% else %}
+
+          **Plan blockiert:** {{ state_attr(''sensor.portfolio_architect_plan_actionability'', ''plan_actionability_detail_de'') | default(''Nicht verfügbar'', true) }}.
+
+          {% endif %}
 
 
           {% set rows = state_attr(''binary_sensor.portfolio_architect_data_fresh'', ''source_freshness'') or [] %}
@@ -133,7 +155,15 @@ views:
 
           {% if old %}
 
+          {% if retained %}
+
+          **Daten der letzten akzeptierten Berechnung (keine aktuellen Gateway-Beobachtungen):**
+
+          {% else %}
+
           **Maßgebliche Nachweise aktualisieren:**
+
+          {% endif %}
 
           {% for row in old[:3] %}
 
@@ -2318,7 +2348,8 @@ views:
       card:
         type: tile
         entity: sensor.portfolio_architect_source_conflict_count
-        name: Quellenkonflikte
+        name: Instrumenttypen
+        state_content: finding_summary_de
         tap_action:
           action: more-info
         icon: mdi:source-branch-alert

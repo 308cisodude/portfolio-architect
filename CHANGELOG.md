@@ -1,3 +1,9 @@
+## 1.66.2
+
+- Explain cross-source instrument-type findings accurately: an `other` fallback from a source without a type is presented as unspecified, while two different known types remain an explicit conflict.
+- Show the bounded finding summary directly on the English and German dashboards. Keep the existing diagnostic entity ID, raw source evidence, identity matching and planning calculations unchanged.
+- When an unavailable source forces PA to retain its last accepted calculation, label the old source dates as retained evidence and name the current unavailable Gateway. Do not claim a newly imported provider statement is stale merely because it has not yet been consolidated.
+
 ## 1.66.1
 
 - Label the five-minute DKB CSV/FinTS holdings review according to the selected acquisition authority. The review remains a transient comparison and never changes authority or evidence.

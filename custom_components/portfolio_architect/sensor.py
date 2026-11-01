@@ -33,6 +33,7 @@ from .decision_trace import PLAN_CHANGE_STATES
 from .coordinator import PortfolioArchitectCoordinator
 from .engine.aggregation import PROVIDER_MULTI_SOURCE
 from .engine.rest import PROVIDER_LOCAL_REST_JSON
+from .source_type_diagnostics import describe_instrument_type_findings
 from .execution_semantics import PLAN_ACTIONABILITY_STATES, derive_plan_actionability
 from .execution_path import EXECUTION_PATH_MODES, EXECUTION_PATH_SCHEMA_VERSION, build_execution_path
 from .model import HoldingData, PolicyFindingData, PositionData
@@ -2545,7 +2546,7 @@ class PortfolioSourceCountSensor(
 class PortfolioSourceConflictCountSensor(
     CoordinatorEntity[PortfolioArchitectCoordinator], SensorEntity
 ):
-    """Count of cross-source identity inconsistencies requiring review."""
+    """Count of cross-source instrument type findings requiring review."""
 
     _attr_has_entity_name = True
     _attr_translation_key = "source_conflict_count"
@@ -2567,8 +2568,13 @@ class PortfolioSourceConflictCountSensor(
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
+        presentation = describe_instrument_type_findings(self.coordinator.source_conflicts)
         return {
-            "conflicts": list(self.coordinator.source_conflicts),
+            "conflicts": presentation["findings"],
+            "unspecified_type_count": presentation["unspecified_type_count"],
+            "known_type_conflict_count": presentation["known_type_conflict_count"],
+            "finding_summary": presentation["finding_summary"],
+            "finding_summary_de": presentation["finding_summary_de"],
             **_source_attributes(self.coordinator),
         }
 

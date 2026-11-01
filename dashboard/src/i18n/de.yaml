@@ -42,12 +42,27 @@ strings:
   optimisation_opportunities: Optimierungsmöglichkeiten
   why_plan_not_ready: Grund der fehlenden Umsetzbarkeit
   plan_source_blocker_content: |
+    {% set retained = is_state('sensor.portfolio_architect_gateway_operating_mode', 'last_known_good') %}
+    {% if retained %}
+    **Plan blockiert:** PA zeigt die letzte akzeptierte Berechnung. Für einen neuen Plan ist sie zu alt.
+    {% set missing = state_attr('binary_sensor.portfolio_architect_source_healthy', 'unavailable_source_summary_de') %}
+    {% if missing and missing != 'Keine' %}
+    **Aktuell zu prüfende Quelle:** {{ missing | e }}. Solange diese Quelle nicht verfügbar ist, veröffentlicht PA keine Teilberechnung.
+    {% else %}
+    **Aktuell zu prüfende Quelle:** Siehe Gateway-Status. Solange ein Quellenabruf fehlschlägt, veröffentlicht PA keine Teilberechnung.
+    {% endif %}
+    {% else %}
     **Plan blockiert:** {{ state_attr('sensor.portfolio_architect_plan_actionability', 'plan_actionability_detail_de') | default('Nicht verfügbar', true) }}.
+    {% endif %}
 
     {% set rows = state_attr('binary_sensor.portfolio_architect_data_fresh', 'source_freshness') or [] %}
     {% set old = rows | rejectattr('within_age_threshold', 'equalto', true) | list %}
     {% if old %}
+    {% if retained %}
+    **Daten der letzten akzeptierten Berechnung (keine aktuellen Gateway-Beobachtungen):**
+    {% else %}
     **Maßgebliche Nachweise aktualisieren:**
+    {% endif %}
     {% for row in old[:3] %}
     - **{{ row.label | e }}** ({{ row.evidence_kind | e }}): beobachtet `{{ row.generated_at or 'nicht verfügbar' }}`; Aktualitätsgrenze {{ row.threshold_hours }} Stunden.
     {% endfor %}
@@ -93,7 +108,8 @@ strings:
   next_plan_review: Nächste Planprüfung
   last_evaluation: Letzte Auswertung
   portfolio_sources: Portfolioquellen
-  identity_conflicts: Quellenkonflikte
+  instrument_type_findings: Instrumenttypen
+  instrument_type_finding_summary_attribute: finding_summary_de
   gateway_reauthentication_required: Gateway-Anmeldung erforderlich
   gateway_status: Gateway-Status
   last_live_refresh: Live-Aktualisierung

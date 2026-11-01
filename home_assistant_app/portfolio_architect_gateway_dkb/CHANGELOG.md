@@ -1,3 +1,7 @@
+## v1.66.2
+
+- Align the App release version with the integration dashboard diagnostic update. DKB acquisition, authority, private evidence and cash authorization are unchanged.
+
 ## v1.66.1
 
 - Correct the transient holdings comparison labels so CSV or FinTS is marked authoritative only when selected. The five-minute detail and the private evidence, cash policy and acquisition controls are unchanged.
