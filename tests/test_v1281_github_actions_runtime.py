@@ -7,7 +7,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOWS = ROOT / ".github" / "workflows"
 CHECKOUT_SHA = "3d3c42e5aac5ba805825da76410c181273ba90b1"
-SETUP_PYTHON_SHA = "5fda3b95a4ea91299a34e894583c3862153e4b97"
+SETUP_PYTHON_SHA = "6d4fd22b20465ccc0f7354476588e8df7c9ca0e0"
 OLD_CHECKOUT_SHA = "11d5960a326750d5838078e36cf38b85af677262"
 OLD_SETUP_PYTHON_SHA = "a26af69be951a213d495a4c3e4e4022e16d87065"
 
@@ -36,8 +36,8 @@ def test_setup_python_v7_is_pinned_in_validate_and_release_only() -> None:
         refs.extend((name, match.group(1)) for match in re.finditer(r"actions/setup-python@([^\s]+)", text))
     assert set(refs) == {("release.yml", SETUP_PYTHON_SHA), ("validate.yml", SETUP_PYTHON_SHA)}
     assert len(refs) == 2
-    assert f"actions/setup-python@{SETUP_PYTHON_SHA} # v7.0.0" in workflows["validate.yml"]
-    assert f"actions/setup-python@{SETUP_PYTHON_SHA} # v7.0.0" in workflows["release.yml"]
+    assert f"actions/setup-python@{SETUP_PYTHON_SHA} # v7.1.0" in workflows["validate.yml"]
+    assert f"actions/setup-python@{SETUP_PYTHON_SHA} # v7.1.0" in workflows["release.yml"]
     assert all(OLD_SETUP_PYTHON_SHA not in text for text in workflows.values())
 
 

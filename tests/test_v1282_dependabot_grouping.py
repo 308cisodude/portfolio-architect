@@ -11,7 +11,7 @@ DEPENDABOT = ROOT / ".github" / "dependabot.yml"
 WORKFLOWS = ROOT / ".github" / "workflows"
 EXPECTED_GROUP = "github-actions-version-updates"
 CHECKOUT_SHA = "3d3c42e5aac5ba805825da76410c181273ba90b1"
-SETUP_PYTHON_SHA = "5fda3b95a4ea91299a34e894583c3862153e4b97"
+SETUP_PYTHON_SHA = "6d4fd22b20465ccc0f7354476588e8df7c9ca0e0"
 
 
 def _dependabot() -> dict[str, object]:
