@@ -76,6 +76,19 @@ def test_private_file_and_fixture_path_policy_is_fail_closed() -> None:
         assert (ROOT / allowed).is_file()
 
 
+def test_marketplace_visual_is_exactly_reviewed_public_branding() -> None:
+    banner = "brand/marketplace-overview.png"
+    data = (ROOT / banner).read_bytes()
+    assert privacy.path_findings(banner) == []
+    assert privacy.reviewed_image_findings(banner, data) == []
+    assert {finding.rule for finding in privacy.reviewed_image_findings(banner, data + b"x")} == {
+        "unreviewed-brand-image"
+    }
+    assert {finding.rule for finding in privacy.path_findings("brand/statement.png")} == {
+        "unexpected-image"
+    }
+
+
 def test_provider_identity_values_must_be_unmistakably_synthetic() -> None:
     assert privacy.text_findings('accountId: "ACCOUNT-1"', "fixture.json", ()) == []
     assert privacy.text_findings('account_id="account-internal-1"', "fixture.py", ()) == []

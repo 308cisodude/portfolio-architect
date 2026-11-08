@@ -1,20 +1,32 @@
 # Installation
 
 Portfolio Architect requires Home Assistant 2026.7.0 or newer. The integration
-and its four Gateway Apps are separate packages. HACS installs only the
-integration; provider acquisition runs in the appropriate App.
+and its four Gateway Apps are separate packages. Marketplace or HACS installs
+only the integration; provider acquisition runs in the appropriate App.
 
 ## Install the integration
 
-### HACS
+### Home Assistant 2026.11 or newer: Marketplace
 
-1. Add this repository to HACS as a custom **Integration** repository.
-2. Install **Portfolio Architect** and restart Home Assistant.
+1. Open **Settings → Marketplace** and select **Portfolio Architect**. If it is
+   not listed, use **Add from link** with this repository's public GitHub URL;
+   adding a custom repository requires a GitHub connection in Marketplace.
+2. Install the integration. Follow any restart prompt or repair shown by Home
+   Assistant.
 3. Open **Settings → Devices & services → Add integration → Portfolio Architect**.
 
-HACS consumes the release asset `portfolio_architect.zip`. The repository's
-README appears in HACS; the current behavior and upgrade steps are documented in
-[release notes](RELEASE-NOTES.md).
+Marketplace migrates existing HACS installations and custom repositories during
+the Home Assistant 2026.11 upgrade. It continues to use this repository's
+`hacs.json` and the release asset `portfolio_architect.zip`.
+
+### Home Assistant 2026.7–2026.10: HACS
+
+1. Add this repository to HACS as a custom **Integration** repository.
+2. Install **Portfolio Architect** and restart Home Assistant when prompted.
+3. Open **Settings → Devices & services → Add integration → Portfolio Architect**.
+
+The repository README appears in the catalog. Current behavior and upgrade
+steps are documented in [release notes](RELEASE-NOTES.md).
 
 ### Manual
 

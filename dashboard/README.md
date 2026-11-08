@@ -76,6 +76,6 @@ When accepted exceptions exist, their bounded detail presentation remains clicka
 
 ## Reference-dashboard ownership
 
-Generated YAML is static reference configuration, not integration-owned Home Assistant state. Once copied/imported into a Home Assistant dashboard, that copy is user-owned. HACS updates only the integration package; Portfolio Architect never silently overwrites a user's Lovelace configuration.
+Generated YAML is static reference configuration, not integration-owned Home Assistant state. Once copied/imported into a Home Assistant dashboard, that copy is user-owned. Marketplace or HACS updates only the integration package; Portfolio Architect never silently overwrites a user's Lovelace configuration.
 
 When a release changes the reference layout, its upgrade guide identifies the change. Users can deliberately bulk-replace the copied dashboard YAML or retain their customized version.

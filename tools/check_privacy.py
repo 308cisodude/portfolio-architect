@@ -13,6 +13,7 @@ boundaries and safely inspects both the source tree and release ZIP contents.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import os
 import re
 import shutil
@@ -103,6 +104,12 @@ ALLOWED_IMAGE_NAMES = {
     "dark_logo@2x.png",
 }
 
+# One reviewed, synthetic README illustration. Keep this exact asset pinned so
+# replacing it with a screenshot cannot pass by reusing the public image path.
+MARKETPLACE_IMAGE_SHA256 = {
+    "brand/marketplace-overview.png": "b662b77414160fdb81ee04d3837dc77431ff9a3734ff30535a804f3a4e8fe04b",
+}
+
 PRIVATE_KEY_RE = re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH |DSA )?PRIVATE KEY-----")
 # Candidate IBANs are validated with the ISO 13616 mod-97 checksum below. Public
 # ISINs do not match because they are only 12 characters long.
@@ -168,6 +175,8 @@ def normalize_member_path(value: str) -> str:
 
 
 def is_allowed_png(relative: str) -> bool:
+    if relative in MARKETPLACE_IMAGE_SHA256:
+        return True
     path = PurePosixPath(relative)
     if path.name not in ALLOWED_IMAGE_NAMES:
         return False
@@ -218,6 +227,14 @@ def path_findings(relative: str, *, historical: bool = False) -> list[Finding]:
     if suffix == ".csv" and normalized not in ALLOWED_CSV_PATHS:
         findings.append(Finding("unapproved-csv", relative))
     return findings
+
+
+def reviewed_image_findings(relative: str, data: bytes) -> list[Finding]:
+    normalized = normalize_member_path(relative)
+    expected = MARKETPLACE_IMAGE_SHA256.get(normalized)
+    if expected is not None and hashlib.sha256(data).hexdigest() != expected:
+        return [Finding("unreviewed-brand-image", relative)]
+    return []
 
 
 def iban_is_valid(candidate: str) -> bool:
@@ -332,6 +349,7 @@ def scan_source(root: Path, private_literals: tuple[str, ...]) -> list[Finding]:
         relative = path.relative_to(root).as_posix()
         findings.extend(path_findings(relative))
         data = path.read_bytes()
+        findings.extend(reviewed_image_findings(relative, data))
         text = decode_text(data)
         if text is not None:
             findings.extend(text_findings(text, relative, private_literals))
@@ -401,6 +419,7 @@ def scan_dist(dist: Path, private_literals: tuple[str, ...]) -> list[Finding]:
             for info, data in safe_zip_members(path):
                 location = f"{path.name}!/{info.filename}"
                 findings.extend(path_findings(info.filename))
+                findings.extend(reviewed_image_findings(info.filename, data))
                 text = decode_text(data)
                 if text is not None:
                     findings.extend(text_findings(text, location, private_literals))
