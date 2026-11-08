@@ -12,13 +12,19 @@ Explicit CSV/FinTS selection, independent 14-day FinTS evidence and no automatic
 
 Align the transient DKB review labels with explicit authority. Show source observation dates, freshness limits and relevant error-level policy evidence in the dashboard plan blockers without entity-state or log inspection. DKB cash remains capped at zero; holdings freshness still governs inclusion in an actionable plan.
 
-The current healthy dashboard and authority/cash-cap persistence were live checked on October 17, 2026. Blocker wording and the five-minute FinTS review label remain to be checked at the next naturally occurring blocker and manual read, respectively.
+The healthy dashboard and authority/cash-cap persistence were live checked on October 17, 2026. The five-minute FinTS review label remains to be checked at the next ordinary manual read.
 
-## v1.66.2 — instrument-type diagnostic clarity — prepared
+## v1.66.2 — instrument-type diagnostic clarity — published; healthy-state acceptance passed
 
 Keep the existing diagnostic entity and planning source unchanged. Present missing instrument-type metadata from DKB FinTS and Trade Republic as unspecified, and distinguish it from contradictory known types in the English and German dashboards. The two observed cases are IE00BJ0KDQ92 and IE00BTJRMP35.
 
 Also clarify the plan blocker when DKB expiry leaves PA serving a stale last accepted calculation: old TR dates are retained calculation evidence, even if the TR Gateway has since accepted new statements. A complete source refresh remains mandatory before the planner can use new evidence.
+
+The two unspecified instrument-type cases were live checked after publication. The retained-calculation blocker wording and the five-minute DKB authority-review label still await their next naturally occurring live observations.
+
+## Documentation maintenance — Marketplace presentation and installation guidance
+
+The catalog README now has a bounded product visual and a shorter overview. Version-specific installation details live in the installation guide: Marketplace for Home Assistant 2026.11 and later, HACS for older supported versions. DKB upgrade wording preserves the existing selected authority. HACS metadata and validation remain because Marketplace still uses them. Acquisition, planner and App behavior are unchanged.
 
 ## Later — operating-account cash semantics
 

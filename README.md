@@ -1,84 +1,50 @@
 # Portfolio Architect
 
-Portfolio Architect is a Home Assistant integration for portfolio overview,
-policy checks, and deterministic investment planning. It combines independently
-acquired holdings and eligible EUR investment cash, explains freshness and policy
-findings, and proposes purchases and funding routes. All recommendations are
-advisory: Portfolio Architect cannot place orders or move money.
+![Portfolio Architect: independent sources, explicit policy, advisory plan](brand/marketplace-overview.png)
 
-For current changes and the corresponding upgrade guide, read the
-[release notes](docs/RELEASE-NOTES.md).
+**A clear investment plan from portfolio evidence you control.** Portfolio Architect brings holdings and eligible EUR investment cash into Home Assistant, checks freshness and policy, then proposes purchases and funding routes. Every recommendation is advisory: it cannot place orders or move money.
 
-## Portfolio and planning
+## At a glance
 
-- Consolidate provider-isolated portfolio snapshots in one Home Assistant service.
-- Define target allocations, investment policies, savings-plan routes, fees, and
-  optional directed funding relationships through native configuration flows.
-- Evaluate evidence age and route readiness before producing an actionable plan.
-  Stale or incomplete evidence does not silently become fresh or authoritative.
-- Review the plan, cash authorization, source health, policy findings, and
-  execution sequence in native entities and generated English/German dashboards.
-- Use separate, read-only Gateway Apps for provider acquisition. Gateways publish
-  bounded, provider-neutral snapshots over verified private HTTPS and bearer
-  authentication; they do not execute transactions.
-
-## Providers and source authority
-
-| Gateway App | Current planning source | Other method |
+| See your portfolio | Understand the decision | Stay in control |
 | --- | --- | --- |
-| Comdirect | Live API by default, or an explicitly activated complete holdings-and-cash CSV path | No automatic cross-method fallback |
-| DKB | Depot holdings and Girokonto cash CSV by default, or explicitly activated manual FinTS holdings and selected-account booked cash | No automatic cross-method fallback; FinTS observations expire after 14 days |
-| Trade Republic | Local `DEPOTAUSZUG` holdings and `KONTOAUSZUG` cash PDF imports | Live API unavailable |
-| Generic Import | Mapped holdings CSV, with optional provider-local EUR cash; up to eight separately identified profiles | Fixed CSV method |
+| Combine separately acquired holdings and cash from multiple providers. | See source dates, policy findings, route costs and plan blockers in native entities and English/German dashboards. | Choose acquisition authority and investment cash limits explicitly. No silent fallback to an older source. |
 
-The DKB Gateway can select one eligible EUR cash account using masked choices and
-manually refresh the authorized depot and selected account. The bank may require
-app approval. **CSV remains authoritative after upgrade.** A complete new FinTS
-read stages private account-bound evidence; a separate confirmation activates
-FinTS for both holdings and cash. The two observations have independent clocks
-and a fixed 14-day expiry. Expired or missing FinTS evidence stops that source
-without selecting CSV automatically. Investment cash authorization (all eligible
-cash, a cap, or a retained reserve) applies to the selected source. The detailed
-review remains temporary and the older research shadows stay separate. See the
-[DKB upgrade guide](docs/UPGRADE-1.66.2.md).
+## Supported sources
 
-One provider may advertise several methods, but changing authority is explicit.
-There is no silent fallback from a failed or stale source to another method.
+| Gateway App | Acquisition |
+| --- | --- |
+| Comdirect | Live API, or explicitly activated complete holdings and cash CSV |
+| DKB | Depot and Girokonto CSV, or explicitly activated manual FinTS holdings and selected-account booked cash |
+| Trade Republic | Local `DEPOTAUSZUG` holdings and `KONTOAUSZUG` cash PDF imports |
+| Generic Import | Mapped holdings CSV, with optional EUR cash; up to eight separate profiles |
 
-## Install and configure
+Each Gateway App acquires its provider data separately and publishes a bounded snapshot over verified private HTTPS. DKB FinTS evidence requires a manual read, may require banking-app approval and expires after 14 days. An upgrade preserves the currently selected DKB authority; a switch between CSV and FinTS is explicit. Missing or expired evidence does not activate the other method automatically.
 
-Home Assistant **2026.7.0 or newer** is required. Install the integration through
-HACS as a custom **Integration** repository or use the versioned manual drop-in.
-Install each Gateway App separately through the Home Assistant App repository or
-as a local App; HACS does not install the Apps.
+## Set up your plan
 
-Add **Portfolio Architect** in **Settings → Devices & services**. A new installation
-starts without inventing a portfolio source or investment assumptions. Configure
-and explicitly adopt a ready Gateway, then complete the native initial-plan setup
-or use an existing valid configuration. See the [installation guide](docs/INSTALL.md)
-and [dashboard guide](dashboard/README.md).
+1. Add **Portfolio Architect** in **Settings → Devices & services**. A new installation starts without an invented source or investment assumptions.
+2. Install and configure the relevant Gateway Apps through **Settings → Apps** or as local Apps, then explicitly adopt a ready source.
+3. Define your target allocation, cash authorization, policies and verified execution routes in the native setup flows.
 
-## Security and privacy
+The [installation guide](docs/INSTALL.md), [DKB authority guide](docs/UPGRADE-1.66.2.md) and [dashboard guide](dashboard/README.md) give the detailed steps. See [release notes](docs/RELEASE-NOTES.md) before upgrading.
 
-Bank credentials, authentication sessions, raw statements, full account identifiers,
-and private Gateway state remain outside Home Assistant entities and diagnostics.
-Gateway Apps keep provider-specific acquisition isolated and publish only the
-validated portfolio, authorized cash, and bounded health contracts needed by the
-integration. DKB FinTS feeds planning only after explicit activation. No Gateway
-provides order, transfer, payment, or transaction-history write operations.
+<!-- ha-marketplace:exclude-start -->
+## Install the integration
 
-Read the [privacy model](docs/PRIVACY.md), [security policy](SECURITY.md),
-[architecture](docs/ARCHITECTURE.md), and [support policy](SUPPORT.md).
+Home Assistant **2026.7.0 or newer** is required. On **2026.11 or newer**, open **Settings → Marketplace** and install Portfolio Architect; if it is not in your catalog, use **Add from link** with this repository's GitHub URL. On **2026.7–2026.10**, add this repository to HACS as a custom **Integration** repository. A versioned manual drop-in is also available. The Gateway Apps are separate Home Assistant Apps and are not installed by Marketplace or HACS. Follow [the installation guide](docs/INSTALL.md) for setup and restart details.
 
-## Development and validation
+## Development
 
-The repository includes regression tests, reproducible release archives,
-publication checks, privacy checks, HACS and hassfest workflows, and a pinned
-Python validation toolchain. See [quality and validation](docs/QUALITY.md) and
-[publishing](docs/PUBLISHING.md) for the complete gates.
+The repository includes regression tests, reproducible release archives, privacy checks, and pinned HACS and hassfest validation workflows. See [quality and validation](docs/QUALITY.md) and [publishing](docs/PUBLISHING.md).
 
 ## AI-assisted development
 
-Generative AI assists implementation, tests, documentation, and release
-preparation. The maintainer retains responsibility for architecture, security,
-review, merging, and publication. See [AI_POLICY.md](AI_POLICY.md).
+Generative AI assists implementation, tests, documentation and release preparation. The maintainer retains responsibility for architecture, security, review, merging and publication. See [AI_POLICY.md](AI_POLICY.md).
+<!-- ha-marketplace:exclude-end -->
+
+## Security and privacy
+
+Bank credentials, authentication sessions, raw statements and full account identifiers stay outside Home Assistant entities and diagnostics. Provider acquisition remains in isolated Gateway Apps; Portfolio Architect receives only validated portfolio, authorized cash and bounded health evidence. It never executes a transaction.
+
+Read the [privacy model](docs/PRIVACY.md), [security policy](SECURITY.md) and [architecture](docs/ARCHITECTURE.md).
