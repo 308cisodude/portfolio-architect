@@ -12,6 +12,7 @@ from datetime import datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 import re
+import threading
 from typing import Final
 
 from .acquisition_control import (
@@ -85,11 +86,12 @@ class TradeRepublicStatementProvider:
 
     def __init__(self, snapshot_file) -> None:
         self._snapshot_file = Path(snapshot_file)
+        self._import_lock = threading.RLock()
         self._cash_file = self._snapshot_file.parent / CASH_STATE_FILE_NAME
         try:
             loaded = load_snapshot(self._snapshot_file)
             self._holdings_snapshot = _holdings_only(loaded) if loaded is not None else None
-            self._cash_snapshot = load_cash_snapshot(self._cash_file)
+            self._cash_snapshot = load_cash_snapshot(self._cash_file) if loaded is None or loaded.investment_cash is None else None
             if self._cash_snapshot is None and loaded is not None and loaded.investment_cash is not None:
                 # Recovery compatibility: a composed schema-1 snapshot may survive even if
                 # the dedicated sibling state was lost.  Retain only the bounded cash facts.
@@ -155,6 +157,30 @@ class TradeRepublicStatementProvider:
     def persist_cash_snapshot(self, snapshot: TradeRepublicCashSnapshot | None) -> None:
         save_cash_snapshot(self._cash_file, snapshot)
 
+    def activate_evidence(self, evidence, refresh) -> None:
+        """Publish a validated pair through the single atomic canonical snapshot file."""
+        with self._import_lock:
+            old_holdings, old_cash = self._holdings_snapshot, self._cash_snapshot
+            if evidence.holdings is not None and old_holdings is not None:
+                if evidence.holdings.generated_at < old_holdings.generated_at:
+                    raise StatementImportError("Imported statement evidence is older than accepted evidence")
+            if evidence.cash is not None and old_cash is not None:
+                if evidence.cash.as_of < old_cash.as_of:
+                    raise StatementImportError("Imported statement evidence is older than accepted evidence")
+            try:
+                if evidence.holdings is not None:
+                    self._holdings_snapshot = _holdings_only(evidence.holdings)
+                if evidence.cash is not None:
+                    self._cash_snapshot = evidence.cash
+                if self._holdings_snapshot is None:
+                    # Cash-only bootstrap has no publishable holdings snapshot yet.
+                    self.persist_cash_snapshot(self._cash_snapshot)
+                elif not refresh(trigger="manual"):
+                    raise StatementImportError("Imported statement could not be activated")
+            except Exception:
+                self._holdings_snapshot, self._cash_snapshot = old_holdings, old_cash
+                raise
+
     @property
     def holdings_snapshot(self) -> PortfolioSnapshot | None:
         return self._holdings_snapshot
@@ -165,6 +191,10 @@ class TradeRepublicStatementProvider:
 
     @property
     def snapshot(self) -> PortfolioSnapshot | None:
+        with self._import_lock:
+            return self._composed_snapshot()
+
+    def _composed_snapshot(self) -> PortfolioSnapshot | None:
         if self._holdings_snapshot is None:
             return None
         if self._cash_snapshot is None:

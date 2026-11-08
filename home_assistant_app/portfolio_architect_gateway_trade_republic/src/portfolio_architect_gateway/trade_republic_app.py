@@ -37,12 +37,12 @@ from .trade_republic_cash_statement import (
     CashStatementImportError,
     parse_cash_statement_pdf,
 )
+from .trade_republic_import import parse_import_pdf, StatementEvidence
 from .trade_republic_statement import (
     MAX_PDF_BYTES,
     StatementImportError,
     TradeRepublicStatementProvider,
     import_summary,
-    parse_statement_pdf,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -51,7 +51,7 @@ MAX_BOUNDARY_BYTES: Final = 70
 IMPORT_DIAGNOSTIC_FILE_NAME: Final = "trade-republic-import-diagnostic.json"
 _IMPORT_DIAGNOSTIC_OUTCOMES: Final = frozenset({"accepted", "rejected", "internal_error"})
 _ACCEPTED_NOTICE_RE: Final = re.compile(
-    r"^(?:Statement accepted: \d{1,3} positions; snapshot timestamp "
+    r"^(?:(?:Statement|Combined statement) accepted: \d{1,3} positions; snapshot timestamp "
     r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:.+-]+|"
     r"Cash statement accepted: EUR (?:0|[1-9][0-9]{0,11})(?:\.[0-9]{1,2})?; cash timestamp "
     r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:.+-]+)\.$"
@@ -74,6 +74,8 @@ _SAFE_IMPORT_ERRORS: Final = frozenset(
         "PDF could not be parsed safely",
         "Statement text is empty or too large",
         "Unsupported Trade Republic document type",
+        "Combined statement sections do not reconcile",
+        "Imported statement evidence is older than accepted evidence",
         "Document issuer is not the supported Trade Republic statement format",
         "Statement date and document creation date do not match",
         "Statement creation timestamp is in the future",
@@ -232,33 +234,26 @@ class TradeRepublicIngressHandler(ProviderShellIngressHandler):
             nonce, document = self._read_import_form()
             if not secrets.compare_digest(nonce, self.tr_server.import_nonce):
                 raise StatementImportError("Import form session is invalid; reload the page and try again")
-            if import_path == "/import":
-                snapshot = parse_statement_pdf(document)
-                previous = self.tr_server.statement_provider.holdings_snapshot
-                self.tr_server.statement_provider.replace_snapshot(snapshot)
-                if not self.tr_server.gateway_state.refresh(trigger="manual"):
-                    self.tr_server.statement_provider.replace_snapshot(previous)
-                    raise StatementImportError("Imported statement could not be activated")
-                summary = import_summary(snapshot)
-                self.tr_server.record_import_diagnostic(
-                    "accepted",
-                    f"Statement accepted: {summary.position_count} positions; "
-                    f"snapshot timestamp {summary.generated_at.isoformat(timespec='seconds')}.",
+            evidence = (
+                parse_import_pdf(document) if import_path == "/import"
+                else StatementEvidence(cash=parse_cash_statement_pdf(document))
+            )
+            self.tr_server.statement_provider.activate_evidence(
+                evidence, self.tr_server.gateway_state.refresh
+            )
+            if evidence.holdings is not None:
+                summary = import_summary(evidence.holdings)
+                notice = (
+                    f"{'Combined statement' if evidence.cash is not None else 'Statement'} accepted: {summary.position_count} positions; "
+                    f"snapshot timestamp {summary.generated_at.isoformat(timespec='seconds')}."
                 )
             else:
-                cash = parse_cash_statement_pdf(document)
-                previous_cash = self.tr_server.statement_provider.cash_snapshot
-                self.tr_server.statement_provider.replace_cash_snapshot(cash)
-                self.tr_server.statement_provider.persist_cash_snapshot(cash)
-                if not self.tr_server.gateway_state.refresh(trigger="manual"):
-                    self.tr_server.statement_provider.replace_cash_snapshot(previous_cash)
-                    self.tr_server.statement_provider.persist_cash_snapshot(previous_cash)
-                    raise CashStatementImportError("Imported statement could not be activated")
-                self.tr_server.record_import_diagnostic(
-                    "accepted",
+                cash = evidence.cash
+                notice = (
                     f"Cash statement accepted: EUR {cash.eligible_eur}; "
-                    f"cash timestamp {cash.as_of.isoformat(timespec='seconds')}.",
+                    f"cash timestamp {cash.as_of.isoformat(timespec='seconds')}."
                 )
+            self.tr_server.record_import_diagnostic("accepted", notice)
         except (StatementImportError, CashStatementImportError) as err:
             _LOGGER.warning("Trade Republic statement import rejected")
             self.tr_server.record_import_diagnostic(
@@ -267,7 +262,7 @@ class TradeRepublicIngressHandler(ProviderShellIngressHandler):
             self._html_status(self._render_import_page(), HTTPStatus.BAD_REQUEST)
             return
         except Exception:
-            _LOGGER.exception("Trade Republic statement import failed internally")
+            _LOGGER.error("Trade Republic statement import failed internally")
             self.tr_server.record_import_diagnostic(
                 "internal_error",
                 "Statement import failed internally; no new snapshot was activated.",
@@ -350,7 +345,7 @@ class TradeRepublicIngressHandler(ProviderShellIngressHandler):
             self.tr_server.statement_provider.acquisition_control,
             evidence_timestamps=self.tr_server.gateway_state.capability_evidence_timestamps(),
         )
-        body = f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Portfolio Architect Gateway — {name}</title><style>body{{font-family:system-ui,sans-serif;max-width:800px;margin:2rem auto;padding:0 1rem;background:#111;color:#eee}}section{{border:1px solid #444;border-radius:12px;padding:1rem;margin:1rem 0}}.mode-card.active{{border:2px solid #22c55eaa;background:#22c55e12}}.mode-card.unavailable{{border:2px solid #f59e0baa;background:#f59e0b12}}.mode-head{{display:flex;justify-content:space-between;align-items:center;gap:12px}}.badge{{font-size:.78rem;font-weight:800;padding:4px 9px;border-radius:999px;border:1px solid currentColor}}.mode-card.active .badge{{color:#4ade80}}.mode-card.unavailable .badge{{color:#fbbf24}}code{{word-break:break-all}}.warn{{color:#ffca28}}.ok{{color:#7ddc7a}}.small{{font-size:.9rem;color:#bbb}}{ACQUISITION_AUTHORITY_CSS}input[type=file]{{display:block;margin:.8rem 0 1rem}}button{{padding:.6rem 1rem}}@media(max-width:650px){{.mode-head{{align-items:flex-start;flex-direction:column}}}}</style></head><body><main><h1>Portfolio Architect Gateway — {name}</h1><section class="mode-card active"><div class="mode-head"><h2>Static acquisition · Trade Republic statements</h2><span class="badge">ACTIVE</span></div><p>Portfolio Architect {escape(__version__)} keeps <strong>DEPOTAUSZUG</strong> holdings and <strong>KONTOAUSZUG</strong> cash evidence independent. Uploaded PDFs are parsed in memory and are not stored; only bounded provider-neutral snapshots persist in this App's private data volume.</p>{notice}<h3>Depot holdings</h3><p>{escape(snapshot_text)}</p><form method="post" action="./import" enctype="multipart/form-data"><input type="hidden" name="nonce" value="{nonce}"><label for="statement">Trade Republic DEPOTAUSZUG PDF</label><input id="statement" type="file" name="statement" accept="application/pdf,.pdf" required><button type="submit">Import depot statement</button></form><h3>Investment cash</h3><p>{escape(cash_text)}</p><form method="post" action="./import-cash" enctype="multipart/form-data"><input type="hidden" name="nonce" value="{nonce}"><label for="cash-statement">Trade Republic KONTOAUSZUG PDF</label><input id="cash-statement" type="file" name="statement" accept="application/pdf,.pdf" required><button type="submit">Import cash statement</button></form><p class="warn">Unsupported, encrypted, scanned/image-only, ambiguous, or internally inconsistent documents are rejected without replacing either last accepted private snapshot.</p></section><section class="mode-card unavailable"><div class="mode-head"><h2>Live acquisition · Trade Republic</h2><span class="badge">UNAVAILABLE</span></div><p>No supported Trade Republic live/private API acquisition is used. Portfolio Architect does not emulate a private client and never turns statement-import failure into an online fallback.</p></section>{authority_html}<section><h2>Runtime</h2><p>Provider ID: <code>{provider_id}</code></p><p>Acquisition mode: <strong>pdf</strong></p><p>Gateway status: <strong>{status}</strong></p><p>Bearer token: <code>{token}</code></p><p>The token and normalized snapshot are App-private state and survive in-place upgrades. Do not publish screenshots containing the token.</p></section></main></body></html>"""
+        body = f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Portfolio Architect Gateway — {name}</title><style>body{{font-family:system-ui,sans-serif;max-width:800px;margin:2rem auto;padding:0 1rem;background:#111;color:#eee}}section{{border:1px solid #444;border-radius:12px;padding:1rem;margin:1rem 0}}.mode-card.active{{border:2px solid #22c55eaa;background:#22c55e12}}.mode-card.unavailable{{border:2px solid #f59e0baa;background:#f59e0b12}}.mode-head{{display:flex;justify-content:space-between;align-items:center;gap:12px}}.badge{{font-size:.78rem;font-weight:800;padding:4px 9px;border-radius:999px;border:1px solid currentColor}}.mode-card.active .badge{{color:#4ade80}}.mode-card.unavailable .badge{{color:#fbbf24}}code{{word-break:break-all}}.warn{{color:#ffca28}}.ok{{color:#7ddc7a}}.small{{font-size:.9rem;color:#bbb}}{ACQUISITION_AUTHORITY_CSS}input[type=file]{{display:block;margin:.8rem 0 1rem}}button{{padding:.6rem 1rem}}@media(max-width:650px){{.mode-head{{align-items:flex-start;flex-direction:column}}}}</style></head><body><main><h1>Portfolio Architect Gateway — {name}</h1><section class="mode-card active"><div class="mode-head"><h2>Static acquisition · Trade Republic statements</h2><span class="badge">ACTIVE</span></div><p>Portfolio Architect {escape(__version__)} accepts <strong>VERMÖGENSÜBERSICHT</strong> net worth statements, legacy <strong>DEPOTAUSZUG</strong> holdings and <strong>KONTOAUSZUG</strong> cash statements. Holdings and cash evidence stay independent. A combined statement updates both together; crypto is excluded. Uploaded PDFs are parsed in memory and are not stored; only bounded provider-neutral snapshots persist in this App's private data volume.</p>{notice}<h3>Depot holdings</h3><p>{escape(snapshot_text)}</p><h3>Investment cash</h3><p>{escape(cash_text)}</p><h3>Import TR statement</h3><form method="post" action="./import" enctype="multipart/form-data"><input type="hidden" name="nonce" value="{nonce}"><label for="statement">Trade Republic statement PDF</label><input id="statement" type="file" name="statement" accept="application/pdf,.pdf" required><button type="submit">Import TR statement</button></form><p class="warn">Unsupported, encrypted, scanned/image-only, ambiguous, or internally inconsistent documents are rejected without replacing either last accepted private snapshot.</p></section><section class="mode-card unavailable"><div class="mode-head"><h2>Live acquisition · Trade Republic</h2><span class="badge">UNAVAILABLE</span></div><p>No supported Trade Republic live/private API acquisition is used. Portfolio Architect does not emulate a private client and never turns statement-import failure into an online fallback.</p></section>{authority_html}<section><h2>Runtime</h2><p>Provider ID: <code>{provider_id}</code></p><p>Acquisition mode: <strong>pdf</strong></p><p>Gateway status: <strong>{status}</strong></p><p>Bearer token: <code>{token}</code></p><p>The token and normalized snapshot are App-private state and survive in-place upgrades. Do not publish screenshots containing the token.</p></section></main></body></html>"""
         return body.encode("utf-8")
 
     def _html_status(self, body: bytes, status: HTTPStatus) -> None:
