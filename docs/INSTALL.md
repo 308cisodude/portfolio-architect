@@ -68,7 +68,7 @@ or extract each complete App directory below `/addons` for a local installation:
 | --- | --- | --- |
 | Comdirect | `portfolio_architect_gateway_comdirect` | Live API or explicit complete CSV |
 | DKB | `portfolio_architect_gateway_dkb` | Depot and Girokonto CSV, or explicitly activated manual FinTS holdings and selected-account cash |
-| Trade Republic | `portfolio_architect_gateway_trade_republic` | Holdings and cash statement PDFs |
+| Trade Republic | `portfolio_architect_gateway_trade_republic` | Combined net worth, legacy holdings, or cash statement PDFs |
 | Generic Import | `portfolio_architect_gateway_import` | Mapped holdings CSV with optional EUR cash |
 
 In **Settings → Apps → App store**, use **Check for updates** after copying a

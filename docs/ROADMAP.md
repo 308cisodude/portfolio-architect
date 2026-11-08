@@ -26,6 +26,10 @@ The two unspecified instrument-type cases were live checked after publication. T
 
 The catalog README now has a bounded product visual and a shorter overview. Version-specific installation details live in the installation guide: Marketplace for Home Assistant 2026.11 and later, HACS for older supported versions. DKB upgrade wording preserves the existing selected authority. HACS metadata and validation remain because Marketplace still uses them. Acquisition, planner and App behavior are unchanged.
 
+## v1.66.3 — unified TR statement import — prepared; live acceptance pending
+
+One uploader detects supported combined net worth, legacy holdings and standalone cash statements. Combined imports retain only validated Brokerage and Cashkonto facts, commit both atomically, reject older evidence and exclude crypto. Live acceptance must compare the new cash evidence with the separate account statement and verify the Marketplace presentation after installing this release. The two DKB live checks remain pending.
+
 ## Later — operating-account cash semantics
 
 Consider explicit per-capability exclusion only if the zero cash authorization proves insufficient. Keep Comdirect and Trade Republic investment cash separate from DKB's volatile operating balance and preserve the manual, read-only FinTS boundary.

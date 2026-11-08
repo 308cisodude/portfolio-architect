@@ -1,3 +1,10 @@
+## 1.66.3
+
+- Replace the two TR upload forms with one format-aware statement uploader; support the German combined net worth statement without importing crypto.
+- Reconcile Brokerage, Cashkonto, section dates and overall totals before atomic publication; retain independent evidence clocks and reject older imports.
+- Recover cash from the committed canonical snapshot before legacy sidecar state; preserve previous evidence on rejected imports.
+- Include the merged Marketplace overview, banner and version-aware installation documentation.
+
 ## 1.66.2
 
 - Explain cross-source instrument-type findings accurately: an `other` fallback from a source without a type is presented as unspecified, while two different known types remain an explicit conflict.

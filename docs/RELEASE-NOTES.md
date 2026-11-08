@@ -1,7 +1,11 @@
-# Portfolio Architect v1.66.2
+# Portfolio Architect v1.66.3
 
-The source diagnostic now describes instrument-type findings rather than calling them identity conflicts. When one source lacks a type, the dashboard shows a bounded summary such as **2 unspecified types**. If sources supply two different known types, the detail classifies that as a known-type conflict. The existing diagnostic entity ID and count remain available.
+Trade Republic now has one **Import TR statement** uploader. It recognizes the supported German `VERMÖGENSÜBERSICHT` net worth format, the legacy `DEPOTAUSZUG` portfolio statement, and the existing cash statement. The combined format publishes Brokerage holdings and the Cashkonto balance together only after section dates, position count, Brokerage subtotal, cash detail/overview and overall totals reconcile. Crypto is explicitly excluded. Standalone statements update their own capability only.
 
-This presentation uses already validated source metadata, including older cached calculations. It does not change ISIN/WKN identity matching, portfolio values, planning, DKB FinTS authority or its 14-day evidence limit, or the user-set EUR 0 DKB investment-cash cap. No manual bank read or configuration migration is required. Replace the English, German or combined dashboard YAML to see the new label and summary. See the [full notes](RELEASE-NOTES-1.66.2.md) and [upgrade guide](UPGRADE-1.66.2.md).
+Combined date-only evidence is conservatively observed at the beginning of the statement day in Europe/Berlin, converted to UTC; document creation time does not invent an intraday balance time. Older capability evidence is rejected. Existing holdings/cash status remains separate. The canonical snapshot commits both capabilities in one atomic file replacement; existing separate cash state remains a legacy/bootstrap input, never an override of newer canonical cash.
 
-When a source outage makes PA retain a prior calculation, the plan blocker now names the unavailable Gateway and clearly labels old dates as belonging to that retained calculation. An independently refreshed Gateway is no longer called stale based on the old calculation. A fresh DKB manual read is still required to restore planning after its FinTS evidence expires.
+The Marketplace README now has a compact overview and branded banner. Installation guidance covers Marketplace on HA 2026.11+ and HACS on older supported HA versions. Marketplace displays the README from the installed PA release, so the revised page appears after this update.
+
+No DKB refresh, source-authority switch, new API access, order placement, money movement or credential retention is introduced. DKB's fixed 14-day expiry and configured zero cash cap remain unchanged. Uploaded PDFs and extracted text remain transient; only normalized provider snapshots persist. Public tests use synthetic documents only.
+
+See the [upgrade guide](UPGRADE-1.66.3.md).

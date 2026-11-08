@@ -16,7 +16,7 @@
 | --- | --- |
 | Comdirect | Live API, or explicitly activated complete holdings and cash CSV |
 | DKB | Depot and Girokonto CSV, or explicitly activated manual FinTS holdings and selected-account booked cash |
-| Trade Republic | Local `DEPOTAUSZUG` holdings and `KONTOAUSZUG` cash PDF imports |
+| Trade Republic | One PDF upload: `VERMÖGENSÜBERSICHT` holdings and cash, legacy `DEPOTAUSZUG`, or `KONTOAUSZUG` cash |
 | Generic Import | Mapped holdings CSV, with optional EUR cash; up to eight separate profiles |
 
 Each Gateway App acquires its provider data separately and publishes a bounded snapshot over verified private HTTPS. DKB FinTS evidence requires a manual read, may require banking-app approval and expires after 14 days. An upgrade preserves the currently selected DKB authority; a switch between CSV and FinTS is explicit. Missing or expired evidence does not activate the other method automatically.
