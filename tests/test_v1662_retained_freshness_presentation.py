@@ -76,3 +76,44 @@ def test_retained_and_live_blockers_are_distinct(
     assert live_heading in live
     assert retained_heading not in live
     assert "Trade Republic and DKB appear stale" in live
+
+
+@pytest.mark.parametrize(
+    ("locale", "retained_name", "stale_attribute", "retained_attribute"),
+    (
+        ("en", "Retained calculation", "stale_source_summary", None),
+        ("de", "Letzte Berechnung", "stale_source_summary_de", "display_state_de"),
+    ),
+)
+def test_compact_freshness_does_not_attribute_retained_staleness_to_current_sources(
+    locale, retained_name, stale_attribute, retained_attribute,
+):
+    dashboard = yaml.safe_load(
+        (ROOT / "dashboard/generated" / f"portfolio-architect-dashboard-{locale}.yaml").read_text(encoding="utf-8")
+    )
+    data_fresh = "binary_sensor.portfolio_architect_data_fresh"
+    operating_mode = "sensor.portfolio_architect_gateway_operating_mode"
+    cards = [
+        item for item in dashboard["views"][0]["sections"][3]["cards"]
+        if item.get("card", {}).get("entity") == data_fresh
+    ]
+
+    def visible(mode, freshness):
+        states = {operating_mode: mode, data_fresh: freshness}
+        return [
+            item["card"] for item in cards
+            if all(
+                states[condition["entity"]] == condition["state"] if "state" in condition
+                else states[condition["entity"]] != condition["state_not"]
+                for condition in item["conditions"]
+            )
+        ]
+
+    for freshness in ("on", "off"):
+        (retained,) = visible("last_known_good", freshness)
+        assert retained["name"] == retained_name
+        assert retained.get("state_content") == retained_attribute
+    (live_stale,) = visible("live", "off")
+    assert live_stale["state_content"] == stale_attribute
+    (live_fresh,) = visible("live", "on")
+    assert live_fresh["name"] != retained_name

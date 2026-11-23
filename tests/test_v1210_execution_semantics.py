@@ -142,8 +142,7 @@ def test_reference_dashboard_surfaces_freshness_window_semantics() -> None:
     source = (ROOT / "dashboard" / "bilingual-dashboard.yaml").read_text(encoding="utf-8")
     assert "name: Snapshot freshness" in source
     assert "name: Snapshot-Aktualität" in source
-    # The freshness card must show its translated on/off state so LKG can read
-    # "Snapshot freshness / Within freshness window" rather than imply live data.
+    # Freshness cards show their state, including on the retained calculation.
     def walk(value):
         if isinstance(value, dict):
             yield value
@@ -167,10 +166,10 @@ def test_v1210_does_not_add_transaction_or_execution_evidence_semantics() -> Non
 def test_v1210_version_and_wire_contracts_are_aligned() -> None:
     manifest = json.loads((COMPONENT / "manifest.json").read_text(encoding="utf-8"))
     app = yaml.safe_load((ROOT / "home_assistant_app" / "portfolio_architect_gateway_comdirect" / "config.yaml").read_text(encoding="utf-8"))
-    assert manifest["version"] == "1.66.3"
-    assert app["version"] == "1.66.3"
-    assert 'VERSION: Final = "1.66.3"' in (COMPONENT / "const.py").read_text(encoding="utf-8")
-    assert '__version__ = "1.66.3"' in (COMPONENT / "engine" / "__init__.py").read_text(encoding="utf-8")
+    assert manifest["version"] == "1.66.4"
+    assert app["version"] == "1.66.4"
+    assert 'VERSION: Final = "1.66.4"' in (COMPONENT / "const.py").read_text(encoding="utf-8")
+    assert '__version__ = "1.66.4"' in (COMPONENT / "engine" / "__init__.py").read_text(encoding="utf-8")
     assert manifest["version"] == app["version"]
     # Execution semantics are additive Home Assistant entities only.
     assert '"schema_version": 8' in (COMPONENT / "engine" / "calculator.py").read_text(encoding="utf-8")

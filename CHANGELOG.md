@@ -1,3 +1,8 @@
+## 1.66.4
+
+- In Runtime health, label freshness of a retained calculation without presenting its stale providers as current warnings.
+- In the DKB Gateway, mark expired authoritative FinTS evidence and distinguish it from evidence whose timestamp is still in range but whose complete snapshot cannot be served.
+
 ## 1.66.3
 
 - Replace the two TR upload forms with one format-aware statement uploader; support the German combined net worth statement without importing crypto.

@@ -22,7 +22,7 @@ from urllib.parse import parse_qs, urlsplit
 from zoneinfo import ZoneInfo
 
 from . import __version__
-from .acquisition_presentation import ACQUISITION_AUTHORITY_CSS, render_acquisition_authority
+from .acquisition_presentation import ACQUISITION_AUTHORITY_CSS, EvidenceStatus, render_acquisition_authority
 from .dkb_authenticated import AuthObservation, AuthSession, begin_authenticated_observation, continue_authenticated_observation
 from .dkb_holdings_research import HoldingsObservation, HoldingsSession, begin_holdings_observation, continue_holdings_observation
 from .dkb_holdings_review import HoldingsReview, ReviewRow, build_review, render_review
@@ -44,7 +44,7 @@ from .dkb_csv import (
     parse_dkb_csv_batch,
 )
 from .dkb_fints_authority import (
-    DkbAcquisitionProvider, EVIDENCE_FILE_NAME, MODE_CSV, MODE_FINTS, stage_evidence,
+    DkbAcquisitionProvider, EVIDENCE_FILE_NAME, MAX_FINTS_AGE, MODE_CSV, MODE_FINTS, stage_evidence,
 )
 from .dkb_fints import (
     CapabilityProbeResult,
@@ -1609,8 +1609,9 @@ class DKBIngressHandler(BaseHTTPRequestHandler):
             cash_policy = None
             policy_warning = '<p class="warn">Stored cash authorization is invalid; planning cash is unavailable.</p>'
         mode = cash_policy.mode if cash_policy else ""
-        acquisition_mode = self.app_server.csv_provider.acquisition_mode
-        fints_ready = next(item.can_activate for item in self.app_server.csv_provider.acquisition_control.methods
+        control = self.app_server.csv_provider.acquisition_control
+        acquisition_mode = control.active_method
+        fints_ready = next(item.can_activate for item in control.methods
                            if item.method_id == MODE_FINTS)
         cap = str(cash_policy.cap_eur) if cash_policy and cash_policy.cap_eur is not None else ""
         retain = str(cash_policy.retain_eur) if cash_policy and cash_policy.retain_eur is not None else ""
@@ -1663,9 +1664,23 @@ class DKBIngressHandler(BaseHTTPRequestHandler):
             cash_detail = (f'<p>CSV booked balance: EUR {escape(csv_value)}; FinTS booked balance: '
                            f'{escape(bank.currency)} {escape(bank.amount)}; bank date {escape(bank.bank_date)}. '
                            'The observations may differ because their times differ.</p>')
+        gateway = self.app_server.gateway_state
+        evidence_timestamps = gateway.capability_evidence_timestamps()
+        evidence_statuses: dict[str, EvidenceStatus] = {}
+        if acquisition_mode == MODE_FINTS:
+            # A canonical clock can remain visible after the Gateway stops
+            # serving the complete pair. Use the same read guard as the API.
+            usable = gateway.snapshot_view() is not None
+            now = datetime.now(timezone.utc)
+            for capability, observed_at in evidence_timestamps.items():
+                if observed_at is None:
+                    continue
+                if now - observed_at >= MAX_FINTS_AGE:
+                    evidence_statuses[capability] = "expired"
+                else:
+                    evidence_statuses[capability] = "usable" if usable else "not_usable"
         authority = render_acquisition_authority(
-            self.app_server.csv_provider.acquisition_control,
-            evidence_timestamps=self.app_server.gateway_state.capability_evidence_timestamps())
+            control, evidence_timestamps=evidence_timestamps, evidence_statuses=evidence_statuses)
         body = f'''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Portfolio Architect Gateway — DKB</title><style>
 :root{{color-scheme:dark;font-family:system-ui,sans-serif}}body{{max-width:920px;margin:1.5rem auto;padding:0 1rem;background:#111;color:#eee}}
@@ -1710,7 +1725,7 @@ button{{padding:.55rem .8rem;margin:.6rem .4rem .2rem 0}}code{{overflow-wrap:any
 <button type="submit">Save authorization policy</button></form>
 <p class="small">This policy applies to the authoritative DKB cash source. A negative booked balance authorizes EUR 0; pending transactions can make booked cash differ from spendable cash.</p></section>
 <section><h2>Acquisition source</h2><p>Selected source: <strong>{escape(acquisition_mode)}</strong>. Automatic fallback: <strong>none</strong>.</p>
-<p class="small">FinTS requires one complete manual read made with this release and the selected account. Both observations expire after 14 days. When FinTS evidence is unavailable, planning stops until a manual refresh or an explicit switch to fresh CSV.</p>
+<p class="small">FinTS requires a complete manual read for the selected account. Holdings and cash each expire after 14 days; both are needed for a complete snapshot. When FinTS evidence is unavailable, planning stops until a manual refresh or an explicit switch to fresh CSV.</p>
 <form method="post" action="set-acquisition"><input type="hidden" name="csrf" value="{csrf}">
 <label for="acquisition-mode">Use for holdings and cash</label><select id="acquisition-mode" name="mode" required>
 <option value="csv" {'selected' if acquisition_mode == MODE_CSV else ''}>DKB CSV</option>

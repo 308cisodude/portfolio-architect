@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from html import escape
-from typing import Final, Mapping
+from typing import Final, Literal, Mapping
 
 from .acquisition_control import (
     AcquisitionControl,
@@ -35,6 +35,12 @@ _REASON_LABELS: Final = {
 _CAPABILITY_LABELS: Final = {
     "holdings": "Holdings",
     "cash": "Cash",
+}
+EvidenceStatus = Literal["usable", "expired", "not_usable"]
+_EVIDENCE_BADGES: Final = {
+    "usable": ("evidence-available", "AVAILABLE FOR PLANNING"),
+    "expired": ("evidence-missing", "EXPIRED"),
+    "not_usable": ("evidence-missing", "NOT USABLE FOR PLANNING"),
 }
 
 
@@ -62,7 +68,7 @@ def _display_id(value: str) -> str:
     return escape(value)
 
 
-def _evidence_rows(value: datetime | None) -> str:
+def _evidence_rows(value: datetime | None, status: EvidenceStatus | None) -> str:
     if value is None:
         return (
             '<div class="pa-authority-row"><span>Authoritative evidence</span>'
@@ -71,9 +77,10 @@ def _evidence_rows(value: datetime | None) -> str:
             '<span class="pa-evidence-time">not available</span></div>'
         )
     timestamp = value.astimezone(timezone.utc).isoformat(timespec="seconds")
+    css, label = _EVIDENCE_BADGES.get(status, ("evidence-available", "AVAILABLE"))
     return (
         '<div class="pa-authority-row"><span>Authoritative evidence</span>'
-        '<span class="pa-pill evidence-available">AVAILABLE</span></div>'
+        f'<span class="pa-pill {css}">{label}</span></div>'
         '<div class="pa-authority-row"><span>Evidence timestamp</span>'
         f'<code class="pa-evidence-time">{escape(timestamp)}</code></div>'
     )
@@ -83,10 +90,12 @@ def render_acquisition_authority(
     control: AcquisitionControl,
     *,
     evidence_timestamps: Mapping[str, datetime | None] | None = None,
+    evidence_statuses: Mapping[str, EvidenceStatus] | None = None,
 ) -> str:
     """Render bounded read-only acquisition authority and canonical evidence clocks."""
     methods = {item.method_id: item for item in control.methods}
     evidence_timestamps = evidence_timestamps or {}
+    evidence_statuses = evidence_statuses or {}
 
     capability_cards: list[str] = []
     for item in control.capabilities:
@@ -115,7 +124,9 @@ def render_acquisition_authority(
                 authority=_display_id(item.authoritative_method),
                 reason=escape(_REASON_LABELS.get(item.authority_reason, item.authority_reason)),
                 fallback=escape(item.fallback_policy),
-                evidence_rows=_evidence_rows(evidence_timestamps.get(item.capability_id)),
+                evidence_rows=_evidence_rows(
+                    evidence_timestamps.get(item.capability_id), evidence_statuses.get(item.capability_id)
+                ),
                 supported=supported,
             )
         )
@@ -154,7 +165,7 @@ def render_acquisition_authority(
         '<h2 id="pa-acquisition-authority-heading">Acquisition authority</h2>'
         '<p class="pa-authority-intro">Read-only capability authority and method readiness, with canonical evidence clocks. '
         'A supported method is not necessarily active or authoritative; authority changes only through '
-        'the provider Gateway\'s explicit control path. Evidence timestamps describe the currently published authoritative snapshot, not inactive staged evidence. Automatic fallback remains disabled.</p>'
+        'the provider Gateway\'s explicit control path. Evidence timestamps come from the last published authoritative snapshot, not inactive staged evidence. They can remain visible after the snapshot expires. Automatic fallback remains disabled.</p>'
         f'<div class="pa-capability-grid">{capability_html}</div>'
         '<h3>Method inventory</h3>'
         f'<div class="pa-method-grid">{"".join(method_cards)}</div>'

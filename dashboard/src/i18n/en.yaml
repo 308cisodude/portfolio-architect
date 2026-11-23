@@ -103,6 +103,7 @@ strings:
   source_healthy: Source healthy
   source_unavailable: Source unavailable
   snapshot_freshness: Snapshot freshness
+  retained_calculation: Retained calculation
   review_schedule_not_configured: Review schedule not configured
   plan_review_due: Plan review due
   next_plan_review: Next plan review

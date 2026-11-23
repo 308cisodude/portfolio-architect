@@ -103,6 +103,7 @@ strings:
   source_healthy: Quelle verfügbar
   source_unavailable: Quelle fehlt
   snapshot_freshness: Snapshot-Aktualität
+  retained_calculation: Letzte Berechnung
   review_schedule_not_configured: Prüfplan nicht konfiguriert
   plan_review_due: Planprüfung fällig
   next_plan_review: Nächste Planprüfung

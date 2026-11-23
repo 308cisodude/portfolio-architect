@@ -7,6 +7,7 @@ import importlib
 import importlib.util
 from pathlib import Path
 import sys
+from types import SimpleNamespace
 
 import pytest
 
@@ -155,3 +156,51 @@ def test_dkb_fints_freshness_kind_is_fixed_at_fourteen_days():
     row = freshness.source_freshness_rows(source, now=now, threshold_hours=744,
                                           threshold_hours_by_kind={"fints": 744})[0]
     assert row["threshold_hours"] == 336 and row["within_age_threshold"] is False
+
+
+def test_ingress_evidence_badges_follow_published_fints_expiry(monkeypatch, tmp_path):
+    app = importlib.import_module(f"{NAME}.dkb_app")
+    current = datetime.now(timezone.utc).replace(microsecond=0)
+    holdings_at = current - timedelta(minutes=1)
+
+    class Clock(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return current.astimezone(tz) if tz else current.replace(tzinfo=None)
+
+    monkeypatch.setattr(app, "datetime", Clock)
+    monkeypatch.setattr(authority, "datetime", Clock)
+    selected, provider = _setup(tmp_path)
+    raw = _evidence(selected, holdings_at=holdings_at, cash_at=current)
+    authority.stage_evidence(provider.evidence_file, selected, raw["holdings"], raw["cash"])
+    state = server.GatewayState(pending.build_server_config(pending.PendingAppOptions(), tmp_path), provider)
+    provider.activate_mode("fints", lambda: state.refresh(trigger="manual"))
+
+    handler = object.__new__(app.DKBIngressHandler)
+    handler.server = SimpleNamespace(
+        controller=app.DKBProbeController(tmp_path), csv_provider=provider,
+        gateway_state=state, api_token="SYNTHETIC", last_import_notice=None,
+    )
+
+    def card(capability):
+        return handler._render_page().decode().split(f'data-capability="{capability}">', 1)[1].split("</article>", 1)[0]
+
+    assert state.snapshot_view() is not None
+    assert all(">AVAILABLE FOR PLANNING<" in card(kind) for kind in ("holdings", "cash"))
+    provider.evidence_file.unlink()
+    assert state.snapshot_view() is None
+    assert all(">NOT USABLE FOR PLANNING<" in card(kind) for kind in ("holdings", "cash"))
+    authority.stage_evidence(provider.evidence_file, selected, raw["holdings"], raw["cash"])
+
+    current = holdings_at + authority.MAX_FINTS_AGE
+    assert state.snapshot_view() is None
+    assert ">EXPIRED<" in card("holdings")
+    assert holdings_at.isoformat() in card("holdings")
+    assert ">NOT USABLE FOR PLANNING<" in card("cash")
+
+    current += timedelta(minutes=1)
+    for kind in ("holdings", "cash"):
+        expired = card(kind)
+        assert ">EXPIRED<" in expired
+        assert 'class="pa-pill authority">fints<' in expired
+        assert 'class="pa-no-fallback">none<' in expired

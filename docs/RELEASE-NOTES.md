@@ -1,11 +1,6 @@
-# Portfolio Architect v1.66.3
+# Portfolio Architect v1.66.4
 
-Trade Republic now has one **Import TR statement** uploader. It recognizes the supported German `VERMÖGENSÜBERSICHT` net worth format, the legacy `DEPOTAUSZUG` portfolio statement, and the existing cash statement. The combined format publishes Brokerage holdings and the Cashkonto balance together only after section dates, position count, Brokerage subtotal, cash detail/overview and overall totals reconcile. Crypto is explicitly excluded. Standalone statements update their own capability only.
+- Runtime health shows **Retained calculation** when PA is using its last accepted calculation. Its freshness describes that calculation. **Source unavailable** continues to name the Gateway that needs attention.
+- The DKB Gateway marks authoritative FinTS evidence **Expired** when its observation reaches 14 days. If an observation is still in range but the Gateway cannot serve the complete FinTS snapshot, its badge says **Not usable for planning**. The last published timestamps remain visible for reference.
 
-Combined date-only evidence is conservatively observed at the beginning of the statement day in Europe/Berlin, converted to UTC; document creation time does not invent an intraday balance time. Older capability evidence is rejected. Existing holdings/cash status remains separate. The canonical snapshot commits both capabilities in one atomic file replacement; existing separate cash state remains a legacy/bootstrap input, never an override of newer canonical cash.
-
-The Marketplace README now has a compact overview and branded banner. Installation guidance covers Marketplace on HA 2026.11+ and HACS on older supported HA versions. Marketplace displays the README from the installed PA release, so the revised page appears after this update.
-
-No DKB refresh, source-authority switch, new API access, order placement, money movement or credential retention is introduced. DKB's fixed 14-day expiry and configured zero cash cap remain unchanged. Uploaded PDFs and extracted text remain transient; only normalized provider snapshots persist. Public tests use synthetic documents only.
-
-See the [upgrade guide](UPGRADE-1.66.3.md).
+This release changes presentation only. The FinTS authority choice, 14-day limit, cash authorization policy and no-fallback behavior remain as configured. See the [upgrade guide](UPGRADE-1.66.4.md) and replace the dashboard YAML to get the new Runtime health tile.
