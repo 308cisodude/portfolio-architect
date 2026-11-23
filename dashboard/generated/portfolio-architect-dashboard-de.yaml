@@ -2236,6 +2236,9 @@ views:
       - condition: state
         entity: binary_sensor.portfolio_architect_data_fresh
         state: 'on'
+      - condition: state
+        entity: sensor.portfolio_architect_gateway_operating_mode
+        state_not: last_known_good
       card:
         type: tile
         entity: binary_sensor.portfolio_architect_data_fresh
@@ -2254,6 +2257,9 @@ views:
       - condition: state
         entity: binary_sensor.portfolio_architect_data_fresh
         state: 'off'
+      - condition: state
+        entity: sensor.portfolio_architect_gateway_operating_mode
+        state_not: last_known_good
       card:
         type: tile
         entity: binary_sensor.portfolio_architect_data_fresh
@@ -2264,6 +2270,24 @@ views:
         color: amber
         icon: mdi:clock-alert-outline
         hide_state: false
+      grid_options:
+        columns: 6
+        rows: auto
+    - type: conditional
+      conditions:
+      - condition: state
+        entity: sensor.portfolio_architect_gateway_operating_mode
+        state: last_known_good
+      card:
+        type: tile
+        entity: binary_sensor.portfolio_architect_data_fresh
+        name: Letzte Berechnung
+        tap_action:
+          action: more-info
+        color: amber
+        icon: mdi:history
+        hide_state: false
+        state_content: display_state_de
       grid_options:
         columns: 6
         rows: auto

@@ -12,7 +12,7 @@ Explicit CSV/FinTS selection, independent 14-day FinTS evidence and no automatic
 
 Align the transient DKB review labels with explicit authority. Show source observation dates, freshness limits and relevant error-level policy evidence in the dashboard plan blockers without entity-state or log inspection. DKB cash remains capped at zero; holdings freshness still governs inclusion in an actionable plan.
 
-The healthy dashboard and authority/cash-cap persistence were live checked on October 17, 2026. The five-minute FinTS review label remains to be checked at the next ordinary manual read.
+The healthy dashboard and authority/cash-cap persistence were live checked on October 17, 2026. The transient FinTS review labels were confirmed during the November 18 manual read.
 
 ## v1.66.2 — instrument-type diagnostic clarity — published; healthy-state acceptance passed
 
@@ -20,15 +20,19 @@ Keep the existing diagnostic entity and planning source unchanged. Present missi
 
 Also clarify the plan blocker when DKB expiry leaves PA serving a stale last accepted calculation: old TR dates are retained calculation evidence, even if the TR Gateway has since accepted new statements. A complete source refresh remains mandatory before the planner can use new evidence.
 
-The two unspecified instrument-type cases were live checked after publication. The retained-calculation blocker wording and the five-minute DKB authority-review label still await their next naturally occurring live observations.
+The two unspecified instrument-type cases were live checked after publication. On November 18, 2026, the detailed blocker correctly identified expired DKB while distinguishing retained dates from the current Comdirect Gateway. The compact freshness tile still needed the same distinction.
 
 ## Documentation maintenance — Marketplace presentation and installation guidance
 
 The catalog README now has a bounded product visual and a shorter overview. Version-specific installation details live in the installation guide: Marketplace for Home Assistant 2026.11 and later, HACS for older supported versions. DKB upgrade wording preserves the existing selected authority. HACS metadata and validation remain because Marketplace still uses them. Acquisition, planner and App behavior are unchanged.
 
-## v1.66.3 — unified TR statement import — prepared; live acceptance pending
+## v1.66.3 — unified TR statement import — published and live accepted
 
-One uploader detects supported combined net worth, legacy holdings and standalone cash statements. Combined imports retain only validated Brokerage and Cashkonto facts, commit both atomically, reject older evidence and exclude crypto. Live acceptance must compare the new cash evidence with the separate account statement and verify the Marketplace presentation after installing this release. The two DKB live checks remain pending.
+One uploader detects supported combined net worth, legacy holdings and standalone cash statements. Combined imports retain only validated Brokerage and Cashkonto facts, commit both atomically, reject older evidence and exclude crypto. The combined import, reported cash (also matched against the TR app), persistence across an App restart and PA uptake were live checked. The Marketplace banner rendered; excluded documentation sections remained visible.
+
+## v1.66.4 — retained calculation and DKB evidence clarity — prepared
+
+The November 18 live trial confirmed natural DKB expiry, fail-closed planning without CSV fallback, and recovery after a manual FinTS read with the DKB cash cap preserved. This patch distinguishes retained calculation freshness from current source warnings, and distinguishes an expired DKB timestamp from usable evidence in the Gateway UI.
 
 ## Later — operating-account cash semantics
 

@@ -34,7 +34,7 @@ operations:
   path: /sections/0/cards/13/state_content
   value: display_state_de
 - op: replace
-  path: /sections/3/cards/37/state_content
+  path: /sections/3/cards/38/state_content
   value: provider_summary_de
 - op: add
   path: /sections/0/cards/15/tap_action/entity
@@ -52,9 +52,6 @@ operations:
   path: /sections/0/cards/11/card/state_content
   value: display_state_de
 - op: add
-  path: /sections/3/cards/12/card/state_content
-  value: display_state_de
-- op: add
   path: /sections/3/cards/13/card/state_content
   value: display_state_de
 - op: add
@@ -69,44 +66,47 @@ operations:
 - op: add
   path: /sections/3/cards/17/card/state_content
   value: display_state_de
+- op: add
+  path: /sections/3/cards/18/card/state_content
+  value: display_state_de
 - op: replace
-  path: /sections/3/cards/19/card/state_content
+  path: /sections/3/cards/20/card/state_content
   value: display_state_de
 - op: replace
   path: /sections/3/cards/2/card/state_content
   value: unavailable_source_summary_de
 - op: replace
-  path: /sections/3/cards/20/card/state_content
-  value: display_state_de
-- op: replace
   path: /sections/3/cards/21/card/state_content
   value: display_state_de
-- op: add
+- op: replace
   path: /sections/3/cards/22/card/state_content
   value: display_state_de
 - op: add
-  path: /sections/3/cards/24/card/state_content
+  path: /sections/3/cards/23/card/state_content
   value: display_state_de
 - op: add
-  path: /sections/3/cards/28/card/state_content
+  path: /sections/3/cards/25/card/state_content
   value: display_state_de
 - op: add
   path: /sections/3/cards/29/card/state_content
   value: display_state_de
 - op: add
-  path: /sections/3/cards/3/card/state_content
-  value: display_state_de
-- op: add
   path: /sections/3/cards/30/card/state_content
   value: display_state_de
 - op: add
-  path: /sections/3/cards/35/card/state_content
+  path: /sections/3/cards/3/card/state_content
+  value: display_state_de
+- op: add
+  path: /sections/3/cards/31/card/state_content
+  value: display_state_de
+- op: add
+  path: /sections/3/cards/36/card/state_content
   value: display_state_de
 - op: replace
   path: /sections/3/cards/4/card/state_content
   value: stale_source_summary_de
 - op: replace
-  path: /sections/3/cards/8/state_content/0
+  path: /sections/3/cards/9/state_content/0
   value: display_state_de
 - op: replace
   path: /sections/0/cards/23/card/state_content/0
@@ -120,3 +120,6 @@ operations:
 - op: replace
   path: /sections/0/cards/28/card/state_content/1
   value: cash_context_de
+- op: add
+  path: /sections/3/cards/5/card/state_content
+  value: display_state_de

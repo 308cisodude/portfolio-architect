@@ -157,7 +157,7 @@ def test_authority_presentation_shows_independent_authoritative_evidence_clocks(
     assert html.count('class="pa-pill evidence-available">AVAILABLE</span>') == 2
     assert holdings_at.isoformat(timespec="seconds") in html
     assert cash_at.isoformat(timespec="seconds") in html
-    assert "currently published authoritative snapshot" in html
+    assert "last published authoritative snapshot" in html
     assert "inactive staged evidence" in html
 
 
